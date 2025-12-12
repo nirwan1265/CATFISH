@@ -31,6 +31,103 @@ Pathways can be significant for qualitatively different reasons:
 
 No single gene‑set statistic is uniformly most powerful across these regimes. CATFISH therefore treats pathway detection as a **model‑averaging** problem over latent “signal architectures,” rather than a single one‑size‑fits‑all test.
 
+# Pathway signal archetypes (interpretation layer)
+
+CATFISH interprets each significant pathway by classifying the **rank profile** of its gene-level p-values into one of several archetypes and reporting which component test drove significance.
+
+## Archetype I — Sparse Driver Architecture (SDA)
+
+**Signature:** one or a few genes are extremely significant; most genes are null.
+
+$$
+p_{(1)} \ll \alpha,
+\quad
+p_{(k)} \sim \mathrm{Uniform}(0,1)\ \ \forall k > K.
+$$
+
+**Best detectors:** ACAT, minP-like behavior, hard truncation.  
+**Interpretation:** pathway is significant due to **driver gene dominance**, not broad engagement.
+
+---
+
+## Archetype II — Coordinated Moderate Enrichment (CME)
+
+**Signature:** many genes show moderate association; no single extreme driver.
+
+$$
+\exists\ \text{non-trivial fraction of } g \text{ with } p_g \in [10^{-3},\,0.05],
+\quad
+\text{and } p_{(1)} \text{ not overwhelmingly dominant}.
+$$
+
+**Best detectors:** Fisher / wFisher / mean‑Z aggregation.  
+**Interpretation:** **collective functional engagement**.
+
+---
+
+## Archetype III — Diffuse Polygenic Shift (DPS)
+
+**Signature:** weak but consistent deviation from null; few (if any) cross 0.05.
+
+$$
+\mathbb{E}[Z_g] > 0
+\quad \text{but} \quad
+p_g \not\ll 0.05 \text{ for most } g.
+$$
+
+**Best detectors:** regression / distributional‑shift competitive models (e.g., MAGMA competitive).  
+**Interpretation:** **global pathway bias** consistent with polygenicity.
+
+---
+
+## Archetype IV — Hybrid Driver–Support (HDS)
+
+**Signature:** a few strong genes + several moderately associated genes.
+
+$$
+p_{(1)} \ll 10^{-4},
+\quad
+p_{(2..K)} \in [10^{-3},\,0.05].
+$$
+
+**Best detectors:** truncation/TFisher + Fisher + omnibus.  
+**Interpretation:** **hierarchical pathway organization** (drivers + supporting machinery).
+
+---
+
+## Archetype V — Single-Gene Proxy Pathway (SGP)
+
+**Signature:** pathway signal disappears after removing/conditioning on top gene(s).
+
+Operationally:
+
+- recompute pathway p-value after removing $g^\*$ (top gene),
+- or perform conditional gene‑set analysis if available.
+
+**Best detectors (but potentially misleading):** minP, uncorrected ACAT.  
+**Interpretation:** pathway is a **proxy** for a gene‑level association (annotation reuse / overlap).
+
+---
+
+## Archetype VI — Heterogeneous / Antagonistic (HAA)
+
+**Signature:** heterogeneous submodules, mixed directions, or context dependence; mean-based tests can cancel.
+
+**Best detectors:** stratified/signed models; sub‑pathway or network‑aware analyses.  
+**Interpretation:** requires **substructure-aware** modeling; global enrichment may be misleading.
+
+---
+
+## Recommended reporting checklist (per significant pathway)
+
+- **Archetype call:** SDA / CME / DPS / HDS / SGP / HAA  
+- **Driver test:** which component (ACAT vs Fisher vs TFisher) primarily drove $p_{\mathrm{omni}}$  
+- **Robustness:** persistence after conditioning/removing top gene(s) (flags SGP)  
+- **Bias controls:** gene size, SNP density/gene density, pathway size, LD panel choice  
+- **Calibration:** analytic vs permutation p-values (and $B$ used if permutation)
+
+---
+
 ### Bias warning
 
 When calculating over‑representation or enrichment, pathway‑based analysis is subject to multiple biases; **gene size**, **pathway size**, **density of SNP coverage**, and **linkage disequilibrium (LD)** patterns are all factors that must be considered and appropriately addressed (White et al., 2020; PMC6391732), which we have tried to address in our pipeline.  
@@ -278,103 +375,6 @@ q_{\mathrm{BH}}(S) = \mathrm{BH}\left(p_{\mathrm{omni}}(S)\right).
 $$
 
 Because each pathway yields a **single** omnibus p-value, no additional penalty is required for the number of component tests.
-
----
-
-# Pathway signal archetypes (interpretation layer)
-
-CATFISH interprets each significant pathway by classifying the **rank profile** of its gene-level p-values into one of several archetypes and reporting which component test drove significance.
-
-## Archetype I — Sparse Driver Architecture (SDA)
-
-**Signature:** one or a few genes are extremely significant; most genes are null.
-
-$$
-p_{(1)} \ll \alpha,
-\quad
-p_{(k)} \sim \mathrm{Uniform}(0,1)\ \ \forall k > K.
-$$
-
-**Best detectors:** ACAT, minP-like behavior, hard truncation.  
-**Interpretation:** pathway is significant due to **driver gene dominance**, not broad engagement.
-
----
-
-## Archetype II — Coordinated Moderate Enrichment (CME)
-
-**Signature:** many genes show moderate association; no single extreme driver.
-
-$$
-\exists\ \text{non-trivial fraction of } g \text{ with } p_g \in [10^{-3},\,0.05],
-\quad
-\text{and } p_{(1)} \text{ not overwhelmingly dominant}.
-$$
-
-**Best detectors:** Fisher / wFisher / mean‑Z aggregation.  
-**Interpretation:** **collective functional engagement**.
-
----
-
-## Archetype III — Diffuse Polygenic Shift (DPS)
-
-**Signature:** weak but consistent deviation from null; few (if any) cross 0.05.
-
-$$
-\mathbb{E}[Z_g] > 0
-\quad \text{but} \quad
-p_g \not\ll 0.05 \text{ for most } g.
-$$
-
-**Best detectors:** regression / distributional‑shift competitive models (e.g., MAGMA competitive).  
-**Interpretation:** **global pathway bias** consistent with polygenicity.
-
----
-
-## Archetype IV — Hybrid Driver–Support (HDS)
-
-**Signature:** a few strong genes + several moderately associated genes.
-
-$$
-p_{(1)} \ll 10^{-4},
-\quad
-p_{(2..K)} \in [10^{-3},\,0.05].
-$$
-
-**Best detectors:** truncation/TFisher + Fisher + omnibus.  
-**Interpretation:** **hierarchical pathway organization** (drivers + supporting machinery).
-
----
-
-## Archetype V — Single-Gene Proxy Pathway (SGP)
-
-**Signature:** pathway signal disappears after removing/conditioning on top gene(s).
-
-Operationally:
-
-- recompute pathway p-value after removing $g^\*$ (top gene),
-- or perform conditional gene‑set analysis if available.
-
-**Best detectors (but potentially misleading):** minP, uncorrected ACAT.  
-**Interpretation:** pathway is a **proxy** for a gene‑level association (annotation reuse / overlap).
-
----
-
-## Archetype VI — Heterogeneous / Antagonistic (HAA)
-
-**Signature:** heterogeneous submodules, mixed directions, or context dependence; mean-based tests can cancel.
-
-**Best detectors:** stratified/signed models; sub‑pathway or network‑aware analyses.  
-**Interpretation:** requires **substructure-aware** modeling; global enrichment may be misleading.
-
----
-
-## Recommended reporting checklist (per significant pathway)
-
-- **Archetype call:** SDA / CME / DPS / HDS / SGP / HAA  
-- **Driver test:** which component (ACAT vs Fisher vs TFisher) primarily drove $p_{\mathrm{omni}}$  
-- **Robustness:** persistence after conditioning/removing top gene(s) (flags SGP)  
-- **Bias controls:** gene size, SNP density/gene density, pathway size, LD panel choice  
-- **Calibration:** analytic vs permutation p-values (and $B$ used if permutation)
 
 ---
 
