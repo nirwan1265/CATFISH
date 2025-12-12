@@ -945,10 +945,18 @@ omni_minp <- omni_pathways(
 
 ## References
 
-- White MJ et al. *Strategies for Pathway Analysis using GWAS and WGS Data*. (PMC6391732)  
+- White MJ et al. *Strategies for Pathway Analysis using GWAS and WGS Data*. Current Protocols in Human Genetics (2020)
   https://pmc.ncbi.nlm.nih.gov/articles/PMC6391732/
 - de Leeuw CA et al. *MAGMA: Generalized Gene‑Set Analysis of GWAS Data*. PLoS Comput Biol (2015).
-- Liu Y et al. *ACAT / Cauchy combination test* (2019).
-- TFisher / truncated Fisher family: Zaykin et al.; Sheng & Yang; Zhang & Wu (depending on implementation).
+  https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1004219
+- Liu Y et al. *ACAT: A Fast and Powerful p Value Combination Method for Rare-Variant Analysis in Sequencing Studies*.  The American Journal of Human Genetics (2019).
+  https://pubmed.ncbi.nlm.nih.gov/30849328/
+- Zhang H et al. *TFisher: A powerful truncation and weighting procedure for combining p-values*. Annals of Applied Statistics (2020)
+https://projecteuclid.org/journals/annals-of-applied-statistics/volume-14/issue-1/TFisher--A-powerful-truncation-and-weighting-procedure-for-combining/10.1214/19-AOAS1302.full
+- Yoon S et al. *Powerful p-value combination methods to detect incomplete association*. Nature (2021)
+  https://www.nature.com/articles/s41598-021-86465-y
+- Tippett, L. H. C. *The Methods of Statistics*. London:Williams & Norgate (1931)
+- Westfall, P. H., & Young, S. S. *Resampling-Based Multiple Testing: Examples and Methods for p-Value Adjustment*. New York: Wiley(1993)
+  
 
 
