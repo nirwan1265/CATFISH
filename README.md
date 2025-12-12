@@ -324,6 +324,45 @@ Soft‑truncation uses a continuous tail‑weighting scheme that downweights lar
 
 ---
 
+### 4.5 Stouffer’s method (mean-Z; diffuse polygenic shift)
+
+Stouffer aggregates gene-level **Z** statistics (e.g., `Z_adj`) rather than p-values. For a pathway with genes `g = 1..G`, define:
+
+- **Unweighted Stouffer:**
+  - `Z_stouffer = (1/sqrt(G)) * sum_g Z_g`
+  - Convert to p-value: `p_stouffer = 2 * Φ( -|Z_stouffer| )`
+
+- **Weighted Stouffer (optional):**
+  - Choose weights `w_g >= 0`
+  - `Z_stouffer = (sum_g w_g * Z_g) / sqrt( sum_g w_g^2 )`
+  - `p_stouffer = 2 * Φ( -|Z_stouffer| )`
+
+Notes:
+- Best for **Diffuse Polygenic Shift (DPS)** where the **average Z** is shifted but few genes pass 0.05.
+- If you calibrate by permutation, compute `Z_stouffer` on permuted gene labels and use an empirical p-value.
+
+---
+
+### 4.6 minP / Tippett (single-gene proxy diagnostic)
+
+Define the pathway’s minimum gene p-value:
+
+- `p_min = min_g p_g`
+
+Under independence, Tippett’s combined p-value is:
+
+- `p_tippett = 1 - (1 - p_min)^G`
+
+But because gene p-values are correlated (LD, shared biology), CATFISH typically treats **minP as a diagnostic** and/or calibrates it by permutation:
+
+- `p_min_perm = (1 + #{b: p_min^(b) <= p_min_obs}) / (B + 1)`
+
+Notes:
+- Highly sensitive to **single extreme genes**, so it flags **Sparse Driver (SDA)** and especially **Single-Gene Proxy (SGP)** pathways.
+- Use “remove top gene and recompute” as the practical SGP check.
+
+---
+
 ## 5) Correlation among pathway tests
 
 All pathway statistics above are functions of the **same** gene-level p-values $\{p_g\}$, and are therefore intrinsically correlated:
