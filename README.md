@@ -1,10 +1,11 @@
-# CATFISH : pathway analysis pipeline + signal archetypes
+# CATFISH : GWAS pathway analysis pipeline
 
 This Markdown is structured into:
 
 - **INTRODUCTION** — what the pipeline is and why multiple tests are needed  
 - **METHODS** — paper‑ready subsections with explicit equations and assumptions  
-- **USAGE** — installation + reproducible example commands and R snippets  
+- **USAGE** — installation + reproducible example commands and R snippets
+- **RESULTS** — an example analysis for soil Nitrogen GWAS
 
 ---
 
@@ -12,26 +13,26 @@ This Markdown is structured into:
 
 ### What CATFISH is
 
-**CATFISH** is a gene‑set (pathway) analysis workflow that starts from SNP‑level association results and produces **pathway‑level significance** *plus* a **mechanistic interpretation** of *why* each pathway is significant.
+**CATFISH** (**C**ombining **A**CAT, **T**Fisher (soft), **F**isher, m**I**n-P, and **S**touffer for **H**olistic pathway analysis) is a model-averaged pathway framework that combines ACAT, soft TFisher, Fisher, Stouffer, and minP on top of LD-aware MAGMA gene-level GWAS statistics adjusted for gene length and SNP density. It then uses an omnibus test based on permutation-calibrated minP or ACAT to collapse these multiple pathway tests into a single, correlation-robust enrichment p-value that is sensitive to both sparse and polygenic pathway patterns.
 
 CATFISH uses:
 
-1. **MAGMA** for LD‑aware **SNP → gene** inference (gene-level p-values).
-2. **Multiple gene → pathway combination tests** (ACAT, Fisher / wFisher, truncation/TFisher).
-3. A **correlation‑robust omnibus test** that aggregates these correlated component tests.
-4. A **signal archetype** framework to interpret pathway significance by its gene‑level p‑value rank profile.
+1. **MAGMA** for LD-aware **SNP → gene** inference (gene-level p-values).
+2. **Multiple gene → pathway combination tests** (ACAT, Fisher, soft TFisher, Stouffer).
+3. A **correlation-robust omnibus test** (permutation-calibrated minP and ACAT-O) that aggregates these correlated component tests into a single pathway-level p-value.
 
 ### Why multiple tests are needed
 
-Pathways can be significant for qualitatively different reasons:
+Pathways can be significant for statistically different reasons:
 
-- one **driver** gene dominates,
-- many genes show **coordinated moderate** enrichment,
-- or there is a **diffuse polygenic** shift.
+- one driver gene dominates,
+- many genes show coordinated moderate enrichment,
+- diffuse polygenic shift, and
+- hybrids of these patterns.
 
-No single gene‑set statistic is uniformly most powerful across these regimes. CATFISH therefore treats pathway detection as a **model‑averaging** problem over latent “signal architectures,” rather than a single one‑size‑fits‑all test.
+No single gene-set statistic is uniformly most powerful across these various possibilities. Instead of relying on a single test, CATFISH runs several complementary pathway tests and combines them into one omnibus p-value. We summarize these patterns using a set of **pathway signal archetypes** (sparse driver, coordinated moderate enrichment, diffuse polygenic shift, hybrid driver–support, single-gene proxy), which describe different ways a pathway can appear significant.
 
-# Pathway signal archetypes (interpretation layer)
+# Pathway signal archetypes
 
 CATFISH interprets each significant pathway by classifying the **rank profile** of its gene-level p-values into one of several archetypes and reporting which component test drove significance.
 
