@@ -13,7 +13,7 @@ This Markdown is structured into:
 
 ### What CATFISH is
 
-**CATFISH** (**C**ombining **A**CAT, **T**Fisher (soft), **F**isher, m**I**n-P, and **S**touffer for **H**olistic pathway analysis) is a model-averaged pathway framework that combines ACAT, soft TFisher, Fisher, Stouffer, and minP on top of LD-aware MAGMA gene-level GWAS statistics adjusted for gene length and SNP density. It then uses an omnibus test based on permutation-calibrated minP or ACAT to collapse these multiple pathway tests into a single, correlation-robust enrichment p-value that is sensitive to both sparse and polygenic pathway patterns.
+**CATFISH** (**C**ombining **A**CAT, **T**Fisher (soft), **F**isher, m**I**n-P, and **S**touffer for **H**olistic pathway analysis) is a model-averaged pathway framework that combines ACAT, soft TFisher, Fisher, Stouffer, and minP on top of LD-aware MAGMA gene-level GWAS statistics adjusted for gene length and SNP density. It then uses an omnibus test based on permutation-calibrated minP or ACAT to collapse these multiple pathway tests into a single, correlation-robust enrichment p-value that is sensitive to both sparse and polygenic pathway patterns. In short, CATFISH casts a wide net across complementary tests and reels in a single pathway p-value.
 
 CATFISH uses:
 
@@ -38,37 +38,30 @@ We divide the pathway signals into a small set of archetypes that describe diffe
 
 ## Archetype I — Sparse Driver Architecture (SDA)
 
-**Signature:** one or a few genes are extremely significant; most genes look null.
+**Signature:** one or a few genes are extremely significant.
 
-- The top gene p-value `p_(1)` is much smaller than α (e.g. `p_(1) ≈ 1e-6` or smaller).
-- The remaining gene p-values in the pathway are approximately uniform on (0, 1).
+**Gene-level p-value pattern:**
 
-**Best detectors in CATFISH:**
+- The top gene(s) p-value is much smaller than the significance level α:
+  $$p_{(1)} \ll \alpha \;\;(\text{e.g. } p_{(1)} \approx 10^{-6}\text{ or smaller}).$$
 
-- **ACAT** (loves a few very small high p’s)
-- **minP / Tippett** (minimum p-value)
+- The remaining gene p-values are approximately uniform:  
+  $$(p_{(2)},\,p_{(3)},\,\dots,\,p_{(m)}) \sim \mathrm{Uniform}(0,1).$$
+
+- A sharp “elbow” in the ranked p-values (one (or few) tiny hit, then a long flat tail).
 
 **Interpretation:**  
-The pathway is significant because of **driver gene dominance**, not broad engagement. Biologically, this could be a core “bottleneck” gene whose annotation pulls in a whole pathway.
+An SDA pathway is significant because of **driver gene(s) dominance**, not broad engagement. One gene can carry the pathway signal when it sits at a mechanistic bottleneck (committed step, rate-limiting enzyme, key regulator, or essential transporter). Pathway annotations bundle a few true control points with many supporting enzymes and housekeeping genes; under SDA, trait-relevant variation concentrates in the control point(s) while the rest remain near-null. Statistically, this produces a tiny $p_{(1)}$ and a long tail of near-uniform values.
 
 **Biological example:**  
 **Aspartokinase in the aspartate-derived amino acid pathway**
 
-The aspartate-derived amino acid biosynthesis pathway converts aspartate into a family of essential amino acids, including lysine, threonine, methionine, and isoleucine. In bacteria and plants, the first committed step is catalyzed by aspartokinase (AK), which phosphorylates aspartate to aspartyl-phosphate. This step sits at the top of a branched network of downstream reactions that eventually produce the different end-products.
+The aspartate-derived amino-acid biosynthesis pathway converts **aspartate** into essential amino acids such as **lysine**, **threonine**, **methionine**, and **isoleucine**. In plants and bacteria, the first committed step is catalyzed by **aspartokinase (AK)**, which phosphorylates aspartate to **aspartyl-phosphate** and feeds a branched network that produces multiple end-products. Because AK sits at the top of this branchpoint, it acts as a **flux-controlling bottleneck**: changes in AK activity shift carbon and nitrogen flow through the entire network. Downstream enzymes (tailoring steps, dehydrogenases, transaminases) tend to have distributed or buffered roles. Hence the gene-level pattern matches SDA: one AK gene or a few genes downstream with very small $p$’s (e.g. $10^{-8}\text{-}10^{-10}$), while most others scatter over $(0,1)$.
 
-In many organisms, AK is the main flux-controlling bottleneck: its activity largely determines how much carbon and nitrogen flow into the entire aspartate family. AK is tightly regulated by feedback inhibition from lysine, threonine, methionine, or combinations of these products, while most downstream enzymes (transaminases, dehydrogenases, small tailoring steps) are more housekeeping-like and do not exert the same degree of control.
+**Best detectors in CATFISH:**
+- **ACAT** — sensitive to a few extremely small p-values (RECOMMENDED).  
+- **minP / Tippett** — targets the minimum p-value; optimal when one gene dominates.
 
-If you GWAS a trait like grain lysine content or total aspartate-family amino acid content, a plausible pattern is:
-
-one or a small number of AK genes / isozymes (for example, a lysine-regulated AK isoform) show very strong association (extremely small gene-level p-values), because changes in AK activity directly modulate flux into all branches;
-
-most other pathway genes have p-values that look null or weak, because common variation there has smaller or more buffered effects.
-
-At the pathway level this yields a Sparse Driver Architecture:
-
-p_(1) (for the top AK gene) is tiny (e.g. 1e-8, 1e-10),
-
-p_(2), p_(3), … are mostly noise-like, scattered over (0,1).
 
 ---
 
@@ -76,39 +69,35 @@ p_(2), p_(3), … are mostly noise-like, scattered over (0,1).
 
 **Signature:** many genes show moderate association; no single gene is insanely extreme.
 
-- A non-trivial fraction of genes have p in, say, `[1e-3, 0.05]`,
-- The top p-value is not massively more extreme than the rest.
-
-**Best detectors in CATFISH:**
-
-- **Fisher’s method** (sum of log p’s)
-- Optionally **wFisher / mean-Z** if you ever add weights
+**Gene-level p-value pattern:**
+- A non-trivial fraction of genes have moderately small p-values, e.g.
+  $$p_i \in [10^{-3},\,0.05]\quad\text{for many } i.$$
+- The top signal is not orders-of-magnitude beyond the rest (no single-gene spike), e.g.
+  $$p_{(1)} \not\ll p_{(k)}\quad\text{for small }k\ (\text{e.g., }k=5,10,20).$$
+- The ranked p-values show a **broad shoulder** (many “pretty good” genes), not a sharp elbow.
 
 **Interpretation:**  
-This reflects **collective functional engagement**: the pathway as a whole is involved, even if no single gene is a monster hit.
+CME reflects **collective functional engagement**: the pathway behaves like a coordinated module where many components contribute small-to-moderate effects. This is expected when phenotypes arise from distributed regulation, redundancy, and buffering/feedback (extreme single-gene effects are uncommon). Statistically, enrichment comes from many mildly informative genes rather than one dominating driver.
 
 **Biological example:**  
 **Cytokine / immune signaling cascades**
 
-When tissues are injured or infected, inflammatory signaling does not flip through a single master switch. Instead, cytokine cascades (such as IL-6/JAK–STAT or NF-κB signaling) act as multi-step modules that sense danger, transmit the signal through the cell, and reprogram gene expression to mount a response and then turn it back down.
+Cytokine and inflammatory signaling rarely operates through a single master switch. Instead, cascades such as **IL-6/JAK–STAT**, **TNF/NF-κB**, and **IL-1** function as multi-step circuits that sense damage or infection, propagate signals through adaptor/kinase layers, reprogram transcription, and then dampen the response through negative feedback. These modules contain many interacting parts that each tune inflammatory tone:
 
-A typical pro-inflammatory module includes:
+- **Cytokines** (e.g., *IL6*, *TNF*, *IL1B*) acting as soluble alarm signals.
+- **Cell-surface receptors** (e.g., *IL6R*, TNFRSF family) that detect alarms and set sensitivity.
+- **Intracellular adaptors and kinases** (e.g., JAKs, MAPKs, TRAFs, IKK complex) that relay signals through phosphorylation cascades.
+- **Transcription factors** (e.g., STATs, RELA/NF-κB) that shift downstream gene expression programs.
+- **Feedback and regulatory nodes** (inhibitors, suppressors, decoy receptors) that reshape, terminate, or localize responses.
 
-Cytokines (e.g. IL6, TNF, IL1B) that are secreted as soluble “alarm” signals,
+Because pathway output emerges from **distributed tuning across many steps** (receptor abundance, kinase efficiency, adaptor binding, TF activation thresholds, and feedback strength), natural genetic variation tends to produce **many modest effects** rather than one overwhelming driver. This often appears as gene-level p-values clustered in a “pretty good” range across multiple pathway members, for example:
+$$(p_{(1)},p_{(2)},\ldots)\  \text{contains many values around }10^{-3}\text{--}10^{-2}\ \text{without an extreme like }10^{-12}.$$
+At the pathway level, the entire signaling circuit is slightly shifted, consistent with CME. In CATFISH, this pattern is best captured by tests that accumulate evidence across many genes, such as **Fisher** and **Stouffer/mean-Z** (and often **soft TFisher** with mild truncation)—because their power increases when many genes contribute moderate association rather than a single spike.
 
-Cell-surface receptors (IL6R, TNFRSF family) that detect these alarms on target cells,
-
-Intracellular kinases and adaptors (JAKs, MAPKs, TRAFs, IKKs) that propagate the signal through phosphorylation cascades,
-
-Transcription factors (STATs, RELA/NF-κB) that enter the nucleus and change the expression of hundreds of target genes,
-
-Plus feedback and regulatory nodes (inhibitors, decoy receptors, suppressors) that damp or reshape the response.
-
-Functionally, the inflammatory tone of a tissue is set by small perturbations at many of these steps: a bit more or less receptor on the surface, slightly altered kinase activity, modest changes in transcription factor binding efficiency, or subtle shifts in the strength of negative feedback. No single gene acts as a strict on/off switch; the phenotype emerges from coordinated nudges across the module.
-
-In an association context (e.g. CRP levels, autoimmune disease risk, or cytokine concentrations), this architecture tends to produce many genes with modest effects rather than one overwhelming driver: gene-level p-values cluster in a “pretty good” range (around 10⁻³–10⁻²) across a dozen or more pathway members, with no single gene showing an extreme p-value like 10⁻¹².
-
-At the pathway level this is a textbook Coordinated Moderate Enrichment (CME) pattern: the entire signaling module is slightly shifted in the same general direction. In CATFISH, this kind of signal is best captured by Fisher’s method, Stouffer/mean-Z, and soft TFisher with a mild truncation, all of which gain power from many moderately associated genes rather than a single spike.
+**Best detectors in CATFISH:**
+- **Fisher’s method** (aggregates evidence across many moderately small p-values) (RECOMMENDED).
+- **Stouffer / mean-Z** (gains power when many genes shift together).
+- Optionally **wFisher / weighted Z** if you later add biologically informed weights.
 
 
 
@@ -116,27 +105,41 @@ At the pathway level this is a textbook Coordinated Moderate Enrichment (CME) pa
 
 ## Archetype III — Diffuse Polygenic Shift (DPS)
 
-**Signature:** the pathway’s genes are, on average, slightly more associated than the genome-wide background, but almost none cross a conventional 0.05 threshold.
+**Signature:** the pathway’s genes are, on average, slightly more associated than the genome-wide background, but almost none cross a conventional significance threshold.
 
-- Most p-values are > 0.05,
-- But the **mean adjusted Z (`Z_adj`) is shifted** away from 0 in one direction.
+**Gene-level p-value / Z pattern:**
+- Most gene p-values satisfy:
+  $$p_i > 0.05\quad\text{for most } i.$$
+Yet the pathway shows a small but consistent shift in adjusted gene-level Z-scores:
 
-**Best detectors in CATFISH:**
+$$
+\overline{Z}_{S,\mathrm{adj}} \;=\; \frac{1}{G}\sum_{i\in S} Z_{i,\mathrm{adj}} \;\neq\; 0,
+$$
 
-- **Stouffer / mean-Z on `Z_adj`** (unweighted; permutation-calibrated)
-- Optionally **competitive regression models** (e.g. MAGMA competitive) if you include them
+often with a coherent sign (bias in one direction).
+- Equivalent distributional statement:
+  $$\{p_i: i\in S\}\ \text{is subtly enriched toward smaller values relative to Uniform}(0,1),$$
+  but without extreme outliers.
+- Visual cue: no sharp elbow; instead, the ranked p-values show a gentle, global downward bend relative to null.
 
 **Interpretation:**  
-This is a **global pathway bias consistent with polygenicity** – lots of tiny pushes in the same direction, no obvious star gene. It’s the “many gnats, no dragon” scenario.
+DPS reflects a **global pathway bias consistent with polygenicity**: many genes each contribute tiny effects in the same general direction, and the pathway is enriched because the entire module is subtly shifted rather than driven by a single “star” gene. This is the “many gnats, no dragon” regime. Spike-hunting tests (e.g., minP/Tippett or very aggressive truncation) are typically underpowered here because there is no single extreme p-value to exploit. In contrast, mean-/distribution-sensitive tests (Stouffer/mean-Z, Fisher, and competitive regression) are designed to detect exactly this low-amplitude, widespread deviation from the null.
 
 **Biological example:**  
-**Human height as a diffuse polygenic shift**
 
-Human adult height is one of the clearest examples of an extremely polygenic trait. Early GWAS meta-analyses identified hundreds of common variants at roughly 180 loci that each shift height by only a few millimetres, already demonstrating that height is influenced by many genes of small effect rather than a handful of large-effect loci (Lango Allen et al., 2010). Subsequent larger studies in ~250,000 individuals extended this to hundreds of loci and hundreds of genome-wide significant variants (Wood et al., 2014). A later meta-analysis in roughly 700,000 Europeans mapped over 3,000 independent SNPs associated with height, explaining a substantial fraction of common-variant heritability and reinforcing the view that height is governed by many small contributions dispersed across the genome (Yengo et al., 2018). Most recently, “saturated” maps of height genetics suggest that tens of thousands of common variants across the genome contribute measurably to adult height, consistent with an extremely dense, polygenic architecture (Wainschtein et al., 2022).
+**Biological example – human height as a diffuse polygenic shift**
 
-Biologically, height integrates multiple processes: chondrocyte proliferation and hypertrophy in the growth plate, extracellular matrix and cartilage organization, growth hormone and IGF-1 signaling, morphogen pathways such as Wnt, Hedgehog, and BMP/TGF-β, and systemic influences including endocrine regulation and nutrition (Wood et al., 2014; Yengo et al., 2018). Across these pathways, there is no single “height gene” in typical populations. Instead, many genes carry one or more common variants with very small effects, so that individual gene-level tests often do not pass stringent significance thresholds in a single study. When one aggregates a biologically coherent pathway—for example, genes involved in growth-plate extracellular matrix, GH/IGF signaling, or chondrocyte differentiation—the distribution of gene-level p-values is subtly but consistently shifted toward smaller values compared with a random set of genes: there are more p-values in, say, the 0.1–0.01 range and fewer near 1.0 than expected under a uniform null.
+Human adult height is one of the clearest textbook examples of an extremely polygenic trait. Early GIANT meta-analyses in ~180k individuals identified 180 loci and “hundreds of variants” for height, yet these explained only about 10% of phenotypic variance, despite height’s ~80% heritability. Subsequent meta-analyses in ~700,000 Europeans expanded this to thousands of associated SNPs and hundreds of loci, reinforcing the view that height is influenced by very many common variants of tiny effect rather than a small set of large-effect genes. A recent “saturated map” analysis went further, reporting ~12,000 genome-wide significant SNPs in >7,000 genomic segments (covering ~21% of the genome), again consistent with Fisher’s original polygenic model for height proposed in 1918.
 
-This pattern is exactly what we mean by a Diffuse Polygenic Shift (DPS) archetype. Almost none of the genes in the pathway individually surpass a conventional per-gene significance threshold after correction, yet the aggregate distribution of p-values (or Z-scores) is clearly enriched for modest effects relative to the genome-wide background, especially in large cohorts. In this regime, spike-oriented tests such as ACAT or minP are not ideal, because there is no single outlier to exploit. Instead, methods that compare the mean or overall distribution of test statistics—such as Fisher’s method, Stouffer/mean-Z, or competitive regression-style gene-set models (e.g. MAGMA competitive)—are more appropriate, because they are designed to detect exactly this kind of low-amplitude but widespread deviation from the null. From a biological standpoint, such DPS-type pathways are still highly relevant: they correspond to core developmental and endocrine programs for height that are modulated not by a single catastrophic lesion but by the cumulative effect of many tiny perturbations spread across the entire module.
+Biologically, these variants fall into multiple growth-related programs: growth plate chondrocyte proliferation and hypertrophy, extracellular matrix and cartilage organization, growth hormone and IGF-1 signalling, and morphogen pathways such as TGF-β and Hedgehog, along with broader developmental and endocrine regulators. Pathway and gene-set analyses of height GWAS loci have shown enrichment for signalling pathways like TGF-β and Hedgehog, and for genes involved in skeletal growth, growth plate regulation, and related Mendelian growth disorders. For example, Lango Allen et al. (2010) found that genes near height-associated variants cluster in biologically coherent pathways (TGF-β signalling, Hedgehog signalling, histone and growth/development gene sets) and that several SNPs near genes in these pathways “narrowly miss” genome-wide significance, implying many additional sub-threshold contributors within the same modules. Guo et al. (2018) similarly show that genes near height GWAS loci are enriched in growth-relevant pathways and tissues such as growth plate cartilage.
+
+Viewed at the level of a single pathway (e.g. TGF-β signalling, Hedgehog signalling, or growth-plate extracellular matrix genes), this architecture naturally yields a **Diffuse Polygenic Shift (DPS)** pattern rather than a single screaming driver. Across the gene set, many genes carry one or more common variants with small effects on height; some genes achieve clear genome-wide significance, but many others show only modest or nominal association. The result is that, compared with random gene sets, the distribution of gene-level test statistics in these pathways is shifted toward stronger evidence overall—more genes with small or moderate p-values, fewer genes that look completely null—even though most individual genes would not, by themselves, justify a strong claim of association. This is exactly the situation where CATFISH’s DPS-oriented detectors (Stouffer/mean-Z on adjusted gene-level Z-scores, and optionally MAGMA-style competitive regression tests) are most appropriate: rather than hunting for a single driver gene, they test whether the **average** association signal across a biologically coherent pathway is subtly but consistently elevated relative to the genome-wide background.
+
+
+**Best detectors in CATFISH:**
+- **Stouffer / mean-Z on** `Z_adj` (unweighted; permutation-calibrated) (RECOMMENDED).
+- Optionally **competitive regression-style gene-set models** (e.g., **MAGMA competitive**) if included as a component test (NOT INCLUDED IN CATFISH)
+
 
 ---
 
@@ -144,58 +147,65 @@ This pattern is exactly what we mean by a Diffuse Polygenic Shift (DPS) archetyp
 
 **Signature:** a few very strong genes plus a supporting cast of moderately associated genes.
 
-- The top one or few genes have very small p-values (e.g. < 1e-4),
-- Several additional genes have p in `[1e-3, 0.05]`.
-
-**Best detectors in CATFISH:**
-
-- **Soft TFisher** (truncated / tail-focused, but not as extreme as minP)
-- **Fisher** (picks up the moderate bulk)
-- **Omnibus combo** (ACAT over ACAT/Fisher/TFisher/Stouffer)
+**Gene-level p-value pattern:**
+- One or a few top genes are extremely significant, e.g.
+  $$p_{(1)},\,p_{(2)} \ll 10^{-4}\quad(\text{often much smaller}).$$
+- Beyond the top hits, several additional genes show moderate evidence:
+  $$p_{(k)} \in [10^{-3},\,0.05]\quad\text{for multiple }k \text{ (support genes).}$$
+- The remaining genes are near-null:
+  $$p_{(j)} \sim \mathrm{Uniform}(0,1)\quad\text{for most other }j.$$
+- Visual cue: a small “spike” at the top (drivers) plus a clear “shoulder” of moderately small p-values (support), then a flat tail.
 
 **Interpretation:**  
-This fits a **hierarchical pathway organization**: a few “driver” genes plus **supporting machinery**. It’s often what you expect for key biosynthetic or signaling pathways.
+HDS reflects a **hierarchical pathway organization**: a few “driver” genes dominate the strongest effects, while a set of **supporting machinery** genes contribute smaller but consistent association. This is common in pathways where flux or signal is gated by a small number of control points, yet successful pathway output also depends on coordinated activity across multiple downstream components. Statistically, this architecture sits between Sparse Driver (single spike) and Coordinated Moderate Enrichment (broad shoulder): there *is* a clear driver signal, but the pathway significance is strengthened by additional moderate signals rather than being purely carried by one gene.
 
 
 
-**Biological example:**
-**Hybrid Driver–Support (HDS) – LDL cholesterol / lipoprotein metabolism**
 
-Low-density lipoprotein cholesterol (LDL-C) regulation is a classic example of a hybrid driver–support architecture. A small number of genes act as major “drivers” with very large effects, while a broader set of pathway members make more modest, supporting contributions.
+**Biological example** 
+**LDL cholesterol as a hybrid driver–support pathway**
 
-At the top of the hierarchy are genes such as LDLR, APOB, and PCSK9. Loss-of-function or strongly damaging variants in LDLR or APOB cause familial hypercholesterolemia, characterized by markedly elevated LDL-C and very high risk of premature coronary artery disease (Goldstein and Brown, 2015). Gain-of-function mutations in PCSK9 similarly raise LDL-C by accelerating LDL receptor degradation, whereas loss-of-function variants lower LDL-C and protect against coronary events (Abifadel et al., 2003; Cohen et al., 2006). These three genes can produce multi-standard-deviation shifts in LDL-C and are clear “driver” nodes in the lipoprotein metabolism network.
+LDL-cholesterol (LDL-C) regulation is a textbook case where a few genes act as major “drivers,” sitting on top of a broader polygenic background. Large GWAS and sequencing studies consistently highlight *LDLR*, *APOB* and *PCSK9* as core Mendelian hypercholesterolemia genes: rare coding or splice-altering variants in these genes can shift LDL-C by roughly half a standard deviation or more and underlie classical familial hypercholesterolemia, with greatly increased coronary artery disease risk. Recent whole-genome sequence analyses in >60,000 individuals extend this picture by showing that even rare *non-coding* variants near *LDLR* and *PCSK9* can have effects comparable to clinically reported exonic FH variants, reinforcing their role as dominant levers of LDL-C homeostasis.
 
-Surrounding these drivers is a supporting cast of genes involved in lipoprotein assembly, remodeling, and cholesterol transport. This includes other apolipoproteins (e.g. APOE, APOA1, APOC3), intestinal and hepatobiliary transporters (e.g. ABCG5, ABCG8), and enzymes in cholesterol biosynthesis and regulation (e.g. HMGCR, NPC1L1). Common variants in many of these genes show reproducible but smaller effects on LDL-C and cardiovascular risk in large GWAS and sequencing studies—typically modest changes in LDL-C or odds ratios that only become clearly detectable when aggregated across very large cohorts (Teslovich et al., 2010; Do et al., 2013; Ference et al., 2019).
+Around these drivers sits a much larger supporting network of lipoprotein and cholesterol metabolism genes. GWAS of conventional lipids and NMR-based lipoprotein traits have identified dozens of additional loci influencing LDL particle size, concentration, and composition, including apolipoprotein clusters (*APOE/APOC*, *APOA1/A5*), hepatic lipase (*LIPC*), and transporters such as *ABCG5/ABCG8*. Individually, common variants at these loci tend to explain only a small fraction of LDL-C variance, but collectively they account for a substantial portion of the genome-wide polygenic signal, and large multi-ancestry meta-analyses now report hundreds of lipid-associated loci spread across this extended lipoprotein network.
 
-If you turn this biology into gene-level association statistics for an LDL-related trait, the pathway does not look purely “sparse driver” (one screaming gene and nothing else), nor purely “coordinated moderate” (dozens of similar-strength signals). Instead, you tend to see a handful of very small p-values at LDLR, APOB, PCSK9, etc., sitting on top of a broader base of moderately associated genes with p-values in roughly the 10⁻³–10⁻² range. That is exactly the Hybrid Driver–Support (HDS) pattern: a pathway whose statistical enrichment reflects a few dominant levers plus a genuine, but softer, contribution from the wider metabolic machinery. In CATFISH terms, this is where soft TFisher (which emphasizes the lower tail but still counts the moderate p-values), together with Fisher and the omnibus combination, is particularly well matched.
+If you translate this biology into gene-level association statistics for an LDL-related trait, the pathway does not look purely “sparse driver” (one screaming gene and nothing else), nor purely “coordinated moderate” (dozens of roughly equal signals). Instead, you typically see a handful of very strong gene-level signals at *LDLR*, *APOB*, *PCSK9*, and a few related loci, sitting on a broader base of moderately associated genes involved in lipoprotein assembly, remodeling, and cholesterol transport. That is precisely the **Hybrid Driver–Support (HDS)** pattern: a pathway whose enrichment reflects both a small set of dominant, large-effect genes and a genuine, but softer, contribution from the wider metabolic machinery. In CATFISH terms, this is the regime where **soft TFisher** (which emphasizes the lower tail while still counting moderate p-values), together with **Fisher** and the **omnibus combination**, is well matched to the underlying biology.
+
+
+**Best detectors in CATFISH:**
+- **Soft TFisher** (tail-focused; gains power from a few strong hits *plus* additional modest hits)
+- **Fisher** (accumulates evidence across the moderate support set)
+- **Omnibus combination** (e.g., ACAT across ACAT/Fisher/soft-TFisher/Stouffer; or permutation-calibrated minP across methods)
 
 
 ---
 
 ## Archetype V — Single-Gene Proxy Pathway (SGP)
 
-**Signature:** the entire pathway signal is explained by one gene; remove that gene and the pathway is no longer significant.
+**Signature:** the pathway looks significant only because it contains one very strong gene; the remaining members look essentially null.
 
-Operationally you can flag it by:
-
-- Removing the top gene `g*` from the pathway and recomputing the pathway p-value,
-- Marking pathways where the p-value becomes non-significant after that removal.
-
-**Best detectors / diagnostics in CATFISH:**
-
-- **minP / Tippett** (will happily call these significant),
-- **ACAT** (also loves a single extreme gene),
-- **SGP check:** “recompute without top gene” as a *diagnostic*, not as another omnibus test.
+**Gene-level pattern:**
+- The top gene has an extremely small p-value (e.g. $10^{-6}\text{--}10^{-12}$).
+- The rest of the genes have p-values that look noisy / $\mathrm{Uniform}(0,1)$, with no clear excess of small p’s.
+- If you mentally “ignore” that top gene, there is no obvious enrichment left in the pathway.
 
 **Interpretation:**  
-The pathway is essentially a **proxy for a single gene-level association** (often due to dense annotation or overlapping pathway definitions). Biologically, the pathway may still be relevant, but you should interpret it as “this gene is driving everything.”
+The pathway is essentially acting as a proxy for a single gene-level association. This often happens when:
+- an annotation term is very small (one gene plus a couple of weakly related neighbors), or
+- multiple pathway definitions redundantly include the same driver gene, so several “different” pathways light up but all are tagging the same underlying gene.
 
+Biologically, the driver gene can still be very important (and may also fit the Sparse Driver archetype), but the pathway-level claim carries no extra information beyond “this gene is strongly associated.” In CATFISH we therefore flag SGP patterns as a caution: interpret these as gene-centric hits with pathway labels attached, rather than as evidence that the entire pathway is collectively engaged.
 
 **Biological example:**  
 **PAH in phenylalanine metabolism**
-Phenylalanine metabolism is dominated by a single bottleneck enzyme, phenylalanine hydroxylase (PAH), which converts phenylalanine to tyrosine. In humans, loss or severe reduction of PAH activity causes hyperphenylalaninemia and classic phenylketonuria (PKU) where phenylalanine accumulates to toxic levels, while downstream products are depleted. Most cases of elevated phenylalanine (HPA) are due to PAH deficiency, whereas only a minority are caused by defects in cofactor (BH₄) metabolism. Here, one gene (PAH) is the critical flux-controlling step;
 
-Other genes in the “phenylalanine metabolism” pathway (transporters, minor side-enzymes, cofactor recycling, etc.) generally have much weaker or rarer effects at the population level.
+Phenylalanine metabolism in humans is dominated by a single bottleneck enzyme, phenylalanine hydroxylase (PAH), a hepatic monooxygenase that hydroxylates phenylalanine to tyrosine in a tetrahydrobiopterin (BH₄)–dependent reaction (Scriver, 2007; Elhawary et al., 2022). Classical phenylketonuria (PKU) and related forms of hyperphenylalaninemia (HPA) arise when PAH activity is severely reduced: blood phenylalanine rises far above the normal range, tyrosine is relatively low, and neurotoxic metabolites accumulate, leading to the characteristic untreated PKU phenotype of very high phenylalanine, low tyrosine, and progressive neurological damage (Elhawary et al., 2022). Large clinical and molecular series show that the vast majority of HPA/PKU cases are caused by pathogenic variants in PAH itself, while only a minority are due to defects in BH₄ synthesis or recycling or in the PAH co-chaperone DNAJC12 (Blau et al., 2014; Himmelreich et al., 2021; Elhawary et al., 2022). In other words, within the broader “phenylalanine metabolism” pathway, PAH is the critical flux-controlling step: common and rare variation at PAH has large, direct effects on systemic phenylalanine levels, whereas most other pathway components (transporters, minor side-enzymes, cofactor recycling genes) exert much weaker or rarer effects at the population level. This is exactly the sparse driver architecture that CATFISH’s driver-oriented tests (ACAT, minP-like behavior, hard truncation) are designed to detect.
+
+**Best detectors / diagnostics in CATFISH:**
+- **minP / Tippett** (will happily call these significant)
+- **ACAT** (also loves a single extreme gene)
+- **SGP check:** “recompute without top gene” as a *diagnostic*, not as another omnibus test
+
 
 ---
 
