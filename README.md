@@ -468,52 +468,51 @@ where $$\text{count}(\cdot)$$ counts the number of permutations satisfying the c
 
 ## 4) Correlation among pathway tests
 
-All pathway statistics above are functions of the **same** gene-level p-values $\{p_g\}$, and are therefore intrinsically correlated:
+All pathway statistics above are functions of the same gene-level p-values $$\{p_g\}$$ and are therefore intrinsically correlated. For a given pathway $$S$$, define $$T_{\mathrm{ACAT}},\$$ $$T_{\mathrm{Fisher}},\$$ $$T_{\mathrm{TF}}^{\mathrm{soft}}(\tau),\$$ $$T_{\mathrm{Stouffer}},\$$ $$T_{\mathrm{minP}},\$$
+where
 
-$$
-\left(T_{\mathrm{ACAT}},\,T_{\mathrm{Fisher}},\,T_{\mathrm{TF}}(\tau)\right)
-\text{ are dependent}.
-$$
+- $$T_{\mathrm{ACAT}}$$ is the ACAT statistic on $$S$$ (Section 3.1),
+- $$T_{\mathrm{Fisher}}$$ is the Fisher / sum–log–p statistic (Section 3.2),
+- $$T_{\mathrm{TF}}^{\mathrm{soft}}(\tau)$$ is the soft–TFisher statistic with truncation parameter $$\tau$$ (Section 3.3),
+- $$T_{\mathrm{Stouffer}}$$ is the (possibly weighted) Stouffer / mean-$$Z$$ statistic, and
+- $$T_{\min} = \min_{g \in S} p_g$$ is the Tippett / minP statistic.
 
-Examples of why:
+Under the null, this vector is **not** jointly independent, because each component is a deterministic function of the same set of p-values $$\{p_g\}$$ (or equivalently the same ordered p-values $$\{p_{(k)}\}$$).
 
-- Fisher and TFisher share overlapping subsets of $\{p_g\}$.
-- ACAT and TFisher are both strongly influenced by the extreme left tail (smallest $p_g$).
-- LD and shared biology induce correlation among gene-level signals, further increasing dependence.
+Intuitively:
 
-**Implication:** naïve combination rules assuming independence between component pathway tests would be invalid (often anti‑conservative).
+- **Fisher** and **soft TFisher** are both based on $$-\log(p_g)$$, with TFisher acting like a truncated / reweighted Fisher focused on $$p_g \le \tau$$. Whenever the sum of $$-\log(p_g)$$ is large (many small p-values), both statistics tend to be extreme in the same direction.
 
----
+- **Stouffer** first maps p-values to $$Z$$-scores via $$Z_g = \Phi^{-1}(1 - p_g/2)$$ and then averages or sums them. This is a monotone transform of the same $$\{p_g\}$$, so pathways with many small p-values will simultaneously inflate Fisher, TFisher, and Stouffer.
 
-## 5) Omnibus pathway testing (correlation-robust model averaging)
+- **ACAT** and **soft TFisher** both emphasize the **lower tail**: ACAT uses $$\tan\{\pi(0.5 - p_g)\}$$ (very heavy weight on the smallest p’s), while TFisher heavily weights small $$p_g$$ through $$-\log(p_g)$$ below $$\tau$$. A pathway with one or a few very small p-values will push both $$T_{\mathrm{ACAT}}$$ and $$T_{\mathrm{TF}}^{\mathrm{soft}}(\tau)$$ in the same direction.
 
-Because no single test is uniformly optimal across latent pathway architectures, for each pathway `S` we compute a small panel of component p-values:
+- **minP** is literally the smallest p-value $$p_{(1)}$$. It is almost perfectly aligned with the extreme-tail behavior of ACAT and the most aggressive truncation versions of TFisher: whenever $$p_{(1)}$$ is tiny, ACAT, TFisher, and often Fisher / Stouffer will also look unusually extreme.
 
-- `p_ACAT(S)`       – ACAT on gene-level p-values
-- `p_Fisher(S)`     – Fisher’s sum-of-logs combination
-- `p_TF(S; tau)`    – soft truncated Fisher (TFisher) at threshold `tau`
-- `p_Stouffer(S)`   – (optionally weighted) Stouffer / mean-Z combination
-- `p_minP(S)`       – within-pathway minP (Tippett) across genes
+On top of this, linkage disequilibrium and shared biology induce correlation among the gene-level inputs themselves (the $$\{p_g\}$$ and corresponding $$\{Z_g\}$$ are not independent across genes), which further strengthens dependence among all of the pathway-level statistics.
 
-We then summarize these into *two* omnibus statistics:
-(i) an analytic **ACAT-O** combination across methods, and  
-(ii) a permutation-calibrated **minimum-p (minP)** across methods.
+**Implication.** Because $$T_{\mathrm{ACAT}},\$$ $$T_{\mathrm{Fisher}},\$$ $$T_{\mathrm{TF}}^{\mathrm{soft}}(\tau),\$$ $$T_{\mathrm{Stouffer}},\$$ $$T_{\mathrm{minP}},\$$
+is strongly dependent, naïve combination rules that assume independence between component tests (e.g. simple Bonferroni or analytic minP under independence) would generally be mis-calibrated and often anti-conservative. This is why CATFISH uses **permutation-calibrated minP across methods** (and treats ACAT-O as a model-based sensitivity analysis), so that the joint null distribution of these correlated statistics is learned empirically rather than assumed.
+
 
 ---
+
+## 5) Omnibus pathway p-value across methods
+
+Each pathway in CATFISH is evaluated by a panel of complementary gene → pathway tests (ACAT, Fisher, soft TFisher, Stouffer, and minP), each tuned to a different pattern of gene-level signal. Because these five statistics are all functions of the same adjusted gene p-values, they are strongly correlated and can disagree in which pathways they call “most” enriched. Rather than choosing a single favorite test a priori, we combine their evidence into a **single omnibus pathway p-value** using two complementary strategies: (i) an analytic ACAT-O combination across method-level p-values, and (ii) a permutation-calibrated minP across methods that provides a dependence-robust, “best-of-tests” summary. The following subsections describe these two omnibus layers.
+
 
 ### 5.1 Omnibus ACAT (ACAT-O across methods)
 
-Let `p1, p2, p3, p4, p5` denote the five component p-values for pathway `S`, and let weights `v_j >= 0` satisfy `sum_j v_j = 1` (default `v_j = 1/5`).
+Let $$p_1, \dots, p_5$$ denote the five component p-values for pathway $$S$$, and let weights $$v_j \ge 0$$ satisfy $$\sum_{j=1}^5 v_j = 1$$ (default $$v_j = 1/5$$).
 
-Define the ACAT-O Cauchy statistic:
+Define the ACAT-O Cauchy statistic
 
-- `T_omni_ACAT(S) = sum_{j=1..5} v_j * tan( pi * (0.5 - p_j) )`
+$$T_{\mathrm{omni,ACAT}}(S) = \sum_{j=1}^5 v_j \,\tan\{\pi(0.5 - p_j)\},$$
+which under the global null is approximately standard Cauchy. The analytic omnibus p-value is
+$$p_{\mathrm{omni,ACAT}}(S)= 0.5 - \frac{1}{\pi}\arctan\{T_{\mathrm{omni,ACAT}}(S)\}.$$
 
-Under the global null, `T_omni_ACAT(S)` is approximately standard Cauchy, giving the analytic omnibus p-value:
-
-- `p_omni_ACAT(S) = 0.5 - (1/pi) * atan( T_omni_ACAT(S) )`
-
-This ACAT-O layer is most sensitive when **at least one** component test (e.g., ACAT for sparse drivers, Fisher / Stouffer for coordinated enrichment, TFisher for hybrid patterns, or minP for hard single-gene hits) is strongly significant, even if the others are not.
+This ACAT-O layer is most sensitive when **at least one** component test (e.g. ACAT for sparse drivers, Fisher/Stouffer for coordinated enrichment, soft TFisher for hybrid patterns, or minP for hard single-gene hits) is strongly significant, even if the others are only modest or null.
 
 ---
 
@@ -521,47 +520,36 @@ This ACAT-O layer is most sensitive when **at least one** component test (e.g., 
 
 To obtain a complementary, more conservative summary that explicitly accounts for correlation between component tests, we also compute a minimum-p omnibus statistic across methods:
 
-- `T_omni_min(S) = min_{j in {1,2,3,4,5}} p_j`
+$$T_{\mathrm{omni,min}}(S) = \min_{j \in \{1,\dots,5\}} p_j= \min\({ p_{\mathrm{ACAT}}(S), p_{\mathrm{Fisher}}(S),p_{\mathrm{TF}}(S;\tau), p_{\mathrm{Stouffer}}(S),p_{\mathrm{minP}}(S) \})$$
 
-equivalently:
+Because the $$p_j$$ are correlated (they are all computed from the same set of gene-level p-values), we calibrate $$T_{\mathrm{omni,min}}(S)$$ by gene-label permutation. For each of $$B$$ permutations:
 
-- `T_omni_min(S) = min( p_ACAT(S), p_Fisher(S), p_TF(S; tau), p_Stouffer(S), p_minP(S) )`
-
-Because the `p_j` are correlated (all are computed from the same set of gene-level p-values), we calibrate `T_omni_min(S)` by permutation.
-
-For each of `B` permutations:
-
-- randomize gene labels across pathways (preserving the empirical distribution of gene-level p-values),
+- randomize gene labels across pathways (preserving the empirical distribution of gene-level p-values and pathway sizes),
 - recompute all five component tests for each pathway,
-- record, for permutation `b = 1..B`:
+- record, for permutation $$b = 1,\dots,B$$,
 
-  - `T_omni_min^(b)(S) = min_j p_j^(b)(S)`
+$$T_{\mathrm{omni,min}}^{(b)}(S) = \min_j p_j^{(b)}(S).$$
 
-The permutation-based omnibus p-value is:
+The permutation-based omnibus p-value is then
 
-- `p_omni_min_hat(S) = (1 + #{ b : T_omni_min^(b)(S) <= T_omni_min(S) }) / (B + 1)`
+$$\hat p_{\mathrm{omni,min}}(S)= \frac{1 + \text{count}\{\,b : T_{\mathrm{omni,min}}^{(b)}(S)\le T_{\mathrm{omni,min}}(S)\,\}}{B + 1}.$$
 
-We use `p_omni_min_hat(S)` as the **primary omnibus p-value** in the main analyses because it:
+We use $$\hat p_{\mathrm{omni,min}}(S)$$ as the **primary** omnibus p-value in the main analyses because it
 
 1. protects nominal type-I error under *arbitrary* dependence between component tests, and  
-2. explicitly targets the “best” component test for each pathway while accounting for the fact that the best test is chosen post hoc (via the min across methods).
+2. explicitly targets the "best" component test for each pathway while accounting for the fact that this best test is effectively chosen post hoc via the min across methods.
 
-The analytic ACAT-O p-value `p_omni_ACAT(S)` is reported alongside as a **higher-power, model-based sensitivity analysis**, highlighting pathways that are consistently strong across methods or dominated by a single very informative test.
-
+The analytic ACAT-O p-value $$p_{\mathrm{omni,ACAT}}(S)$$ is reported alongside as a **higher-power, model-based sensitivity analysis**, highlighting pathways that are consistently strong across methods or dominated by a single very informative test.
 
 ---
 
 ## 6) Optional permutation calibration (when you want empirical p-values)
 
-Permutation can be used to calibrate pathway p-values (especially truncation-based statistics) under complex dependence and finite-sample quirks.
+Beyond the omnibus minP, permutation can also be used to calibrate individual pathway statistics (especially truncation-based ones) under complex dependence and finite-sample quirks. A generic permutation p-value for a test statistic $$T$$ is
 
-A generic permutation p-value is:
+$$p_{\mathrm{perm}}= \frac{1 + \sum_{b=1}^{B} \mathbf{1}\bigl(T^{(b)} \ge T^{\mathrm{obs}}\bigr)}{B + 1},$$
 
-$$
-p_{\mathrm{perm}} = \frac{1 + \sum_{b=1}^{B} \mathbf{1}\left(T^{(b)} \ge T^{\mathrm{obs}}\right)}{B + 1}.
-$$
-
-**Note:** the minimum achievable permutation p-value is $1/(B+1)$; increasing $B$ increases resolution but should not be interpreted as “making results more significant” unless the observed statistic truly lies in the extreme tail.
+when larger values of $$T$$ are more extreme (for statistics where *smaller* values are more extreme, such as minimum p-values, the inequality is reversed). The minimum achievable permutation p-value is $$1/(B+1)$$; increasing $$B$$ improves resolution but does not "make results more significant" unless the observed statistic truly lies in the extreme tail of its null distribution.
 
 ---
 
