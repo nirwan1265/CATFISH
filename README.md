@@ -677,13 +677,18 @@ MAGCAT::magma_set_path("/full/path/to/magma")
    - Compute pathway p-values from adjusted gene p-values using:
      - ACAT,
      - Fisher,
-     - soft TFisher (tail-focused).
+     - soft TFisher (tail-focused),
+     - Stouffer's test,
+     - minP.
 
 4. **Omnibus**
-   - Combine pathway p-values using ACAT to produce $p_{\mathrm{omni}}$.
+   - Combine pathway p-values using minP or ACAT to produce $p_{\mathrm{omni}}$.
 
 5. **Multiple testing**
    - BH FDR (and optional Storey q-values).
+  
+6. Permutation
+   - Use either random sampling or MVN (RECOMMENDED).
 
 ---
 
