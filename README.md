@@ -555,7 +555,7 @@ Because each pathway yields a **single** omnibus p-value, no additional penalty 
 
 ---
 
-## 7) Omnibus minP across methods with permutation (LD-aware upstream gene statistics)
+## 7) Omnibus across methods with permutation (LD-aware upstream gene statistics)
 
 To obtain a complementary, conservative omnibus summary that explicitly accounts for dependence among component pathway tests, we compute a minimum-p statistic across the five component p-values for each pathway $$S$$.
 Let
