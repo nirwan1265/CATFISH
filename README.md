@@ -516,44 +516,34 @@ This ACAT-O layer is most sensitive when **at least one** component test (e.g. A
 
 ---
 
-### 5.2 Omnibus minP across methods with permutation
+### 5.2 Omnibus minP across methods with permutation 
 
-To obtain a complementary, more conservative summary that explicitly accounts for correlation between component tests, we also compute a minimum-p omnibus statistic across methods:
+To obtain a complementary, more conservative summary that explicitly accounts for correlation between component tests, we also compute a minimum-p omnibus statistic across methods: 
 
-$$T_{\mathrm{omni,min}}(S) = \min_{j \in \{1,\dots,5\}} p_j= \min\({ p_{\mathrm{ACAT}}(S), p_{\mathrm{Fisher}}(S),p_{\mathrm{TF}}(S;\tau), p_{\mathrm{Stouffer}}(S),p_{\mathrm{minP}}(S) \})$$
+$$T_{\mathrm{omni,min}}(S) = \min_{j \in \{1,\dots,5\}} p_j= \min\({ p_{\mathrm{ACAT}}(S), p_{\mathrm{Fisher}}(S),p_{\mathrm{TF}}(S;\tau), p_{\mathrm{Stouffer}}(S),p_{\mathrm{minP}}(S) \})$$ 
 
-Because the $$p_j$$ are correlated (they are all computed from the same set of gene-level p-values), we calibrate $$T_{\mathrm{omni,min}}(S)$$ by gene-label permutation. For each of $$B$$ permutations:
+Because the $$p_j$$ are correlated (they are all computed from the same set of gene-level p-values), we calibrate $$T_{\mathrm{omni,min}}(S)$$ by gene-label permutation. 
+
+For each of $$B$$ permutations: 
 
 - randomize gene labels across pathways (preserving the empirical distribution of gene-level p-values and pathway sizes),
 - recompute all five component tests for each pathway,
-- record, for permutation $$b = 1,\dots,B$$,
+- record, for permutation $$b = 1,\dots,B$$, $$T_{\mathrm{omni,min}}^{(b)}(S) = \min_j p_j^{(b)}(S)$$
 
-$$T_{\mathrm{omni,min}}^{(b)}(S) = \min_j p_j^{(b)}(S).$$
+The permutation-based omnibus p-value is then 
 
-The permutation-based omnibus p-value is then
+$$\hat p_{\mathrm{omni,min}}(S)= \frac{1 + \text{count}\{\,b : T_{\mathrm{omni,min}}^{(b)}(S)\le T_{\mathrm{omni,min}}(S)\,\}}{B + 1}$$ 
 
-$$\hat p_{\mathrm{omni,min}}(S)= \frac{1 + \text{count}\{\,b : T_{\mathrm{omni,min}}^{(b)}(S)\le T_{\mathrm{omni,min}}(S)\,\}}{B + 1}.$$
+We use $$\hat p_{\mathrm{omni,min}}(S)$$ as the **primary** omnibus p-value in the main analyses because it 
 
-We use $$\hat p_{\mathrm{omni,min}}(S)$$ as the **primary** omnibus p-value in the main analyses because it
-
-1. protects nominal type-I error under *arbitrary* dependence between component tests, and  
+1. protects nominal type-I error under *arbitrary* dependence between component tests, and
 2. explicitly targets the "best" component test for each pathway while accounting for the fact that this best test is effectively chosen post hoc via the min across methods.
 
 The analytic ACAT-O p-value $$p_{\mathrm{omni,ACAT}}(S)$$ is reported alongside as a **higher-power, model-based sensitivity analysis**, highlighting pathways that are consistently strong across methods or dominated by a single very informative test.
 
 ---
 
-## 6) Permutation calibration (empirical p-values)
-
-Beyond the omnibus minP, permutation can also be used to calibrate individual pathway statistics (especially truncation-based ones) under complex dependence and finite-sample quirks. A generic permutation p-value for a test statistic $$T$$ is
-
-$$p_{\mathrm{perm}}= \frac{1 + \sum_{b=1}^{B} \mathbf{1}\bigl(T^{(b)} \ge T^{\mathrm{obs}}\bigr)}{B + 1},$$
-
-when larger values of $$T$$ are more extreme (for statistics where *smaller* values are more extreme, such as minimum p-values, the inequality is reversed). The minimum achievable permutation p-value is $$1/(B+1)$$; increasing $$B$$ improves resolution but does not "make results more significant" unless the observed statistic truly lies in the extreme tail of its null distribution.
-
----
-
-## 7) Multiple testing correction
+## 6) Multiple testing correction
 
 Across all pathways, omnibus p-values $\{p_{\mathrm{omni}}(S)\}$ are adjusted using Benjamini–Hochberg FDR:
 
@@ -562,6 +552,86 @@ q_{\mathrm{BH}}(S) = \mathrm{BH}\left(p_{\mathrm{omni}}(S)\right).
 $$
 
 Because each pathway yields a **single** omnibus p-value, no additional penalty is required for the number of component tests.
+
+---
+
+## 7) Omnibus minP across methods with permutation (LD-aware upstream gene statistics)
+
+To obtain a complementary, conservative omnibus summary that explicitly accounts for dependence among component pathway tests, we compute a minimum-p statistic across the five component p-values for each pathway $$S$$.
+Let
+
+$$\mathcal{P}(S)=\{p_{\mathrm{ACAT}}(S)\,p_{\mathrm{wFisher}}(S)\,p_{\mathrm{TPM}}(S;\tau)\,p_{\mathrm{Stouffer}}(S)\,p_{\mathrm{minP,gene}}(S)\}$$
+
+The omnibus minimum statistic is
+
+$$T_{\mathrm{omni,min}}(S)=\min \mathcal{P}(S)=\min\!\{p_{\mathrm{ACAT}}(S),\,p_{\mathrm{wFisher}}(S),\,p_{\mathrm{TPM}}(S;\tau),\,p_{\mathrm{Stouffer}}(S),\,p_{\mathrm{minP,gene}}(S)\}.$$
+
+Because all $$p_j(S)$$ are computed from the *same* gene-level association evidence and therefore are correlated, $$T_{\mathrm{omni,min}}(S)$$ is not Uniform $$(0,1)$$ under the null. We therefore calibrate the minP omnibus by permutation.
+
+#### 7.1 LD-aware gene-level inputs via MAGMA
+
+All pathway tests operate on gene-level summary statistics computed using MAGMA's SNP-to-gene model with an LD reference panel. Specifically, GWAS summary statistics are mapped to genes (with a symmetric $$\pm 25$$ kb window), and MAGMA is run using the multi-model SNP-wise gene analysis. This step is LD-aware: within each gene, SNP associations are aggregated while accounting for linkage disequilibrium in the reference genotypes, producing gene-level test statistics (e.g., $$Z_g$$, $$P_g$$) that are appropriately calibrated under correlated SNP structure.
+
+To reduce confounding by gene size and SNP density, we additionally adjust gene-level $$Z_g$$ (or $$-\log_{10} P_g$$) by regressing on log(gene length) and log(#SNPs) and using residual-based, size-adjusted gene p-values $$P_g^{\mathrm{adj}}$$. These adjusted gene p-values are the inputs to all pathway-level component tests.
+
+This design ensures that LD is handled where it matters most and is most identifiable from data—at the SNP-to-gene aggregation stage—while keeping downstream pathway aggregation flexible across multiple alternative signal architectures.
+
+#### 7.2 Component pathway tests
+
+For each pathway $$S$$ with member genes $$g \in S$$, we compute five complementary pathway p-values from the (optionally adjusted) gene-level p-values $$\{P_g\}_{g\in S}$$:
+
+1. **ACAT**: sensitive to sparse signals and a few very strong genes.
+2. **Weighted Fisher (wFisher)**: aggregates evidence across genes with optional weights (e.g., SNP counts) and can incorporate effect direction when available.
+3. **Truncated Product Method / truncated Fisher (TPM)** with truncation $$\tau$$: emphasizes moderate subsets of more significant genes while down-weighting null genes.
+4. **Stouffer**: combines gene-level Z-scores (or Z reconstructed from p-values under the null) to target diffuse polygenic enrichment.
+5. **Gene-level minP**: a diagnostic "single-gene proxy" detector, capturing whether the pathway is driven by one extreme gene.
+
+These tests are deliberately correlated but have different power profiles across latent pathway architectures. The minP omnibus selects the best-performing component while controlling for this post hoc selection.
+
+#### 7.3 Gene-label permutation calibration of the minP omnibus
+
+We calibrate $$T_{\mathrm{omni,min}}(S)$$ using gene-label permutation, which preserves (i) the empirical distribution of gene-level p-values and (ii) the observed pathway sizes, while breaking pathway membership.
+
+For each permutation $$b = 1,\dots,B$$ and each pathway $$S$$ with $$|S|$$ genes:
+
+1. **Sample a null gene set** $$S^{(b)}$$ by selecting $$|S|$$ genes uniformly without replacement from the pool of all genes with non-missing gene-level p-values.
+2. **Recompute all component tests** on the sampled gene set, yielding
+
+   $$p_j^{(b)}(S), \quad j \in \{\mathrm{ACAT},\mathrm{wFisher},\mathrm{TPM},\mathrm{Stouffer},\mathrm{minP,gene}\}$$
+
+3. Record the permutation min statistic
+
+   $$T_{\mathrm{omni,min}}^{(b)}(S) = \min_j p_j^{(b)}(S)$$
+
+The permutation-calibrated omnibus p-value is then
+
+$$\hat p_{\mathrm{omni,min}}(S)=\frac{1 + \bigl|\{\,b : T_{\mathrm{omni,min}}^{(b)}(S)\le T_{\mathrm{omni,min}}(S)\,\}\bigr|}{B + 1}$$
+
+In practice, this procedure is implemented in MAGCAT/CATFISH as follows:
+
+- we construct the gene pool from MAGMA gene results (after optional size/SNP adjustment),
+- for each pathway we generate $$B$$ random gene sets of identical size,
+- for each permuted gene set we recompute the five component pathway tests using the same parameters (e.g., truncation $$\tau$$ for TPM),
+- we compute $$\hat p_{\mathrm{omni,min}}(S)$$ using the standard "+1" correction to avoid zero p-values.
+
+This permutation directly addresses correlation between the component tests because the full multivariate dependence induced by shared inputs and shared pathways is mirrored under permutation.
+
+#### 7.4 Rationale and interpretation
+
+We use $$\hat p_{\mathrm{omni,min}}(S)$$ as the **primary** omnibus p-value in the main analyses because it:
+
+1. controls type-I error under *arbitrary dependence* among component tests (all derived from the same gene-level signals),
+2. properly accounts for "winner's curse" induced by taking a minimum across multiple methods,
+3. remains robust across diverse pathway signal architectures by adaptively selecting the most informative component per pathway.
+
+The analytic ACAT-O omnibus $$p_{\mathrm{omni,ACAT}}(S)$$ is reported alongside as a **higher-power, model-based sensitivity analysis**, highlighting pathways with consistent support across methods or those dominated by a single exceptionally sensitive component.
+
+#### 7.5 Note on LD-awareness and the permutation layer
+
+A key design choice is that LD-awareness is enforced upstream at the SNP-to-gene stage via MAGMA's LD-informed gene model. The omnibus permutation described above is a gene-label permutation and therefore does not explicitly resimulate LD structure. Instead, it leverages the fact that the gene-level p-values already represent LD-adjusted gene evidence; the permutation step is used to calibrate dependence *between pathway-level test statistics* and to control for post hoc selection across multiple correlated pathway tests.
+
+This tiered strategy allows computationally feasible, robust omnibus inference using only GWAS summary statistics and an LD reference panel, while retaining sensitivity to multiple plausible pathway architectures.
+
 
 ---
 
