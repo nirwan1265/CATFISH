@@ -942,22 +942,23 @@ maize_pw <- magcat_load_pathways(
 ##  - take their p-values (raw P or adjusted P_adj),
 ##  - compute a pathway-level p per method.
 
-
 omni_minp <- omni_pathways(
   gene_results      = genes_adj,
   species           = "maize",
   gene_col          = "GENE",
   p_col             = "P_adj",
-  effect_col        = "Z_adj",     # use adjusted Z for direction
-  #weight_col       = "NSNPS",    # optional, if you want wFisher to be weighted
+  effect_col        = "Z_adj",   # use adjusted Z for direction
+  #weight_col        = "NSNPS",
   is_onetail        = FALSE,
-  ptrunc            = 0.05,        # passed to internal TFisher component
-  min_p             = 1e-15,       # floor for tiny p's (needed for ACAT stability)
+  ptrunc            = 0.05,   # passed to internal TFisher component
+  min_p             = 1e-15,  # floor for tiny p's (needed for ACAT stability)
   do_fix            = TRUE,
-  omnibus           = "minP",      # "minP" or "ACAT"
+  omnibus           = "ACAT",      # minP or "ACAT"
   B_perm            = 10000L,      # permutations at the *omnibus* level
   seed              = 123,
-  remove_singletons = TRUE,        # drop pathways with n_genes < 2
+  perm_mode    = "mvn",
+  magma_genes_out = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/magma_N_maize.txt",
+  remove_singletons = TRUE,     # drop pathways with n_genes < 2
   output            = TRUE,
   out_dir           = "magcat_omni_full"
 )
