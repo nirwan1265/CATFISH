@@ -306,21 +306,21 @@ $$
 
 ## 1) Gene-level association statistics (SNP → gene)
 
-For each gene $g$, MAGMA produces a gene‑level association p‑value $p_g$ by aggregating SNP‑level signals within/near the gene while accounting for local LD using a reference panel. We used MAGMA’s `multi=snp-wise` model, which combines a SNP-wise mean test (good for many small effects) and a SNP-wise top test (good for a single strong SNP) into a single LD-aware omnibus statistic per gene, making the gene p-values robust to different within-gene causal architectures.
+For each gene $g$, MAGMA generates a gene‑level association p‑value $p_g$ by aggregating SNP‑level signals within or within a window of the gene while accounting for local LD using a reference panel. We employed MAGMA’s `multi=snp-wise` model, which integrates a SNP-wise mean test (effective for numerous small effects) and a SNP-wise top test (effective for a single strong SNP) into a unified LD-aware omnibus statistic per gene, hence ensuring the robustness of gene p-values against varying within-gene causal structures.
 
-The workflow includes:
+The workflow emcompasses:
 
 - SNPs are mapped to genes (gene boundaries with optional windows).
-- A multi‑marker gene model accounts for LD among SNPs in the gene region.
-- MAGMA outputs gene statistics (e.g., $Z_g$ and $p_g$).
+- A multi‑marker gene model accounts for LD among SNPs in the genic region.
+- MAGMA generates gene statistics (e.g., $Z_g$ and $p_g$).
 
-In CATFISH, these MAGMA gene p-values (or Z statistics) are treated as the inputs to all pathway tests.
+In CATFISH, the p-values (or Z statistics) of the MAGMA gene are utilized as inputs for all pathway analyses.
 
 ---
 
 ## 2) Gene-level adjustment for gene size and SNP density
 
-Even with LD-aware gene testing, gene‑level signals can exhibit residual dependence on gene size and SNP density. CATFISH performs a post‑hoc adjustment at the gene level.
+Despite LD-aware gene testing, gene-level signals may still demonstrate residual dependency on gene size and SNP density. CATFISH executes a post-hoc correction at the gene level.
 
 Let:
 
@@ -461,21 +461,10 @@ $$
 
 where $$\Phi(\cdot)$$ is the standard normal CDF.
 
-**Weighted Stouffer (optional):** choose weights $$w_g \geq 0$$.
-
-$$
-Z_{\mathrm{stouffer}}^{(w)}(S) = \frac{\sum_{g \in S} w_g Z_g}{\sqrt{\sum_{g \in S} w_g^2}}
-$$
-
-$$
-p_{\mathrm{stouffer}}^{(w)}(S) = 2\,\Phi\!\left(-\left|Z_{\mathrm{stouffer}}^{(w)}(S)\right|\right)
-$$
-
-**Notes:**
-- Best for **Diffuse Polygenic Shift (DPS)**: many small positive (or negative) shifts in $$Z_g$$ that may not yield many $$p_g<0.05$$ individually.
-- If calibrating by permutation, recompute $$Z_{\mathrm{stouffer}}$$ (or $$Z_{\mathrm{stouffer}}^{(w)}$$) under permuted gene labels and use an empirical p-value.
+Most effective for **Diffuse Polygenic Shift (DPS)**: numerous minor positive (or negative) shifts in $$Z_g$$ that may not individually produce many $$p_g<0.05$$. If calibration is performed via permutation, recompute $$Z_{\\mathrm{stouffer}}$$ (or $$Z_{\\mathrm{stouffer}}^{(w)}$$) using permuted gene labels and subsequently derive an empirical p-value.
 
 ---
+
 ### 3.5 minP / Tippett (single-gene proxy diagnostic)
 
 Define the pathway's minimum gene p-value:
@@ -490,7 +479,7 @@ $$
 p_{\mathrm{tippett}} = 1 - (1 - p_{\min})^G
 $$
 
-But because gene p-values are correlated (LD, shared biology), CATFISH typically treats **minP as a diagnostic** and/or calibrates it by permutation:
+However, due to the correlation of gene p-values (LD, shared biology), CATFISH generally considers **minP as a diagnostic** and/or adjusts it through permutation if needed. 
 
 Let:
 - $$p_{\min}^{\mathrm{obs}}$$ be the observed minimum p-value
