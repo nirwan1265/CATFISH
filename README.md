@@ -38,6 +38,9 @@ We divide the pathway signals into a set of archetypes that describe different w
 
 ## Archetype I — Sparse Driver Architecture (SDA)
 
+![Archetype I — Sparse Driver Architecture](Figures/Fig_archetypesI.png)
+*Archetype I: Sparse Driver Architecture (SDA).*
+
 **Signature:** A small number of genes are extremely significant; most genes look null.
 
 **Gene-level p-value pattern:**
@@ -62,6 +65,10 @@ The aspartate-derived amino-acid biosynthesis pathway converts **aspartate** int
 ---
 
 ## Archetype II — Coordinated Moderate Enrichment (CME)
+
+![Archetype II — Coordinated Moderate Enrichment (CME)](Figures/Fig_archetypesII.png)
+*Archetype II — Coordinated Moderate Enrichment (CME)*
+
 
 **Signature:** many genes show moderate association; no single gene is extremely low.
 
@@ -95,6 +102,10 @@ $$ (p_{(1)}, p_{(2)}, \ldots) \text{ comprises numerous values approximately in 
 ---
 
 ## Archetype III — Diffuse Polygenic Shift (DPS)
+
+![Archetype III — Diffuse Polygenic Shift (DPS)](Figures/Fig_archetypesIII.png)
+*Archetype III — Diffuse Polygenic Shift (DPS)*
+
 
 **Signature:** the pathway’s genes are, on average, slightly more associated than the genome-wide background, but almost none cross a conventional significance threshold.
 
@@ -135,6 +146,10 @@ When examined at the level of an individual pathway (e.g., TGF-β signaling, Hed
 
 ## Archetype IV — Hybrid Driver–Support (HDS)
 
+![Archetype IV — Hybrid Driver–Support (HDS)](Figures/Fig_archetypesIV.png)
+*Archetype IV — Hybrid Driver–Support (HDS)*
+
+
 **Signature:** a few very strong genes plus a some moderately associated genes.
 
 **Gene-level p-value pattern:**
@@ -167,6 +182,10 @@ Translating this biology into gene-level association statistics for an LDL-relat
 
 ## Archetype V — Single-Gene Proxy Pathway (SGP)
 
+![Archetype V — Single-Gene Proxy Pathway (SGP)](Figures/Fig_archetypesV.png)
+*Archetype V — Single-Gene Proxy Pathway (SGP)*
+
+
 **Signature:** the pathway looks significant only because it contains one very strong gene; the remaining members look essentially null.
 
 **Gene-level pattern:**
@@ -192,7 +211,11 @@ In humans, phenylalanine metabolism is primarily regulated by a singular bottlen
 
 ---
 
-## Archetype VI — Competitive Enrichment Above Background (CEAB)  
+## Archetype VI — Competitive Enrichment Above Background (CEAB)
+
+![Archetype VI — Competitive Enrichment Above Background (CEAB)](Figures/Fig_archetypesVI.png)
+*Archetype VI — Competitive Enrichment Above Background (CEAB)*
+
 
 **Signature:** the pathway is not merely “associated”; it is enriched above the genome-wide polygenic background. It passes a MAGMA competitive test ($\beta_s > 0$), indicating that genes inside the set exhibit, on average, greater associated than those outside the set.
 
