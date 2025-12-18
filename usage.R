@@ -9,6 +9,7 @@ library(metap)
 library(rtracklayer)
 library(ggplot2)
 library(TFisher)
+library(data.table)
 # 1. See where it's installed
 .libPaths()
 
@@ -186,9 +187,10 @@ adj_out <- magcat_adjust_gene_p(
 )
 head(adj_out)
 
-genes_adj <- adj_out$gene_id
+genes_adj <- adj_out[,c(1,2,3)]
+colnames(genes_adj)=c("GENE", "Z_adj","P_adj")
 head(genes_adj)
-genes_all
+head(genes_all)
 
 write.csv(genes_adj,"genes_adj.csv", row.names=F)
 
@@ -483,14 +485,143 @@ args(MAGCAT::magcat_soft_tfisher_adaptive_pathways)
 
 
 ### MAGMA-competitive
-out_pref <- magma_geneset_competitive(
-  gene_results_raw = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/magma_N_maize.txt",
-  set_annot        = "annot/N_maize_MLM.genes.annot",
+## First combine the raw files my guy
+## Combine per-chromosome MAGMA gene results (.genes.raw-style) into one file
+## (works for your custom v1.10 format with "# VERSION" and correlation tail)
+
+in_dir  <- "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize"
+pattern <- "^N_maize_MLM_chr[0-9]+\\.multi_snp_wise.genes.raw"  
+out_file <- file.path(in_dir, "N_maize_MLM_ALLCHR.multi_snp_wise.genes")
+
+files <- list.files(in_dir, pattern = pattern, full.names = TRUE)
+stopifnot(length(files) > 0)
+
+# order chr1, chr2, ... chr10, ...
+chr_num <- function(x) as.integer(sub(".*_chr([0-9]+)\\..*", "\\1", basename(x)))
+files <- files[order(chr_num(files))]
+
+# helper: extract header lines + data lines
+read_genes_file <- function(f) {
+  lines <- readLines(f, warn = FALSE)
+  hdr <- lines[grepl("^#", lines)]
+  dat <- lines[!grepl("^#", lines) & nzchar(lines)]
+  list(hdr = hdr, dat = dat)
+}
+
+x1 <- read_genes_file(files[1])
+
+# keep header from the first file only
+header_keep <- x1$hdr
+
+# drop any "# COVAR" lines from subsequent files (if present) and keep only data
+data_all <- x1$dat
+
+if (length(files) > 1) {
+  for (f in files[-1]) {
+    xi <- read_genes_file(f)
+    data_all <- c(data_all, xi$dat)
+  }
+}
+
+# write merged
+writeLines(c(header_keep, data_all), con = out_file)
+
+cat("Wrote:", out_file, "\n")
+cat("Chromosomes merged:", length(files), "\n")
+
+
+
+# EDIT PATHWAY
+library(data.table)
+head(maize_pw)
+# maize_pw: pathway_id, pathway_name, gene_id
+dt <- as.data.table(maize_pw)[, .(set_id = as.character(pathway_id),
+                                 gene_id = sub("^gene:", "", as.character(gene_id)))]
+
+dt <- dt[!is.na(set_id) & nzchar(set_id) & !is.na(gene_id) & nzchar(gene_id)]
+dt <- unique(dt)
+
+# (optional but recommended) keep only genes that exist in your .genes.raw
+genes_raw <- "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/N_maize_MLM_ALLCHR.multi_snp_wise.genes"
+raw_lines <- readLines(genes_raw, warn = FALSE)
+raw_dat   <- raw_lines[!grepl("^#", raw_lines) & nzchar(raw_lines)]
+genes_ok  <- unique(sub("\\s+.*$", "", raw_dat))
+dt <- dt[gene_id %in% genes_ok]
+
+# build wide lines: set_id \t gene1 \t gene2 ...
+setlist <- split(dt$gene_id, dt$set_id)
+setlist <- lapply(setlist, unique)
+
+set_annot_wide <- "annot/maize_pathways.sets.annot.WIDE"
+dir.create(dirname(set_annot_wide), recursive = TRUE, showWarnings = FALSE)
+
+con <- file(set_annot_wide, open = "wt")
+for (sid in names(setlist)) {
+  genes <- setlist[[sid]]
+  if (length(genes) == 0) next
+  writeLines(paste(c(sid, genes), collapse = "\t"), con = con)
+}
+close(con)
+
+set_annot_wide
+
+
+## Example usage (your workflow becomes ONE call)
+# ONE call (but internally it does exactly what you described)
+# -------------------------
+# Example usage (your case):
+# -------------------------
+maize_pw <- magcat_load_pathways("maize", gene_col = "Gene-name")
+
+
+out <- magma_geneset_competitive(
+  gene_results_raw = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/N_maize_MLM_ALLCHR.multi_snp_wise.genes",
+  #set_annot        = "annot/maize_pathways.sets.annot.WIDE",  # OR set_annot = NULL to auto-build
+  set_annot         = NULL,
   out_prefix       = "N_maize_MLM_ALLCHR.PMN_COMP",
-  out_dir          = "magma_geneset"
+  out_dir          = "magma_geneset",
+  pathways         = maize_pw,
+  genes_all        = genes_all,
+  filter_to_gene_results = TRUE
 )
 
-out_pref
+
+# 1) User-friendly species mode (auto-load PMN + auto-build WIDE set-annot)
+
+
+# -----------------------------------------
+# 3) How to store your built-in files (pkg)
+# -----------------------------------------
+# Put these in your package repo:
+#   inst/extdata/MAGMA_pathway/maize_pathway.sets.annot.WIDE
+#   inst/extdata/MAGMA_pathway/maize_pathways.long.tsv
+#
+# NOTE: You said "maize_pathway.txt" — you *can* name it that, but keep a consistent
+# suffix so it’s obvious it’s a WIDE set-annot file. I’d keep:
+#   *.sets.annot.WIDE
+
+# ----------------------------
+# 4) ONE-call usage (final)
+# ----------------------------
+out <- magma_geneset_competitive(
+  gene_results_raw = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/N_maize_MLM_ALLCHR.multi_snp_wise.genes",
+  out_prefix       = "N_maize_MLM_ALLCHR.PMN_COMP",
+  out_dir          = "magma_geneset",
+  species          = "maize",
+  genes_all        = genes_all,
+  write_tidy       = TRUE
+)
+
+
+
+
+head(out)
+attr(out, "set_annot_wide")
+attr(out, "tidy_file")
+
+
+
+
 
 
 
