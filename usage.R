@@ -185,10 +185,10 @@ adj_out <- magcat_adjust_gene_p(
   len_gene_col = "gene_id",
   len_col      = "length"
 )
-head(adj_out)
+
 
 genes_adj <- adj_out[,c(1,2,3)]
-colnames(genes_adj)=c("GENE", "Z_adj","P_adj")
+colnames(genes_adj)=c("GENE", "ZSTAT","P")
 head(genes_adj)
 head(genes_all)
 
@@ -612,6 +612,8 @@ out <- magma_geneset_competitive(
   write_tidy       = TRUE
 )
 
+head(genes_all)
+head(genes_adj)
 
 
 

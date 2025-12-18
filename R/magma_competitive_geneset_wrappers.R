@@ -506,6 +506,7 @@
 # ----------------------------
 # 1) Built-in file path helper
 # ----------------------------
+pmn_gene_col     = "Gene-name"
 builtin_magma_set_annot_path <- function(
   species = c("maize","sorghum","arabidopsis","plant")
 ) {
@@ -577,6 +578,7 @@ magma_geneset_competitive <- function(gene_results_raw,
                                       out_dir = NULL,
                                       pathways = NULL,
                                       species = NULL,
+                                      pmn_gene_col = "Gene-name",
                                       genes_all,
                                       write_tidy = TRUE,
                                       tidy_suffix = ".tidy.tsv") {
@@ -585,7 +587,9 @@ magma_geneset_competitive <- function(gene_results_raw,
     stop("magma_geneset_competitive(): requires the 'data.table' package.", call. = FALSE)
   }
 
-  if (!file.exists(gene_results_raw)) stop("gene_results_raw not found: ", gene_results_raw, call. = FALSE)
+  if (!file.exists(gene_results_raw)) {
+    stop("gene_results_raw not found: ", gene_results_raw, call. = FALSE)
+  }
 
   prefix_full <- if (is.null(out_dir)) out_prefix else {
     if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
@@ -600,16 +604,17 @@ magma_geneset_competitive <- function(gene_results_raw,
     pathways <- magcat_load_pathways(species = species, gene_col = pmn_gene_col)
   }
 
-
   if (is.null(set_annot) || !file.exists(set_annot)) {
     stop("set_annot missing/not found. Provide set_annot or species.", call. = FALSE)
   }
 
   # ---------- run MAGMA ----------
   mp <- magma_path()
-  args <- c("--gene-results", gene_results_raw,
-            "--set-annot",    set_annot,
-            "--out",          prefix_full)
+  args <- c(
+    "--gene-results", gene_results_raw,
+    "--set-annot",    set_annot,
+    "--out",          prefix_full
+  )
 
   status <- system2(mp, args)
   if (!is.null(status) && status != 0) {
@@ -617,75 +622,114 @@ magma_geneset_competitive <- function(gene_results_raw,
   }
 
   # ---------- read gsa.out ----------
-  gsa_file <- paste0(prefix_full, ".gsa.out")
+  # ---------- read gsa.out ----------
+gsa_file <- paste0(prefix_full, ".gsa.out")
   if (!file.exists(gsa_file)) stop("MAGMA .gsa.out not found: ", gsa_file, call. = FALSE)
 
   lns <- readLines(gsa_file, warn = FALSE)
-  lns2 <- lns[-(1:4)]  # your build’s 4 metadata lines
-  gsa <- data.table::fread(text = paste(lns2, collapse = "\n"), header = TRUE, data.table = TRUE)
 
-  if (!all(c("VARIABLE","NGENES","P") %in% names(gsa))) {
-    stop("Unexpected gsa.out columns. Expected VARIABLE, NGENES, P. File: ", gsa_file, call. = FALSE)
+  # safer than "drop first 4": remove all comment lines
+  lns2 <- lns[!grepl("^\\s*#", lns)]
+  if (length(lns2) < 2) stop("gsa.out has no data lines after removing # metadata: ", gsa_file, call. = FALSE)
+
+  gsa <- data.table::fread(
+    text = paste(lns2, collapse = "\n"),
+    header = TRUE,
+    data.table = TRUE
+  )
+
+  # --- robust column detection ---
+  nms <- names(gsa)
+
+  pick_col <- function(candidates) {
+    hit <- intersect(candidates, nms)
+    if (length(hit)) hit[1] else NA_character_
   }
 
-  gsa_tidy <- gsa[, .(
-    pathway_id    = as.character(VARIABLE),
-    n_genes_magma = as.integer(NGENES),
-    magma_pvalue  = as.numeric(P)
-  )]
+  set_col  <- pick_col(c("VARIABLE", "SET", "GENESET", "SETID", "NAME"))
+  ngen_col <- pick_col(c("NGENES", "NGENE", "N_GENES"))
+  p_col    <- pick_col(c("P", "PVAL", "PVALUE", "P_VALUE"))
+
+  if (is.na(set_col) || is.na(ngen_col) || is.na(p_col)) {
+    stop(
+      "Could not identify required columns in gsa.out.\n",
+      "Found columns: ", paste(nms, collapse = ", "), "\n",
+      "Need something like: {VARIABLE/SET}, {NGENES}, {P}.",
+      call. = FALSE
+    )
+  }
+
+  gsa_tidy <- data.table::data.table(
+    pathway_id    = as.character(gsa[[set_col]]),
+    n_genes_magma = as.integer(gsa[[ngen_col]]),
+    magma_pvalue  = as.numeric(gsa[[p_col]])
+  )
 
   # If no pathways mapping, return minimal tidy
   if (is.null(pathways)) {
-    out <- gsa_tidy[, .(
-      pathway_id,
-      pathway_name = pathway_id,
-      n_genes      = n_genes_magma,
+    out <- data.table::data.table(
+      pathway_id   = gsa_tidy[["pathway_id"]],
+      pathway_name = gsa_tidy[["pathway_id"]],
+      n_genes      = gsa_tidy[["n_genes_magma"]],
       gene_names   = "",
       gene_pvals   = "",
-      magma_pvalue
-    )]
+      magma_pvalue = gsa_tidy[["magma_pvalue"]]
+    )
     data.table::setorder(out, magma_pvalue)
-    if (isTRUE(write_tidy)) data.table::fwrite(out, paste0(prefix_full, tidy_suffix), sep = "\t")
+    if (isTRUE(write_tidy)) {
+      data.table::fwrite(out, paste0(prefix_full, tidy_suffix), sep = "\t")
+    }
     return(out)
   }
 
   # ---------- attach names + gene lists ----------
-  pathways <- data.table::as.data.table(pathways)
+  pathways  <- data.table::as.data.table(pathways)
+  genes_all <- data.table::as.data.table(genes_all)
+
   if (!all(c("pathway_id","pathway_name","gene_id") %in% names(pathways))) {
     stop("pathways must have columns: pathway_id, pathway_name, gene_id", call. = FALSE)
   }
-
-  genes_all <- data.table::as.data.table(genes_all)
   if (!all(c("GENE","P") %in% names(genes_all))) {
     stop("genes_all must have columns: GENE, P", call. = FALSE)
   }
 
-  pw_map <- unique(pathways[, .(pathway_id = as.character(pathway_id),
-                               pathway_name = as.character(pathway_name))])
+  pw_map <- unique(data.table::data.table(
+    pathway_id   = as.character(pathways[["pathway_id"]]),
+    pathway_name = as.character(pathways[["pathway_name"]])
+  ))
 
-  pw_genes <- unique(pathways[, .(pathway_id = as.character(pathway_id),
-                                 gene_id = sub("^gene:", "", as.character(gene_id)))])
+  pw_genes <- unique(data.table::data.table(
+    pathway_id = as.character(pathways[["pathway_id"]]),
+    gene_id    = sub("^gene:", "", as.character(pathways[["gene_id"]]))
+  ))
 
-  gene_p <- unique(genes_all[, .(gene_id = as.character(GENE),
-                                gene_p  = as.numeric(P))], by = "gene_id")
+  gene_p <- unique(
+    data.table::data.table(
+      gene_id = as.character(genes_all[["GENE"]]),
+      gene_p  = as.numeric(genes_all[["P"]])
+    ),
+    by = "gene_id"
+  )
 
   pw_gene_p <- merge(pw_genes, gene_p, by = "gene_id", all.x = TRUE)
 
-  pw_summ <- pw_gene_p[, .(
+  # IMPORTANT FIX: by = "pathway_id" (string), NOT by = pathway_id
+  pw_summ <- pw_gene_p[, list(
     n_genes    = sum(!is.na(gene_p)),
     gene_names = paste(gene_id[!is.na(gene_p)], collapse = ";"),
     gene_pvals = paste(format(gene_p[!is.na(gene_p)], scientific = TRUE, digits = 6), collapse = ";")
-  ), by = pathway_id]
+  ), by = "pathway_id"]
 
-  out <- merge(gsa_tidy, pw_map, by = "pathway_id", all.x = TRUE)
-  out <- merge(out, pw_summ, by = "pathway_id", all.x = TRUE)
+  out <- merge(gsa_tidy, pw_map,  by = "pathway_id", all.x = TRUE)
+  out <- merge(out,      pw_summ, by = "pathway_id", all.x = TRUE)
 
   out[is.na(pathway_name), pathway_name := pathway_id]
-  out[is.na(n_genes), n_genes := 0L]
-  out[is.na(gene_names), gene_names := ""]
-  out[is.na(gene_pvals), gene_pvals := ""]
+  out[is.na(n_genes),      n_genes      := 0L]
+  out[is.na(gene_names),   gene_names   := ""]
+  out[is.na(gene_pvals),   gene_pvals   := ""]
 
-  out <- out[, .(pathway_id, pathway_name, n_genes, gene_names, gene_pvals, magma_pvalue)]
+  # avoid out[, list(...)] — use with=FALSE
+  out <- out[, c("pathway_id","pathway_name","n_genes","gene_names","gene_pvals","magma_pvalue"), with = FALSE]
   data.table::setorder(out, magma_pvalue)
 
   if (isTRUE(write_tidy)) {
@@ -693,27 +737,6 @@ magma_geneset_competitive <- function(gene_results_raw,
   }
 
   out
+
 }
 
-# -----------------------------------------
-# 3) How to store your built-in files (pkg)
-# -----------------------------------------
-# Put these in your package repo:
-#   inst/extdata/MAGMA_pathway/maize_pathway.sets.annot.WIDE
-#   inst/extdata/MAGMA_pathway/maize_pathways.long.tsv
-#
-# NOTE: You said "maize_pathway.txt" — you *can* name it that, but keep a consistent
-# suffix so it’s obvious it’s a WIDE set-annot file. I’d keep:
-#   *.sets.annot.WIDE
-
-# ----------------------------
-# 4) ONE-call usage (final)
-# ----------------------------
-# out <- magma_geneset_competitive(
-#   gene_results_raw = ".../N_maize_MLM_ALLCHR.multi_snp_wise.genes",
-#   out_prefix       = "N_maize_MLM_ALLCHR.PMN_COMP",
-#   out_dir          = "magma_geneset",
-#   species          = "maize",
-#   genes_all        = genes_all,
-#   write_tidy       = TRUE
-# )
