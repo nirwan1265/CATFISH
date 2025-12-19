@@ -514,9 +514,7 @@ where $$\text{count}(\cdot)$$ counts the number of permutations satisfying the c
 
 ## 4) Correlation among pathway tests (shared inputs + LD)
 
-All pathway statistics above are functions of the same gene-level evidence $$\{P_g\}_{g\in S}$$ (and, when
-available, the corresponding $$\{Z_g\}_{g\in S}$$) and are therefore intrinsically correlated. For a given pathway
-$$S$$, define the component statistics
+All pathway statistics mentioned are dependent on the identical gene-level evidence $$\{P_g\}_{g\in S}$$ (and, when accessible, the corresponding $$\{Z_g\}_{g\in S}$$) and are thus inherently connected. For a specified pathway $$S$$, define the component statistics.
 
 $$
 T_{\mathrm{ACAT}},\; T_{\mathrm{Fisher}},\; T_{\mathrm{TF}}^{\mathrm{soft}}(\tau),\; T_{\mathrm{Stouffer}},\; T_{\min},
@@ -532,74 +530,44 @@ where
 
 ### 4.1 Deterministic coupling under the null (same $$\{P_g\}$$ reused)
 
-Even under a pure null in which genes were independent, this vector is **not jointly independent** because
-each component is a deterministic functional of the *same* multiset of p-values $$\{P_g\}_{g\in S}$$ (equivalently
-the order statistics $$\{P_{(k)}\}$$). In particular:
+Even under a pure null scenario where genes are independent, this vector is **not jointly independent** since each component is a deterministic function of the *same* multiset of p-values $$\{P_g\}_{g\in S}$$ (equivalently the order statistics $$\{P_{(k)}\}$$). Specifically:
 
-- **Fisher and soft TFisher** are both monotone in $$-\log(P_g)$$, with TFisher acting like a truncated/reweighted
-  Fisher that concentrates mass on $$P_g \le \tau$$. Thus, whenever many $$P_g$$ are small (or the lower tail is
-  moderately enriched), both $$T_{\mathrm{Fisher}}$$ and $$T_{\mathrm{TF}}^{\mathrm{soft}}(\tau)$$ tend to be extreme in
-  the same direction.
+- **Fisher and soft TFisher** exhibit monotonicity in $$-\log(P_g)$$, with TFisher functioning as a shortened or reweighted Fisher that focuses mass on $$P_g \le \tau$$. Consequently, when numerous $$P_g$$ values are diminutive (or the lower tail is relatively enriched), both $$T_{\mathrm{Fisher}}$$ and $$T_{\mathrm{TF}}^{\mathrm{soft}}(\tau)$$ typically exhibit extremity in the same direction.
 
-- **Stouffer** combines Z-scores which, in typical gene-set settings, are monotone transforms of p-values
-  (or are directly provided as gene-level association Z’s). Therefore, pathways with systematic enrichment
-  of small $$P_g$$ will also tend to inflate $$T_{\mathrm{Stouffer}}$$.
+- **Stouffer** integrates Z-scores, which in standard gene-set contexts, are monotonic transformations of p-values (or are directly supplied as gene-level association Z-scores). Consequently, routes exhibiting consistent enrichment of tiny $$P_g$$ will also likely increase $$T_{\mathrm{Stouffer}}$$.
 
-- **ACAT** and **minP** are extreme-tail driven: ACAT uses the heavy-tailed Cauchy transform
-  $$\tan\{\pi(1/2 - P_g)\}$$, and minP is exactly $$P_{(1)}$$. Hence, when a pathway contains one (or a few)
-  exceptionally small p-values, both $$T_{\mathrm{ACAT}}$$ and $$T_{\min}$$ become extreme. Soft TFisher with small
-  $$\tau$$ behaves similarly because it upweights the smallest p-values.
+- **ACAT** and **minP** are influenced by extreme tails: ACAT employs the heavy-tailed Cauchy transform $$\tan\{\pi(1/2 - P_g)\}$$, and minP is precisely $$P_{(1)}$$. Consequently, when a pathway includes one (or more) unusually tiny p-values, both $$T_{\mathrm{ACAT}}$$ and $$T_{\min}$$ reach extreme values. Soft TFisher with a minimal $$\tau$$ exhibits analogous behavior as it assigns greater weight to the smallest p-values.
 
-- **Across-method post hoc selection** further strengthens dependence: any omnibus that takes a minimum across
-  method p-values (or adaptively chooses a $$\tau$$ in TFisher) introduces “winner’s curse” behavior unless the
-  null distribution is explicitly calibrated.
+- **Cross-method post hoc selection** exacerbates dependence: any omnibus that utilizes the minimum across method p-values (or adaptively selects a $$\tau$$ in TFisher) engenders “winner’s curse” behavior unless the null distribution is meticulously adjusted.
 
+- **Across-method post hoc selection** exacerbates dependence. Any omnibus that utilizes the minimal across method p-values (or adaptively selects a $$\tau$$ in TFisher) engenders “winner’s curse” phenomena unless the null distribution is meticulously calibrated.
+
+- 
 ### 4.2 Extra dependence from LD and shared gene-level correlation
 
-In real data, gene-level inputs are also correlated: $$\{P_g\}$$ and $$\{Z_g\}$$ are not independent across genes
-because (i) nearby genes can share SNPs or LD structure, (ii) local LD couples SNP-level evidence across genes,
-and (iii) genome-wide polygenic background can create weak correlation in gene-level association measures.
-This strengthens dependence among pathway statistics beyond the deterministic coupling above.
+In actual data, gene-level inputs exhibit correlation. The sets $$\{P_g\}$$ and $$\{Z_g\}$$ exhibit dependence across genes due to (i) the potential for adjacent genes to share single nucleotide polymorphisms (SNPs) or linkage disequilibrium (LD) structures, (ii) the coupling of SNP-level evidence across genes through local LD, and (iii) the influence of a genome-wide polygenic background that may induce weak correlations in gene-level association metrics. This enhances reliance on pathway statistics beyond the aforementioned deterministic coupling.
 
 In MAGCAT/CATFISH we address this in two complementary ways:
 
-1. **Upstream LD-aware SNP $$\rightarrow$$ gene aggregation (MAGMA).**  
-   Gene-level $$P_g$$ and $$Z_g$$ are obtained from MAGMA’s LD-informed SNP-to-gene model, which calibrates gene
-   evidence under correlated SNP structure.
+1. **Upstream LD-aware SNP $$\rightarrow$$ gene aggregation (MAGMA).**
+  Gene-level $$P_g$$ and $$Z_g$$ are derived from MAGMA’s LD-informed SNP-to-gene model, which adjusts gene evidence considering the correlated SNP structure.
 
-2. **Downstream empirical calibration of the omnibus across correlated tests.**  
-   Rather than assuming independence among $$\{p_j(S)\}$$, we calibrate the omnibus using resampling:
-   - **Global gene-set resampling** samples genes from the genome-wide pool and recomputes *all* component tests
-     on the same resampled gene sets, capturing dependence induced by shared inputs.
-   - **LD-aware MVN calibration** simulates a single correlated Gaussian draw $$Z \sim \mathcal{N}(0, R_S)$$ for each
-     pathway (with $$R_S$$ built from MAGMA gene–gene correlations), and derives p-based components from the same
-     draw via a Gaussian-copula mapping. This preserves both within-pathway correlation and cross-test coherence.
+2. **Downstream empirical calibration of the omnibus across correlated tests.**
+   Instead of supposing independence among $$\{p_j(S)\}$$, we calibrate the omnibus through resampling:
+   - **Global gene-set resampling** selects genes from the genome-wide repository and recalculates *all* component tests on the identical resampled gene sets, therefore capturing dependencies arising from shared inputs.
+   - **LD-aware MVN calibration** simulates a singular correlated Gaussian draw $$Z \sim \mathcal{N}(0, R_S)$$ for each route (with $$R_S$$ constructed using MAGMA gene–gene correlations), and extracts p-based components from the identical draw by a Gaussian-copula mapping. This maintains both intra-pathway correlation and inter-test coherence.
 
 ### 4.3 Implication for inference
 
-Because $$\big(T_{\mathrm{ACAT}}, T_{\mathrm{Fisher}}, T_{\mathrm{TF}}^{\mathrm{soft}}(\tau), T_{\mathrm{Stouffer}}, T_{\min}\big)$$
-is strongly dependent, **naïve** combination rules that assume independence (e.g., analytic minP across methods
-under independence, or simple Bonferroni across correlated method p-values) can be mis-calibrated and often
-anti-conservative.
+Due to the strong dependence among $$\big(T_{\mathrm{ACAT}}, T_{\mathrm{Fisher}}, T_{\mathrm{TF}}^{\mathrm{soft}}(\tau), T_{\mathrm{Stouffer}}, T_{\min}\big)$$, naive combination rules that presume independence (such as analytic minP across methods under independence or straightforward Bonferroni adjustments across correlated method p-values) may be miscalibrated and frequently result in anti-conservatism.
 
-Therefore, CATFISH treats the analytic across-method omnibus (ACAT-O or minP-O) as a convenient summary and uses
-**resampling-calibrated omnibus p-values** as primary evidence when requested. This calibration directly learns
-the null distribution of the omnibus under the same recomputation pipeline used for the observed pathway,
-thereby controlling type-I error in the presence of dependence among component tests and LD among genes.
-
-
-
+Consequently, CATFISH regards the analytic across-method omnibus (ACAT-O or minP-O) as a useful summary and use resampling-calibrated omnibus p-values as the principal evidence when solicited. This calibration directly determines the null distribution of the omnibus using the identical recomputation methodology used to the observed pathway, thus regulating type-I error amidst dependency across component tests and linkage disequilibrium among genes.
 
 ---
 
 ## 5) Omnibus pathway p-value across methods (analytic + resampling-calibrated; global + LD-aware MVN)
 
-Each pathway in CATFISH is evaluated by a panel of complementary gene $$\rightarrow$$ pathway tests
-(**ACAT**, **Fisher**, **adaptive soft TFisher**, **Stouffer**, and **gene-minP**), each tuned to a different
-pattern of gene-level signal. Because these five statistics are all functions of the same gene-level evidence
-($$\{P_g\}$$ and optionally $$\{Z_g\}$$), they are **strongly correlated** and can disagree in which pathways they
-rank as “most” enriched. Rather than choosing a single test a priori, we summarize the evidence for each pathway
-with a **single omnibus pathway p-value** using two complementary strategies:
+Each pathway in CATFISH is assessed by a panel of complementary gene-to-pathway tests (**ACAT**, **Fisher**, **adaptive soft TFisher**, **Stouffer**, and **gene-minP**), each calibrated to a distinct pattern of gene-level signal. Due to the fact that these five statistics derive from the same gene-level evidence ($$\{P_g\}$$ and optionally $$\{Z_g\}$$), they exhibit a **strong correlation** and may differ in their ranking of the "most" enriched pathways. Instead of selecting a singular test a priori, we consolidate the evidence for each pathway with a **single omnibus pathway p-value** employing two complementing methodologies:
 
 1. **Analytic ACAT-O across methods** (a fast, sensitive summary across correlated method p-values), and  
 2. **Resampling-calibrated omnibus** (global gene-set resampling and/or LD-aware MVN), which learns the null
@@ -613,24 +581,19 @@ $$
 
 with the Stouffer term included only when gene Z-scores are available.
 
-> **MAGMA competitive (reported separately):** If available, the MAGMA competitive gene-set p-value is reported
-> as an additional pathway summary (`magma_pvalue`). By default it is **not included** in the resampling-calibrated
-> omnibus (`include_magma_in_perm=FALSE`) because the resampling layer below does not generate a principled null
-> for the MAGMA competitive regression without rerunning MAGMA (Section 5.6).
+> **MAGMA Competitive (Reported Separately):** If accessible, the MAGMA competitive gene-set p-value is disclosed.
+> As an auxiliary pathway summary (`magma_pvalue`). It is **not included** in the resampling calibration by default.
+> Utilize omnibus (`include_magma_in_perm=FALSE`) as the resampling layer beneath fails to produce a methodical null.
+> for the MAGMA competitive regression without re-executing MAGMA (Section 5.6).
+
 
 ---
 
 ### 5.0 LD-aware SNP $$\rightarrow$$ gene inputs via MAGMA (upstream)
 
-GWAS summary statistics were aggregated to gene-level association statistics using MAGMA’s LD-aware SNP-to-gene
-model (multi-model SNP-wise gene analysis) with a reference LD panel. SNPs were mapped to genes using a symmetric
-$$\pm 25$$ kb window. This yields per-gene association measures such as $$P_g$$ and $$Z_g$$ that are calibrated while
-accounting for within-gene LD.
+GWAS summary results were consolidated into gene-level association statistics utilizing MAGMA’s LD-aware SNP-to-gene model (multi-model SNP-wise gene analysis) with a reference LD panel. SNPs were assigned to genes utilizing a symmetric ± 25 kb frame. This produces per-gene association metrics such as $$P_g$$ and $$Z_g$$ that are adjusted to consider within-gene linkage disequilibrium (LD).
 
-To reduce confounding by gene size and SNP density, gene-level evidence can be adjusted by regressing on
-$$\log(L_g)$$ and $$\log(S_g)$$, and using residual-based size-adjusted gene p-values as
-pathway inputs (when provided as an alternative p-value column). In the implementation, p-based component tests
-use the preferred p-value column (e.g., an adjusted column if present, otherwise raw MAGMA gene p-values).
+To mitigate confounding effects from gene size and SNP density, gene-level evidence may be adjusted by regressing on $$\log(L_g)$$ and $$\log(S_g)$$, utilizing residual-based size-adjusted gene p-values as inputs for pathways (where available as an alternative p-value column). In the implementation, p-based component tests utilize the preferred p-value column (e.g., an adjusted column if available, otherwise raw MAGMA gene p-values).
 
 ---
 
@@ -638,39 +601,12 @@ use the preferred p-value column (e.g., an adjusted column if present, otherwise
 
 For each pathway $$S$$ with member genes $$g\in S$$, we compute:
 
-1. **ACAT (gene-level)**  
-   Combines $$\{P_g\}_{g\in S}$$ using the Cauchy transform (heavy weight on smallest p-values).
-
+1. **ACAT (gene-level)**
 2. **Fisher (gene-level)**  
-   Fisher’s sum–log–p statistic on $$\{P_g\}_{g\in S}$$.
-
 3. **Adaptive soft TFisher (gene-level)**  
-   For a grid $$\tau \in \mathcal{T}$$ (e.g., `tau_grid`), compute a soft-threshold TFisher statistic and its analytic
-   p-value for each $$\tau$$, then define
-
-   $$
-   p_{\mathrm{TFisher}}(S)=\min_{\tau\in\mathcal{T}} p_{\mathrm{soft}}(S;\tau),
-   $$
-
-   recording the argmin $$\hat\tau$$ and the corresponding statistic.
-
 4. **Gene-level minP (Sidák)**  
-   Uses the minimum gene p-value in the set with a Sidák correction:
-
-   $$
-   p_{\mathrm{minP}}(S)=1-\bigl(1-\min_{g\in S} P_g\bigr)^{|S|}.
-   $$
-
-5. **Stouffer Z (optional; from gene Z-scores)**  
-   Combines gene-level Z-scores $$\{Z_g\}_{g\in S}$$ as
-
-   $$
-   Z_S=\frac{\sum_{g\in S} w_g Z_g}{\sqrt{\sum_{g\in S} w_g^2}},
-   $$
-
-   with equal weights if no weights are provided. We typically use a one-sided alternative (`greater`) when
-   $$Z_g$$ is treated as an association-strength score.
-
+5. **Stouffer Z (optional; from gene Z-scores)**
+6. 
 **Numerical stability.** All p-values are clipped to $$[p_{\min},\,1-p_{\min}]$$ (e.g., $$p_{\min}=10^{-15}$$)
 before applying $$\log(\cdot)$$ or $$\tan(\cdot)$$ transforms.
 
@@ -691,15 +627,13 @@ $$
 p_{\mathrm{omni,ACAT}}(S)=0.5-\frac{1}{\pi}\arctan\{T_{\mathrm{omni,ACAT}}(S)\}.
 $$
 
-This ACAT-O layer is most sensitive when **at least one** component test is strongly significant (sparse drivers,
-coordinated enrichment, hybrid subsets, etc.), even if other components are modest.
+The ACAT-O layer has heightened sensitivity when at least one component test demonstrates great significance, regardless of the modest performance of other components (e.g., sparse drivers, coordinated enrichment, hybrid subsets).
 
 ---
 
 ### 5.3 “Best-of-tests” omnibus via minP across methods (minP-O)
 
-To obtain a complementary, more conservative summary that explicitly targets the *best-performing* component test
-for each pathway, we compute a minimum-p omnibus across methods:
+To derive a supplementary, more conservative summary that just focuses on the *best-performing* component test for each pathway, we calculate a minimum-p omnibus across methodologies:
 
 $$
 T_{\mathrm{omni,min}}(S)=\min_{p\in\mathcal{P}(S)} p
@@ -718,19 +652,19 @@ but because the component tests are correlated, inference is based on **empirica
 
 ### 5.4 Resampling calibration of the omnibus (global and LD-aware MVN)
 
-Because the five component pathway tests (ACAT, Fisher, soft TFisher, Stouffer, and gene-minP) are all functions of the same gene-level inputs, they are statistically dependent under the null. To obtain valid significance levels that respect this dependence, CATFISH implements two complementary resampling frameworks:
+The five component pathway tests (ACAT, Fisher, soft TFisher, Stouffer, and gene-minP) are statistically dependent under the null hypothesis, as they all derive from the same gene-level inputs. To achieve proper significance levels that account for this reliance, CATFISH employs two complementary resampling frameworks:
 
-1. **Global gene-set resampling**, which draws null gene sets directly from the empirical MAGMA gene-level results; and  
-2. **LD-aware multivariate normal (MVN) simulation**, which generates correlated null Z-scores using the MAGMA gene–gene correlation structure for each pathway.
+1. **Global gene-set resampling**, which extracts null gene sets directly from the empirical MAGMA gene-level outcomes; and
+2. **LD-aware multivariate normal (MVN) simulation**, which produces correlated null Z-scores utilizing the MAGMA gene–gene correlation framework for each pathway.
 
-Both approaches share the same key principle: in each permutation replicate, **the entire set of component tests is recomputed from a new draw of gene-level evidence**, ensuring that dependence between methods is faithfully preserved.
+Both methodologies adhere to a fundamental principle: in every permutation duplicate, **the complete array of component tests is recalculated from a fresh sample of gene-level evidence**, so ensuring that the interdependence between methods is accurately maintained.
 
 ---
 
 #### 5.4.1 Global gene-set resampling (`perm_mode="global"`)
 
 **Concept.**  
-The global resampling scheme constructs the null distribution of the omnibus by *re-sampling genes rather than SNPs*. It preserves the empirical distribution of gene-level p-values and Z-scores from MAGMA, while randomizing their assignment to pathways. This mimics a scenario where the genome-wide association landscape is intact but unrelated to any particular biological pathway definition.
+The global resampling approach generates the null distribution of the omnibus by re-sampling genes instead of SNPs. It maintains the empirical distribution of gene-level p-values and Z-scores from MAGMA, while randomizing their allocation to pathways. This simulates a situation in which the genome-wide association landscape remains intact yet is not associated with any specific biological route designation.
 
 **Step 1 – Define the global gene pool.**  
 We define a gene pool $$\mathcal{G}$$ containing all genes with valid pathway inputs. Each gene contributes:
@@ -754,8 +688,8 @@ For each pathway $$S$$ of size $$|S| = d$$, and each permutation $$b = 1, \dots,
    Z^{(b)} = (Z_{i_1}, \dots, Z_{i_d}) \text{ (if Stouffer enabled)}.
    $$
 
-   This “paired resampling” guarantees that each gene contributes its observed correlation between $$P_g$$ and $$Z_g$$ to the same replicate, and that all component tests in replicate $$b$$ share the same underlying gene draw.
-
+   This "paired resampling" ensures that each gene contributes its observed correlation between $$P_g$$ and $$Z_g$$ to the identical replicate, and that all component tests in replicate $$b$$ utilize the same foundational gene selection.
+   
 **Step 3 – Recompute all five component tests.**  
 For every null draw $$(P^{(b)}, Z^{(b)})$$, CATFISH recomputes:
 - $$p_{\mathrm{ACAT}}^{(b)}(S)$$ using the Cauchy combination on $$P^{(b)}$$;
@@ -764,7 +698,7 @@ For every null draw $$(P^{(b)}, Z^{(b)})$$, CATFISH recomputes:
 - $$p_{\mathrm{minP}}^{(b)}(S)$$ from the smallest gene p-value;
 - and $$p_{\mathrm{Stouffer}}^{(b)}(S)$$ using $$Z^{(b)}$$ under the same (one-sided) alternative.
   
-The Stouffer null is generally treated as unweighted for numerical stability, but this does not affect dependence preservation because the same genes are sampled jointly for all components.
+The Stouffer null is typically regarded as unweighted for numerical stability; however, this does not influence dependence preservation, as the same genes are sampled collectively across all components.
 
 **Step 4 – Combine resampled components into omnibus.**  
 The set of replicate component p-values $$\{p_j^{(b)}(S)\}$$ are combined using the same omnibus rule (ACAT-O or minP-O) applied to the observed data:
@@ -783,18 +717,19 @@ $$
   = \frac{1 + \left|\{\,b : p_{\mathrm{omni}}^{(b)}(S) \le p_{\mathrm{omni}}(S)\,\}\right|}{B + 1}.
 $$
 
-The “+1 correction” prevents zero p-values and yields unbiased estimates even for small $$B$$.  
-Because all five component statistics are recomputed on the *same resampled gene sets*, their cross-method correlation is inherently preserved.
+The "+1 correction" eliminates zero p-values and produces unbiased estimates, even with modest $$B$$ values.  
+The cross-method correlation is inherently preserved because all five component statistics are recalculated on the identical resampled gene sets.
 
 **Interpretation.**  
-Global resampling provides a data-driven, LD-agnostic calibration of the omnibus that respects the genome-wide distribution of gene-level evidence while randomizing pathway membership. It is computationally efficient and yields valid nulls under arbitrary dependence among component tests.
+Global resampling offers a data-driven, LD-agnostic calibration of the omnibus, honoring the genome-wide distribution of gene-level evidence while randomizing route affiliation. It is computationally efficient and produces valid null hypotheses despite arbitrary reliance among component tests.
 
 ---
 
 #### 5.4.2 LD-aware MVN calibration (`perm_mode="mvn"`)
 
 **Concept.**  
-While global resampling preserves empirical p-value distributions, it does not explicitly model *within-pathway* LD between genes. The LD-aware MVN calibration addresses this by simulating correlated gene-level Z-scores from a multivariate normal distribution parameterized by MAGMA’s gene–gene correlation matrix $$R_S$$ for each pathway.
+Although global resampling maintains empirical p-value distributions, it fails to explicitly account for *within-pathway* linkage disequilibrium among genes. The LD-aware MVN calibration resolves this issue by generating correlated gene-level Z-scores from a multivariate normal distribution defined by MAGMA’s gene–gene correlation matrix $$R_S$$ for each pathway.
+
 
 **Step 1 – Build the correlation matrix $$R_S$$.**  
 For each pathway $$S=\{g_1,\dots,g_d\}$$, we extract pairwise gene correlations $$r_{ij}$$ from a MAGMA correlation file (three columns: `gene1`, `gene2`, `r`). We construct a symmetric $$d \times d$$ matrix $$R_S$$ with:
