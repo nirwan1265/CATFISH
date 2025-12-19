@@ -446,9 +446,7 @@ which oTFisher explicitly uses in its soft-thresholding omnibus examples, and wh
 
 ### 3.4 Stouffer's method (mean-Z; diffuse polygenic shift)
 
-Stouffer's method aggregates gene-level **Z** statistics rather than p-values and is most sensitive to a **Diffuse Polygenic Shift (DPS)**—i.e., many genes in the pathway show small but consistent shifts that may not yield a large excess of extremely small p-values.
-
-In CATFISH, the gene-level Z input is taken directly from MAGMA’s gene output (`ZSTAT`). Importantly, MAGMA’s Z-scale is best interpreted as an **association-strength score** (a probit transform of the gene p-value), meaning that larger positive values indicate stronger evidence of association, rather than a trait-increasing vs trait-decreasing effect direction. Therefore, the natural pathway-level Stouffer test in this setting is **one-sided (greater)**, testing enrichment of positive association strength within the pathway.
+Stouffer's technique consolidates gene-level **Z** statistics instead of p-values and exhibits increased sensitivity to DPS. In CATFISH, the gene-level Z input is sourced directly from MAGMA’s gene output (`ZSTAT`). Significantly, MAGMA’s Z-scale is optimally understood as a **association-strength score** (a probit transformation of the gene p-value), indicating that greater positive values signify stronger evidence of association, rather than indicating the direction of effect as trait-increasing or trait-decreasing. Consequently, the natural pathway-level Stouffer test in this context is **one-sided (greater)**, assessing the enrichment of positive association strength inside the pathway.
 
 **Default (unweighted) Stouffer:**
 
