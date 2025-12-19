@@ -19,6 +19,7 @@ magcat_stoufferZ_pathways(
   magma_cor_file = NULL,
   make_PD = TRUE,
   seed = NULL,
+  alternative = c("greater", "two.sided", "less"),
   output = FALSE,
   out_dir = "magcat_stouffer_z"
 )
@@ -58,6 +59,8 @@ Provide either \code{pathways} OR \code{species}, but not both.}
 \item{make_PD}{logical; if TRUE, force correlation matrix PSD (default TRUE).}
 
 \item{seed}{optional RNG seed (default NULL).}
+
+\item{alternative}{either "greater", "two.sided" or "less", greater, less = one-sided in the positive and negative direction respectively (default "greater")}
 
 \item{output}{logical; if TRUE, write a CSV of results to \code{out_dir}.}
 

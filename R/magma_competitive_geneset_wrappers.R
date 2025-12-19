@@ -621,122 +621,136 @@ magma_geneset_competitive <- function(gene_results_raw,
     stop("MAGMA failed (exit status ", status, "). Check log: ", paste0(prefix_full, ".log"), call. = FALSE)
   }
 
+  
   # ---------- read gsa.out ----------
-  # ---------- read gsa.out ----------
-gsa_file <- paste0(prefix_full, ".gsa.out")
+  # ---------- read gsa.out (SIMPLE + STABLE) ----------
+  gsa_file <- paste0(prefix_full, ".gsa.out")
   if (!file.exists(gsa_file)) stop("MAGMA .gsa.out not found: ", gsa_file, call. = FALSE)
 
   lns <- readLines(gsa_file, warn = FALSE)
+  if (length(lns) < 6) stop("gsa.out too short: ", gsa_file, call. = FALSE)
 
-  # safer than "drop first 4": remove all comment lines
-  lns2 <- lns[!grepl("^\\s*#", lns)]
-  if (length(lns2) < 2) stop("gsa.out has no data lines after removing # metadata: ", gsa_file, call. = FALSE)
+  # your build writes exactly 4 metadata lines at top
+  lns2 <- lns[-(1:4)]
 
-  gsa <- data.table::fread(
+  # parse as data.frame (avoid data.table NSE issues)
+  gsa <- utils::read.table(
     text = paste(lns2, collapse = "\n"),
     header = TRUE,
-    data.table = TRUE
+    stringsAsFactors = FALSE,
+    check.names = FALSE
   )
 
-  # --- robust column detection ---
-  nms <- names(gsa)
-
-  pick_col <- function(candidates) {
-    hit <- intersect(candidates, nms)
-    if (length(hit)) hit[1] else NA_character_
+  need <- c("VARIABLE", "NGENES", "P")
+  if (!all(need %in% names(gsa))) {
+    stop("Unexpected gsa.out columns. Found: ",
+         paste(names(gsa), collapse = ", "),
+         "\nNeed at least: ", paste(need, collapse = ", "),
+         call. = FALSE)
   }
 
-  set_col  <- pick_col(c("VARIABLE", "SET", "GENESET", "SETID", "NAME"))
-  ngen_col <- pick_col(c("NGENES", "NGENE", "N_GENES"))
-  p_col    <- pick_col(c("P", "PVAL", "PVALUE", "P_VALUE"))
-
-  if (is.na(set_col) || is.na(ngen_col) || is.na(p_col)) {
-    stop(
-      "Could not identify required columns in gsa.out.\n",
-      "Found columns: ", paste(nms, collapse = ", "), "\n",
-      "Need something like: {VARIABLE/SET}, {NGENES}, {P}.",
-      call. = FALSE
-    )
-  }
-
-  gsa_tidy <- data.table::data.table(
-    pathway_id    = as.character(gsa[[set_col]]),
-    n_genes_magma = as.integer(gsa[[ngen_col]]),
-    magma_pvalue  = as.numeric(gsa[[p_col]])
+  # build the minimal MAGMA tidy table (base df)
+  gsa_tidy <- data.frame(
+    pathway_id    = as.character(gsa[["VARIABLE"]]),
+    n_genes_magma = as.integer(gsa[["NGENES"]]),
+    magma_pvalue  = as.numeric(gsa[["P"]]),
+    stringsAsFactors = FALSE
   )
 
   # If no pathways mapping, return minimal tidy
   if (is.null(pathways)) {
-    out <- data.table::data.table(
-      pathway_id   = gsa_tidy[["pathway_id"]],
-      pathway_name = gsa_tidy[["pathway_id"]],
-      n_genes      = gsa_tidy[["n_genes_magma"]],
+    out <- data.frame(
+      pathway_id   = gsa_tidy$pathway_id,
+      pathway_name = gsa_tidy$pathway_id,
+      n_genes      = gsa_tidy$n_genes_magma,
       gene_names   = "",
       gene_pvals   = "",
-      magma_pvalue = gsa_tidy[["magma_pvalue"]]
+      magma_pvalue = gsa_tidy$magma_pvalue,
+      stringsAsFactors = FALSE
     )
-    data.table::setorder(out, magma_pvalue)
+
+    out <- out[order(out$magma_pvalue), , drop = FALSE]
     if (isTRUE(write_tidy)) {
-      data.table::fwrite(out, paste0(prefix_full, tidy_suffix), sep = "\t")
+      utils::write.table(out, file = paste0(prefix_full, tidy_suffix),
+                         sep = "\t", quote = FALSE, row.names = FALSE)
     }
     return(out)
   }
 
-  # ---------- attach names + gene lists ----------
-  pathways  <- data.table::as.data.table(pathways)
-  genes_all <- data.table::as.data.table(genes_all)
+  # ---------- attach names + gene lists (BASE R) ----------
+  pathways  <- as.data.frame(pathways, stringsAsFactors = FALSE)
+  genes_all <- as.data.frame(genes_all, stringsAsFactors = FALSE)
 
   if (!all(c("pathway_id","pathway_name","gene_id") %in% names(pathways))) {
-    stop("pathways must have columns: pathway_id, pathway_name, gene_id", call. = FALSE)
+    stop("pathways must have columns: pathway_id, pathway_name, gene_id.\nFound: ",
+         paste(names(pathways), collapse = ", "), call. = FALSE)
   }
   if (!all(c("GENE","P") %in% names(genes_all))) {
-    stop("genes_all must have columns: GENE, P", call. = FALSE)
+    stop("genes_all must have columns: GENE, P.\nFound: ",
+         paste(names(genes_all), collapse = ", "), call. = FALSE)
   }
 
-  pw_map <- unique(data.table::data.table(
-    pathway_id   = as.character(pathways[["pathway_id"]]),
-    pathway_name = as.character(pathways[["pathway_name"]])
-  ))
+  # pathway map
+  pw_map <- unique(pathways[, c("pathway_id","pathway_name"), drop = FALSE])
 
-  pw_genes <- unique(data.table::data.table(
+  # pathway -> genes (clean)
+  pw_genes <- unique(data.frame(
     pathway_id = as.character(pathways[["pathway_id"]]),
-    gene_id    = sub("^gene:", "", as.character(pathways[["gene_id"]]))
+    gene_id    = sub("^gene:", "", as.character(pathways[["gene_id"]])),
+    stringsAsFactors = FALSE
+  ))
+  pw_genes <- pw_genes[nzchar(pw_genes$pathway_id) & nzchar(pw_genes$gene_id), , drop = FALSE]
+
+  # gene -> p
+  gene_p <- unique(data.frame(
+    gene_id = as.character(genes_all[["GENE"]]),
+    gene_p  = as.numeric(genes_all[["P"]]),
+    stringsAsFactors = FALSE
   ))
 
-  gene_p <- unique(
-    data.table::data.table(
-      gene_id = as.character(genes_all[["GENE"]]),
-      gene_p  = as.numeric(genes_all[["P"]])
-    ),
-    by = "gene_id"
-  )
-
+  # join genes to p
   pw_gene_p <- merge(pw_genes, gene_p, by = "gene_id", all.x = TRUE)
 
-  # IMPORTANT FIX: by = "pathway_id" (string), NOT by = pathway_id
-  pw_summ <- pw_gene_p[, list(
-    n_genes    = sum(!is.na(gene_p)),
-    gene_names = paste(gene_id[!is.na(gene_p)], collapse = ";"),
-    gene_pvals = paste(format(gene_p[!is.na(gene_p)], scientific = TRUE, digits = 6), collapse = ";")
-  ), by = "pathway_id"]
+  # summarize per pathway
+  split_list <- split(pw_gene_p, pw_gene_p$pathway_id)
+  pw_summ <- do.call(rbind, lapply(names(split_list), function(pid) {
+    dd <- split_list[[pid]]
+    ok <- !is.na(dd$gene_p)
+    data.frame(
+      pathway_id = pid,
+      n_genes    = sum(ok),
+      gene_names = paste(dd$gene_id[ok], collapse = ";"),
+      gene_pvals = paste(format(dd$gene_p[ok], scientific = TRUE, digits = 6), collapse = ";"),
+      stringsAsFactors = FALSE
+    )
+  }))
 
+  # merge everything onto MAGMA results
   out <- merge(gsa_tidy, pw_map,  by = "pathway_id", all.x = TRUE)
-  out <- merge(out,      pw_summ, by = "pathway_id", all.x = TRUE)
+  out <- merge(out,     pw_summ, by = "pathway_id", all.x = TRUE)
 
-  out[is.na(pathway_name), pathway_name := pathway_id]
-  out[is.na(n_genes),      n_genes      := 0L]
-  out[is.na(gene_names),   gene_names   := ""]
-  out[is.na(gene_pvals),   gene_pvals   := ""]
+  # fill
+  out$pathway_name <- ifelse(
+    is.na(out$pathway_name) | out$pathway_name == "",
+    out$pathway_id,
+    out$pathway_name
+  )
 
-  # avoid out[, list(...)] — use with=FALSE
-  out <- out[, c("pathway_id","pathway_name","n_genes","gene_names","gene_pvals","magma_pvalue"), with = FALSE]
-  data.table::setorder(out, magma_pvalue)
+  out$n_genes     <- ifelse(is.na(out$n_genes), 0L, out$n_genes)
+  out$gene_names  <- ifelse(is.na(out$gene_names), "", out$gene_names)
+  out$gene_pvals  <- ifelse(is.na(out$gene_pvals), "", out$gene_pvals)
+
+  # final columns (NO fancy subset)
+  out <- out[, c("pathway_id","pathway_name","n_genes","gene_names","gene_pvals","magma_pvalue"), drop = FALSE]
+  out <- out[order(out$magma_pvalue), , drop = FALSE]
 
   if (isTRUE(write_tidy)) {
-    data.table::fwrite(out, paste0(prefix_full, tidy_suffix), sep = "\t")
+    utils::write.table(out, file = paste0(prefix_full, tidy_suffix),
+                       sep = "\t", quote = FALSE, row.names = FALSE)
   }
 
-  out
+  return(out)
+
 
 }
 

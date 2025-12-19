@@ -215,18 +215,16 @@ fig <- (p1 + p2 + p3) / (p4 + p5 + p6) +
     theme = theme(plot.title = element_text(face = "bold", size = 13))
   )
 
-quartz()
+#quartz()
 fig
 
 # Save:
-ggsave("Fig_archetypesI.png", p1, width = 7.2, height = 4.6, units = "in", dpi = 600)
-ggsave("Fig_archetypesII.png", p2, width = 7.2, height = 4.6, units = "in", dpi = 600)
-ggsave("Fig_archetypesIII.png", p3, width = 7.2, height = 4.6, units = "in", dpi = 600)
-ggsave("Fig_archetypesVI.png", p4, width = 7.2, height = 4.6, units = "in", dpi = 600)
-ggsave("Fig_archetypesV.png", p5, width = 7.2, height = 4.6, units = "in", dpi = 600)
-ggsave("Fig_archetypesVI.png", p6, width = 7.2, height = 4.6, units = "in", dpi = 600)
+#ggsave("Fig_archetypesI.png", p1, width = 7.2, height = 4.6, units = "in", dpi = 600)
+#ggsave("Fig_archetypesII.png", p2, width = 7.2, height = 4.6, units = "in", dpi = 600)
+#ggsave("Fig_archetypesIII.png", p3, width = 7.2, height = 4.6, units = "in", dpi = 600)
+#ggsave("Fig_archetypesIV.png", p4, width = 7.2, height = 4.6, units = "in", dpi = 600)
+#ggsave("Fig_archetypesV.png", p5, width = 7.2, height = 4.6, units = "in", dpi = 600)
+#ggsave("Fig_archetypesVI.png", p6, width = 7.2, height = 4.6, units = "in", dpi = 600)
 
 # ggsave("Fig_archetypes_rankcurves.pdf", fig, width = 7.2, height = 4.6, units = "in", device = cairo_pdf)
 # ggsave("Fig_archetypes_rankcurves.png", fig, width = 7.2, height = 4.6, units = "in", dpi = 600)
-
-
