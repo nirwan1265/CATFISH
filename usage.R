@@ -641,6 +641,8 @@ mni_omni <- magcat_omni2_pathways(
   out_dir        = "magcat_omnibus_results"
 )
 
+args(MAGCAT::magcat_omni2_pathways)
+
 
 res <- magcat_omni2_pathways(
   gene_results = genes_adj,
