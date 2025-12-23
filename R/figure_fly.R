@@ -4,6 +4,8 @@ library(ggrepel)
 f_female <- "magcat_omnibus_results_Fly/omni_minp_mvn_female.csv"
 f_male   <- "magcat_omnibus_results_Fly/omni_minp_mvn_male.csv"
 
+colnames(f_female)
+
 safe_p <- function(p, min_p = 1e-300) {
   p <- suppressWarnings(as.numeric(p))
   p[is.na(p)] <- 1
@@ -26,6 +28,7 @@ prep_top <- function(df, sex, top_n = 20) {
 
 female_raw <- readr::read_csv(f_female, show_col_types = FALSE)
 male_raw   <- readr::read_csv(f_male,   show_col_types = FALSE)
+colnames(female_raw)
 
 topF <- prep_top(female_raw, "Female", top_n = 20)
 topM <- prep_top(male_raw,   "Male",   top_n = 20)
@@ -128,3 +131,165 @@ p2
 ggsave("Figures/Fig_top20_bubbles_by_sex.png", p1, width = 20, height = 8, dpi = 300)
 # ggsave("male_vs_female_union_top20.png", p2, width = 9, height = 7, dpi = 300)
 
+
+
+
+
+
+#### VENN DIAGRAM
+library(tidyverse)
+
+tests <- c(
+  acat_p             = "ACAT",
+  fisher_p           = "Fisher",
+  tfisher_p_analytic  = "Adaptive_TFisher",
+  minp_p_analytic     = "minP",
+  stouffer_p_analytic = "Stouffer"
+)
+
+safe_p <- function(x) {
+  x <- suppressWarnings(as.numeric(x))
+  x[is.na(x)] <- 1
+  pmin(pmax(x, 1e-300), 1)
+}
+
+top_ids_by_test <- function(df, top_n = 20, id_col = "pathway_id") {
+  out <- list()
+  for (col in names(tests)) {
+    tmp <- df %>%
+      mutate(.p = safe_p(.data[[col]])) %>%
+      arrange(.p) %>%
+      slice_head(n = top_n) %>%
+      pull(.data[[id_col]]) %>%
+      unique()
+    out[[tests[[col]]]] <- tmp
+  }
+  out
+}
+
+female_sets <- top_ids_by_test(female_raw, top_n = 20)
+male_sets   <- top_ids_by_test(male_raw,   top_n = 20)
+
+# =========================================================
+# 1) UpSet plot (RECOMMENDED) for 5 sets
+# =========================================================
+# install.packages("ComplexUpset")  # if needed
+library(ComplexUpset)
+
+sets_to_df <- function(sets_list) {
+  # union of all ids
+  all_ids <- sort(unique(unlist(sets_list)))
+  # binary membership columns
+  mem <- map_dfc(sets_list, ~ all_ids %in% .x) %>%
+    mutate(pathway_id = all_ids, .before = 1)
+  mem
+}
+
+female_mem <- sets_to_df(female_sets)
+male_mem   <- sets_to_df(male_sets)
+
+p_up_female <- ComplexUpset::upset(
+  female_mem,
+  intersect = names(female_sets),
+  name = "Female top20 overlap (5 tests)"
+)
+
+p_up_male <- ComplexUpset::upset(
+  male_mem,
+  intersect = names(male_sets),
+  name = "Male top20 overlap (5 tests)"
+)
+
+quartz()
+p_up_female
+p_up_male
+
+
+
+library(tidyverse)
+library(ComplexUpset)
+
+safe_p <- function(x) {
+  x <- suppressWarnings(as.numeric(x))
+  x[is.na(x)] <- 1
+  pmin(pmax(x, 1e-300), 1)
+}
+
+# 5 tests + add omni_p_mvn as the 6th "set"
+tests6 <- c(
+  acat_p             = "ACAT",
+  fisher_p           = "Fisher",
+  tfisher_p_analytic  = "Adaptive_TFisher",
+  minp_p_analytic     = "minP",
+  stouffer_p_analytic = "Stouffer",
+  omni_p_mvn          = "Omni_MVN"
+)
+
+top_ids_by_col <- function(df, cols_named, top_n = 20, id_col = "pathway_id") {
+  out <- list()
+  for (col in names(cols_named)) {
+    lab <- cols_named[[col]]
+    ids <- df %>%
+      mutate(.p = safe_p(.data[[col]])) %>%
+      arrange(.p) %>%
+      slice_head(n = top_n) %>%
+      pull(.data[[id_col]]) %>%
+      unique()
+    out[[lab]] <- ids
+  }
+  out
+}
+
+sets_to_df <- function(sets_list, id_col = "pathway_id") {
+  all_ids <- sort(unique(unlist(sets_list)))
+  mem <- purrr::map_dfc(sets_list, ~ all_ids %in% .x)
+  mem <- dplyr::mutate(mem, !!id_col := all_ids, .before = 1)
+  mem
+}
+
+# ---- Female ----
+female_sets6 <- top_ids_by_col(female_raw, tests6, top_n = 20, id_col = "pathway_id")
+female_mem6  <- sets_to_df(female_sets6, id_col = "pathway_id")
+
+p_up_female <- ComplexUpset::upset(
+  female_mem6,
+  intersect = names(female_sets6),
+  name = "Female top20 overlap (5 tests + Omni_MVN)",
+  base_annotations = list("Intersection size" = intersection_size())
+)
+
+# ---- Male ----
+male_sets6 <- top_ids_by_col(male_raw, tests6, top_n = 20, id_col = "pathway_id")
+male_mem6  <- sets_to_df(male_sets6, id_col = "pathway_id")
+
+p_up_male <- ComplexUpset::upset(
+  male_mem6,
+  intersect = names(male_sets6),
+  name = "Male top20 overlap (5 tests + Omni_MVN)",
+  base_annotations = list("Intersection size" = intersection_size())
+)
+
+quartz()
+p_up_female
+
+quartz()
+p_up_male
+
+
+
+# =========================================================
+# 2) Venn diagram (works, but cramped with 5)
+# =========================================================
+# install.packages("ggVennDiagram")  # if needed
+library(ggVennDiagram)
+
+p_venn_female <- ggVennDiagram(female_sets, label = "count") +
+  ggtitle("Female: overlap of top 20 pathways across 5 tests")
+
+p_venn_male <- ggVennDiagram(male_sets, label = "count") +
+  ggtitle("Male: overlap of top 20 pathways across 5 tests")
+
+quartz()
+p_venn_female
+quartz()
+p_venn_male
