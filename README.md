@@ -1237,6 +1237,24 @@ minp_res <- magcat_minp_pathways(
 ## RESULTS
 
 ### Drosophila melanogaster Starvation Response GWAS example 
+
+### Limited cross-sex overlap at the gene level (Figures 1–2)
+
+We began with sex-stratified single-variant GWAS (male and female analyzed independently) and asked a simple question: do the “top genes” replicate across sexes? Using the top 50 annotated genes from the *individual GWAS* ranking, overlap between males and females was minimal (Figure 1). Only **4 genes** were shared, with **46 genes unique** to each sex. Repeating the same comparison after SNP-to-gene aggregation with **MAGMA** produced a very similar outcome (Figure 2): only **5 genes** were shared between male and female top-50 lists, with **45 genes unique** to each sex. Thus, whether we examine the raw GWAS top genes or MAGMA-aggregated gene results, sex-stratified analyses yield **limited gene-level concordance**, consistent with a polygenic architecture where gene rankings can be sex-dependent and sensitive to modest differences in effect size, LD structure, and sampling variation.
+
+### Pathway analysis increases concordance between males and females (Figure 3)
+
+Because pathway tests aggregate signal across sets of functionally related genes, we next evaluated male–female overlap at the pathway level. For each method in the CATFISH framework (ACAT, Fisher, Adaptive TFisher, minP, Stouffer) and for the omnibus calibration (Omni_MVN), we compared the **top 20 pathways** between sexes (Figure 3). In contrast to the gene-level results, pathway-level overlap was clearly higher and strongly method-dependent. Some tests showed modest overlap (e.g., **ACAT: 1 shared pathway; Fisher: 2 shared pathways**), whereas other tests recovered substantially more shared pathways (**Adaptive TFisher: 5 shared pathways**). Notably, overlap was weakest for **minP (0 shared pathways)**, consistent with its tendency to emphasize a single best gene per pathway and thereby amplify sex-specific “winner” effects. The strongest male–female concordance was observed for **Stouffer and Omni_MVN (both 7 shared pathways)**, indicating that methods sensitive to distributed pathway-wide enrichment (and, for Omni_MVN, correlation-aware synthesis) better recover shared biology across sexes. Overall, these results support the central interpretation that males and females may prioritize different individual genes, but they converge more strongly on **common functional programs** when evidence is aggregated at the pathway level.
+
+### Omni_MVN preferentially captures consensus signal across tests (Figures 4–5)
+
+To understand why Omni_MVN shows among the strongest male–female overlap, we examined the structure of agreement among methods within each sex using UpSet plots of the **top 20 pathways per test** (Figures 4–5). In females (Figure 4), the largest intersections involve multiple tests simultaneously (intersection sizes up to **4**), indicating that several top pathways are consistently prioritized across different gene-set statistics. In males (Figure 5), this multi-method consistency is even stronger (intersection sizes up to **6**), again revealing a non-trivial “core” of pathways supported by several tests at once. Critically, **Omni_MVN frequently appears within these multi-test intersections** rather than being confined to method-unique pathways. This pattern supports the intended role of the omnibus procedure: Omni_MVN does not merely reproduce one component test; instead, it concentrates its top hits in regions of the results space where multiple methods agree, effectively drawing on signal “from across the panel” of enrichment tests and reducing reliance on any single test’s idiosyncrasies.
+
+### Summary interpretation
+
+Taken together, the figure sequence motivates a clear narrative for the manuscript. Gene-level rankings show **little cross-sex replication** (Figures 1–2; 4–5 shared genes out of the top 50), but pathway aggregation reveals **substantially greater concordance** and shared functional themes (Figure 3). Among the pathway approaches, **Omni_MVN achieves one of the strongest male–female overlaps (tied with Stouffer)** and, based on the within-sex UpSet structures (Figures 4–5), this performance is explained by the fact that Omni_MVN’s top pathways tend to be those supported by multiple component tests rather than being driven by a single method. This provides a principled justification for emphasizing the omnibus pathway results as the most stable summary of shared biology across sexes.
+
+
 ### Pathway-level patterns of starvation tolerance are conserved across sexes, with sex-biased metabolic strategies
 
 
