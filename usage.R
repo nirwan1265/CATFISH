@@ -575,6 +575,22 @@ head(maize_pw)
 fly_pw=read.delim("inst/extdata/pathway/Fly_Cyc.tsv")
 head(fly_pw)
 
+# Arabidopsis
+at_pw=read.delim("inst/extdata/pathway/aracyc_pathways.20230103")
+head(at_pw)
+
+at_pw <- at_pw %>%
+  transmute(
+    pathway_id   = Pathway.id,
+    pathway_name = Pathway.name,
+    gene_id      = Gene.id
+  ) %>%
+  mutate(
+    gene_id = sub("^gene:", "", gene_id)  # safe even if no prefix
+  ) %>%
+  filter(!is.na(gene_id), gene_id != "") %>%
+  distinct()
+
 # Run ACAT per pathway (no permutations first):
 pw_res <- magcat_acat_pathways(
   gene_results = genes_adj,
@@ -840,7 +856,7 @@ mni_omni <- magcat_omni2_pathways(
   out_dir        = "magcat_omnibus_results"
 )
 
-
+# Fly
 mni_omni <- magcat_omni2_pathways(
   gene_results   = genes_adj,
   species        = NULL,                     # load PMN maize pathways automatically
@@ -868,6 +884,33 @@ mni_omni <- magcat_omni2_pathways(
   out_dir        = "magcat_omnibus_results_Fly"
 )
 
+# Arabidopsis
+mni_omni <- magcat_omni2_pathways(
+  gene_results   = genes_adj,
+  species        = NULL,                     # load PMN maize pathways automatically
+  pathways       = at_pw,
+  pmn_gene_col   = "Gene-name",                 # column in PMN file
+  gene_col       = "GENE",                      # column in your gene results
+  p_raw_col      = "P",                         # use MAGMA P column
+  z_col          = "ZSTAT",                     # use MAGMA ZSTAT column for Stouffer
+  weight_col     = NULL,                        # optional if you have custom weights
+  tau_grid       = c(0.1, 0.05, 0.02, 0.01, 0.005, 0.001),
+  min_p          = 1e-15,
+  do_fix         = TRUE,
+  stouffer_min_abs_w = 1e-8,
+  stouffer_alternative = "greater",
+  #magma_out      = out,              # MAGMA competitive p-values
+  include_magma_in_omni = FALSE,
+  include_magma_in_perm = FALSE,                # only for analytic omnibus, no MAGMA in permutations
+  omnibus        = "minP",                      # or "minP"
+  B_perm         = 10000L,                        # number of permutations for omnibus
+  perm_mode      = "mvn",                       # or "global", "both", "none"
+  magma_cor_file = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize//magma_gene_cor_pairs_MLM_arabidopsis.txt",  # 3-column file gene1 gene2 r
+  make_PD        = TRUE,
+  seed           = 123,
+  output         = TRUE,
+  out_dir        = "magcat_omnibus_results_Arabidopsis"
+)
 
 
 args(MAGCAT::magcat_omni2_pathways)

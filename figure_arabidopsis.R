@@ -10,6 +10,7 @@ library(forcats)
 library(viridis)
 library(ComplexUpset)
 library(patchwork)
+library(ggplot2)
 
 # -----------------------
 # INPUT
@@ -104,8 +105,8 @@ p_at_bubble <- ggplot(at_top, aes(x = mlog10p, y = pathway_name_ord)) +
 
 quartz()
 print(p_at_bubble)
-ggsave("Figures/Fig_top20_bubbles_Arabidopsis.png", p_at_bubble,
-       width = 14, height = 10, dpi = 300, bg = "white")
+ggsave("Figures/Fig_top15_bubbles_Arabidopsis.png", p_at_bubble,
+       width = 18, height = 10, dpi = 300, bg = "white")
 
 
 # ============================================================
@@ -170,8 +171,8 @@ p_up_at <- ComplexUpset::upset(
 
 quartz()
 print(p_up_at)
-# ggsave("Figures/Fig_Top10_overlap_Arabidopsis.png", p_up_at,
-#        width = 12, height = 8, dpi = 300, bg = "white")
+ggsave("Figures/Fig_Top15_overlap_Arabidopsis.png", p_up_at,
+       width = 12, height = 8, dpi = 300, bg = "white")
 
 
 # ---------- B) p-cutoff mode (optional) ----------
@@ -292,8 +293,8 @@ p_venn_row <- purrr::imap(method_cols, function(col, lab) {
 
 quartz()
 print(p_venn_row)
-# ggsave("Figures/Fig_Arabidopsis_omni_vs_methods_venns.png", p_venn_row,
-#        width = 18, height = 4, dpi = 300, bg = "white")
+ggsave("Figures/Fig_Arabidopsis_omni_vs_methods_venns.png", p_venn_row,
+       width = 20, height = 6, dpi = 300, bg = "white")
 
 
 # ============================================================
