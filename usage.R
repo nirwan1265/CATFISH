@@ -346,7 +346,7 @@ files <- list.files(path = "/Users/nirwantandukar/Documents/Research/results/DGR
 
 # Arabidopsis
 files <- list.files(path = "/Users/nirwantandukar/Documents/Research/results/Arabidopsis/MAGMA/AT_cold_by_chr",
-        pattern = "^Male_starvation_fly_.*\\.genes\\.out$",
+        pattern = "^AT_cold_chr.*\\.multi_snp_wise.genes\\.out$",
         full.names = TRUE)
 
 
@@ -409,6 +409,16 @@ gff3_path <- "/Users/nirwantandukar/Documents/Research/data/GFF3/"
 # )
 
 
+# Arabidopsis
+gff3_path <- "/Users/nirwantandukar/Documents/Research/data/GFF3/Arabidopsis_thaliana.TAIR10.62.gff3"
+
+maize_gene_len <- get_gene_lengths(
+  gff3_file  = gff3_path,
+  output     = TRUE,
+  output_dir = "inst/extdata",
+  file_name  = "Arabidopsis_gene_lengths.tsv"
+)
+
 
 # remove "gene:""
 maize_gene_len=read.delim("inst/extdata/Zea_mays_gene_lengths.tsv")
@@ -416,6 +426,12 @@ head(maize_gene_len)
 
 # For flies gene length:
 maize_gene_len=read.delim("inst/extdata/dmel.flybase.fbgn.genes.loc.tsv")
+head(maize_gene_len)
+
+# For arabidopsis gene length:
+maize_gene_len=read.delim("inst/extdata/Arabidopsis_gene_lengths.tsv")
+head(maize_gene_len)
+maize_gene_len$gene_id <- sub("^gene:", "", maize_gene_len$gene_id)
 head(maize_gene_len)
 
 head(genes_all)
