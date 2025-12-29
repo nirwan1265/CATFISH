@@ -1264,38 +1264,32 @@ Within-sex UpSet visualizations further elucidate why integrative testing can yi
 *Top 20 pathways enriched for female and male flies for starvation response*
 
 
-We applied the CATFISH multi-statistic pathway framework to gene-level summary statistics from sex-stratified starvation-resistance genome-wide association studies (GWAS) in *Drosophila melanogaster*, using pathway annotations derived from the BioCyc/MetaCyc databases. No pathway reached statistical significance after correction for multiple hypothesis testing at the prespecified false discovery rate (FDR) threshold. Accordingly, we treat these findings as exploratory pathway rankings rather than as definitive evidence of causal associations. Nonetheless, the highest-ranked pathways exhibit non-random biological clustering, implicating candidate metabolic and proteostasis-related processes that are broadly consistent with known aspects of starvation physiology.
+We applied the CATFISH multi-statistic pathway framework to gene-level summary statistics from sex-stratified starvation resistance GWAS in *Drosophila melanogaster*, using pathway annotations derived from the BioCyc/MetaCyc databases. No pathway reached statistical significance after correction for multiple hypothesis testing at the prespecified false discovery rate (FDR) threshold. Accordingly, we treat these findings as exploratory pathway rankings rather than as definitive evidence of causal associations. Nonetheless, the highest-ranked pathways exhibit non-random biological clustering, implicating candidate metabolic and proteostasis-related processes that are broadly consistent with known aspects of starvation physiology. We must note that, the enriched pathways identified are most appropriately interpreted as an over-representation of genes annotated to the regulation and execution of gluconeogenic processes, rather than as direct evidence for altered metabolic flux through these pathways.
 
-### Recurring cross-sex themes among the top-ranked pathways
+### Recurring cross-sex biological processes among the top-ranked pathways
 
-A small set of pathway annotations appears in the top ranks for both sexes, pointing to shared categories relevant to starvation response:
+A small set of pathway annotations appears in the top ranks for both sexes, suggesting a shared response to starvation:
 
 **Glucose homeostasis and fuel partitioning.**  
-Both sexes exhibited significant enrichment for *gluconeogenesis III*, consistent with the overarching requirement to sustain circulating glucose concentrations as stored carbohydrate reserves become depleted. In this context, the signal is most appropriately interpreted as an over-representation of genes annotated to the regulation and execution of gluconeogenic processes, rather than as direct evidence for altered metabolic flux through these pathways.
+Both sexes exhibited significant enrichment for *gluconeogenesis III*, consistent with the requirement to sustain circulating glucose concentrations as stored carbohydrate reserves become depleted. 
 
 **NAD⁺ metabolism and redox balance.**  
-*NAD biosynthesis* emerged as one of the most strongly enriched themes (*superpathway of NAD biosynthesis in eukaryotes* in both sexes), with females additionally showing enrichment for an NAD salvage pathway. This convergence suggests that genetic variation affecting pathways responsible for maintaining redox homeostasis and cofactor pools becomes particularly relevant under nutrient limitation. However, the current analysis does not provide resolution regarding tissue-specific contributions or the directional nature of any changes in pathway activity.
+*NAD biosynthesis* emerged as one of the most strongly enriched pathwy (*superpathway of NAD biosynthesis in eukaryotes* in both sexes), with females additionally showing enrichment for an NAD salvage pathway. This convergence suggests that genetic variation affecting pathways responsible for maintaining redox homeostasis and cofactor pools becomes particularly relevant under nutrient limitation.
 
 **Membrane lipid remodeling.**  
-Both sexes showed enrichment of sphingolipid-associated pathways (e.g., *ceramide degradation* and *glycosphingolipid biosynthesis*). Given that BioCyc pathway labels frequently capture conserved biochemical modules, we interpret these signals primarily as a recurrent annotation motif implicating membrane lipid composition and the turnover of bioactive sphingolipids during stress, rather than as evidence for a single discrete pathway effect.
+Both sexes showed enrichment of sphingolipid-associated pathways (e.g., *ceramide degradation* and *glycosphingolipid biosynthesis*).
 
 **Proteostasis and secretory pathway function.**  
 *Protein N-glycosylation (initial phase)* was highly ranked in both sexes, suggesting that allelic variation in genes involved in endoplasmic reticulum (ER) and secretory pathway processing, including protein folding, glycoprotein maturation, and quality-control mechanisms, may modulate tolerance to starvation.
 
 **Isoprenoid metabolism.**  
-The *mevalonate pathway* was enriched in both sexes, indicating a shared annotation signal involving isoprenoid metabolism. At present, we regard this as a hypothesis-generating category that warrants targeted follow-up, rather than as a basis for specific mechanistic conclusions.
+The *mevalonate pathway* was enriched in both sexes, indicating a shared annotation signal involving isoprenoid metabolism.
 
-### Sex-skewed patterns among top-ranked annotations (exploratory)
 
-Beyond the shared core, the top-20 lists show sex-skewed emphases that may reflect differences in which biological modules are most genetically “visible” in each sex under starvation:
+Beyond the shared core, the top-20 lists show sex-skewed emphases that may reflect differences in which biological modules are most genetically “visible” in each sex under starvation. **Females** exhibited an enhanced representation of lipid-associated annotations, including fatty acid– and PUFA-derived modules, together with pathways plausibly involved in stress-buffering processes (e.g., carbonyl detoxification and polyamine/methionine recycling). These patterns are consistent with a prominent lipid-handling component in the female-associated rankings. **Males** exhibited an enhanced representation of recycling- and salvage-associated annotations (e.g., nucleoside- and nitrogen-related modules), as well as additional pathways implicated in membrane lipid remodeling. Some pathway labels (e.g., those annotated as “mammals” or “yeast”) likely arise from cross-species naming conventions within MetaCyc.
 
-- **Females** exhibit an enhanced representation of lipid-associated annotations, including fatty acid– and PUFA-derived modules, together with pathways plausibly involved in stress-buffering processes (e.g., carbonyl detoxification and polyamine/methionine recycling). These patterns are consistent with a prominent lipid-handling component in the female-associated rankings; however, the pathway labels should be interpreted primarily as annotation categories rather than precise mechanistic assignments.
 
-- **Males** exhibit an enhanced representation of recycling- and salvage-associated annotations (e.g., nucleoside- and nitrogen-related modules), as well as additional pathways implicated in membrane lipid remodeling. Some pathway labels (e.g., those annotated as “mammals” or “yeast”) likely arise from cross-species naming conventions within MetaCyc; accordingly, we focus on the overarching functional categories rather than literal organism-specific pathway interpretations.
-
-### Summary and limitations
-
-Overall, despite the absence of FDR-significant pathways, the top-ranked results cluster around biologically plausible starvation-related categories—gluconeogenesis, NAD/redox metabolism, membrane lipid remodeling, proteostasis, and isoprenoid-related metabolism—with a small shared core and sex-skewed remainder. These patterns should be treated as **hypothesis-generating**, motivating follow-up analyses such as (i) stability of pathway ranks under resampling, (ii) per-pathway multi-method support summaries, and (iii) gene-level consistency checks within the top categories.
+Overall, despite the absence of FDR-significant pathways, the top-ranked results cluster around biologically plausible starvation-related categories—gluconeogenesis, NAD/redox metabolism, membrane lipid remodeling, proteostasis, and isoprenoid-related metabolism—with a small shared core and sex-skewed remainder.
 
 
 
