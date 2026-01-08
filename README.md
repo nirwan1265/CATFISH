@@ -471,21 +471,34 @@ However, CATFISH does not rely on this analytic mapping for inference because ge
 
 ---
 
-## 4) Correlation among pathway tests (shared inputs + LD)
+## 4) Unified null calibration (captures gene dependence and cross-method coupling)
 
-All pathway statistics mentioned are dependent on the identical gene-level evidence $$\{P_g\}_{g\in S}$$ (and, when accessible, the corresponding $$\{Z_g\}_{g\in S}$$) and are thus inherently connected. For a specified pathway $$S$$, define the component statistics.
+For a pathway $S$, define the vector of component statistics each computed from the same within-pathway gene-level evidence.
 
 $$
-T_{\mathrm{ACAT}},\; T_{\mathrm{Fisher}},\; T_{\mathrm{TF}}^{\mathrm{soft}}(\tau),\; T_{\mathrm{Stouffer}},\; T_{\min},
+\mathbf{T}(S)=\big(T_{\mathrm{ACAT}},T_{\mathrm{Fisher}},T_{\mathrm{TF}}^{\mathrm{soft}},T_{\mathrm{Stouffer}},T_{\min}\big),
 $$
 
-where
+where,
 
 - $$T_{\mathrm{ACAT}}$$ is the ACAT statistic on $$S$$,
 - $$T_{\mathrm{Fisher}}$$ is Fisher’s sum–log–p statistic,
 - $$T_{\mathrm{TF}}^{\mathrm{soft}}(\tau)$$ is the soft–TFisher statistic at truncation $$\tau$$,
 - $$T_{\mathrm{Stouffer}}$$ is the (optionally weighted) Stouffer Z-combination statistic, and
 - $$T_{\min}=\min_{g\in S} P_g$$ is the Tippett/minP statistic.
+
+Two sources of dependence are present: (i) gene-level inputs within $S$ are correlated (e.g., LD/shared structure), and (ii) even conditional on the inputs, the components are mutually dependent because they are deterministic functions of the same $\{p_g\}$ and $\{Z_g\}$.
+
+To obtain valid inference without assuming independence at either level, CATFISH calibrates the entire vector $\mathbf{T}(S)$ under a single null generator. Specifically, we generate null replicates $\{(\{p_g^{(b)}\},\{Z_g^{(b)}\})\}_{b=1}^B$ that preserve within-pathway dependence (e.g., via an LD-aware MVN null $Z^{(b)}\sim \mathcal{N}(0,R_S)$, mapped to $p$-values by $p_g^{(b)}=1-\Phi(Z_g^{(b)})$, or via phenotype permutation when feasible). For each replicate $b$, we recompute all components to obtain $\mathbf{T}^{(b)}(S)$ and the omnibus statistic $T_{\mathrm{omni}}^{(b)}(S)$ using the same rule as for the observed data.
+
+The omnibus $p$-value is then estimated by the standard resampling tail probability
+
+$$
+p_{\mathrm{omni}}(S)=\frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(T_{\mathrm{omni}}^{(b)}(S)\ge T_{\mathrm{omni}}^{\mathrm{obs}}(S)\right)}{B+1}
+$$
+
+Because the null replicates recompute *all* components from the same dependence-preserving draws, this calibration simultaneously accounts for within-pathway gene dependence and across-method coupling. Optionally, calibrated component $p$-values can be obtained analogously by applying the same tail-probability calculation to each $T_j$.
+
 
 ### 4.1 Deterministic coupling under the null (same $$\{P_g\}$$ reused)
 
