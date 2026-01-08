@@ -252,7 +252,6 @@ Link: https://pmc.ncbi.nlm.nih.gov/articles/PMC6391732/
 ## METHODS
 
 ### Notation
-## Gene-level covariate adjustment (gene length & SNP density)
 
 Let a pathway (gene set) be denoted by $S$, containing $G = |S|$ genes indexed by $g = 1,\dots,G$.
 
@@ -267,35 +266,6 @@ $$
 \qquad
 \mathbf{p}_S = (p_1, p_2, \dots, p_G).
 $$
-
-To remove residual dependence on gene length and SNP density, we fit a linear model:
-
-$$
-Z_g = \beta_0 + \beta_1 \log(L_g) + \beta_2 \log(\mathrm{SNPs}_g) + \varepsilon_g.
-$$
-
-We define the adjusted $Z$-scores as the regression residuals:
-
-$$
-Z_{g,\mathrm{adj}} = \hat{\varepsilon}_g.
-$$
-
-The corresponding adjusted two-sided $p$-values are:
-
-$$
-p_{g,\mathrm{adj}} = 2\,\Phi\!\left(-\left|Z_{g,\mathrm{adj}}\right|\right),
-$$
-
-where $\Phi(\cdot)$ is the standard normal CDF.
-
-We denote the adjusted vectors by:
-
-$$
-\mathbf{Z}_{S,\mathrm{adj}} = (Z_{1,\mathrm{adj}}, \dots, Z_{G,\mathrm{adj}}),
-\qquad
-\mathbf{p}_{S,\mathrm{adj}} = (p_{1,\mathrm{adj}}, \dots, p_{G,\mathrm{adj}}).
-$$
-
 
 ---
 
@@ -336,13 +306,22 @@ Z^{\mathrm{adj}}_g = Z_g - \widehat{Z}_g,
 \quad \widehat{Z}_g = \widehat{\beta}_0 + \widehat{\beta}_1 \log(L_g) + \widehat{\beta}_2 \log(S_g).
 $$
 
-We then convert to a two‑sided adjusted p-value:
+The corresponding adjusted two-sided $p$-values are:
 
 $$
-p^{\mathrm{adj}}_g = 2\Phi\left(-|Z^{\mathrm{adj}}_g|\right),
+p_{g,\mathrm{adj}} = 2\,\Phi\!\left(-\left|Z_{g,\mathrm{adj}}\right|\right),
 $$
 
 where $\Phi(\cdot)$ is the standard normal CDF.
+
+We denote the adjusted vectors by:
+
+$$
+\mathbf{Z}_{S,\mathrm{adj}} = (Z_{1,\mathrm{adj}}, \dots, Z_{G,\mathrm{adj}}),
+\qquad
+\mathbf{p}_{S,\mathrm{adj}} = (p_{1,\mathrm{adj}}, \dots, p_{G,\mathrm{adj}}).
+$$
+
 
 ---
 
