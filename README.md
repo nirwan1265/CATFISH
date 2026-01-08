@@ -456,11 +456,16 @@ This is not the default for MAGMA-style association-strength Z scores.
 ### 3.5 minP / Tippett test
 
 For each pathway $S$ with $G$ genes, we define the minimum gene $p$-value as
-$T_{\min}(S)= $p_{\min}(S)=\min_{g\in S} p_g$.
+
+$$
+T_{\min}(S) = p_{\min}(S) = \min_{g \in S} p_g .
+$$
 
 An independence-based calibration is given by Tippett’s transform as: 
 
-$p_{\mathrm{tippett}} = 1 - (1 - p_{\min})^{G}$
+$$
+p_{\mathrm{tippett}} = 1 - (1 - p_{\min})^{G}.
+$$
 
 However, CATFISH does not rely on this analytic mapping for inference because gene-level test statistics within a pathway are typically dependent (see Section~4). The minP statistic is emphasized not because it is uniquely sensitive to dependence (all constituent statistics are), but because it represents a qualitatively distinct mode of evidence that is driven almost entirely by the single most significant gene. Consequently, $(T_{\min}) serves primarily as a detector of sparse, single-gene–driven signals (SDA/SGP-type patterns), thereby complementing aggregate combination procedures (Fisher, Stouffer, softTFisher, ACAT) that are designed to capture more diffuse enrichment. We identify potential single-gene proxy pathways via a leave-one-gene-out diagnostic, in which the top-ranking gene is removed, and the test statistic is recomputed.
 
