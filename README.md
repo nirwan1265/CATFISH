@@ -559,50 +559,50 @@ Due to the strong dependence among $$\big(T_{\mathrm{ACAT}}, T_{\mathrm{Fisher}}
 
 ---
 
-## 5) Omnibus pathway p-value across methods (analytic + resampling-calibrated; global + LD-aware MVN)
+## 5) Omnibus pathway p-value across methods (omnibus operator + unified null calibration)
 
-Each pathway in CATFISH is assessed by a panel of complementary gene-to-pathway tests (**ACAT**, **Fisher**, **adaptive soft TFisher**, **Stouffer**, and **gene-minP**), each calibrated to a distinct pattern of gene-level signal. Due to the fact that these five statistics derive from the same gene-level evidence ($$\{p_g\}$$ and optionally $$\{Z_g\}$$), they exhibit a **strong correlation** and may differ in their ranking of the "most" enriched pathways. Instead of selecting a singular test a priori, we consolidate the evidence for each pathway with a **single omnibus pathway p-value** employing two complementing methodologies:
+Each pathway in CATFISH is evaluated using a panel of complementary gene-to-pathway tests (ACAT, Fisher, adaptive soft TFisher, Stouffer, and a minimum-gene statistic). Because all component tests are deterministic functions of the same gene-level inputs $\{p_g\}$ (and optionally $\{Z_g\}$), the resulting component $p$-values are correlated. Accordingly, CATFISH separates (i) the \emph{omnibus operator} used to combine evidence across methods from (ii) the \emph{null calibration} used to obtain valid inference under dependence.
 
-1. **Analytic ACAT-O across methods** (a fast, sensitive summary across correlated method p-values), and  
-2. **Resampling-calibrated omnibus** (global gene-set resampling and/or LD-aware MVN), which learns the null
-   distribution of the omnibus under dependence and provides a conservative “best-of-tests” inference layer.
-
-Throughout, let the five gene-derived component p-values for pathway $$S$$ be
+Let the component method $p$-values for pathway $S$ be
 
 $$
-\mathcal{P}(S)=\{p_{\mathrm{ACAT}}(S),\,p_{\mathrm{Fisher}}(S),\,p_{\mathrm{TFisher}}(S),\,p_{\mathrm{minP}}(S),\,p_{\mathrm{Stouffer}}(S)\},
+\mathcal{P}(S)=\{p_{\mathrm{ACAT}}(S),\,p_{\mathrm{TFisher}}(S),\,p_{\mathrm{minGene}}(S),\,p_{\mathrm{Stouffer}}(S)\}
 $$
 
-with the Stouffer term included only when gene Z-scores are available.
+with the Stouffer term included only when gene $Z$-scores are available.
 
-> **MAGMA Competitive (Reported Separately):** If accessible, the MAGMA competitive gene-set p-value is disclosed.
-> As an auxiliary pathway summary (`magma_pvalue`). It is **not included** in the resampling calibration by default.
-> Utilize omnibus (`include_magma_in_perm=FALSE`) as the resampling layer beneath fails to produce a methodical null.
-> for the MAGMA competitive regression without re-executing MAGMA (Section 5.6).
+- Omnibus operators (across methods) 
+CATFISH can report either of two omnibus summaries:
+
+(i) \emph{ACAT across methods} (ACAT-O), which is sensitive to at least one highly significant component, or
+
+(ii) a \emph{minimum across methods} (minP-O), which provides a conservative “best-of-tests” summary.
+
+- Null calibration (analytic vs resampling)
+The omnibus can be reported as an analytic value (for descriptive ranking), but primary inference is obtained by a unified resampling calibration (global gene-set resampling and/or LD-aware MVN simulation), in which all component tests and the chosen omnibus operator are recomputed within each null replicat}. This preserves both within-pathway gene dependence and cross-method coupling.
 
 
 ---
 
-### 5.1 LD-aware SNP $$\rightarrow$$ gene inputs via MAGMA (upstream)
+### 5.1 LD-aware SNP $\rightarrow$ gene inputs via MAGMA (upstream)
 
-GWAS summary results were consolidated into gene-level association statistics utilizing MAGMA’s LD-aware SNP-to-gene model (multi-model SNP-wise gene analysis) with a reference LD panel. SNPs were assigned to genes utilizing a symmetric ± 25 kb frame. This produces per-gene association metrics such as $$p_g$$ and $$Z_g$$ that are adjusted to consider within-gene linkage disequilibrium (LD).
+GWAS summary statistics were aggregated to gene-level association evidence using MAGMA’s LD-aware SNP-wise gene model (multi-model), with an external reference panel to represent local LD. SNPs were assigned to genes using a symmetric $\pm 25$ kb window around gene boundaries, yielding per-gene association outputs such as a gene $p$-value $p_g$ and an association-strength Z statistic $Z_g$.
 
-To mitigate confounding effects from gene size and SNP density, gene-level evidence may be adjusted by regressing on $$\log(L_g)$$ and $$\log(S_g)$$, utilizing residual-based size-adjusted gene p-values as inputs for pathways (where available as an alternative p-value column). In the implementation, p-based component tests utilize the preferred p-value column (e.g., an adjusted column if available, otherwise raw MAGMA gene p-values).
+To reduce confounding by gene length and SNP density, we optionally compute covariate-adjusted gene evidence by regressing the gene-level Z statistics on $\log(L_g)$ and $\log(S_g)$, where $L_g$ is gene length and $S_g$ is the number of assigned SNPs. Residual Z-scores are then converted to adjusted gene $p$-values and used as inputs for p-based pathway tests when available; otherwise, raw MAGMA gene $p$-values are used.
 
 ---
 
-### 5.2 Component pathway tests (gene $$\rightarrow$$ pathway)
+### 5.2 Component pathway tests (gene $\rightarrow$ pathway)
 
-For each pathway $$S$$ with member genes $$g\in S$$, we compute:
+For each pathway $S$ with member genes $g\in S$, we compute the following component pathway tests from the gene-level inputs:
 
-1. **ACAT (gene-level)**
-2. **Fisher (gene-level)**  
-3. **Adaptive soft TFisher (gene-level)**  
-4. **Gene-level minP (Sidák)**  
-5. **Stouffer Z (optional; from gene Z-scores)**
-6. 
-**Numerical stability.** All p-values are clipped to $$[p_{\min},\,1-p_{\min}]$$ (e.g., $$p_{\min}=10^{-15}$$)
-before applying $$\log(\cdot)$$ or $$\tan(\cdot)$$ transforms.
+1. **ACAT** (p-based)
+2. **Fisher** (p-based)
+3. **Adaptive soft TFisher** (p-based; via a fixed $\tau$ grid)
+4. **minGene**: the minimum gene $p$-value within the pathway, $p_{\minGene}(S)=\min_{g\in S} p_g$
+5. **Stouffer Z** (optional; using gene $Z_g$ when available)
+
+All p-values are clipped to $$[p_{\min},\,1-p_{\min}]$$ (e.g., $$p_{\min}=10^{-15}$$) before applying $$\log(\cdot)$$ or $$\tan(\cdot)$$ transforms for numerical stability.
 
 ---
 
