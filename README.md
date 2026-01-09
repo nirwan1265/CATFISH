@@ -473,7 +473,8 @@ However, CATFISH does not rely on this analytic mapping for inference because ge
 
 ## 4) Unified null calibration (captures gene dependence and cross-method coupling)
 
-For a pathway $S$, define the vector of component statistics each computed from the same within-pathway gene-level evidence.
+For a pathway $S$, define the vector of component statistics, each computed from the same within-pathway
+gene-level evidence:
 
 $$
 \mathbf{T}(S)=\big(T_{\mathrm{ACAT}},T_{\mathrm{Fisher}},T_{\mathrm{TF}}^{\mathrm{soft}},T_{\mathrm{Stouffer}},T_{\min}\big),
@@ -485,42 +486,7 @@ where,
 - $$T_{\mathrm{Fisher}}$$ is Fisher’s sum–log–p statistic,
 - $$T_{\mathrm{TF}}^{\mathrm{soft}}(\tau)$$ is the soft–TFisher statistic at truncation $$\tau$$,
 - $$T_{\mathrm{Stouffer}}$$ is the (optionally weighted) Stouffer Z-combination statistic, and
-- $$T_{\min}=\min_{g\in S} P_g$$ is the Tippett/minP statistic.
-
-Two sources of dependence are present: (i) gene-level inputs within $S$ are correlated (e.g., LD/shared structure), and (ii) even conditional on the inputs, the components are mutually dependent because they are deterministic functions of the same $\{p_g\}$ and $\{Z_g\}$.
-
-To obtain valid inference without assuming independence at either level, CATFISH calibrates the entire vector $\mathbf{T}(S)$ under a single null generator. Specifically, we generate null replicates
-$\{(\{p_g^{(b)}\}, \{Z_g^{(b)}\})\}_{b=1}^{B}$
-that preserve within-pathway dependence. For example, this can be achieved via an LD-aware multivariate normal null, with
-$Z^{(b)} \sim \mathcal{N}(0, R_S)$,
-which is then mapped to p-values by
-$p_g^{(b)} = 1 - \Phi(Z_g^{(b)})$.
-Alternatively, phenotype permutation may be used when feasible.
-
-For each replicate $b$, we recompute all component pathway statistics to obtain
-$\mathbf{T}^{(b)}(S)$,
-and then compute the corresponding omnibus statistic using the same decision rule applied to the observed data:
-$T_{\mathrm{omni}}^{(b)}(S)$
-
-The omnibus $p$-value is then estimated by the standard resampling tail probability
-
-$$
-p_{\mathrm{omni}}(S)=\frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(T_{\mathrm{omni}}^{(b)}(S)\ge T_{\mathrm{omni}}^{\mathrm{obs}}(S)\right)}{B+1}
-$$
-
-Because the null replicates recompute *all* components from the same dependence-preserving draws, this calibration simultaneously accounts for within-pathway gene dependence and across-method coupling. Optionally, calibrated component $p$-values can be obtained analogously by applying the same tail-probability calculation to each $T_j$.
-
-
-
-
-## 4) Unified null calibration (captures gene dependence and cross-method coupling)
-
-For a pathway $S$, define the vector of component statistics, each computed from the same within-pathway
-gene-level evidence:
-\[
-\mathbf{T}(S)=\big(T_{\mathrm{ACAT}},T_{\mathrm{Fisher}},T_{\mathrm{TF}}^{\mathrm{soft}},T_{\mathrm{Stouffer}},T_{\min}\big),
-\]
-where $T_{\min}(S)=p_{\min}(S)=\min_{g\in S} p_g$.
+- $$T_{\min}=\min_{g\in S} p_g$$ is the Tippett/minP statistic.
 
 Two sources of dependence are present: (i) gene-level inputs within $S$ are correlated (e.g., LD/shared genomic
 structure), and (ii) the components are mutually dependent because they are deterministic functions of the same
@@ -528,32 +494,36 @@ $\{p_g\}$ (and, when used, $\{Z_g\}$).
 
 To obtain valid inference without assuming independence at either level, CATFISH calibrates the omnibus under a
 single dependence-preserving null generator. We generate null replicates
-$\{(\{p_g^{(b)}\},\{Z_g^{(b)}\})\}_{b=1}^{B}$ that preserve within-pathway gene dependence. For example, under an
-LD-aware MVN null,
-\[
-Z^{(b)} \sim \mathcal{N}(0, R_S),
-\]
+
+$\{(\{p_g^{(b)}\},\{Z_g^{(b)}\})\}_{b=1}^{B}$ 
+
+that preserve within-pathway gene dependence. For example, under an LD-aware MVN null,
+
+$Z^{(b)} \sim \mathcal{N}(0, R_S)$,
+
 followed by a Gaussian-copula mapping to $p$-values. Using the one-sided convention (larger $Z$ implies stronger
 association),
-\[
-p_g^{(b)} = 1-\Phi(Z_g^{(b)}),
-\]
+
+$p_g^{(b)} = 1 - \Phi(Z_g^{(b)})$.
+
 (with a two-sided mapping used if the analysis adopts two-sided gene $p$-values). Alternatively, phenotype
 permutation may be used when feasible.
 
 For each replicate $b$, we recompute all component pathway statistics to obtain $\mathbf{T}^{(b)}(S)$ and then compute
 the corresponding omnibus statistic using the same rule applied to the observed data:
-\[
-T_{\mathrm{omni}}^{(b)}(S) = \mathcal{O}\!\left(\mathbf{T}^{(b)}(S)\right),\qquad
-T_{\mathrm{omni}}^{\mathrm{obs}}(S) = \mathcal{O}\!\left(\mathbf{T}^{\mathrm{obs}}(S)\right),
-\]
+
+$$
+T_{\mathrm{omni}}^{(b)}(S)=\mathcal{O}\!\left(\mathbf{T}^{(b)}(S)\right),\qquad T_{\mathrm{omni}}^{\mathrm{obs}}(S)=\mathcal{O}\!\left(\mathbf{T}^{\mathrm{obs}}(S)\right).
+$$
+
 where $\mathcal{O}(\cdot)$ denotes the fixed omnibus decision rule (e.g., ACAT-across-methods, min-across-methods,
 or another prespecified combination).
 
 The omnibus $p$-value is estimated by the standard resampling tail probability:
-\[
-p_{\mathrm{omni}}(S)=\frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(T_{\mathrm{omni}}^{(b)}(S)\ge T_{\mathrm{omni}}^{\mathrm{obs}}(S)\right)}{B+1}.
-\]
+
+$$
+p_{\mathrm{omni}}(S)=\frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(T_{\mathrm{omni}}^{(b)}(S)\ge T_{\mathrm{omni}}^{\mathrm{obs}}(S)\right)}{B+1}
+$$
 
 Because each null replicate recomputes *all* components from the same dependence-preserving draw, this procedure
 simultaneously accounts for within-pathway gene dependence and across-method coupling. Optionally, calibrated
