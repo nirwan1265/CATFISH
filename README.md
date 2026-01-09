@@ -583,7 +583,7 @@ with the Stouffer term included only when gene Z-scores are available.
 
 ---
 
-### 5.0 LD-aware SNP $$\rightarrow$$ gene inputs via MAGMA (upstream)
+### 5.1 LD-aware SNP $$\rightarrow$$ gene inputs via MAGMA (upstream)
 
 GWAS summary results were consolidated into gene-level association statistics utilizing MAGMA’s LD-aware SNP-to-gene model (multi-model SNP-wise gene analysis) with a reference LD panel. SNPs were assigned to genes utilizing a symmetric ± 25 kb frame. This produces per-gene association metrics such as $$p_g$$ and $$Z_g$$ that are adjusted to consider within-gene linkage disequilibrium (LD).
 
@@ -591,7 +591,7 @@ To mitigate confounding effects from gene size and SNP density, gene-level evide
 
 ---
 
-### 5.1 Component pathway tests (gene $$\rightarrow$$ pathway)
+### 5.2 Component pathway tests (gene $$\rightarrow$$ pathway)
 
 For each pathway $$S$$ with member genes $$g\in S$$, we compute:
 
@@ -606,7 +606,7 @@ before applying $$\log(\cdot)$$ or $$\tan(\cdot)$$ transforms.
 
 ---
 
-### 5.2 Omnibus ACAT across methods (ACAT-O)
+### 5.3 Omnibus ACAT across methods (ACAT-O)
 
 Let $$p_1,\dots,p_K$$ denote the available component p-values for pathway $$S$$ (typically $$K=5$$), and let
 weights $$v_j\ge 0$$ satisfy $$\sum_{j=1}^K v_j=1$$ (default $$v_j=1/K$$). Define the ACAT-O statistic
@@ -625,7 +625,7 @@ The ACAT-O layer has heightened sensitivity when at least one component test dem
 
 ---
 
-### 5.3 “Best-of-tests” omnibus via minP across methods (minP-O)
+### 5.4 “Best-of-tests” omnibus via minP across methods (minP-O)
 
 To derive a supplementary, more conservative summary that just focuses on the *best-performing* component test for each pathway, we calculate a minimum-p omnibus across methodologies:
 
@@ -644,7 +644,7 @@ but because the component tests are correlated, inference is based on **empirica
 
 ---
 
-### 5.4 Resampling calibration of the omnibus (global and LD-aware MVN)
+### 5.5 Resampling calibration of the omnibus (global and LD-aware MVN)
 
 The five component pathway tests (ACAT, Fisher, soft TFisher, Stouffer, and gene-minP) are statistically dependent under the null hypothesis, as they all derive from the same gene-level inputs. To achieve proper significance levels that account for this reliance, CATFISH employs two complementary resampling frameworks:
 
@@ -655,7 +655,7 @@ Both methodologies adhere to a fundamental principle: in every permutation dupli
 
 ---
 
-#### 5.4.1 Global gene-set resampling (`perm_mode="global"`)
+#### 5.5.1 Global gene-set resampling (`perm_mode="global"`)
 
 **Concept.**  
 The global resampling approach generates the null distribution of the omnibus by re-sampling genes instead of SNPs. It maintains the empirical distribution of gene-level p-values and Z-scores from MAGMA, while randomizing their allocation to pathways. This simulates a situation in which the genome-wide association landscape remains intact yet is not associated with any specific biological route designation.
@@ -711,7 +711,7 @@ Global resampling offers a data-driven, LD-agnostic calibration of the omnibus, 
 
 ---
 
-#### 5.4.2 LD-aware MVN calibration (`perm_mode="mvn"`)
+#### 5.5.2 LD-aware MVN calibration (`perm_mode="mvn"`)
 
 **Concept.**  
 Although global resampling maintains empirical p-value distributions, it fails to explicitly account for *within-pathway* linkage disequilibrium among genes. The LD-aware MVN calibration resolves this issue by generating correlated gene-level Z-scores from a multivariate normal distribution defined by MAGMA’s gene–gene correlation matrix $$R_S$$ for each pathway.
@@ -764,7 +764,7 @@ The MVN methodology offers a comprehensive LD-aware permutation layer: it transm
 
 ---
 
-### 5.5 Choice of final omnibus p-value (what we report)
+### 5.6 Choice of final omnibus p-value (what we report)
 
 Depending on the resampling mode used:
 
@@ -788,7 +788,7 @@ $$q_{\mathrm{omni,final}}(S)$$, reported as `omni_p_final_BH`.
 
 ---
 
-### 5.6 Treatment of MAGMA competitive in the omnibus (explicit)
+### 5.7 Treatment of MAGMA competitive in the omnibus (explicit)
 
 We also calculate and present the MAGMA competitive gene-set p-value (`magma_pvalue`) as an independent summary.
 By default, it is **excluded** from the resampling-calibrated omnibus (`include_magma_in_perm=FALSE`) because the aforementioned resampling strategies provide null realizations just for **within-pathway** gene evidence ($$p_g$$ and $$Z_g$$ for genes $$g\in S$$). A principled null for the MAGMA competitive statistic necessitates rerunning a competitive regression (or MAGMA itself) for each duplicate on a suitable genome-wide null, which is not executed in this context. Thus, the resampling-calibrated omnibus is calculated exclusively for the five gene-derived component tests, and MAGMA competitive is analyzed in conjunction with the omnibus rather than being integrated into it.
