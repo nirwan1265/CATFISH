@@ -566,9 +566,10 @@ Each pathway in CATFISH is evaluated using a panel of complementary gene-to-path
 
 Let the component method $p$-values for pathway $S$ be
 
-\[
-\mathcal{P}(S)=\{p_{\mathrm{ACAT}}(S),\,p_{\mathrm{Fisher}}(S),\,p_{\mathrm{TFisher}}(S),\,p_{\mathrm{minGene}}(S),\,p_{\mathrm{Stouffer}}(S)\},
-\]
+$$
+\mathcal{P}(S)=\{p_{\mathrm{ACAT}}(S)\, p_{\mathrm{Fisher}}(S)\, p_{\mathrm{TFisher}}(S)\, p_{\mathrm{minGene}}(S)\, p_{\mathrm{Stouffer}}(S)\}
+$$
+
 where the Stouffer term is included only when gene $Z$-scores are available; thus $K=|\mathcal{P}(S)|\le 5$.
 
 \textbf{Omnibus operators (across methods).}
@@ -613,11 +614,9 @@ All p-values are clipped to $[p_{\min},\,1-p_{\min}]$ (e.g., $p_{\min}=10^{-15}$
 
 Let $p_1,\dots,p_K$ denote the available component p-values for pathway $S$ and let weights $v_j\ge 0$ satisfy $\sum_{j=1}^K v_j=1$ (default $v_j=1/K$). Define
 
-\[
-T_{\mathrm{omni,ACAT}}(S)=\sum_{j=1}^{K} v_j \tan\{\pi(0.5-p_j)\},
-\qquad
-p_{\mathrm{omni,ACAT}}(S)=0.5-\frac{1}{\pi}\arctan\{T_{\mathrm{omni,ACAT}}(S)\}.
-\]
+$$
+T_{\mathrm{omni,ACAT}}(S)=\sum_{j=1}^{K} v_j \tan\!\bigl(\pi(0.5 - p_j)\bigr),\qquad p_{\mathrm{omni,ACAT}}(S) = 0.5 - \frac{1}{\pi} \arctan\!\bigl(T_{\mathrm{omni,ACAT}}(S)\bigr).
+$$
 
 The ACAT-O layer has heightened sensitivity when at least one component test demonstrates great significance, regardless of the modest performance of other components (e.g., sparse drivers, coordinated enrichment, hybrid subsets).
 
@@ -627,13 +626,14 @@ The ACAT-O layer has heightened sensitivity when at least one component test dem
 
 Define the across-method minimum
 
-\[
-T_{\mathrm{omni,min}}(S)=\min_{p\in\mathcal{P}(S)} p.
-\]
+$$
+T_{\mathrm{omni,min}}(S) = \min_{p \in \mathcal{P}(S)} p
+$$
+
 An independence-based analytic conversion is
-\[
-p_{\mathrm{omni,min}}(S)=1-\bigl(1-T_{\mathrm{omni,min}}(S)\bigr)^K,
-\]
+$$
+p_{\mathrm{omni,min}}(S) = 1 - \bigl(1 - T_{\mathrm{omni,min}}(S)\bigr)^K 
+$$
 
 Since, the component tests are correlated, inference is based on unified resampling calibration
 (Section 5.5).
@@ -647,15 +647,16 @@ Since, all component pathway tests are computed from the same within-pathway gen
 
 For a chosen omnibus operator $f_{\mathrm{omni}}$ (ACAT-O or minP-O), and null replicates $b=1,\dots,B$, we compute component method $p$-values $\{p_j^{(b)}(S)\}$ and form
 
-\[
+$$
 p_{\mathrm{omni}}^{(b)}(S) = f_{\mathrm{omni}}\!\left(\{p_j^{(b)}(S)\}\right).
-\]
+$$
+
 
 The calibrated omnibus $p$-value is then
 
-\[
-\hat p_{\mathrm{omni}}(S)=\frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left[p_{\mathrm{omni}}^{(b)}(S)\le p_{\mathrm{omni}}^{\mathrm{obs}}(S)\right]}{B+1},
-\]
+$$
+\hat p_{\mathrm{omni}}(S) = \frac{ 1+\sum_{b=1}^{B} \mathbf{1}\!\left( p_{\mathrm{omni}}^{(b)}(S) \le p_{\mathrm{omni}}^{\mathrm{obs}}(S) \right)}{B+1}
+$$
 
 where $p_{\mathrm{omni}}^{\mathrm{obs}}(S)$ is the omnibus value computed on the observed pathway inputs.
 
@@ -728,16 +729,16 @@ Global resampling offers a data-driven, LD-agnostic calibration of the omnibus, 
 To preserve within-pathway dependence, we construct a pathway-specific gene–gene correlation matrix $R_S$
 from MAGMA gene-correlation outputs and simulate
 
-\[
+$$
 Z^{(b)} \sim \mathcal{N}(0, R_S).
-\]
-We 
-then derive null gene-level p-values from the same draw using a one-sided mapping consistent with
-the Stouffer convention:
+$$
 
-\[
-P^{(b)} = 1-\Phi\!\left(Z^{(b)}\right).
-\]
+
+We then derive null gene-level p-values from the same draw using a one-sided mapping consistent with the Stouffer convention:
+
+$$
+P^{(b)} = 1 - \Phi\!\left(Z^{(b)}\right)
+$$
 
 Using $P^{(b)}$ and the same $Z^{(b)}$, we recompute all component pathway tests and apply the chosen omnibus operator to obtain $p_{\mathrm{omni}}^{(b)}(S)$.
 
