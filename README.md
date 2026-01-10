@@ -562,29 +562,27 @@ Due to the strong dependence among $$\big(T_{\mathrm{ACAT}}, T_{\mathrm{Fisher}}
 ## 5) Omnibus pathway p-value across methods (omnibus operator + unified null calibration)
 
 
-Each pathway in CATFISH is evaluated using a panel of complementary gene-to-pathway tests
-(ACAT, Fisher, adaptive soft TFisher, Stouffer, and a minimum-gene statistic).
-Because all component tests are deterministic functions of the same gene-level inputs
-$\{p_g\}$ (and optionally $\{Z_g\}$), the resulting component $p$-values are correlated.
-Accordingly, CATFISH separates (i) the \emph{omnibus operator} used to combine evidence across methods
-from (ii) the \emph{null calibration} used to obtain valid inference under dependence.
+Each pathway in CATFISH is evaluated using a panel of complementary gene-to-pathway tests (ACAT, Fisher, adaptive soft TFisher, Stouffer, and a minimum-gene statistic). All component tests are deterministic functions of the same gene-level inputs $\{p_g\}$ (and optionally $\{Z_g\}$), hence, the resulting component $p$-values are correlated. Accordingly, CATFISH makes two choices: (i) how to summarize the vector of method p-values into a single omnibus statistic (ACAT-O or minP-O), and (ii) how to calibrate that omnibus statistic under the null (analytic for ranking, resampling/MVN for valid inference).
 
 Let the component method $p$-values for pathway $S$ be
+
 \[
 \mathcal{P}(S)=\{p_{\mathrm{ACAT}}(S),\,p_{\mathrm{Fisher}}(S),\,p_{\mathrm{TFisher}}(S),\,p_{\mathrm{minGene}}(S),\,p_{\mathrm{Stouffer}}(S)\},
 \]
 where the Stouffer term is included only when gene $Z$-scores are available; thus $K=|\mathcal{P}(S)|\le 5$.
 
 \textbf{Omnibus operators (across methods).}
-CATFISH reports two omnibus summaries:
-(i) ACAT across methods (ACAT-O), and
-(ii) a minimum across methods (minP-O; a conservative “best-of-tests” summary).
 
-\textbf{Null calibration (analytic vs resampling).}
-Analytic omnibus values are reported for descriptive ranking, but primary inference is obtained
-by a \emph{unified resampling calibration} (global gene-set resampling and/or LD-aware MVN simulation),
-in which all component tests and the chosen omnibus operator are recomputed within each null replicate.
-This preserves cross-method coupling by construction, and (under MVN) also preserves within-pathway gene dependence.
+CATFISH reports two omnibus summaries:
+
+(i) ACAT across methods (ACAT-O), and
+
+(ii) a minimum across methods (minP-O,“best-of-tests” omnibus).
+
+
+Null calibration (analytic vs resampling)
+
+Analytic omnibus values are reported for descriptive ranking, but primary inference is obtained by a unified resampling calibration (global gene-set resampling and/or LD-aware MVN simulation), in which all component tests and the chosen omnibus operator are recomputed within each null replicate. This preserves cross-method coupling by construction, and (under MVN) also preserves within-pathway gene dependence.
 
 
 ---
@@ -593,7 +591,7 @@ This preserves cross-method coupling by construction, and (under MVN) also prese
 
 GWAS summary statistics were aggregated to gene-level association evidence using MAGMA’s LD-aware SNP-wise gene model (multi-model), with an external reference panel to represent local LD. SNPs were assigned to genes using a symmetric $\pm 25$ kb window around gene boundaries, yielding per-gene association outputs such as a gene $p$-value $p_g$ and an association-strength Z statistic $Z_g$.
 
-To reduce confounding by gene length and SNP density, we optionally compute covariate-adjusted gene evidence by regressing the gene-level Z statistics on $\log(L_g)$ and $\log(S_g)$, where $L_g$ is gene length and $S_g$ is the number of assigned SNPs. Residual Z-scores are then converted to adjusted gene $p$-values and used as inputs for p-based pathway tests when available; otherwise, raw MAGMA gene $p$-values are used.
+To reduce confounding by gene length and SNP density, we optionally compute covariate-adjusted gene evidence by regressing the gene-level Z statistics on $\log(L_g)$ and $\log(S_g)$, where $L_g$ is gene length and $S_g$ is the number of assigned SNPs. Residual Z-scores are then converted to adjusted gene $p$-values and used as inputs for p-based pathway tests when available; otherwise, raw MAGMA gene $p$-values are used (Explained in detail in Methods Section 2).
 
 ---
 
@@ -604,19 +602,17 @@ For each pathway $S$ with member genes $g\in S$, we compute:
 1. \textbf{ACAT} (p-based)
 2. \textbf{Fisher} (p-based)
 3. \textbf{Adaptive soft TFisher} (p-based; via a fixed $\tau$ grid)
-4. \textbf{minGene}: $p_{\minGene}(S)=\min_{g\in S} p_g$, reported as the nominal Sidák transform
-   $p_{\mathrm{minGene}}(S)=1-(1-p_{\minGene}(S))^{|S|}$ for comparability across pathway sizes
+4. \textbf{minP}:  $p_{\minGene}(S) = \min_{g\in S} p_g$; this serves as a sparse-signal detector; no analytic independence correction
 5. \textbf{Stouffer Z} (optional; using gene $Z_g$ when available)
 
-All p-values are clipped to $[p_{\min},\,1-p_{\min}]$ (e.g., $p_{\min}=10^{-15}$) before applying
-$\log(\cdot)$ or $\tan(\cdot)$ transforms for numerical stability.
+All p-values are clipped to $[p_{\min},\,1-p_{\min}]$ (e.g., $p_{\min}=10^{-15}$) before applying $\log(\cdot)$ or $\tan(\cdot)$ transforms for numerical stability.
 
 ---
 
 ### 5.3 Omnibus ACAT across methods (ACAT-O)
 
-Let $p_1,\dots,p_K$ denote the available component p-values for pathway $S$ and let weights $v_j\ge 0$
-satisfy $\sum_{j=1}^K v_j=1$ (default $v_j=1/K$). Define
+Let $p_1,\dots,p_K$ denote the available component p-values for pathway $S$ and let weights $v_j\ge 0$ satisfy $\sum_{j=1}^K v_j=1$ (default $v_j=1/K$). Define
+
 \[
 T_{\mathrm{omni,ACAT}}(S)=\sum_{j=1}^{K} v_j \tan\{\pi(0.5-p_j)\},
 \qquad
@@ -630,6 +626,7 @@ The ACAT-O layer has heightened sensitivity when at least one component test dem
 ### 5.4 “Best-of-tests” omnibus via minP across methods (minP-O)
 
 Define the across-method minimum
+
 \[
 T_{\mathrm{omni,min}}(S)=\min_{p\in\mathcal{P}(S)} p.
 \]
@@ -637,7 +634,8 @@ An independence-based analytic conversion is
 \[
 p_{\mathrm{omni,min}}(S)=1-\bigl(1-T_{\mathrm{omni,min}}(S)\bigr)^K,
 \]
-but because the component tests are correlated, inference is based on unified resampling calibration
+
+Since, the component tests are correlated, inference is based on unified resampling calibration
 (Section 5.5).
 
 
@@ -645,20 +643,20 @@ but because the component tests are correlated, inference is based on unified re
 
 ### 5.5 Unified null calibration of the omnibus (global gene-set resampling and LD-aware MVN simulation)
 
-Because all component pathway tests are computed from the same within-pathway gene evidence
-$\{p_g\}$ (and optionally $\{Z_g\}$), their component $p$-values are correlated under the null.
-Rather than assuming independence, CATFISH calibrates the chosen omnibus operator by generating
-null replicates in which *all* component tests are recomputed from the same dependence-preserving draw.
+Since, all component pathway tests are computed from the same within-pathway gene evidence $\{p_g\}$ (and optionally $\{Z_g\}$), their component $p$-values are correlated under the null. Rather than assuming independence, CATFISH calibrates the chosen omnibus operator by generating null replicates in which all component tests are recomputed from the same dependence-preserving draw.
 
-For a chosen omnibus operator $f_{\mathrm{omni}}$ (ACAT-O or minP-O), and null replicates $b=1,\dots,B$,
-we compute component method $p$-values $\{p_j^{(b)}(S)\}$ and form
+For a chosen omnibus operator $f_{\mathrm{omni}}$ (ACAT-O or minP-O), and null replicates $b=1,\dots,B$, we compute component method $p$-values $\{p_j^{(b)}(S)\}$ and form
+
 \[
 p_{\mathrm{omni}}^{(b)}(S) = f_{\mathrm{omni}}\!\left(\{p_j^{(b)}(S)\}\right).
 \]
+
 The calibrated omnibus $p$-value is then
+
 \[
 \hat p_{\mathrm{omni}}(S)=\frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left[p_{\mathrm{omni}}^{(b)}(S)\le p_{\mathrm{omni}}^{\mathrm{obs}}(S)\right]}{B+1},
 \]
+
 where $p_{\mathrm{omni}}^{\mathrm{obs}}(S)$ is the omnibus value computed on the observed pathway inputs.
 
 We implement two complementary null generators.
@@ -668,24 +666,17 @@ We implement two complementary null generators.
 
 #### 5.5.1 Global gene-set resampling (`perm_mode="global"`)
 
-For a pathway $S$ of size $d$, each null replicate samples $d$ genes from a genome-wide pool
-$\mathcal{G}$ of genes with valid MAGMA outputs. Each sampled gene contributes its paired evidence
-$(p_g, Z_g)$ (when $Z_g$ is available), ensuring that p- and Z-based components are computed from
-the same resampled genes in each replicate. All component pathway tests (ACAT, Fisher, adaptive soft TFisher,
-minGene, and optional Stouffer) are recomputed on the resampled set, and then combined using the
-same omnibus operator $f_{\mathrm{omni}}$ used for the observed pathway.
+For a pathway $S$ of size $d$, each null replicate samples $d$ genes from a genome-wide pool $\mathcal{G}$ of genes with valid MAGMA outputs. Each sampled gene contributes its paired evidence $(p_g, Z_g)$ (when $Z_g$ is available), ensuring that p- and Z-based components are computed from the same resampled genes in each replicate. All component pathway tests (ACAT, Fisher, adaptive soft TFisher, minGene, and optional Stouffer) are recomputed on the resampled set, and then combined using the same omnibus operator $f_{\mathrm{omni}}$ used for the observed pathway.
 
-This approach preserves the empirical genome-wide marginal distribution of gene-level evidence and
-captures cross-method coupling (since all components are recomputed from the same resampled gene set),
-but it is LD-agnostic (it does not preserve within-pathway gene–gene correlation).
+This approach preserves the empirical genome-wide marginal distribution of gene-level evidence and captures cross-method coupling (since all components are recomputed from the same resampled gene set), but it is LD-agnostic (it does not preserve within-pathway gene–gene correlation).
 
 **Concept.**  
 The global resampling approach generates the null distribution of the omnibus by re-sampling genes instead of SNPs. It maintains the empirical distribution of gene-level p-values and Z-scores from MAGMA, while randomizing their allocation to pathways. This simulates a situation in which the genome-wide association landscape remains intact yet is not associated with any specific biological route designation.
 
 **Step 1 – Define the global gene pool.**  
 We define a gene pool $$\mathcal{G}$$ containing all genes with valid pathway inputs. Each gene contributes:
-- its p-value $$p_g$$ from the preferred MAGMA p-value column (adjusted if provided, otherwise raw), and
-- if Stouffer is used, its corresponding Z-score $$Z_g$$ from the `z_col` field in the same MAGMA gene results.
+- its p-value $$p_g$$ from the  MAGMA p-value column (or adjusted p-value), and
+- if Stouffer is used, its corresponding Z-score (or adjusted Z-score) in the same MAGMA results.
 
 Both vectors $$\{p_g\}$$ and $$\{Z_g\}$$ are aligned so that each gene $$g$$ has a paired $$(p_g, Z_g)$$. This ensures that the p-value and Z-score for a given gene are always resampled together in every replicate.
 
@@ -693,15 +684,14 @@ Both vectors $$\{p_g\}$$ and $$\{Z_g\}$$ are aligned so that each gene $$g$$ has
 For each pathway $$S$$ of size $$|S| = d$$, and each permutation $$b = 1, \dots, B$$:
 
 1. **Randomly draw gene indices**  
-   Select $$d$$ unique gene indices $$I^{(b)} = (i_1, \dots, i_d)$$ uniformly from $$\{1, \dots, |\mathcal{G}|\}$$.  
-   Sampling is *without replacement* when $$d \leq |\mathcal{G}|$$; if a pathway is extremely large, fallback to *with replacement* is allowed.
+   Select $$d$$ unique gene indices $$I^{(b)} = (i_1, \dots, i_d)$$ uniformly from $$\{1, \dots, |\mathcal{G}|\}$$. Sampling is without replacement when $$d \leq |\mathcal{G}|$$.
 
 2. **Construct paired null evidence**  
    The resampled gene-level evidence is  
 
    $$P^{(b)} = (P_{i_1}, \dots, P_{i_d}), \quad Z^{(b)} = (Z_{i_1}, \dots, Z_{i_d}) \text{ (if Stouffer enabled)}$$
 
-   This "paired resampling" ensures that each gene contributes its observed correlation between $$p_g$$ and $$Z_g$$ to the identical replicate, and that all component tests in replicate $$b$$ utilize the same foundational gene selection.
+   This paired resampling ensures that each gene contributes its observed correlation between $$p_g$$ and $$Z_g$$ to the identical replicate, and that all component tests in replicate $$b$$ utilize the same foundational gene selection.
    
 **Step 3 – Recompute all five component tests.**  
 For every null draw $$(P^{(b)}, Z^{(b)})$$, CATFISH recomputes:
@@ -711,7 +701,7 @@ For every null draw $$(P^{(b)}, Z^{(b)})$$, CATFISH recomputes:
 - $$p_{\mathrm{minP}}^{(b)}(S)$$ from the smallest gene p-value;
 - and $$p_{\mathrm{Stouffer}}^{(b)}(S)$$ using $$Z^{(b)}$$ under the same (one-sided) alternative.
   
-The Stouffer null is typically regarded as unweighted for numerical stability; however, this does not influence dependence preservation, as the same genes are sampled collectively across all components.
+The Stouffer null is typically regarded as unweighted for numerical stability. However, this does not influence dependence preservation, as the same genes are sampled collectively across all components.
 
 **Step 4 – Combine resampled components into omnibus.**  
 The set of replicate component p-values $$\{p_j^{(b)}(S)\}$$ are combined using the same omnibus rule (ACAT-O or minP-O) applied to the observed data:
@@ -737,19 +727,21 @@ Global resampling offers a data-driven, LD-agnostic calibration of the omnibus, 
 
 To preserve within-pathway dependence, we construct a pathway-specific gene–gene correlation matrix $R_S$
 from MAGMA gene-correlation outputs and simulate
+
 \[
 Z^{(b)} \sim \mathcal{N}(0, R_S).
 \]
-We then derive null gene-level p-values from the same draw using a one-sided mapping consistent with
+We 
+then derive null gene-level p-values from the same draw using a one-sided mapping consistent with
 the Stouffer convention:
+
 \[
 P^{(b)} = 1-\Phi\!\left(Z^{(b)}\right).
 \]
-Using $P^{(b)}$ and the same $Z^{(b)}$, we recompute all component pathway tests and apply the
-chosen omnibus operator to obtain $p_{\mathrm{omni}}^{(b)}(S)$.
 
-This MVN procedure preserves (i) within-pathway gene dependence encoded by $R_S$ and (ii) cross-method
-coupling because every component test is recomputed from the same correlated draw.
+Using $P^{(b)}$ and the same $Z^{(b)}$, we recompute all component pathway tests and apply the chosen omnibus operator to obtain $p_{\mathrm{omni}}^{(b)}(S)$.
+
+This MVN procedure preserves (i) within-pathway gene dependence encoded by $R_S$ and (ii) cross-method coupling because every component test is recomputed from the same correlated draw.
 
 **Concept.**  
 Although global resampling maintains empirical p-value distributions, it fails to explicitly account for *within-pathway* linkage disequilibrium among genes. The LD-aware MVN calibration resolves this issue by generating correlated gene-level Z-scores from a multivariate normal distribution defined by MAGMA’s gene–gene correlation matrix $$R_S$$ for each pathway.
