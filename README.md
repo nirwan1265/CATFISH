@@ -1267,7 +1267,8 @@ minp_res <- magcat_minp_pathways(
 
 ### Drosophila melanogaster Starvation Response GWAS example 
 
-### From sex-specific top genes to shared functional programs: pathway-level reproducibility and what the omnibus captures (Fig. A–F)
+Phenotype: We analyzed a starvation-stress (starvation resistance) phenotype measured in Drosophila, with males and females assayed separately. The trait quantifies tolerance to nutrient deprivation (typically recorded as time-to-death or survival under starvation conditions), and because starvation response is strongly sex-dependent, we treated the male and female measurements as two related but distinct quantitative phenotypes rather than pooling them. We performed sex-stratified GWAS using a mixed-model framework to control for relatedness/population structure, then propagated SNP-level signals to genes and pathways. Pathway enrichment was computed separately for males and females, and we summarized cross-sex reproducibility by comparing the sets of significant pathways between the two analyses.
+
 
 ![Pathway analysis](Figures/Fig2/Fig2.png)
 *Pathway analysis*
@@ -1287,6 +1288,8 @@ Within-sex UpSet visualizations further elucidate why integrative testing can yi
 --- 
 
 ### Pathway-level patterns of starvation tolerance are conserved across sexes, with sex-biased metabolic strategies
+
+Phenotype (BIO6): We used BIO6, the “minimum temperature of the coldest month,” as a continuous climate phenotype for Arabidopsis accessions. BIO6 is a standard bioclimatic variable that captures winter cold severity and is commonly used as a proxy for cold‐environment selection pressure. Treating BIO6 as a single quantitative trait, we performed environment GWAS across the accessions (accounting for relatedness/population structure via a mixed-model framework), then propagated SNP-level evidence to genes and pathways. SNP associations were mapped to genes, gene-level statistics were aggregated into pathway enrichment tests, and pathway-level significance was summarized/compared across methods using our CATFISH multi-evidence framework.
 
 
 ![Top 20 pathways enriched for female and male flies for starvation response](Figures/Fig_top20_bubbles_by_sex.png)
