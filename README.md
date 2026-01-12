@@ -1265,14 +1265,13 @@ minp_res <- magcat_minp_pathways(
 
 ## RESULTS
 
-### Drosophila melanogaster Starvation Response GWAS example 
+### *Drosophila melanogaster* Starvation Response GWAS example  
 
-Phenotype: We analyzed a starvation-stress (starvation resistance) phenotype measured in Drosophila, with males and females assayed separately. The trait quantifies tolerance to nutrient deprivation (typically recorded as time-to-death or survival under starvation conditions), and because starvation response is strongly sex-dependent, we treated the male and female measurements as two related but distinct quantitative phenotypes rather than pooling them. We performed sex-stratified GWAS using a mixed-model framework to control for relatedness/population structure, then propagated SNP-level signals to genes and pathways. Pathway enrichment was computed separately for males and females, and we summarized cross-sex reproducibility by comparing the sets of significant pathways between the two analyses.
+We examined a starvation-resistance phenotype in Drosophila, assaying males and females separately. The starvation resistance phenotype was measured as the number of hours adult flies survive without food. The original study analyzed the phenotype both with sexes pooled and stratified by sex. The GWAS recapitulated an association with *pnt*, a gene previously implicated in starvation resistance, and also identified a SNP in *CG3213*, a gene previously highlighted in a Drosophila obesity screen. We reanalyzed the sex-stratified data by applying a minor allele frequency (MAF) threshold greater than 0.05 and annotating genes located within 25 kb upstream and downstream of the single nucleotide polymorphisms (SNPs) for our CATFISH analysis.
 
 
 ![Pathway analysis](Figures/Fig2/Fig2.png)
 *Pathway analysis*
-
 
 We first evaluated the highest-ranking genes from the sex-stratified GWAS to quantify SNP-level cross-sex reproducibility (Fig. A). Among the top 50 genes identified in each sex, the overlap was minimal, with only 4 genes shared between strata. Following LD adjusted SNP-to-gene aggregation using MAGMA (Fig. B), gene-level concordance also remained limited, with 5 of the top 50 genes shared across sexes. These findings indicate that the most strongly associated genes are largely sex-specific, consistent with a highly polygenic architecture in which small effect sizes, LD structure, and sampling variability can substantially reorder gene-level association rankings between sexes.
 
