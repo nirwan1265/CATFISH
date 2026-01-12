@@ -1289,25 +1289,27 @@ These findings indicate that CATFISH/Omni_MVN is not simply “relabeling” the
 
 ### Pathway-level patterns of starvation tolerance are conserved across sexes, with sex-biased metabolic strategies
 
-Phenotype (BIO6): We used BIO6, the “minimum temperature of the coldest month,” as a continuous climate phenotype for Arabidopsis accessions. BIO6 is a standard bioclimatic variable that captures winter cold severity and is commonly used as a proxy for cold‐environment selection pressure. Treating BIO6 as a single quantitative trait, we performed environment GWAS across the accessions (accounting for relatedness/population structure via a mixed-model framework), then propagated SNP-level evidence to genes and pathways. SNP associations were mapped to genes, gene-level statistics were aggregated into pathway enrichment tests, and pathway-level significance was summarized/compared across methods using our CATFISH multi-evidence framework.
-
 
 ![Top 20 pathways enriched for female and male flies for starvation response](Figures/Fig_top20_bubbles_by_sex.png)
 *Top 20 pathways enriched for female and male flies for starvation response*
 
 
-We applied the CATFISH multi-statistic pathway framework to gene-level summary statistics from sex-stratified starvation resistance GWAS in *Drosophila melanogaster*, using pathway annotations derived from the BioCyc/MetaCyc databases. No pathway reached statistical significance after correction for multiple hypothesis testing at the prespecified false discovery rate (FDR) threshold. Accordingly, we treat these findings as exploratory pathway rankings rather than as definitive evidence of causal associations. Nonetheless, the highest-ranked pathways exhibit non-random biological clustering, implicating candidate metabolic and proteostasis-related processes that are broadly consistent with known aspects of starvation physiology. We must note that, the enriched pathways identified are most appropriately interpreted as an over-representation of genes annotated to the regulation and execution of gluconeogenic processes, rather than as direct evidence for altered metabolic flux through these pathways.
+We applied the CATFISH multi-statistic pathway framework to gene-level summary statistics from sex-stratified starvation resistance GWAS in *Drosophila melanogaster*, using pathway annotations derived from the BioCyc/MetaCyc databases. No pathway reached statistical significance after correction for multiple hypothesis testing at the prespecified false discovery rate (FDR) threshold. Accordingly, we treat these findings as exploratory pathway rankings rather than as definitive evidence of causal associations as explained above. Nonetheless, the highest-ranked pathways exhibit non-random biological clustering for processes that are consistent with starvation physiology. We must note that, the enriched pathways identified are most appropriately interpreted as an over-representation of genes annotated to the regulation and execution of gluconeogenic processes, rather than as direct evidence for altered metabolic flux through these pathways.
 
 ### Recurring cross-sex biological processes among the top-ranked pathways
 
 A small set of pathway annotations appears in the top ranks for both sexes, suggesting a shared response to starvation:
 
-**Glucose homeostasis and fuel partitioning.**  
-Both sexes exhibited significant enrichment for *gluconeogenesis III*, consistent with the requirement to sustain circulating glucose concentrations as stored carbohydrate reserves become depleted. 
+**Glucose homeostasis.**  
+According to a 2017 report from Christopher Naisbitt, the perturbation of the gluconeogenic pathway is physiologically connected to starvation resistance. Starvation robustly induces gluconeogenesis, which in turn plays a central role in determining the duration over which an organism can preserve fuel homeostasis in the absence of an exogenous nutrient supply. Gluconeogenesis is defined as the de novo synthesis of glucose from non-carbohydrate precursors—classically glycerol derived from adipose tissue lipolysis, lactate generated via the Cori cycle, and gluconeogenic amino acids such as alanine and glutamine, and becomes indispensable once hepatic glycogen stores are depleted. 
+
+In humans, this metabolic transition is prominent during the early fasting/starvation phase. The brain continues to require approximately 100–120 g/day of glucose, which is supplied predominantly through hepatic gluconeogenesis. Within this framework, alanine and glutamine have been identified as major gluconeogenic substrates for the liver and kidney, respectively (Naisbitt & Davies, 2017). Isotope tracer-based studies in short-term starvation demonstrate that the proportion of endogenous glucose production attributable to gluconeogenesis increases steeply with fasting duration, for example, from ~67% at approximately 22 hours of fasting to ~93% by ~42 hours(Landau et al., 1996; Soeters et al., 2012).  This framework of gluconeogenesis for survival appears to be conserved across taxa. For example, in starved tick embryonic cells, genes encoding key glycolytic enzymes (hexokinase, HK; pyruvate kinase, PK) are downregulated, whereas phosphoenolpyruvate carboxykinase (PEPCK) is upregulated, consistent with a starvation-induced metabolic reprogramming toward gluconeogenesis, accompanied by enhanced nutrient recycling through autophagy (Nogueira et al., 2025).
+
 
 **NAD⁺ metabolism and redox balance.**  
-*NAD biosynthesis* emerged as one of the most strongly enriched pathwy (*superpathway of NAD biosynthesis in eukaryotes* in both sexes), with females additionally showing enrichment for an NAD salvage pathway. This convergence suggests that genetic variation affecting pathways responsible for maintaining redox homeostasis and cofactor pools becomes particularly relevant under nutrient limitation.
+NAD⁺ metabolism (superpathway of NAD biosynthesis in eukaryotes) encompasses the processes by which cells sustain and repartition the nicotinamide adenine dinucleotide pool across subcellular compartments during nutrient stress. In eukaryotic cells, NAD⁺ is generated de novo from tryptophan and via vitamin B₃ salvage pathways (utilizing nicotinamide, nicotinic acid, and nicotinamide riboside), and is then continuously recycled because it functions both as a redox cofactor (NAD⁺/NADH) and as a consumable substrate for signaling enzymes such as sirtuins and poly(ADP-ribose) polymerases (PARPs) (Xiao et al., 2018; Cantó et al., 2015). Starvation or fasting generally reprograms metabolism toward enhanced lipid oxidation and mitochondrial respiration, thereby increasing dependence on NAD⁺-dependent redox reactions while concurrently promoting NAD⁺-dependent stress-response programs. In mice, a 24-hour fasting period elevates hepatic SIRT1 and PPARα expression in parallel with increased NAD⁺ concentrations, which have been linked to augmented NAMPT activity in the NAD⁺ salvage pathway (Hayashida et al., 2010). 
 
+Moreover, fasting directly influences mitochondrial NAD⁺ handling. SLC25A51 (also known as MCART1), identified as a mammalian mitochondrial NAD⁺ transporter (Luongo et al., 2020; Girardi et al., 2020; Kory et al., 2020), is induced in liver by fasting, and its loss perturbs mitochondrial NAD⁺ homeostasis and attenuates fasting-induced SIRT3- and PPARα-associated transcriptional programs (Fu et al., 2022). Furthermore, endocrine and systemic metabolic flexibility are tightly integrated with these processes. Adipose tissue NAD biology has been proposed as a key regulator of whole-body “fuel switching” across fed–fasted transitions (Franczyk et al., 2021), while systemic NAD biosynthesis mediated by NAMPT/eNAMPT can modulate hypothalamic NAD⁺/SIRT1 signaling and thereby influence activity-related and behavioral phenotypes (Revollo et al., 2007; Yoon et al., 2015). Thus, the enrichment of NAD biosynthesis and NAD⁺ metabolic pathways among starvation-resistance genetic hits supports a causal framework in which allelic variation that enhances NAD⁺ availability, subcellular compartmentalization (particularly within mitochondria), or recycling capacity improves the ability to support fasting-associated metabolic states and stress-responsive sirtuin signaling. At the same time, starvation itself appears to upregulate these NAD⁺ pathways as an integral component of the adaptive response.
 **Membrane lipid remodeling.**  
 Both sexes showed enrichment of sphingolipid-associated pathways (e.g., *ceramide degradation* and *glycosphingolipid biosynthesis*).
 
@@ -1328,6 +1330,8 @@ Overall, despite the absence of FDR-significant pathways, the top-ranked results
 ---
 
 ### Arabidopsis thaliana Lowest Temperature of the Coldest Month GWAS example 
+
+Phenotype (BIO6): We used BIO6, the “minimum temperature of the coldest month,” as a continuous climate phenotype for Arabidopsis accessions. BIO6 is a standard bioclimatic variable that captures winter cold severity and is commonly used as a proxy for cold‐environment selection pressure. Treating BIO6 as a single quantitative trait, we performed environment GWAS across the accessions (accounting for relatedness/population structure via a mixed-model framework), then propagated SNP-level evidence to genes and pathways. SNP associations were mapped to genes, gene-level statistics were aggregated into pathway enrichment tests, and pathway-level significance was summarized/compared across methods using our CATFISH multi-evidence framework.
 
 ![Arabidopsis Lowest Temperature Environmental GWAS](Figures/Fig3/Fig3.png)
 *[Arabidopsis Lowest Temperature Environmental GWAS*
@@ -1433,6 +1437,28 @@ https://projecteuclid.org/journals/annals-of-applied-statistics/volume-14/issue-
   https://www.nature.com/articles/s41598-021-86465-y
 - Tippett, L. H. C. *The Methods of Statistics*. London:Williams & Norgate (1931)
 - Westfall, P. H., & Young, S. S. *Resampling-Based Multiple Testing: Examples and Methods for p-Value Adjustment*. New York: Wiley(1993)
-  
 
 
+## References (Glyconeogenesis)
+
+- Karimi, R., Yanovich, A., Elbarbry, F., & Cleven, A. (2024). Adaptive Effects of Endocrine Hormones on Metabolism of Macronutrients during Fasting and Starvation: A Scoping Review. Metabolites.
+- Landau, B. R., Wahren, J., Chandramouli, V., Schumann, W. C., Ekberg, K., & Kalhan, S. C. (1996). Contributions of gluconeogenesis to glucose production in the fasted state. Journal of Clinical Investigation.
+- Naisbitt, C., & Davies, S. (2017). Starvation, exercise and the stress response. Anaesthesia and Intensive Care Medicine.
+- Nogueira, C. L., Arcanjo, A. F., Lima, M. E., et al. (2025). Starvation Metabolism Adaptations in Tick Embryonic Cells BME26. International Journal of Molecular Sciences.
+- Soeters, M. R., Soeters, P. B., Schooneman, M. G., Houten, S. M., & Romijn, J. A. (2012). Adaptive reciprocity of lipid and glucose metabolism in human short-term starvation. American Journal of Physiology – Endocrinology and Metabolism.
+- Steinhauser, M. L., Olenchock, B. A., O’Keefe, J., et al. (2018). The circulating metabolome of human starvation. JCI Insight.
+
+## References (NAD+)
+- Cantó, C., Menzies, K.J., & Auwerx, J. (2015). NAD+ metabolism and the control of energy homeostasis: a balancing act between mitochondria and the nucleus. Cell Metabolism, 22, 31–53. https://doi.org/10.1016/j.cmet.2015.05.023
+- Franczyk, M.P., Qi, N., Stromsdorfer, K.L., Yoshino, J., et al. (2021). Importance of Adipose Tissue NAD+ Biology in Regulating Metabolic Flexibility. Endocrinology, 162(3), bqab006.
+- Fu, Z., Kim, H., Morse, P.T., Lu, M.-J., Hüttemann, M., Cambronne, X.A., Zhang, K., & Zhang, R. (2022). The mitochondrial NAD+ transporter SLC25A51 is a fasting-induced gene affecting SIRT3 functions. Metabolism, 135, 155275. https://doi.org/10.1016/j.metabol.2022.155275
+- Girardi, E., Agrimi, G., Goldmann, U., et al. (2020). Epistasis-driven identification of SLC25A51 as a regulator of human mitochondrial NAD import. Nature Communications, 11, 6145. https://doi.org/10.1038/s41467-020-19871-x
+- Hayashida, S., Arimoto, A., Kuramoto, Y., Kozako, T., Honda, S.-I., & Shimeno, H. (2010). Fasting promotes the expression of SIRT1, an NAD+-dependent protein deacetylase, via activation of PPARα in mice. Molecular and Cellular Biochemistry, 339, 285–292.
+- Kory, N., uit de Bos, J., van der Rijt, S., et al. (2020). MCART1/SLC25A51 is required for mitochondrial NAD transport. Science Advances. (PubMed: 33087354)
+- Luongo, T.S., Eller, J.M., Lu, M.J., et al. (2020). SLC25A51 is a mammalian mitochondrial NAD+ transporter. Nature, 588, 174–179. https://doi.org/10.1038/s41586-020-2741-7
+- Ramsey, K.M., Yoshino, J., Brace, C.S., et al. (2009). Circadian clock feedback cycle through NAMPT-mediated NAD+ biosynthesis. Science, 324, 651–654. https://doi.org/10.1126/science.1171641
+- Revollo, J.R., Grimm, A.A., & Imai, S. (2004). The NAD biosynthesis pathway mediated by nicotinamide phosphoribosyltransferase regulates Sir2 activity in mammalian cells. Journal of Biological Chemistry, 279, 50754–50763. https://doi.org/10.1074/jbc.M408388200
+- Revollo, J.R., Körner, A., Mills, K.F., et al. (2007). Nampt/PBEF/Visfatin regulates insulin secretion in β cells as a systemic NAD biosynthetic enzyme. Cell Metabolism, 6, 363–375. https://doi.org/10.1016/j.cmet.2007.09.003
+- Rongvaux, A., Shea, R.J., Mulks, M.H., et al. (2002). Pre-B-cell colony-enhancing factor… is a nicotinamide phosphoribosyltransferase, a cytosolic enzyme involved in NAD biosynthesis. European Journal of Immunology, 32, 3225–3234.
+- Yoon, M.J., Yoshida, M., Johnson, S., et al. (2015). SIRT1-Mediated eNAMPT Secretion from Adipose Tissue Regulates Hypothalamic NAD+ and Function in Mice. Cell Metabolism, 21, 706–717. https://doi.org/10.1016/j.cmet.2015.04.002
+- Xiao, W., Wang, R.-S., Handy, D.E., & Loscalzo, J. (2018). NAD(H) and NADP(H) Redox Couples and Cellular Energy Metabolism. Antioxidants & Redox Signaling, 28(3), 251–272. https://doi.org/10.1089/ars.2017.7216
