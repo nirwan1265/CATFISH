@@ -1348,7 +1348,12 @@ Furthermore, these results show that different datasets favor different pathway 
 
 ### Pathway-level patterns of cold tolerance/adaptation
 
-These top hits read like a **coherent cold-climate adaptation bundle** for Bio6 in *Arabidopsis*: **carbon buffering + photoprotection + wall mechanics + cuticle barrier**, with “support” metabolism that stabilizes **redox and nucleotide pools** when cold slows growth. Below I expand each module, and I’ll flag where the link is **directly cold/freezing-related** vs **plausible-but-not-specific**.
+The top hits identifies a coherent cold-climate adaptation processes for Bio6 in *Arabidopsis*, such as carbon buffering and photoprotection, wall mechanics, and cuticle barrier. 
+
+### Surface wax-ester flux as a cold-environment signal along BIO6
+
+In our BIO6 environment-GWAS, PWY-5884 (wax esters biosynthesis I) is most parsimoniously interpreted as tagging standing variation in *cuticular wax lipid flux*—i.e., the epidermal “outer lipid barrier” built largely from very-long-chain fatty acids (VLCFAs) and derivatives including **alkanes, ketones, esters, alcohols, and aldehydes**. :contentReference[oaicite:0]{index=0} This matters for cold habitats because winter minimum temperature (BIO6) often covaries with **freeze-desiccation regimes** (dry air, wind, and restricted water uptake), where the cuticle can influence both non-stomatal water loss and the physical conditions that govern *when* freezing initiates. Direct Arabidopsis experiments support this mechanism: the wax-deficient **cer3-6** line shows the strongest dehydration sensitivity, whereas the wax overproducer **dewax** shows increased resistance to dehydration and a freezing-avoidance phenotype consistent with later ice nucleation (i.e., freezing exotherms at colder temperatures), implicating hydrophobic long-chain wax fractions (notably C29–C33 alkanes) as functionally important for water-loss control and freeze avoidance rather than “intrinsic survival after freezing.” :contentReference[oaicite:1]{index=1}:contentReference[oaicite:2]{index=2} At the same time, wax composition is itself plastic under cold: in that study, plants were cold-acclimated and leaf-wax changes were explicitly profiled (GC–MS/ATR-FTIR), reinforcing that wax is also a cold-responsive trait. :contentReference[oaicite:3]{index=3} This “wax ↔ cold” link generalizes beyond Arabidopsis: tea accessions show cultivar-structured wax composition and **cold-stress–inducible wax-gene expression** associated with cold tolerance,:contentReference[oaicite:4]{index=4} and rice reproductive-stage cold tolerance requires lipid metabolism that supports surface barriers, with **wax esters identified as cold-responsive lipids** and disruption of wax-ester biosynthesis genes (OsCER1, WSL2) reducing cold tolerance. :contentReference[oaicite:5]{index=5} Consistent with this, cold-stored pear fruits show substantial remodeling of surface wax composition (including alkanes and esters) alongside coordinated changes in wax-related gene expression across cultivars. :contentReference[oaicite:6]{index=6} Taken together, PWY-5884 in the BIO6 GWAS is best viewed as a signal for *barrier-lipid biosynthesis* that can be (i) **selected** along cold gradients because it modulates dehydration and freeze-avoidance phenotypes, and (ii) **induced** by cold acclimation as part of stress-responsive remodeling.
+
 
 ### Carbon storage and sugar-based cold protection
 
@@ -1364,9 +1369,8 @@ The pigment/cofactor cluster—*chlorophyll a* biosynthesis II (PWY-5064), carot
 
 The wall-associated pathway cluster—*xyloglucan biosynthesis* (PWY-5936), *UDP-galacturonate biosynthesis* (PWY-4), and *UDP-β-L-arabinose biosynthesis* (PWY-82)—is highly congruent with current knowledge of freezing and chilling biology. Cold and sub-zero acclimation are accompanied by extensive **apoplastic and cell-wall remodeling**, including alterations in wall composition and biophysical properties that affect tolerance to **freeze–thaw deformation and dehydration** (Takahashi et al., 2019). A growing body of evidence directly links discrete cell-wall constituents to acquired freezing tolerance, such as coordinated modifications in **pectic polymers** during acclimation and deacclimation (Kutsuno et al., 2022), and data indicating that the fine structure of pectic side chains contributes to the enhanced freezing tolerance conferred by cold acclimation (Takahashi et al., 2024). Consequently, the prominence of UDP-sugar precursor pathways in conjunction with hemicellulose- and pectin-related biosynthetic routes among the top-ranked pathways is not only mechanistically plausible but is increasingly substantiated by experimental evidence. ([Nature][3])
 
-### Surface lipid barrier and cuticle-type traits
 
-*Wax esters biosynthesis I* (PWY-5884) is plausibly linked to adaptation to cold climates via an “outer-shell” mechanism. Cold seasons frequently coincide with **low atmospheric humidity, elevated wind exposure, and freeze-induced dehydration risk**, conditions under which cuticular characteristics can exert a substantial influence on non-stomatal water loss and on the biophysical dynamics of tissue freezing. In *Arabidopsis thaliana*, genetic or physiological perturbation of cuticular wax deposition modulates sensitivity to **dehydration stress** and to **low-temperature/freezing outcomes** following cold acclimation. Comparisons between wax-deficient and wax-overproducing lines reveal quantifiable differences in these stress-response phenotypes (Rahman et al., 2021). Consequently, wax and cuticle biology represent a mechanistically credible axis of adaptation to Bio6-associated environments, particularly where the predominant selective regime reflects combined **cold and desiccation** stress rather than temperature effects in isolation. ([PubMed][4])
+
 
 ### Central energy, redox control, and nucleotide economy
 
@@ -1385,7 +1389,8 @@ Finally, *IAA biosynthesis VII* (PWY-6066) and *salicylate glucosides biosynthes
 
 * Fürtauer et al., 2019 — cold acclimation drives broad metabolic rewiring including sugar/carbon partitioning. ([PubMed][1])
 * Murata et al., 2007 — low temperature enhances photoinhibition largely by inhibiting PSII repair. ([ScienceDirect][2])
-* Bascuñán-Godoy et al., 2012 — cold acclimation can improve resistance/recovery from low-temperature photoinhibition. ([PMC][7])
+* Bascuñán-Godoy et al., 2012 — cold acclimation can improve resistance/recovery from low-temperature photoinhibition. ![Uploading Screenshot 2026-01-12 at 8.04.15 PM.png…]()
+([PMC][7])
 * Demmig-Adams et al., 1996 — carotenoids/xanthophyll cycle as core photoprotection under environmental stress. ([PubMed][8])
 * Gross et al., 2006 — phylloquinone biosynthesis mutants show reduced PSI activity. ([PubMed][9])
 * Huner et al., 1998 — framework for energy balance/acclimation to light + cold (helps explain pigment/cofactor enrichment). ([ScienceDirect][5])
@@ -1464,3 +1469,16 @@ https://projecteuclid.org/journals/annals-of-applied-statistics/volume-14/issue-
 - Rongvaux, A., Shea, R.J., Mulks, M.H., et al. (2002). Pre-B-cell colony-enhancing factor… is a nicotinamide phosphoribosyltransferase, a cytosolic enzyme involved in NAD biosynthesis. European Journal of Immunology, 32, 3225–3234.
 - Yoon, M.J., Yoshida, M., Johnson, S., et al. (2015). SIRT1-Mediated eNAMPT Secretion from Adipose Tissue Regulates Hypothalamic NAD+ and Function in Mice. Cell Metabolism, 21, 706–717. https://doi.org/10.1016/j.cmet.2015.04.002
 - Xiao, W., Wang, R.-S., Handy, D.E., & Loscalzo, J. (2018). NAD(H) and NADP(H) Redox Couples and Cellular Energy Metabolism. Antioxidants & Redox Signaling, 28(3), 251–272. https://doi.org/10.1089/ars.2017.7216
+
+
+References (Wax-esters)
+- Rahman, Yin, Kosma, et al. 2021. *Dissecting the Roles of Cuticular Wax in Plant Resistance to Shoot Dehydration and Low-Temperature Stress in Arabidopsis.* Int. J. Mol. Sci. :contentReference[oaicite:7]{index=7}
+- Reyes-Díaz, Ulloa, Zúñiga-Feest, et al. 2006. *Arabidopsis thaliana avoids freezing by supercooling.* J. Exp. Bot. :contentReference[oaicite:8]{index=8}
+- Hoermiller, Ruschhaupt & Heyer. 2018. *Mechanisms of frost resistance in Arabidopsis thaliana.* Planta. :contentReference[oaicite:9]{index=9}
+- Hou, Han, Meng, et al. 2024. *Acyl carrier protein OsMTACP2 confers rice cold tolerance at the booting stage.* Plant Physiol. :contentReference[oaicite:10]{index=10}
+- Shepherd & Wynne Griffiths. 2006. (cuticle/cuticular waxes as barrier relevant to cold stress; cited in Hou et al. 2024). :contentReference[oaicite:11]{index=11}
+- Lewandowska, Keyl & Feussner. 2020. *Wax biosynthesis in response to danger: its regulation upon abiotic and biotic stress.* New Phytol. :contentReference[oaicite:12]{index=12}
+- Amid, Lytovchenko, Fernie, et al. 2012. *The sensitive to freezing3 mutation… results in cold-induced cuticle deficiencies.* J. Exp. Bot. :contentReference[oaicite:13]{index=13}
+- Zhu, Huang, Cheng, et al. 2022. *Characterization of Cuticular Wax in Tea Plant and Its Modification in Response to Low Temperature.* J. Agric. Food Chem. :contentReference[oaicite:14]{index=14}
+- Li, Cheng, Shang & Guan. 2022. *Changing surface wax compositions and related gene expression in three cultivars of Chinese pear fruits during cold storage.* PeerJ. :contentReference[oaicite:15]{index=15}
+- Li, Wu, Lam, et al. 2008. *Identification of the wax ester synthase… WSD1 required for stem wax ester biosynthesis in Arabidopsis.* Plant Physiol. :contentReference[oaicite:16]{index=16}
