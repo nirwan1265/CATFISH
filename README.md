@@ -5,7 +5,7 @@ This Markdown is structured into:
 - [**INTRODUCTION**](#introduction) — what the pipeline is and why multiple tests are needed  
 - [**METHODS**](#methods) — paper‑ready subsections with explicit equations and assumptions  
 - [**USAGE**](#usage) — installation + reproducible example commands and R snippets
-- [**RESULTS**](#results) — an example analysis for soil Nitrogen GWAS
+- [**RESULTS**](#results) — Examples of (i) *Drosophila* starvation resistance GWAS, and (ii) *Arabidopsis* coldest day of the coldest month GWAS
 
 ---
 
@@ -859,14 +859,14 @@ Download MAGMA from the official site and make the `magma` executable available 
 
 ```r
 # install.packages("devtools")  # if needed
-devtools::install_github("nirwan1265/MAGCAT")
-library(MAGCAT)
+devtools::install_github("nirwan1265/CATFISH")
+library(CATFISH)
 ```
 
 ### 3) Optional: set MAGMA path
 
 ```r
-MAGCAT::magma_set_path("/full/path/to/magma")
+CATFISH::magma_set_path("/full/path/to/magma")
 ```
 
 ---
