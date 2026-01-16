@@ -578,8 +578,10 @@ Each pathway in CATFISH is evaluated using a panel of complementary gene-to-path
 Let the component method p-values for pathway $S$ be
 
 $$
-\mathcal{P}(S)=\big\{p_{\mathrm{ACAT}}(S),\,p_{\mathrm{Fisher}}(S),\,p_{\mathrm{TFisher}}(S),\,p_{\mathrm{minP}}(S),\,p_{\mathrm{Stouffer}}(S)\big\},
+\mathcal{P}(S)= \{p_{\mathrm{ACAT}}(S)\,p_{\mathrm{Fisher}}(S)\,p_{\mathrm{TFisher}}(S)\,p_{\mathrm{minP}}(S)\,p_{\mathrm{Stouffer}}(S)\}
 $$
+
+
 
 where the Stouffer term is included only when gene $Z$-scores are available; thus $K=|\mathcal{P}(S)|\le 5$.
 
@@ -770,10 +772,10 @@ To ensure that Stouffer and the p-based tests are coherent, all components are d
 
 - **Uniform marginals (default; matches implementation).**
 
-  $$
-  U_g^{(b)}=\Phi\!\left(Z_g^{(b)}\right), \qquad
-  p_g^{(b)} = 2\min\{U_g^{(b)},\,1-U_g^{(b)}\}.
-  $$
+$$
+U_g^{(b)}=\Phi\!\left(Z_g^{(b)}\right), \qquad
+p_g^{(b)} = 2\min\{U_g^{(b)},\,1-U_g^{(b)}\}.
+$$
 
   This yields marginally Uniform$(0,1)$ p-values while preserving dependence via $R_S$.
 
