@@ -557,6 +557,57 @@ Instead of supposing independence among $$\{p_j(S)\}$$, we calibrate the omnibus
 
 Due to the strong dependence among $$\big(T_{\mathrm{ACAT}}, T_{\mathrm{Fisher}}, T_{\mathrm{TF}}^{\mathrm{soft}}(\tau), T_{\mathrm{Stouffer}}, T_{\min}\big)$$, naive combination rules that presume independence (such as analytic minP across methods under independence or straightforward Bonferroni adjustments across correlated method p-values) may be miscalibrated and frequently result in anti-conservatism. CATFISH regards the analytic across-method omnibus (ACAT-O or minP-O) as a useful summary and use resampling-calibrated omnibus p-values as the principal evidence. This calibration directly determines the null distribution of the omnibus using the identical recomputation methodology used to the observed pathway, thus regulating type-I error amidst dependency across component tests and LD among genes.
 
+
+
+## 4) Unified null calibration (captures gene dependence and cross-method coupling)
+
+For a pathway $S$ with genes $g\in S$, CATFISH computes multiple component pathway tests from the same
+gene-level evidence (gene $p$-values $\{p_g\}$ and, when used, gene $Z$-scores $\{Z_g\}$). Two sources
+of dependence are present: (i) gene-level inputs within $S$ are correlated (e.g., shared LD/genomic structure),
+and (ii) the component tests are mutually dependent because they are deterministic functions of the same
+$\{p_g\}$ (and $\{Z_g\}$).
+
+To obtain valid inference without assuming independence at either level, CATFISH calibrates the omnibus
+under a single dependence-preserving null generator. Under an LD-aware MVN null, we simulate
+\[
+Z^{(b)} \sim \mathcal{N}(0, R_S), \qquad b=1,\dots,B,
+\]
+where $R_S$ is a pathway-specific gene–gene correlation matrix. For p-based components we apply a
+Gaussian-copula mapping. With two-sided gene p-values (default),
+\[
+U_g^{(b)}=\Phi\!\left(Z_g^{(b)}\right), \qquad
+p_g^{(b)} = 2\min\{U_g^{(b)}, 1-U_g^{(b)}\}.
+\]
+(If one-sided gene p-values are used, replace the mapping with $p_g^{(b)} = 1-\Phi(Z_g^{(b)})$ with the
+appropriate direction.)
+
+For each replicate $b$, we recompute all component pathway p-values from the same null draw
+$\{p_g^{(b)}\}$ (and $\{Z_g^{(b)}\}$ for Stouffer), yielding
+\[
+\mathbf{p}^{(b)}(S)=\big(p_{\mathrm{ACAT}}^{(b)},\,p_{\mathrm{Fisher}}^{(b)},\,p_{\mathrm{TF}}^{(b)},\,p_{\mathrm{Stouffer}}^{(b)},\,p_{\mathrm{minP}}^{(b)}\big).
+\]
+The observed component vector $\mathbf{p}^{\mathrm{obs}}(S)$ is computed analogously from the real data.
+
+We then compute the omnibus p-value for each replicate using the same prespecified omnibus rule
+$\mathcal{O}(\cdot)$ (e.g., ACAT across methods or Sidak-min across methods):
+\[
+p_{\mathrm{omni}}^{(b)}(S)=\mathcal{O}\!\left(\mathbf{p}^{(b)}(S)\right),\qquad
+p_{\mathrm{omni}}^{\mathrm{obs}}(S)=\mathcal{O}\!\left(\mathbf{p}^{\mathrm{obs}}(S)\right).
+\]
+The calibrated omnibus p-value is estimated by the standard resampling tail probability (small = more extreme):
+\[
+\hat p_{\mathrm{omni}}(S)=\frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(p_{\mathrm{omni}}^{(b)}(S)\le p_{\mathrm{omni}}^{\mathrm{obs}}(S)\right)}{B+1}.
+\]
+
+Optional component calibration: using the same MVN draws, each component p-value can be calibrated as
+\[
+\hat p_{j}(S)=\frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(p_{j}^{(b)}(S)\le p_{j}^{\mathrm{obs}}(S)\right)}{B+1}.
+\]
+If component calibration is enabled, CATFISH forms an omnibus from the calibrated components and still
+calibrates that omnibus with the same MVN draws, ensuring validity under cross-method dependence.
+
+
+
 ---
 
 ## 5) Omnibus pathway p-value across methods (omnibus operator + unified null calibration)
