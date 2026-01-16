@@ -561,31 +561,32 @@ Due to the strong dependence among $$\big(T_{\mathrm{ACAT}}, T_{\mathrm{Fisher}}
 
 ## 4) Unified null calibration (captures gene dependence and cross-method coupling)
 
-For a pathway $S$ with genes $g\in S$, CATFISH computes multiple component pathway tests from the same
-gene-level evidence (gene $p$-values $\{p_g\}$ and, when used, gene $Z$-scores $\{Z_g\}$). Two sources
-of dependence are present: (i) gene-level inputs within $S$ are correlated (e.g., shared LD/genomic structure),
-and (ii) the component tests are mutually dependent because they are deterministic functions of the same
-$\{p_g\}$ (and $\{Z_g\}$).
+For a pathway $S$ with genes $g\in S$, CATFISH computes multiple component pathway tests from the same gene-level evidence (gene $p$-values $\{p_g\}$ and, when used, gene $Z$-scores $\{Z_g\}$). Two sources of dependence are present: (i) gene-level inputs within $S$ are correlated (e.g., shared LD/genomic structure),
+and (ii) the component tests are mutually dependent because they are deterministic functions of the same $\{p_g\}$ (and $\{Z_g\}$).
 
-To obtain valid inference without assuming independence at either level, CATFISH calibrates the omnibus
-under a single dependence-preserving null generator. Under an LD-aware MVN null, we simulate
-\[
-Z^{(b)} \sim \mathcal{N}(0, R_S), \qquad b=1,\dots,B,
-\]
-where $R_S$ is a pathway-specific gene–gene correlation matrix. For p-based components we apply a
-Gaussian-copula mapping. With two-sided gene p-values (default),
-\[
+To obtain valid inference without assuming independence at either level, CATFISH calibrates the omnibus under a single dependence-preserving null generator. Under an LD-aware MVN null, we simulate
+
+$$
+Z^{(b)} \sim \mathcal{N}(0, R_S), \qquad b = 1,\dots,B
+$$
+
+where $R_S$ is a pathway-specific gene–gene correlation matrix. 
+
+For p-based components we apply a Gaussian-copula mapping. With two-sided gene p-values (default),
+
+$$
 U_g^{(b)}=\Phi\!\left(Z_g^{(b)}\right), \qquad
 p_g^{(b)} = 2\min\{U_g^{(b)}, 1-U_g^{(b)}\}.
-\]
-(If one-sided gene p-values are used, replace the mapping with $p_g^{(b)} = 1-\Phi(Z_g^{(b)})$ with the
-appropriate direction.)
+$$
 
-For each replicate $b$, we recompute all component pathway p-values from the same null draw
-$\{p_g^{(b)}\}$ (and $\{Z_g^{(b)}\}$ for Stouffer), yielding
-\[
+(If one-sided gene p-values are used, replace the mapping with $p_g^{(b)} = 1-\Phi(Z_g^{(b)})$ with the appropriate direction.)
+
+For each replicate $b$, we recompute all component pathway p-values from the same null draw $\{p_g^{(b)}\}$ (and $\{Z_g^{(b)}\}$ for Stouffer), yielding
+
+$$
 \mathbf{p}^{(b)}(S)=\big(p_{\mathrm{ACAT}}^{(b)},\,p_{\mathrm{Fisher}}^{(b)},\,p_{\mathrm{TF}}^{(b)},\,p_{\mathrm{Stouffer}}^{(b)},\,p_{\mathrm{minP}}^{(b)}\big).
-\]
+$$
+
 The observed component vector $\mathbf{p}^{\mathrm{obs}}(S)$ is computed analogously from the real data.
 
 We then compute the omnibus p-value for each replicate using the same prespecified omnibus rule
