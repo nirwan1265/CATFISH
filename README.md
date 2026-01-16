@@ -584,26 +584,30 @@ $$
 For each replicate $b$, we recompute all component pathway p-values from the same null draw $\{p_g^{(b)}\}$ (and $\{Z_g^{(b)}\}$ for Stouffer), yielding
 
 $$
-\mathbf{p}^{(b)}(S)=\big(p_{\mathrm{ACAT}}^{(b)},\,p_{\mathrm{Fisher}}^{(b)},\,p_{\mathrm{TF}}^{(b)},\,p_{\mathrm{Stouffer}}^{(b)},\,p_{\mathrm{minP}}^{(b)}\big).
+\mathbf{p}^{(b)}(S)=\big(p_{\mathrm{ACAT}}^{(b)}\,p_{\mathrm{Fisher}}^{(b)}\,p_{\mathrm{TF}}^{(b)}\,p_{\mathrm{Stouffer}}^{(b)}\,p_{\mathrm{minP}}^{(b)}\big).
 $$
 
 The observed component vector $\mathbf{p}^{\mathrm{obs}}(S)$ is computed analogously from the real data.
 
-We then compute the omnibus p-value for each replicate using the same prespecified omnibus rule
-$\mathcal{O}(\cdot)$ (e.g., ACAT across methods or Sidak-min across methods):
-\[
+We then compute the omnibus p-value for each replicate using the same prespecified omnibus rule $\mathcal{O}(\cdot)$ (e.g., ACAT across methods or Sidak-min across methods):
+
+$$
 p_{\mathrm{omni}}^{(b)}(S)=\mathcal{O}\!\left(\mathbf{p}^{(b)}(S)\right),\qquad
 p_{\mathrm{omni}}^{\mathrm{obs}}(S)=\mathcal{O}\!\left(\mathbf{p}^{\mathrm{obs}}(S)\right).
-\]
+$$
+
 The calibrated omnibus p-value is estimated by the standard resampling tail probability (small = more extreme):
-\[
+
+$$
 \hat p_{\mathrm{omni}}(S)=\frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(p_{\mathrm{omni}}^{(b)}(S)\le p_{\mathrm{omni}}^{\mathrm{obs}}(S)\right)}{B+1}.
-\]
+$$
 
 Optional component calibration: using the same MVN draws, each component p-value can be calibrated as
-\[
+
+$$
 \hat p_{j}(S)=\frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(p_{j}^{(b)}(S)\le p_{j}^{\mathrm{obs}}(S)\right)}{B+1}.
-\]
+$$
+
 If component calibration is enabled, CATFISH forms an omnibus from the calibrated components and still
 calibrates that omnibus with the same MVN draws, ensuring validity under cross-method dependence.
 
