@@ -838,8 +838,7 @@ By default, it is **excluded** from the resampling-calibrated omnibus (`include_
 
 ## 6) Multiple testing correction
 
-Across all pathways, the final omnibus p-values $$\{p_{\mathrm{omni,final}}(S)\}$$ are adjusted using the
-Benjamini–Hochberg FDR procedure:
+Across all pathways, the final omnibus p-values $$\{p_{\mathrm{omni,final}}(S)\}$$ are adjusted using the Benjamini–Hochberg FDR procedure:
 
 $$
 q_{\mathrm{BH}}(S)=\mathrm{BH}\big(p_{\mathrm{omni,final}}(S)\big)
