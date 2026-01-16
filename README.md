@@ -473,7 +473,7 @@ However, CATFISH does not rely on this analytic mapping for inference because ge
 
 ## 4) Dependence structure and unified null calibration
 
-For a pathway (gene set) $(S\) with genes $(g \in S\), CATFISH computes multiple component pathway tests from the same gene-level evidence (gene p-values $(\{p_g\}\) and, when used, gene Z-scores $(\{Z_g\}\)). Two sources of
+For a pathway (gene set) $S with genes $g \in $S, CATFISH computes multiple component pathway tests from the same gene-level evidence (gene p-values \(\{p_g\}\) and, when used, gene Z-scores \(\{Z_g\}\)). Two sources of
 dependence arise:
 
 1. **Deterministic coupling across component tests:** each component is a deterministic function of the same multiset $(\{p_g\}\) (and possibly $(\{Z_g\}\)), so component p-values are correlated even if genes were
