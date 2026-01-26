@@ -59,3 +59,26 @@ Invisibly returns a list with:
 \description{
 Convert a GFF3 file to a MAGMA gene location file (optionally recoding CHR to 1..K)
 }
+\examples{
+\dontrun{
+# Convert GFF3 to MAGMA gene location file
+result <- gff3_to_geneloc(
+  gff = "reference.gff3",
+  out = "output/genes.loc",
+  feature_type = "gene",
+  id_fields = c("gene_id", "ID", "Name")
+)
+
+# With automatic chromosome recoding for non-numeric chromosomes
+result <- gff3_to_geneloc(
+  gff = "drosophila.gff3",
+  out = "output/fly_genes.loc",
+  recode_chr = "auto",
+  write_chr_map = TRUE
+)
+}
+
+}
+\seealso{
+\code{\link{magma_gene}}, \code{\link{get_gene_lengths}}
+}

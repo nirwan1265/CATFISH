@@ -2,7 +2,7 @@
 % Please edit documentation in R/Stouffer_wrappers.R
 \name{magcat_stoufferZ_pathways}
 \alias{magcat_stoufferZ_pathways}
-\title{Pathway-level (weighted) Stouffer Z test on MAGMA gene Z statistics}
+\title{Pathway-level (weighted) Stouffer Z test on gene-level Z statistics}
 \usage{
 magcat_stoufferZ_pathways(
   gene_results,
@@ -13,94 +13,104 @@ magcat_stoufferZ_pathways(
   z_col = "ZSTAT",
   weight_col = NULL,
   min_abs_w = 1e-08,
-  B_perm = 0L,
-  perm_mode = c("resample_global", "mvn"),
-  magma_genes_out = NULL,
-  magma_cor_file = NULL,
-  make_PD = TRUE,
-  seed = NULL,
   alternative = c("greater", "two.sided", "less"),
   output = FALSE,
   out_dir = "magcat_stouffer_z"
 )
 }
 \arguments{
-\item{gene_results}{data.frame with at least gene + Z columns.
-Typically MAGMA \code{.genes.out} (or your merged file) with \code{gene_col} and \code{z_col}.}
+\item{gene_results}{data.frame with at least a gene ID column and a Z-statistic column.
+For MAGMA \code{.genes.out}, you may have \code{GENE} and \code{ZSTAT} (or similar).}
 
-\item{pathways}{either:
+\item{pathways}{Either:
 \itemize{
-\item a named list: each element is a character vector of gene IDs in that pathway, OR
-\item a data.frame with columns \code{pathway_id}, \code{gene_id} (and optional \code{pathway_name}).
+\item A named list: each element is a character vector of gene IDs in that pathway, OR
+\item A data.frame with columns \code{pathway_id}, \code{gene_id} (and optional \code{pathway_name}).
 }}
 
-\item{species}{optional; one of "maize", "sorghum", "arabidopsis", "plant".
+\item{species}{Optional; one of "maize", "sorghum", "arabidopsis", "plant".
 If provided, built-in PMN pathways are loaded via \code{magcat_load_pathways()}.
 Provide either \code{pathways} OR \code{species}, but not both.}
 
-\item{pmn_gene_col}{optional; passed to \code{magcat_load_pathways(gene_col=...)} when \code{species} is used.}
+\item{pmn_gene_col}{Optional; passed to \code{magcat_load_pathways(gene_col=...)}
+when \code{species} is used. If NULL, the PMN loader prefers "Gene-name"
+then "Gene-id".}
 
-\item{gene_col}{column name in \code{gene_results} containing gene IDs (default "GENE").}
+\item{gene_col}{Column name in \code{gene_results} containing gene IDs (default "GENE").}
 
-\item{z_col}{column name in \code{gene_results} containing gene-level Z statistics (default "ZSTAT").}
+\item{z_col}{Column name in \code{gene_results} containing gene-level Z statistics (default "ZSTAT").}
 
-\item{weight_col}{optional column name in \code{gene_results} for per-gene weights (default NULL = equal weights).}
+\item{weight_col}{Optional column name in \code{gene_results} for per-gene weights
+(default NULL = equal weights). Examples: \code{sqrt(NSNPS)}, \code{1/SE}, etc.}
 
-\item{min_abs_w}{replace non-finite / <=0 weights by this small positive value (default 1e-8).}
+\item{min_abs_w}{Non-finite / NA / <=0 weights are replaced by this small positive value
+(default 1e-8).}
 
-\item{B_perm}{integer; number of permutations for empirical p (default 0L = no permutations).}
+\item{alternative}{One of \code{"greater"}, \code{"two.sided"}, \code{"less"}.
+\code{"greater"} tests for positive enrichment (default "greater").}
 
-\item{perm_mode}{either "resample_global" or "mvn" (default "resample_global").}
+\item{output}{If TRUE, write a CSV of results to \code{out_dir}.}
 
-\item{magma_genes_out}{required if perm_mode="mvn"; path to merged MAGMA *.genes.out (must include CHR).}
-
-\item{magma_cor_file}{optional if perm_mode="mvn"; 3-col file gene1 gene2 r of gene-gene correlations.}
-
-\item{make_PD}{logical; if TRUE, force correlation matrix PSD (default TRUE).}
-
-\item{seed}{optional RNG seed (default NULL).}
-
-\item{alternative}{either "greater", "two.sided" or "less", greater, less = one-sided in the positive and negative direction respectively (default "greater")}
-
-\item{output}{logical; if TRUE, write a CSV of results to \code{out_dir}.}
-
-\item{out_dir}{directory to write CSV when \code{output = TRUE} (default "magcat_stouffer_z").}
+\item{out_dir}{Directory to write CSV when \code{output = TRUE} (default "magcat_stouffer_z").}
 }
 \value{
-data.frame with columns:
-\itemize{
-\item pathway_id
-\item pathway_name
-\item n_genes
-\item gene_names
-\item gene_zvals           (semicolon-separated Z's used)
-\item stouffer_Z
-\item stouffer_p_analytic  (two-sided analytic p)
-\item stouffer_p_perm      (perm p; NA if B_perm = 0)
-Sorted by \code{stouffer_p_perm} ascending if B_perm>0 else by \code{stouffer_p_analytic}.
-If \code{output = TRUE}, attribute \code{"file"} contains the CSV path.
+A data.frame with columns:
+\describe{
+\item{pathway_id}{Pathway identifier}
+\item{pathway_name}{Pathway name (if available; otherwise equals \code{pathway_id})}
+\item{n_genes}{Number of genes used in the pathway}
+\item{gene_names}{Semicolon-separated gene IDs actually used (from \code{gene_results})}
+\item{gene_zvals}{Semicolon-separated Z statistics actually used}
+\item{stouffer_Z}{Combined Stouffer Z-score}
+\item{stouffer_p}{Analytic p-value under the chosen \code{alternative}}
 }
+Rows are sorted by \code{stouffer_p} in increasing order (smallest p first; NA at bottom).
+If \code{output = TRUE}, an attribute \code{"file"} is attached with the CSV path.
 }
 \description{
-For each pathway:
-\itemize{
-\item take gene-level Z statistics (e.g. MAGMA \code{.genes.out} has a Z column),
-\item optionally apply weights (e.g. sqrt(NSNPS), 1/SE, etc.),
-\item compute the weighted Stouffer Z:
-Z_S = sum_i w_i Z_i / sqrt(sum_i w_i^2),
-and return a two-sided p-value p = 2 * Phi(-|Z_S|).
-}
+Computes a (possibly weighted) Stouffer Z within each pathway:
+\deqn{Z_S = \frac{\sum_{g \in S} w_g Z_g}{\sqrt{\sum_{g \in S} w_g^2}}}
 }
 \details{
-Optional permutation calibration:
+and returns a p-value using the requested \code{alternative}:
 \itemize{
-\item perm_mode="resample_global": resample Z's from the global pool (exchangeable null)
-\item perm_mode="mvn": simulate correlated null Z's using MAGMA gene correlation
+\item \code{"two.sided"}: \eqn{p = 2 \Phi(-|Z_S|)}
+\item \code{"greater"}:  \eqn{p = \Pr(Z \ge Z_S)}
+\item \code{"less"}:     \eqn{p = \Pr(Z \le Z_S)}
 }
 
-IMPORTANT:
-\itemize{
-\item If your Z's have direction, this keeps direction (unlike p-value Stouffer-from-p).
-\item Use \code{B_perm > 0} if you want empirical p-values that account for correlation.
+Gene IDs are matched case-insensitively: both \code{gene_results[[gene_col]]} and
+pathway gene IDs are normalized to lower-case before matching. Genes not present
+in \code{gene_results} are dropped from that pathway.
+
+NOTE: The analytic p-value assumes (approximately) independent \eqn{Z_g} within a pathway.
+If genes are correlated (e.g., LD-induced correlation in MAGMA gene statistics), then this
+analytic p-value may be anti-conservative. In MAGCAT/CATFISH, correlation-aware calibration
+should be handled in your MVN/Omni layer (not inside this wrapper).
 }
+\examples{
+\dontrun{
+# Load gene results from MAGMA output (must include ZSTAT column)
+gene_results <- read.delim("magma_output.genes.out")
+
+# Run Stouffer's Z method on maize PMN pathways
+stouffer_res <- magcat_stoufferZ_pathways(
+  gene_results = gene_results,
+  species = "maize",
+  gene_col = "GENE",
+  z_col = "ZSTAT"
+)
+head(stouffer_res)
+
+# With weighted Stouffer (e.g., by number of SNPs)
+stouffer_weighted <- magcat_stoufferZ_pathways(
+  gene_results = gene_results,
+  species = "maize",
+  weight_col = "NSNPS"
+)
+}
+
+}
+\seealso{
+\code{\link{magcat_acat_pathways}}, \code{\link{magcat_fisher_pathways}}
 }

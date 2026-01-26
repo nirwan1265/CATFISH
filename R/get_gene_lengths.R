@@ -14,6 +14,27 @@
 #' @param file_name Output TSV file name if output=TRUE.
 #'
 #' @return data.frame with columns: gene_id, chr, start, end, strand, length
+#'
+#' @examples
+#' \dontrun{
+#' # Extract gene lengths from a GFF3 file
+#' gene_lengths <- get_gene_lengths(
+#'   gff3_file = "reference.gff3",
+#'   feature = "gene",
+#'   id_key = "ID"
+#' )
+#' head(gene_lengths)
+#'
+#' # Write output to file
+#' gene_lengths <- get_gene_lengths(
+#'   gff3_file = "reference.gff3",
+#'   output = TRUE,
+#'   output_dir = "output",
+#'   file_name = "my_gene_lengths.tsv"
+#' )
+#' }
+#'
+#' @seealso \code{\link{gff3_to_geneloc}}, \code{\link{magcat_adjust_gene_p}}
 #' @export
 get_gene_lengths <- function(gff3_file,
                              feature         = "gene",

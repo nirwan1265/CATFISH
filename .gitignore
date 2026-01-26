@@ -26,3 +26,15 @@ cache/
 # Temp & logs
 *.log
 *.tmp
+
+# Large data files (>20MB)
+Tables/*.csv
+annot/*.txt
+annot/*.annot
+
+# Results directories
+acat_results_GLM/
+magcat_omnibus_results_*/
+
+# Vignettes (if large)
+vignettes/*.html

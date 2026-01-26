@@ -46,8 +46,9 @@ and falls back to "Gene-id".}
 \item{p_col}{column name in \code{gene_results} containing gene-level p-values
 (default "P").}
 
-\item{effect_col}{column with effect size / Z-statistic to derive direction
-(default "ZSTAT"). Only used when \code{is_onetail = FALSE}.}
+\item{effect_col}{character. Column name containing effect sizes (beta/log-odds
+or Z-statistic) to derive effect directions (+/-). Default "ZSTAT". Required
+when \code{is_onetail = FALSE} for directional ordmeta combination.}
 
 \item{is_onetail}{logical; passed to \code{ordmeta(is.onetail=...)}.
 Default FALSE (two-sided p-values + directions).}
@@ -83,4 +84,26 @@ If \code{output = TRUE}, an attribute \code{"file"} is attached with the CSV pat
 }
 \description{
 Pathway-level ordmeta test on MAGMA gene p-values
+}
+\examples{
+\dontrun{
+# Load gene results from MAGMA output
+gene_results <- read.delim("magma_output.genes.out")
+
+# Run ordmeta on maize PMN pathways
+ordmeta_res <- magcat_ordmeta_pathways(
+  gene_results = gene_results,
+  species = "maize",
+  gene_col = "GENE",
+  p_col = "P",
+  effect_col = "ZSTAT",
+  is_onetail = FALSE,
+  B = 5000
+)
+head(ordmeta_res)
+}
+
+}
+\seealso{
+\code{\link{ordmeta}}
 }

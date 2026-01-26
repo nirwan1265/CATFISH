@@ -1,11 +1,38 @@
 Package: MAGCAT
-Title: MAGCAT: R interface to MAGMA with ACAT-based gene and pathway aggregation.
-Version: 0.0.0.9000
-Authors@R: 
-    person("Nirwan", "Tandukar", , "tandukar.nirwan@gmail.com", role = c("aut", "cre"),
-           comment = c(ORCID = "ORCID-ID"))
-Description: MAGCAT is an R interface to the MAGMA (Multi-marker Analysis of Genomic Annotation) software with ACAT (Aggregated Cauchy Association Test) for pathway level analysis. It streamlines SNP-to-gene analysis using MAGMA, imports gene-level results into R, and provides flexible ACAT-based gene-set and pathway aggregation, making it easy to build reproducible post-GWAS enrichment pipelines.
-License: `use_mit_license()`
+Title: MAGMA-Based Gene and Pathway Analysis with ACAT Aggregation
+Version: 0.1.0
+Authors@R:
+    person("Nirwan", "Tandukar", , "tandukar.nirwan@gmail.com", role = c("aut", "cre"))
+Description: MAGCAT provides an R interface to MAGMA (Multi-marker Analysis of
+    GenoMic Annotation) for post-GWAS pathway enrichment analysis. It implements
+    multiple p-value combination methods (ACAT, Fisher, Stouffer, minP, adaptive
+    soft TFisher) and combines them into an omnibus test with optional
+    permutation-based or MVN-based calibration to account for gene-gene
+    correlations. Built-in support for Plant Metabolic Network (PMN) pathways
+    for maize, sorghum, arabidopsis, and general plant species.
+License: MIT + file LICENSE
+URL: https://github.com/nirwantandukar/MAGCAT
+BugReports: https://github.com/nirwantandukar/MAGCAT/issues
 Encoding: UTF-8
+LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+Imports:
+    stats,
+    utils
+Suggests:
+    ACAT,
+    TFisher,
+    metap,
+    metapro,
+    Matrix,
+    data.table,
+    qvalue,
+    IHW,
+    rtracklayer,
+    ggplot2,
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+Config/testthat/edition: 3

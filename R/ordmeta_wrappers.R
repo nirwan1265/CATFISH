@@ -100,6 +100,7 @@ ordmeta_core <- function(p2, B = 10000L) {
 #'         B          = 2000)
 #' }
 #'
+#' @seealso \code{\link{magcat_ordmeta_pathways}}
 #' @export
 ordmeta <- function(p,
                     is.onetail = TRUE,
@@ -179,8 +180,9 @@ ordmeta <- function(p,
 #'   (default "GENE").
 #' @param p_col column name in `gene_results` containing gene-level p-values
 #'   (default "P").
-#' @param effect_col column with effect size / Z-statistic to derive direction
-#'   (default "ZSTAT"). Only used when `is_onetail = FALSE`.
+#' @param effect_col character. Column name containing effect sizes (beta/log-odds
+#'   or Z-statistic) to derive effect directions (+/-). Default "ZSTAT". Required
+#'   when `is_onetail = FALSE` for directional ordmeta combination.
 #' @param is_onetail logical; passed to `ordmeta(is.onetail=...)`.
 #'   Default FALSE (two-sided p-values + directions).
 #' @param min_p lower cap for very small p-values (default 1e-15).
@@ -204,6 +206,26 @@ ordmeta <- function(p,
 #'   * overall_eff_direction
 #'   Sorted by `ordmeta_p` ascending (most significant first).
 #'   If `output = TRUE`, an attribute `"file"` is attached with the CSV path.
+#'
+#' @examples
+#' \dontrun{
+#' # Load gene results from MAGMA output
+#' gene_results <- read.delim("magma_output.genes.out")
+#'
+#' # Run ordmeta on maize PMN pathways
+#' ordmeta_res <- magcat_ordmeta_pathways(
+#'   gene_results = gene_results,
+#'   species = "maize",
+#'   gene_col = "GENE",
+#'   p_col = "P",
+#'   effect_col = "ZSTAT",
+#'   is_onetail = FALSE,
+#'   B = 5000
+#' )
+#' head(ordmeta_res)
+#' }
+#'
+#' @seealso \code{\link{ordmeta}}
 #' @export
 magcat_ordmeta_pathways <- function(gene_results,
                                     pathways     = NULL,

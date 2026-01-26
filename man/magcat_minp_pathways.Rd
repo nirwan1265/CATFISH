@@ -2,7 +2,7 @@
 % Please edit documentation in R/minP_wrappers.R
 \name{magcat_minp_pathways}
 \alias{magcat_minp_pathways}
-\title{Pathway-level minP on MAGMA gene p-values}
+\title{Pathway-level minP (Tippett/Wilkinson) on gene-level p-values}
 \usage{
 magcat_minp_pathways(
   gene_results,
@@ -13,86 +13,89 @@ magcat_minp_pathways(
   p_col = "P",
   min_p = 1e-15,
   do_fix = TRUE,
-  B_perm = 0L,
-  seed = NULL,
-  analytic_logical = TRUE,
   output = FALSE,
   out_dir = "magcat_minp"
 )
 }
 \arguments{
-\item{gene_results}{data.frame with at least gene + p-value columns.
-Typically a MAGMA \code{.genes.out} file, with "GENE" and "P".}
+\item{gene_results}{data.frame with at least a gene ID column and a p-value column.
+For MAGMA \code{.genes.out}, these are commonly \code{GENE} and \code{P}.}
 
-\item{pathways}{either:
+\item{pathways}{Either:
 \itemize{
-\item a named list: each element is a character vector of gene IDs
-in that pathway, OR
-\item a data.frame with columns \code{pathway_id}, \code{gene_id}
-(and optional \code{pathway_name}).
+\item A named list: each element is a character vector of gene IDs in that pathway, OR
+\item A data.frame with columns \code{pathway_id}, \code{gene_id} (and optional \code{pathway_name}).
 }}
 
-\item{species}{optional; one of "maize", "sorghum", "arabidopsis", "plant".
+\item{species}{Optional; one of "maize", "sorghum", "arabidopsis", "plant".
 If provided, built-in PMN pathways are loaded via \code{magcat_load_pathways()}.
-You must provide either \code{pathways} OR \code{species}, but not both.}
+Provide either \code{pathways} OR \code{species}, but not both.}
 
-\item{pmn_gene_col}{optional; passed to \code{magcat_load_pathways(gene_col=...)}
-when \code{species} is used.}
+\item{pmn_gene_col}{Optional; passed to \code{magcat_load_pathways(gene_col=...)}
+when \code{species} is used. If NULL, the PMN loader prefers "Gene-name"
+then "Gene-id".}
 
-\item{gene_col}{column name in \code{gene_results} containing gene IDs
-(default "GENE").}
+\item{gene_col}{Column name in \code{gene_results} containing gene IDs (default "GENE").}
 
-\item{p_col}{column name in \code{gene_results} containing gene-level p-values
-(default "P").}
+\item{p_col}{Column name in \code{gene_results} containing gene-level p-values (default "P").}
 
-\item{min_p}{lower cap for very small p-values (default 1e-15).}
+\item{min_p}{Lower cap for extremely small p-values before transformations (default 1e-15).}
 
-\item{do_fix}{logical; if TRUE, clean p-values with \code{fix_p_for_acat()}
-(to keep them strictly in (0,1)).}
+\item{do_fix}{If TRUE (default), clean/cap p-values using \code{fix_p_for_acat()}
+to ensure values lie strictly in (0,1).}
 
-\item{B_perm}{integer; number of permutations for empirical p
-(default 1000L = no permutations).}
+\item{output}{If TRUE, write a CSV of results to \code{out_dir}.}
 
-\item{seed}{optional RNG seed for permutations (default NULL).}
-
-\item{analytic_logical}{logical; if TRUE, compute analytic p via
-\code{metap::minimump()}. If \code{metap} is not available, falls back to
-Sidák: 1 - (1 - min_p)^K. (default TRUE)}
-
-\item{output}{logical; if TRUE, write a CSV of results to \code{out_dir}.}
-
-\item{out_dir}{directory to write CSV when \code{output = TRUE}
-(default "magcat_minp").}
+\item{out_dir}{Directory to write CSV when \code{output = TRUE} (default "magcat_minp").}
 }
 \value{
-data.frame with columns:
-\itemize{
-\item pathway_id
-\item pathway_name
-\item n_genes
-\item gene_names
-\item gene_pvals        (semicolon-separated gene-level p's used in the test)
-\item minp_stat         (min(p_i) for that pathway)
-\item minp_p_perm       (permutation p; NA if B_perm = 0)
-\item minp_p_analytic   (analytic p from minimump / Sidák; NA if
-analytic_logical = FALSE)
-Sorted by \code{minp_p_perm} ascending if B_perm > 0,
-otherwise by \code{minp_p_analytic} (ascending) if available,
-else by \code{minp_stat} (ascending).
+A data.frame with columns:
+\describe{
+\item{pathway_id}{Pathway identifier}
+\item{pathway_name}{Pathway name (if available; otherwise equals \code{pathway_id})}
+\item{n_genes}{Number of genes used in minP for this pathway}
+\item{gene_names}{Semicolon-separated gene IDs actually used (from \code{gene_results})}
+\item{gene_pvals}{Semicolon-separated gene-level p-values actually used}
+\item{minp_stat}{The minimum gene p-value in the pathway}
+\item{minp_p}{Combined minP p-value under independence}
+\item{minp_method}{Which analytic method was used: \code{"metap::minimump"} or \code{"sidak"}}
+}
+Rows are sorted by \code{minp_p} in increasing order (smallest p first; NA at bottom).
 If \code{output = TRUE}, an attribute \code{"file"} is attached with the CSV path.
 }
-}
 \description{
-For each pathway:
+For each pathway, this function:
 \itemize{
-\item take gene-level p-values (e.g. MAGMA .genes.out),
-\item compute the minimum p-value statistic: min(p_i),
-\item optionally get analytic combined p via metap::minimump()
-(Wilkinson / Tippett type minP),
-\item optionally calibrate with gene-set permutations for empirical p.
+\item extracts the pathway's gene-level p-values (e.g., from MAGMA \code{.genes.out})
+\item computes the minimum p-value statistic \eqn{\min_g p_g}
+\item converts it to a combined p-value under independence using either:
+\itemize{
+\item \code{metap::minimump()} if available (Tippett/Wilkinson minP), or
+\item the Sidák transform \eqn{1 - (1 - p_{\min})^m} as a fallback
+}
 }
 }
 \details{
-All non-NA p-values in the pathway are used (no truncation / filtering),
-except for cleaning to keep them strictly in (0,1) via fix_p_for_acat().
+Gene IDs are matched case-insensitively: both \code{gene_results[[gene_col]]} and
+pathway gene IDs are normalized to lower-case before matching. Genes not present
+in \code{gene_results} are dropped from that pathway.
+}
+\examples{
+\dontrun{
+# Load gene results from MAGMA output
+gene_results <- read.delim("magma_output.genes.out")
+
+# Run minP (Tippett/Wilkinson) on maize PMN pathways
+minp_res <- magcat_minp_pathways(
+  gene_results = gene_results,
+  species = "maize",
+  gene_col = "GENE",
+  p_col = "P"
+)
+head(minp_res)
+}
+
+}
+\seealso{
+\code{\link{magcat_acat_pathways}}, \code{\link{magcat_fisher_pathways}}
 }

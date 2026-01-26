@@ -43,3 +43,6 @@ ordmeta(p = c(0.01, 0.02, 0.8, 0.25),
 }
 
 }
+\seealso{
+\code{\link{magcat_ordmeta_pathways}}
+}

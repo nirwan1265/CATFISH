@@ -45,8 +45,9 @@ when \code{species} is used.}
 \item{p_col}{column name in \code{gene_results} containing gene-level p-values
 (default "P").}
 
-\item{effect_col}{column with effect size / Z-statistic to derive direction
-(default "ZSTAT"). Only used when \code{is_onetail = FALSE}.}
+\item{effect_col}{character. Column name containing effect sizes (beta/log-odds
+or Z-statistic) to derive effect directions. Default "ZSTAT". Required when
+\code{is_onetail = FALSE} for directional weighted Fisher combination.}
 
 \item{weight_col}{optional column in \code{gene_results} to use as weight
 (e.g. "NSNPS"). If NULL, all weights = 1 (classic Fisher).}
@@ -78,4 +79,32 @@ If \code{output = TRUE}, an attribute \code{"file"} is attached with the CSV pat
 }
 \description{
 Pathway-level wFisher test on MAGMA gene p-values
+}
+\examples{
+\dontrun{
+# Load gene results from MAGMA output
+gene_results <- read.delim("magma_output.genes.out")
+
+# Run weighted Fisher on maize PMN pathways
+wfisher_res <- magcat_wfisher_pathways(
+  gene_results = gene_results,
+  species = "maize",
+  gene_col = "GENE",
+  p_col = "P",
+  effect_col = "ZSTAT",
+  is_onetail = FALSE
+)
+head(wfisher_res)
+
+# With weights from NSNPS column
+wfisher_weighted <- magcat_wfisher_pathways(
+  gene_results = gene_results,
+  species = "maize",
+  weight_col = "NSNPS"
+)
+}
+
+}
+\seealso{
+\code{\link{magcat_fisher_pathways}}
 }

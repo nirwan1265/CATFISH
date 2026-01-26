@@ -540,6 +540,33 @@ magma_annotate <- function(stats_file,
 #' @param sep Separation = "," or " " or "\t"
 #'   `min(length(chroms), detectCores() - 1)`.
 #'
+#' @return Invisibly returns a list containing information about each gene model
+#'   run, including output prefix and paths to generated files.
+#'
+#' @examples
+#' \dontrun{
+#' # Run MAGMA gene analysis from GWAS summary stats
+#' result <- magma_gene(
+#'   bfile = "reference_panel",
+#'   gene_annot = "genes.annot",
+#'   stats_file = "gwas_results.txt",
+#'   n_total = 10000,
+#'   rename_columns = c(CHR = "chr", SNP = "rs", POS = "ps", PVALUE = "p_wald"),
+#'   out_prefix = "magma_output",
+#'   out_dir = "results"
+#' )
+#'
+#' # Run with per-SNP N from a column
+#' result <- magma_gene(
+#'   bfile = "reference_panel",
+#'   gene_annot = "genes.annot",
+#'   stats_file = "gwas_results.txt",
+#'   rename_columns = c(CHR = "chr", SNP = "rs", POS = "ps", PVALUE = "p", N = "sample_size"),
+#'   out_prefix = "magma_output"
+#' )
+#' }
+#'
+#' @seealso \code{\link{magma_path}}, \code{\link{magcat_acat_pathways}}
 #' @export
 magma_gene <- function(bfile,
                        gene_annot,

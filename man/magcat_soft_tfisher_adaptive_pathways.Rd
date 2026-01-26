@@ -2,7 +2,7 @@
 % Please edit documentation in R/adaptive_soft_TFisher_wrappers.R
 \name{magcat_soft_tfisher_adaptive_pathways}
 \alias{magcat_soft_tfisher_adaptive_pathways}
-\title{Pathway-level \emph{adaptive} soft TFisher (stat.soft / p.soft) on MAGMA gene p-values}
+\title{Pathway-level \emph{adaptive} soft TFisher (omnibus) on gene-level p-values}
 \usage{
 magcat_soft_tfisher_adaptive_pathways(
   gene_results,
@@ -14,115 +14,102 @@ magcat_soft_tfisher_adaptive_pathways(
   tau_grid = c(0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001),
   min_p = 1e-15,
   do_fix = TRUE,
-  B_perm = 0L,
-  perm_mode = c("resample_global", "mvn"),
-  magma_genes_out = NULL,
-  magma_cor_file = NULL,
-  make_PD = TRUE,
-  seed = NULL,
-  analytic_logical = TRUE,
   output = FALSE,
   out_dir = "magcat_tfisher_soft_adaptive"
 )
 }
 \arguments{
-\item{gene_results}{data.frame with at least gene + p-value columns.
-Typically a MAGMA \code{.genes.out}-like table, with \code{gene_col} and \code{p_col}.}
+\item{gene_results}{data.frame with at least a gene ID column and a p-value column.
+For MAGMA \code{.genes.out}, these are commonly \code{GENE} and \code{P}.}
 
-\item{pathways}{either:
+\item{pathways}{Either:
 \itemize{
-\item a named list: each element is a character vector of gene IDs
-in that pathway, OR
-\item a data.frame with columns \code{pathway_id}, \code{gene_id}
-(and optional \code{pathway_name}).
+\item A named list: each element is a character vector of gene IDs in that pathway, OR
+\item A data.frame with columns \code{pathway_id}, \code{gene_id} (and optional \code{pathway_name}).
 }}
 
-\item{species}{optional; one of "maize", "sorghum", "arabidopsis", "plant".
+\item{species}{Optional; one of "maize", "sorghum", "arabidopsis", "plant".
 If provided, built-in PMN pathways are loaded via \code{magcat_load_pathways()}.
-You must provide either \code{pathways} OR \code{species}, but not both.}
+Provide either \code{pathways} OR \code{species}, but not both.}
 
-\item{pmn_gene_col}{optional; passed to \code{magcat_load_pathways(gene_col=...)}
-when \code{species} is used.}
+\item{pmn_gene_col}{Optional; passed to \code{magcat_load_pathways(gene_col=...)}
+when \code{species} is used. If NULL, the PMN loader prefers "Gene-name" then "Gene-id".}
 
-\item{gene_col}{column name in \code{gene_results} containing gene IDs
-(default "GENE").}
+\item{gene_col}{Column name in \code{gene_results} containing gene IDs (default "GENE").}
 
-\item{p_col}{column name in \code{gene_results} containing gene-level p-values
-(default "P").}
+\item{p_col}{Column name in \code{gene_results} containing gene-level p-values (default "P").}
 
-\item{tau_grid}{numeric vector of tau values to scan (default common grid).}
+\item{tau_grid}{Numeric vector of \code{tau} values to scan. Internally sorted increasing,
+as required by \code{TFisher::stat.soft.omni()}.}
 
-\item{min_p}{lower cap for very small p-values (default 1e-15).}
+\item{min_p}{Lower cap for extremely small p-values before TFisher math (default 1e-15).}
 
-\item{do_fix}{logical; if TRUE, clean p-values with \code{fix_p_for_acat()}
-(to keep them strictly in (0,1)).}
+\item{do_fix}{If TRUE (default), clean/cap p-values using \code{fix_p_for_acat()}
+to ensure values lie strictly in (0,1).}
 
-\item{B_perm}{integer; number of permutations for empirical p
-(default 0L = no permutations).}
+\item{output}{If TRUE, write a CSV of results to \code{out_dir}.}
 
-\item{perm_mode}{either "resample_global" or "mvn" (default "resample_global").}
-
-\item{magma_genes_out}{required if perm_mode="mvn"; path to merged MAGMA *.genes.out
-containing at least gene + chromosome (CHR) columns for all genes.}
-
-\item{magma_cor_file}{optional if perm_mode="mvn"; 3-column file gene1 gene2 r
-of gene-gene correlations (if NULL, your MAGMA-based builder may fall back
-to block/within-chr heuristics depending on your implementation).}
-
-\item{make_PD}{logical; if TRUE, force the pathway correlation matrix to be PSD
-(default TRUE).}
-
-\item{seed}{optional RNG seed for permutations (default NULL).}
-
-\item{analytic_logical}{logical; if TRUE, compute per-tau analytic p via p.soft()
-and report the min across tau as \code{tfisher_p_analytic} (default TRUE).}
-
-\item{output}{logical; if TRUE, write a CSV of results to \code{out_dir}.}
-
-\item{out_dir}{directory to write CSV when \code{output = TRUE}
+\item{out_dir}{Directory to write CSV when \code{output = TRUE}
 (default "magcat_tfisher_soft_adaptive").}
 }
 \value{
-data.frame with columns:
-\itemize{
-\item pathway_id
-\item pathway_name
-\item n_genes
-\item gene_names
-\item gene_pvals             (semicolon-separated p's used)
-\item tau_hat                (tau achieving min analytic p)
-\item tfisher_stat_hat       (stat.soft at tau_hat)
-\item tfisher_p_analytic     (min over tau of right-tail analytic p; NA if analytic_logical=FALSE)
-\item tfisher_p_perm         (permutation-calibrated p for the adaptive min-over-tau; NA if B_perm=0)
+A data.frame with columns:
+\describe{
+\item{pathway_id}{Pathway identifier}
+\item{pathway_name}{Pathway name (if available; otherwise equals \code{pathway_id})}
+\item{n_genes}{Number of genes used in the pathway}
+\item{gene_names}{Semicolon-separated gene IDs actually used (from \code{gene_results})}
+\item{gene_pvals}{Semicolon-separated p-values actually used}
+\item{tau_hat}{Tau achieving the minimum single-\code{tau} p-value}
+\item{tfisher_stat_hat}{Soft TFisher statistic at \code{tau_hat}}
+\item{tfisher_p_hat}{Single-\code{tau} right-tail p-value at \code{tau_hat}}
+\item{tfisher_p_min}{Minimum single-\code{tau} p-value across \code{tau_grid} (= \eqn{W_o})}
+\item{tfisher_p_omni}{Adaptive omnibus p-value for \eqn{W_o} under the null (independence)}
 }
 
-Sorted by \code{tfisher_p_perm} ascending if \code{B_perm > 0}, otherwise by
-\code{tfisher_p_analytic} ascending.
+Rows are sorted by \code{tfisher_p_omni} in increasing order (smallest p first; NA at bottom).
 If \code{output = TRUE}, an attribute \code{"file"} is attached with the CSV path.
 }
 \description{
-For each pathway:
+For each pathway, this function:
 \itemize{
-\item take gene-level p-values (e.g. MAGMA \code{.genes.out}),
-\item compute soft-threshold TFisher statistics across a grid of \code{tau} values,
-\item compute per-tau analytic p via TFisher::p.soft() under independence
-(right-tail p = 1 - F(q)),
-\item define the adaptive TFisher score as:
-p_adapt = min_{tau in tau_grid} p_TFisher(tau),
-and record the argmin tau_hat,
-\item optionally calibrate \code{p_adapt} with permutations:
-\itemize{
-\item perm_mode="resample_global": resample gene p-values from the global pool
-\item perm_mode="mvn": simulate correlated null p-values using MAGMA gene correlation
-}
+\item extracts the pathway's gene-level p-values (e.g., from MAGMA \code{.genes.out})
+\item computes soft-thresholding Fisher statistics across a grid of \code{tau} values
+\item computes per-\code{tau} right-tail p-values under the null (via \code{TFisher::p.soft})
+\item defines the adaptive score as \eqn{W_o = \min_{\tau \in \text{grid}} p_\tau}
+\item computes a calibrated adaptive p-value under independence using
+\code{TFisher::p.soft.omni(q = W_o, ...)}
 }
 }
 \details{
-NOTE:
-\itemize{
-\item The analytic p-values across tau are \emph{not} multiple-testing corrected;
-if you use adaptivity (min over tau), you should use \code{B_perm > 0} to
-obtain a valid calibrated \code{tfisher_p_perm}.
-\item All non-NA p-values in the pathway are used (no hard truncation/filtering).
+Gene IDs are matched case-insensitively: both \code{gene_results[[gene_col]]} and
+pathway gene IDs are normalized to lower-case before matching. Genes not present
+in \code{gene_results} are dropped from that pathway.
 }
+\examples{
+\dontrun{
+# Load gene results from MAGMA output
+gene_results <- read.delim("magma_output.genes.out")
+
+# Run adaptive soft TFisher on maize PMN pathways
+tfisher_adapt_res <- magcat_soft_tfisher_adaptive_pathways(
+  gene_results = gene_results,
+  species = "maize",
+  gene_col = "GENE",
+  p_col = "P"
+)
+head(tfisher_adapt_res)
+
+# With custom tau grid
+tfisher_custom <- magcat_soft_tfisher_adaptive_pathways(
+  gene_results = gene_results,
+  species = "maize",
+  tau_grid = c(0.1, 0.05, 0.01)
+)
+}
+
+}
+\seealso{
+\code{\link{magcat_tfisher_pathways}},
+\code{\link{magcat_soft_tfisher_pathways}}
 }

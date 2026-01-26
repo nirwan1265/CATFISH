@@ -1,75 +1,97 @@
-#' Pathway-level (weighted) Stouffer Z test on MAGMA gene Z statistics
+#' Pathway-level (weighted) Stouffer Z test on gene-level Z statistics
 #'
-#' For each pathway:
-#'   * take gene-level Z statistics (e.g. MAGMA `.genes.out` has a Z column),
-#'   * optionally apply weights (e.g. sqrt(NSNPS), 1/SE, etc.),
-#'   * compute the weighted Stouffer Z:
-#'       Z_S = sum_i w_i Z_i / sqrt(sum_i w_i^2),
-#'     and return a two-sided p-value p = 2 * Phi(-|Z_S|).
+#' Computes a (possibly weighted) Stouffer Z within each pathway:
+#' \deqn{Z_S = \frac{\sum_{g \in S} w_g Z_g}{\sqrt{\sum_{g \in S} w_g^2}}}
 #'
-#' Optional permutation calibration:
-#'   - perm_mode="resample_global": resample Z's from the global pool (exchangeable null)
-#'   - perm_mode="mvn": simulate correlated null Z's using MAGMA gene correlation
+#' and returns a p-value using the requested \code{alternative}:
+#' \itemize{
+#'   \item \code{"two.sided"}: \eqn{p = 2 \Phi(-|Z_S|)}
+#'   \item \code{"greater"}:  \eqn{p = \Pr(Z \ge Z_S)}
+#'   \item \code{"less"}:     \eqn{p = \Pr(Z \le Z_S)}
+#' }
 #'
-#' IMPORTANT:
-#'   - If your Z's have direction, this keeps direction (unlike p-value Stouffer-from-p).
-#'   - Use `B_perm > 0` if you want empirical p-values that account for correlation.
+#' Gene IDs are matched case-insensitively: both \code{gene_results[[gene_col]]} and
+#' pathway gene IDs are normalized to lower-case before matching. Genes not present
+#' in \code{gene_results} are dropped from that pathway.
 #'
-#' @param gene_results data.frame with at least gene + Z columns.
-#'   Typically MAGMA `.genes.out` (or your merged file) with `gene_col` and `z_col`.
-#' @param pathways either:
-#'   * a named list: each element is a character vector of gene IDs in that pathway, OR
-#'   * a data.frame with columns `pathway_id`, `gene_id` (and optional `pathway_name`).
-#' @param species optional; one of "maize", "sorghum", "arabidopsis", "plant".
-#'   If provided, built-in PMN pathways are loaded via `magcat_load_pathways()`.
-#'   Provide either `pathways` OR `species`, but not both.
-#' @param pmn_gene_col optional; passed to `magcat_load_pathways(gene_col=...)` when `species` is used.
-#' @param gene_col column name in `gene_results` containing gene IDs (default "GENE").
-#' @param z_col column name in `gene_results` containing gene-level Z statistics (default "ZSTAT").
-#' @param weight_col optional column name in `gene_results` for per-gene weights (default NULL = equal weights).
-#' @param min_abs_w replace non-finite / <=0 weights by this small positive value (default 1e-8).
-#' @param B_perm integer; number of permutations for empirical p (default 0L = no permutations).
-#' @param perm_mode either "resample_global" or "mvn" (default "resample_global").
-#' @param magma_genes_out required if perm_mode="mvn"; path to merged MAGMA *.genes.out (must include CHR).
-#' @param magma_cor_file optional if perm_mode="mvn"; 3-col file gene1 gene2 r of gene-gene correlations.
-#' @param make_PD logical; if TRUE, force correlation matrix PSD (default TRUE).
-#' @param alternative either "greater", "two.sided" or "less", greater, less = one-sided in the positive and negative direction respectively (default "greater")
-#' @param seed optional RNG seed (default NULL).
-#' @param output logical; if TRUE, write a CSV of results to `out_dir`.
-#' @param out_dir directory to write CSV when `output = TRUE` (default "magcat_stouffer_z").
+#' NOTE: The analytic p-value assumes (approximately) independent \eqn{Z_g} within a pathway.
+#' If genes are correlated (e.g., LD-induced correlation in MAGMA gene statistics), then this
+#' analytic p-value may be anti-conservative. In MAGCAT/CATFISH, correlation-aware calibration
+#' should be handled in your MVN/Omni layer (not inside this wrapper).
 #'
-#' @return data.frame with columns:
-#'   * pathway_id
-#'   * pathway_name
-#'   * n_genes
-#'   * gene_names
-#'   * gene_zvals           (semicolon-separated Z's used)
-#'   * stouffer_Z
-#'   * stouffer_p_analytic  (two-sided analytic p)
-#'   * stouffer_p_perm      (perm p; NA if B_perm = 0)
-#' Sorted by `stouffer_p_perm` ascending if B_perm>0 else by `stouffer_p_analytic`.
-#' If `output = TRUE`, attribute `"file"` contains the CSV path.
+#' @param gene_results data.frame with at least a gene ID column and a Z-statistic column.
+#'   For MAGMA `.genes.out`, you may have \code{GENE} and \code{ZSTAT} (or similar).
+#' @param pathways Either:
+#' \itemize{
+#'   \item A named list: each element is a character vector of gene IDs in that pathway, OR
+#'   \item A data.frame with columns \code{pathway_id}, \code{gene_id} (and optional \code{pathway_name}).
+#' }
+#' @param species Optional; one of "maize", "sorghum", "arabidopsis", "plant".
+#'   If provided, built-in PMN pathways are loaded via \code{magcat_load_pathways()}.
+#'   Provide either \code{pathways} OR \code{species}, but not both.
+#' @param pmn_gene_col Optional; passed to \code{magcat_load_pathways(gene_col=...)}
+#'   when \code{species} is used. If NULL, the PMN loader prefers "Gene-name"
+#'   then "Gene-id".
+#' @param gene_col Column name in \code{gene_results} containing gene IDs (default "GENE").
+#' @param z_col Column name in \code{gene_results} containing gene-level Z statistics (default "ZSTAT").
+#' @param weight_col Optional column name in \code{gene_results} for per-gene weights
+#'   (default NULL = equal weights). Examples: \code{sqrt(NSNPS)}, \code{1/SE}, etc.
+#' @param min_abs_w Non-finite / NA / <=0 weights are replaced by this small positive value
+#'   (default 1e-8).
+#' @param alternative One of \code{"greater"}, \code{"two.sided"}, \code{"less"}.
+#'   \code{"greater"} tests for positive enrichment (default "greater").
+#' @param output If TRUE, write a CSV of results to \code{out_dir}.
+#' @param out_dir Directory to write CSV when \code{output = TRUE} (default "magcat_stouffer_z").
 #'
+#' @return A data.frame with columns:
+#' \describe{
+#'   \item{pathway_id}{Pathway identifier}
+#'   \item{pathway_name}{Pathway name (if available; otherwise equals \code{pathway_id})}
+#'   \item{n_genes}{Number of genes used in the pathway}
+#'   \item{gene_names}{Semicolon-separated gene IDs actually used (from \code{gene_results})}
+#'   \item{gene_zvals}{Semicolon-separated Z statistics actually used}
+#'   \item{stouffer_Z}{Combined Stouffer Z-score}
+#'   \item{stouffer_p}{Analytic p-value under the chosen \code{alternative}}
+#' }
+#' Rows are sorted by \code{stouffer_p} in increasing order (smallest p first; NA at bottom).
+#' If \code{output = TRUE}, an attribute \code{"file"} is attached with the CSV path.
+#'
+#' @examples
+#' \dontrun{
+#' # Load gene results from MAGMA output (must include ZSTAT column)
+#' gene_results <- read.delim("magma_output.genes.out")
+#'
+#' # Run Stouffer's Z method on maize PMN pathways
+#' stouffer_res <- magcat_stoufferZ_pathways(
+#'   gene_results = gene_results,
+#'   species = "maize",
+#'   gene_col = "GENE",
+#'   z_col = "ZSTAT"
+#' )
+#' head(stouffer_res)
+#'
+#' # With weighted Stouffer (e.g., by number of SNPs)
+#' stouffer_weighted <- magcat_stoufferZ_pathways(
+#'   gene_results = gene_results,
+#'   species = "maize",
+#'   weight_col = "NSNPS"
+#' )
+#' }
+#'
+#' @seealso \code{\link{magcat_acat_pathways}}, \code{\link{magcat_fisher_pathways}}
 #' @export
 magcat_stoufferZ_pathways <- function(gene_results,
-                                      pathways        = NULL,
-                                      species         = NULL,
-                                      pmn_gene_col    = NULL,
-                                      gene_col        = "GENE",
-                                      z_col           = "ZSTAT",
-                                      weight_col      = NULL,
-                                      min_abs_w       = 1e-8,
-                                      B_perm          = 0L,
-                                      perm_mode       = c("resample_global", "mvn"),
-                                      magma_genes_out = NULL,
-                                      magma_cor_file  = NULL,
-                                      make_PD         = TRUE,
-                                      seed            = NULL,
-                                      alternative     = c("greater", "two.sided", "less"), # greater, less = one-sided in the positive and negative direction
-                                      output          = FALSE,
-                                      out_dir         = "magcat_stouffer_z") {
+                                      pathways     = NULL,
+                                      species      = NULL,
+                                      pmn_gene_col = NULL,
+                                      gene_col     = "GENE",
+                                      z_col        = "ZSTAT",
+                                      weight_col   = NULL,
+                                      min_abs_w    = 1e-8,
+                                      alternative  = c("greater", "two.sided", "less"),
+                                      output       = FALSE,
+                                      out_dir      = "magcat_stouffer_z") {
 
-  perm_mode   <- match.arg(perm_mode)
   alternative <- match.arg(alternative)
 
   ## -------- decide pathway source: pathways vs species ----------
@@ -77,60 +99,85 @@ magcat_stoufferZ_pathways <- function(gene_results,
     stop("Provide either 'pathways' OR 'species', not both.", call. = FALSE)
   }
   if (is.null(pathways) && is.null(species)) {
-    stop("You must provide either 'pathways' (list/data.frame) OR 'species'.", call. = FALSE)
+    stop("You must provide either:\n",
+         "  * 'pathways' (list/data.frame), OR\n",
+         "  * 'species' = 'maize' | 'sorghum' | 'arabidopsis' | 'plant'.",
+         call. = FALSE)
   }
+
+  # If user gave species, load PMN pathways
   if (is.null(pathways) && !is.null(species)) {
-    if (is.null(pmn_gene_col)) {
-      pathways <- magcat_load_pathways(species = species)
+    pathways <- if (is.null(pmn_gene_col)) {
+      magcat_load_pathways(species = species)
     } else {
-      pathways <- magcat_load_pathways(species = species, gene_col = pmn_gene_col)
+      magcat_load_pathways(species = species, gene_col = pmn_gene_col)
     }
   }
 
   ## -------- standardize gene_results ----------
-  needed_cols <- c(gene_col, z_col)
-  if (!all(needed_cols %in% names(gene_results))) {
-    stop("gene_results must contain columns '", gene_col, "' and '", z_col, "'.", call. = FALSE)
+  if (!all(c(gene_col, z_col) %in% names(gene_results))) {
+    stop("gene_results must contain columns '", gene_col, "' and '", z_col, "'.",
+         call. = FALSE)
   }
   if (!is.null(weight_col) && !(weight_col %in% names(gene_results))) {
     stop("weight_col='", weight_col, "' not found in gene_results.", call. = FALSE)
   }
 
-  gr         <- gene_results
-  genes_all  <- as.character(gr[[gene_col]])
-  z_all      <- as.numeric(gr[[z_col]])
+  genes_all  <- as.character(gene_results[[gene_col]])
+  z_all      <- as.numeric(gene_results[[z_col]])
   genes_norm <- tolower(genes_all)
 
-  # map normalized -> canonical
-  gene_map <- tapply(genes_all, genes_norm, function(x) x[1])
+  ok <- !is.na(genes_norm) & genes_norm != "" & is.finite(z_all) & !is.na(z_all)
+  if (!any(ok)) {
+    stop("No valid (non-NA) gene IDs and Z statistics found in gene_results.", call. = FALSE)
+  }
 
-  # named vectors for fast lookup
-  z_vec <- stats::setNames(z_all, genes_norm)
+  # Robust to duplicates: keep first Z per gene (MAGMA genes.out should be unique anyway)
+  z_vec <- tapply(z_all[ok], genes_norm[ok], function(x) x[1])
 
+  # Map normalized -> canonical gene ID (first occurrence)
+  gene_map <- tapply(genes_all[ok], genes_norm[ok], function(x) x[1])
+
+  # Optional weights
   w_vec <- NULL
   if (!is.null(weight_col)) {
-    w_all <- as.numeric(gr[[weight_col]])
-    w_vec <- stats::setNames(w_all, genes_norm)
+    w_all <- as.numeric(gene_results[[weight_col]])
+    ok_w  <- !is.na(genes_norm) & genes_norm != "" & is.finite(w_all) & !is.na(w_all)
+    if (any(ok_w)) {
+      w_vec <- tapply(w_all[ok_w], genes_norm[ok_w], function(x) x[1])
+    } else {
+      # weight_col provided but all weights invalid -> fallback to equal weights
+      w_vec <- NULL
+    }
   }
 
   ## -------- pathways -> named list + names ----------
   if (is.data.frame(pathways)) {
     if (!("pathway_id" %in% names(pathways)) || !("gene_id" %in% names(pathways))) {
-      stop("If 'pathways' is a data.frame it must have columns 'pathway_id' and 'gene_id'.", call. = FALSE)
+      stop("If 'pathways' is a data.frame it must have columns 'pathway_id' and 'gene_id'.",
+           call. = FALSE)
     }
-    if (!("pathway_name" %in% names(pathways))) pathways$pathway_name <- pathways$pathway_id
-    p_list  <- split(pathways$gene_id, pathways$pathway_id)
-    p_names <- tapply(pathways$pathway_name, pathways$pathway_id, FUN = function(x) x[1])
+    if (!("pathway_name" %in% names(pathways))) {
+      pathways$pathway_name <- pathways$pathway_id
+    }
+
+    p_list  <- split(as.character(pathways$gene_id), pathways$pathway_id)
+    p_names <- tapply(pathways$pathway_name, pathways$pathway_id, function(x) x[1])
+
   } else if (is.list(pathways)) {
-    p_list  <- pathways
-    p_names <- names(pathways)
-    if (is.null(p_names)) {
-      p_names <- paste0("PWY_", seq_along(pathways))
-      names(p_list) <- p_names
+    p_list <- pathways
+    nm <- names(p_list)
+    if (is.null(nm)) {
+      nm <- paste0("PWY_", seq_along(p_list))
+      names(p_list) <- nm
     }
+    p_names <- stats::setNames(nm, nm)
+
   } else {
     stop("'pathways' must be either a list or a data.frame.", call. = FALSE)
   }
+
+  # normalize IDs inside pathways
   p_list <- lapply(p_list, function(g) tolower(as.character(g)))
 
   ## -------- helpers ----------
@@ -162,166 +209,66 @@ magcat_stoufferZ_pathways <- function(gene_results,
       if (length(w_i) != length(z_i)) w_i <- rep(1, length(z_i))
     }
 
-    Zs <- sum(w_i * z_i) / sqrt(sum(w_i^2))
-    ps <- .p_from_Z(Zs)
-    list(Z = Zs, p = ps)
-  }
+    denom <- sqrt(sum(w_i^2))
+    if (!is.finite(denom) || denom <= 0) return(list(Z = NA_real_, p = NA_real_))
 
-  ## -------- global pools for permutations ----------
-  ok_pool <- which(is.finite(z_all) & !is.na(z_all) & !is.na(genes_norm) & genes_norm != "")
-  if (!length(ok_pool)) stop("No valid gene-level Z statistics found.", call. = FALSE)
-
-  z_pool <- as.numeric(z_all[ok_pool])
-
-  if (!is.null(seed)) set.seed(seed)
-
-  ## -------- MVN prep (once) ----------
-  genes_out_tab <- NULL
-  cor_pairs     <- NULL
-  if (B_perm > 0L && perm_mode == "mvn") {
-    if (is.null(magma_genes_out) || !file.exists(magma_genes_out)) {
-      stop("perm_mode='mvn' requires magma_genes_out = path to merged MAGMA *.genes.out", call. = FALSE)
-    }
-    genes_out_tab <- magma_read_genes_out(magma_genes_out, gene_col = gene_col, chr_col = "CHR")
-
-    if (!is.null(magma_cor_file)) {
-      if (!file.exists(magma_cor_file)) stop("magma_cor_file does not exist: ", magma_cor_file, call. = FALSE)
-      cor_pairs <- magma_read_gene_cor_pairs(magma_cor_file, gene1_col = 1, gene2_col = 2, r_col = 3)
-    }
+    Zs <- sum(w_i * z_i) / denom
+    list(Z = Zs, p = .p_from_Z(Zs))
   }
 
   ## -------- result container ----------
-  n_pw <- length(p_list)
-  res  <- data.frame(
-    pathway_id          = names(p_list),
-    pathway_name        = if (is.null(p_names)) names(p_list) else unname(p_names),
-    n_genes             = NA_integer_,
-    gene_names          = NA_character_,
-    gene_zvals          = NA_character_,
-    stouffer_Z          = NA_real_,
-    stouffer_p_analytic = NA_real_,
-    stouffer_p_perm     = NA_real_,
-    stringsAsFactors    = FALSE
+  pw_ids <- names(p_list)
+  pw_names <- unname(p_names[pw_ids])
+  pw_names[is.na(pw_names) | pw_names == ""] <- pw_ids[is.na(pw_names) | pw_names == ""]
+
+  res <- data.frame(
+    pathway_id   = pw_ids,
+    pathway_name = pw_names,
+    n_genes      = NA_integer_,
+    gene_names   = NA_character_,
+    gene_zvals   = NA_character_,
+    stouffer_Z   = NA_real_,
+    stouffer_p   = NA_real_,
+    stringsAsFactors = FALSE
   )
 
   ## -------- main loop ----------
-  for (i in seq_len(n_pw)) {
+  for (i in seq_along(p_list)) {
     genes_i <- p_list[[i]]
 
     z_i <- z_vec[genes_i]
-    keep <- is.finite(z_i) & !is.na(z_i)
-    z_i  <- as.numeric(z_i[keep])
-    genes_used <- genes_i[keep]
+    z_i <- as.numeric(z_i[!is.na(z_i) & is.finite(z_i)])
+    genes_used_norm <- names(z_i)
 
     d <- length(z_i)
     res$n_genes[i] <- d
-    if (!d) next
+    if (d == 0L) next
 
-    canon_ids <- unname(gene_map[genes_used])
-    canon_ids <- unique(canon_ids[!is.na(canon_ids)])
+    canon_ids <- unname(gene_map[genes_used_norm])
+    canon_ids <- unique(canon_ids[!is.na(canon_ids) & canon_ids != ""])
     res$gene_names[i] <- paste(canon_ids, collapse = ";")
     res$gene_zvals[i] <- paste(z_i, collapse = ";")
 
     w_i <- NULL
-    if (!is.null(w_vec)) w_i <- as.numeric(w_vec[genes_used])
+    if (!is.null(w_vec)) {
+      # align weights to the genes actually used
+      w_i <- as.numeric(w_vec[genes_used_norm])
+    }
 
     st <- .stouffer_from_z(z_i, w_i)
-    res$stouffer_Z[i]          <- st$Z
-    res$stouffer_p_analytic[i] <- st$p
-
-    ## ---- permutations ----
-    if (B_perm > 0L && is.finite(st$Z)) {
-
-      if (alternative == "two.sided") {
-        T_obs <- abs(st$Z)
-        T_of  <- function(Z) abs(Z)
-        cmp   <- function(Tnull) Tnull >= T_obs
-      } else if (alternative == "greater") {
-        T_obs <- st$Z
-        T_of  <- function(Z) Z
-        cmp   <- function(Tnull) Tnull >= T_obs
-      } else { # "less"
-        T_obs <- st$Z
-        T_of  <- function(Z) Z
-        cmp   <- function(Tnull) Tnull <= T_obs
-      }
-
-      T_null <- rep(NA_real_, B_perm)
-
-      if (perm_mode == "resample_global") {
-        for (b in seq_len(B_perm)) {
-          z_perm <- sample(z_pool, size = d, replace = FALSE)
-          st_b <- .stouffer_from_z(z_perm, if (is.null(w_i)) NULL else w_i)
-          T_null[b] <- T_of(st_b$Z)
-        }
-        res$stouffer_p_perm[i] <- (1 + sum(cmp(T_null), na.rm = TRUE)) / (B_perm + 1)
-
-      } else if (perm_mode == "mvn") {
-
-        R_S <- magma_build_R_for_pathway(
-          genes_S       = genes_used,
-          genes_out_tab = genes_out_tab,
-          cor_pairs     = cor_pairs,
-          gene_col      = gene_col,
-          chr_col       = "CHR",
-          make_PD       = make_PD
-        )
-        if (is.null(R_S)) next
-
-        sim <- magma_simulate_null_Zp(
-          genes_S       = rownames(R_S),
-          genes_out_tab = genes_out_tab,
-          R_S           = R_S,
-          B             = B_perm,
-          gene_col      = gene_col,
-          chr_col       = "CHR"
-        )
-
-        Zmat <- sim$Z
-        if (is.null(Zmat)) {
-          # If only P is returned, convert P -> Z using MAGMA-style association-strength:
-          #   z = qnorm(1 - p)
-          Pmat <- sim$P
-          if (is.null(Pmat)) next
-
-          for (b in seq_len(B_perm)) {
-            p_perm <- as.numeric(Pmat[b, ])
-            p_perm <- p_perm[is.finite(p_perm) & !is.na(p_perm)]
-            if (!length(p_perm)) next
-            p_perm <- pmin(pmax(p_perm, 1e-15), 1 - 1e-15)
-
-            z_perm <- stats::qnorm(1 - p_perm)
-
-            st_b <- .stouffer_from_z(z_perm, if (is.null(w_i)) NULL else w_i)
-            T_null[b] <- T_of(st_b$Z)
-          }
-
-        } else {
-          for (b in seq_len(B_perm)) {
-            z_perm <- as.numeric(Zmat[b, ])
-            z_perm <- z_perm[is.finite(z_perm) & !is.na(z_perm)]
-            if (!length(z_perm)) next
-            st_b <- .stouffer_from_z(z_perm, if (is.null(w_i)) NULL else w_i)
-            T_null[b] <- T_of(st_b$Z)
-          }
-        }
-
-        res$stouffer_p_perm[i] <- (1 + sum(cmp(T_null), na.rm = TRUE)) / (B_perm + 1)
-      }
-    }
+    res$stouffer_Z[i] <- st$Z
+    res$stouffer_p[i] <- st$p
   }
 
-  ## -------- sort ----------
-  if (B_perm > 0L) {
-    ord <- order(res$stouffer_p_perm, decreasing = FALSE, na.last = TRUE)
-  } else {
-    ord <- order(res$stouffer_p_analytic, decreasing = FALSE, na.last = TRUE)
-  }
+  ## -------- sort by p (smallest first) ----------
+  ord <- order(res$stouffer_p, decreasing = FALSE, na.last = TRUE)
   res <- res[ord, , drop = FALSE]
 
   ## -------- optional CSV output ----------
-  if (output) {
-    if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+  if (isTRUE(output)) {
+    if (!dir.exists(out_dir)) {
+      dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+    }
     species_tag <- if (is.null(species)) "custom" else species
     out_path <- file.path(out_dir, paste0("magcat_stoufferZ_pathways_", species_tag, ".csv"))
     utils::write.csv(res, out_path, row.names = FALSE)
@@ -330,271 +277,3 @@ magcat_stoufferZ_pathways <- function(gene_results,
 
   res
 }
-
-
-
-
-
-
-
-
-
-
-
-# magcat_stoufferZ_pathways <- function(gene_results,
-#                                       pathways        = NULL,
-#                                       species         = NULL,
-#                                       pmn_gene_col    = NULL,
-#                                       gene_col        = "GENE",
-#                                       z_col           = "ZSTAT",
-#                                       weight_col      = NULL,
-#                                       min_abs_w       = 1e-8,
-#                                       B_perm          = 0L,
-#                                       perm_mode       = c("resample_global", "mvn"),
-#                                       magma_genes_out = NULL,
-#                                       magma_cor_file  = NULL,
-#                                       make_PD         = TRUE,
-#                                       seed            = NULL,
-#                                       output          = FALSE,
-#                                       out_dir         = "magcat_stouffer_z") {
-
-#   perm_mode <- match.arg(perm_mode)
-
-#   ## -------- decide pathway source: pathways vs species ----------
-#   if (!is.null(pathways) && !is.null(species)) {
-#     stop("Provide either 'pathways' OR 'species', not both.", call. = FALSE)
-#   }
-#   if (is.null(pathways) && is.null(species)) {
-#     stop("You must provide either 'pathways' (list/data.frame) OR 'species'.", call. = FALSE)
-#   }
-#   if (is.null(pathways) && !is.null(species)) {
-#     if (is.null(pmn_gene_col)) {
-#       pathways <- magcat_load_pathways(species = species)
-#     } else {
-#       pathways <- magcat_load_pathways(species = species, gene_col = pmn_gene_col)
-#     }
-#   }
-
-#   ## -------- standardize gene_results ----------
-#   needed_cols <- c(gene_col, z_col)
-#   if (!all(needed_cols %in% names(gene_results))) {
-#     stop("gene_results must contain columns '", gene_col, "' and '", z_col, "'.", call. = FALSE)
-#   }
-#   if (!is.null(weight_col) && !(weight_col %in% names(gene_results))) {
-#     stop("weight_col='", weight_col, "' not found in gene_results.", call. = FALSE)
-#   }
-
-#   gr         <- gene_results
-#   genes_all  <- as.character(gr[[gene_col]])
-#   z_all      <- as.numeric(gr[[z_col]])
-#   genes_norm <- tolower(genes_all)
-
-#   # map normalized -> canonical
-#   gene_map <- tapply(genes_all, genes_norm, function(x) x[1])
-
-#   # named vectors for fast lookup
-#   z_vec <- stats::setNames(z_all, genes_norm)
-
-#   w_vec <- NULL
-#   if (!is.null(weight_col)) {
-#     w_all <- as.numeric(gr[[weight_col]])
-#     w_vec <- stats::setNames(w_all, genes_norm)
-#   }
-
-#   ## -------- pathways -> named list + names ----------
-#   if (is.data.frame(pathways)) {
-#     if (!("pathway_id" %in% names(pathways)) || !("gene_id" %in% names(pathways))) {
-#       stop("If 'pathways' is a data.frame it must have columns 'pathway_id' and 'gene_id'.", call. = FALSE)
-#     }
-#     if (!("pathway_name" %in% names(pathways))) pathways$pathway_name <- pathways$pathway_id
-
-#     p_list  <- split(pathways$gene_id, pathways$pathway_id)
-#     p_names <- tapply(pathways$pathway_name, pathways$pathway_id, FUN = function(x) x[1])
-#   } else if (is.list(pathways)) {
-#     p_list  <- pathways
-#     p_names <- names(pathways)
-#     if (is.null(p_names)) {
-#       p_names <- paste0("PWY_", seq_along(pathways))
-#       names(p_list) <- p_names
-#     }
-#   } else {
-#     stop("'pathways' must be either a list or a data.frame.", call. = FALSE)
-#   }
-#   p_list <- lapply(p_list, function(g) tolower(as.character(g)))
-
-#   ## -------- helpers ----------
-#   .fix_w <- function(w) {
-#     w <- as.numeric(w)
-#     bad <- !is.finite(w) | is.na(w) | w <= 0
-#     if (any(bad)) w[bad] <- min_abs_w
-#     w
-#   }
-
-#   .stouffer_from_z <- function(z_i, w_i = NULL) {
-#     z_i <- as.numeric(z_i)
-#     z_i <- z_i[is.finite(z_i) & !is.na(z_i)]
-#     if (!length(z_i)) return(list(Z = NA_real_, p = NA_real_))
-
-#     if (is.null(w_i)) {
-#       w_i <- rep(1, length(z_i))
-#     } else {
-#       w_i <- .fix_w(w_i)
-#       if (length(w_i) != length(z_i)) w_i <- rep(1, length(z_i))
-#     }
-
-#     Zs <- sum(w_i * z_i) / sqrt(sum(w_i^2))
-#     ps <- 2 * stats::pnorm(-abs(Zs))
-#     list(Z = Zs, p = ps)
-#   }
-
-#   ## -------- global pools for permutations ----------
-#   ok_pool <- which(is.finite(z_all) & !is.na(z_all) & !is.na(genes_norm) & genes_norm != "")
-#   if (!length(ok_pool)) stop("No valid gene-level Z statistics found.", call. = FALSE)
-
-#   z_pool <- as.numeric(z_all[ok_pool])
-
-#   if (!is.null(seed)) set.seed(seed)
-
-#   ## -------- MVN prep (once) ----------
-#   genes_out_tab <- NULL
-#   cor_pairs     <- NULL
-#   if (B_perm > 0L && perm_mode == "mvn") {
-#     if (is.null(magma_genes_out) || !file.exists(magma_genes_out)) {
-#       stop("perm_mode='mvn' requires magma_genes_out = path to merged MAGMA *.genes.out", call. = FALSE)
-#     }
-#     genes_out_tab <- magma_read_genes_out(magma_genes_out, gene_col = gene_col, chr_col = "CHR")
-
-#     if (!is.null(magma_cor_file)) {
-#       if (!file.exists(magma_cor_file)) stop("magma_cor_file does not exist: ", magma_cor_file, call. = FALSE)
-#       cor_pairs <- magma_read_gene_cor_pairs(magma_cor_file, gene1_col = 1, gene2_col = 2, r_col = 3)
-#     }
-#   }
-
-#   ## -------- result container ----------
-#   n_pw <- length(p_list)
-#   res  <- data.frame(
-#     pathway_id         = names(p_list),
-#     pathway_name       = if (is.null(p_names)) names(p_list) else unname(p_names),
-#     n_genes            = NA_integer_,
-#     gene_names         = NA_character_,
-#     gene_zvals         = NA_character_,
-#     stouffer_Z         = NA_real_,
-#     stouffer_p_analytic= NA_real_,
-#     stouffer_p_perm    = NA_real_,
-#     stringsAsFactors   = FALSE
-#   )
-
-#   ## -------- main loop ----------
-#   for (i in seq_len(n_pw)) {
-#     genes_i <- p_list[[i]]
-
-#     z_i <- z_vec[genes_i]
-#     keep <- is.finite(z_i) & !is.na(z_i)
-#     z_i  <- as.numeric(z_i[keep])
-#     genes_used <- genes_i[keep]
-
-#     d <- length(z_i)
-#     res$n_genes[i] <- d
-#     if (!d) next
-
-#     canon_ids <- unname(gene_map[genes_used])
-#     canon_ids <- unique(canon_ids[!is.na(canon_ids)])
-#     res$gene_names[i] <- paste(canon_ids, collapse = ";")
-#     res$gene_zvals[i] <- paste(z_i, collapse = ";")
-
-#     w_i <- NULL
-#     if (!is.null(w_vec)) {
-#       w_i <- as.numeric(w_vec[genes_used])
-#     }
-
-#     st <- .stouffer_from_z(z_i, w_i)
-#     res$stouffer_Z[i]          <- st$Z
-#     res$stouffer_p_analytic[i] <- st$p
-
-#     ## ---- permutations (two-sided; compare |Z|) ----
-#     if (B_perm > 0L && is.finite(st$Z)) {
-
-#       Z_obs <- abs(st$Z)
-#       Z_null <- rep(NA_real_, B_perm)
-
-#       if (perm_mode == "resample_global") {
-
-#         for (b in seq_len(B_perm)) {
-#           z_perm <- sample(z_pool, size = d, replace = FALSE)
-#           st_b <- .stouffer_from_z(z_perm, if (is.null(w_i)) NULL else w_i)
-#           Z_null[b] <- abs(st_b$Z)
-#         }
-
-#         res$stouffer_p_perm[i] <- (1 + sum(Z_null >= Z_obs, na.rm = TRUE)) / (B_perm + 1)
-
-#       } else if (perm_mode == "mvn") {
-
-#         R_S <- magma_build_R_for_pathway(
-#           genes_S       = genes_used,
-#           genes_out_tab = genes_out_tab,
-#           cor_pairs     = cor_pairs,
-#           gene_col      = gene_col,
-#           chr_col       = "CHR",
-#           make_PD       = make_PD
-#         )
-#         if (is.null(R_S)) next
-
-#         # simulate correlated Z under null
-#         sim <- magma_simulate_null_Zp(
-#           genes_S       = rownames(R_S),
-#           genes_out_tab = genes_out_tab,
-#           R_S           = R_S,
-#           B             = B_perm,
-#           gene_col      = gene_col,
-#           chr_col       = "CHR"
-#         )
-
-#         # IMPORTANT: magma_simulate_null_Zp() in your code returns both Z and P.
-#         # We prefer Z here if available; otherwise invert P to |Z|.
-#         Zmat <- sim$Z
-#         if (is.null(Zmat)) {
-#           # fallback from P to |Z| (loses sign)
-#           Pmat <- sim$P
-#           if (is.null(Pmat)) next
-#           for (b in seq_len(B_perm)) {
-#             p_perm <- as.numeric(Pmat[b, ])
-#             p_perm <- p_perm[is.finite(p_perm) & !is.na(p_perm)]
-#             if (!length(p_perm)) next
-#             z_abs <- stats::qnorm(p_perm / 2, lower.tail = FALSE)
-#             st_b <- .stouffer_from_z(z_abs, if (is.null(w_i)) NULL else w_i)
-#             Z_null[b] <- abs(st_b$Z)
-#           }
-#         } else {
-#           for (b in seq_len(B_perm)) {
-#             z_perm <- as.numeric(Zmat[b, ])
-#             z_perm <- z_perm[is.finite(z_perm) & !is.na(z_perm)]
-#             if (!length(z_perm)) next
-#             st_b <- .stouffer_from_z(z_perm, if (is.null(w_i)) NULL else w_i)
-#             Z_null[b] <- abs(st_b$Z)
-#           }
-#         }
-
-#         res$stouffer_p_perm[i] <- (1 + sum(Z_null >= Z_obs, na.rm = TRUE)) / (B_perm + 1)
-#       }
-#     }
-#   }
-
-#   ## -------- sort ----------
-#   if (B_perm > 0L) {
-#     ord <- order(res$stouffer_p_perm, decreasing = FALSE, na.last = TRUE)
-#   } else {
-#     ord <- order(res$stouffer_p_analytic, decreasing = FALSE, na.last = TRUE)
-#   }
-#   res <- res[ord, , drop = FALSE]
-
-#   ## -------- optional CSV output ----------
-#   if (output) {
-#     if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-#     species_tag <- if (is.null(species)) "custom" else species
-#     out_path <- file.path(out_dir, paste0("magcat_stoufferZ_pathways_", species_tag, ".csv"))
-#     utils::write.csv(res, out_path, row.names = FALSE)
-#     attr(res, "file") <- out_path
-#   }
-
-#   res
-# } 

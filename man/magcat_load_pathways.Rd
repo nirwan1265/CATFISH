@@ -31,10 +31,23 @@ A data.frame with columns:
 }
 }
 \description{
-Load PMN pathways as a long data.frame
-}
-\details{
 Reads a Plant Metabolic Network (PMN) pathway file from
-\code{inst/extdata/pathway} and returns a long table of
-(pathway, gene) membership.
+\code{inst/extdata/pathway} and returns a long table of (pathway, gene) membership.
+}
+\examples{
+\dontrun{
+# Load maize PMN pathways
+maize_pathways <- magcat_load_pathways(species = "maize")
+head(maize_pathways)
+
+# Load arabidopsis pathways with specific gene column
+arab_pathways <- magcat_load_pathways(
+  species = "arabidopsis",
+  gene_col = "Gene-id"
+)
+}
+
+}
+\seealso{
+\code{\link{magcat_acat_pathways}}, \code{\link{magcat_fisher_pathways}}
 }

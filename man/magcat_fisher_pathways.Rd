@@ -2,7 +2,7 @@
 % Please edit documentation in R/Fisher_wrappers.R
 \name{magcat_fisher_pathways}
 \alias{magcat_fisher_pathways}
-\title{Pathway-level Fisher test on MAGMA gene p-values}
+\title{Pathway-level Fisher test on gene-level p-values}
 \usage{
 magcat_fisher_pathways(
   gene_results,
@@ -18,48 +18,75 @@ magcat_fisher_pathways(
 )
 }
 \arguments{
-\item{gene_results}{data.frame with at least gene + p-value columns.
-Typically a MAGMA \code{.genes.out} file, with "GENE" and "P".}
+\item{gene_results}{data.frame with at least a gene ID column and a p-value column.
+For MAGMA \code{.genes.out}, these are commonly \code{GENE} and \code{P}.}
 
-\item{pathways}{either:
+\item{pathways}{Either:
 \itemize{
-\item a named list: each element is a character vector of gene IDs in that pathway, OR
-\item a data.frame with columns \code{pathway_id}, \code{gene_id} (and optional \code{pathway_name}).
+\item A named list: each element is a character vector of gene IDs in that pathway, OR
+\item A data.frame with columns \code{pathway_id}, \code{gene_id} (and optional \code{pathway_name}).
 }}
 
-\item{species}{optional; one of "maize", "sorghum", "arabidopsis", "plant".
+\item{species}{Optional; one of "maize", "sorghum", "arabidopsis", "plant".
 If provided, built-in PMN pathways are loaded via \code{magcat_load_pathways()}.
 Provide either \code{pathways} OR \code{species}, but not both.}
 
-\item{pmn_gene_col}{optional; passed to \code{magcat_load_pathways(gene_col=...)}
-when \code{species} is used.}
+\item{pmn_gene_col}{Optional; passed to \code{magcat_load_pathways(gene_col=...)}
+when \code{species} is used. If NULL, the PMN loader prefers "Gene-name"
+then "Gene-id".}
 
-\item{gene_col}{column name in \code{gene_results} containing gene IDs (default "GENE").}
+\item{gene_col}{Column name in \code{gene_results} containing gene IDs (default "GENE").}
 
-\item{p_col}{column name in \code{gene_results} containing gene-level p-values (default "P").}
+\item{p_col}{Column name in \code{gene_results} containing gene-level p-values (default "P").}
 
-\item{min_p}{lower cap for very small p-values (default 1e-15).}
+\item{min_p}{Lower cap for very small p-values (default 1e-15).}
 
-\item{do_fix}{logical; if TRUE, clean p-values with \code{fix_p_for_acat()}.}
+\item{do_fix}{If TRUE (default), clean/cap p-values using \code{fix_p_for_acat()}
+to ensure values lie strictly in (0,1).}
 
-\item{output}{logical; if TRUE, write a CSV of results to \code{out_dir}.}
+\item{output}{If TRUE, write a CSV of results to \code{out_dir}.}
 
-\item{out_dir}{directory to write CSV when \code{output = TRUE} (default "magcat_fisher").}
+\item{out_dir}{Directory to write CSV when \code{output = TRUE} (default "magcat_fisher").}
 }
 \value{
-data.frame with columns:
-\itemize{
-\item pathway_id
-\item pathway_name
-\item n_genes
-\item gene_names
-\item fisher_p
-Sorted by \code{fisher_p} ascending (most significant first).
+A data.frame with columns:
+\describe{
+\item{pathway_id}{Pathway identifier}
+\item{pathway_name}{Pathway name (if available; otherwise equals \code{pathway_id})}
+\item{n_genes}{Number of genes used in Fisher's test for this pathway}
+\item{gene_names}{Semicolon-separated gene IDs actually used (from \code{gene_results})}
+\item{fisher_p}{Fisher combined p-value}
+}
+Rows are sorted by \code{fisher_p} in increasing order (smallest p first; NA at bottom).
 If \code{output = TRUE}, an attribute \code{"file"} is attached with the CSV path.
 }
-}
 \description{
-This is \strong{classic Fisher's method} (no weights, no direction):
-T = -2 * sum(log(p_g)),  df = 2 * m
-p = P(ChiSq_df >= T)
+Computes classic Fisher's combination test within each pathway:
+\deqn{T = -2 \sum_{g \in S} \log(p_g), \qquad T \sim \chi^2_{2m}}
+where \eqn{m} is the number of genes with available p-values in the pathway.
+}
+\details{
+Gene IDs are matched case-insensitively: both \code{gene_results[[gene_col]]} and
+pathway gene IDs are normalized to lower-case before matching. Genes not present
+in \code{gene_results} are dropped from that pathway.
+}
+\examples{
+\dontrun{
+# Load gene results from MAGMA output
+gene_results <- read.delim("magma_output.genes.out")
+
+# Run Fisher's method on maize PMN pathways
+fisher_res <- magcat_fisher_pathways(
+  gene_results = gene_results,
+  species = "maize",
+  gene_col = "GENE",
+  p_col = "P"
+)
+head(fisher_res)
+}
+
+}
+\seealso{
+\code{\link{magcat_acat_pathways}}, \code{\link{magcat_minp_pathways}},
+\code{\link{magcat_wfisher_pathways}}
 }

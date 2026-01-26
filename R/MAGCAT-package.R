@@ -1,0 +1,76 @@
+#' @keywords internal
+"_PACKAGE"
+
+#' MAGCAT: MAGMA-Based Gene and Pathway Analysis with ACAT Aggregation
+#'
+#' MAGCAT provides an R interface to MAGMA (Multi-marker Analysis of
+#' GenoMic Annotation) for post-GWAS pathway enrichment analysis. It implements
+#' multiple p-value combination methods and combines them into an omnibus test
+#' with optional permutation-based or MVN-based calibration to account for
+#' gene-gene correlations.
+#'
+#' @section Main Function Families:
+#'
+#' \strong{Pathway Testing Methods:}
+#' \itemize{
+#'   \item \code{\link{magcat_acat_pathways}} - ACAT (Cauchy combination)
+#'   \item \code{\link{magcat_fisher_pathways}} - Fisher's method
+#'   \item \code{\link{magcat_minp_pathways}} - Minimum p-value (Tippett/Wilkinson)
+#'   \item \code{\link{magcat_stoufferZ_pathways}} - Stouffer's Z-score method
+#'   \item \code{\link{magcat_tfisher_pathways}} - Truncated Fisher (TPM)
+#'   \item \code{\link{magcat_soft_tfisher_pathways}} - Soft-thresholding TFisher
+#'   \item \code{\link{magcat_soft_tfisher_adaptive_pathways}} - Adaptive soft TFisher
+#'   \item \code{\link{magcat_wfisher_pathways}} - Weighted Fisher with effect directions
+#'   \item \code{\link{magcat_ordmeta_pathways}} - Order-statistics meta-analysis
+#' }
+#'
+#' \strong{Omnibus Testing:}
+#' \itemize{
+#'   \item \code{\link{magcat_omni2_pathways}} - Omnibus combination of multiple methods
+#'     with optional MVN resampling for correlation-aware calibration
+#' }
+#'
+#' \strong{MAGMA Interface:}
+#' \itemize{
+#'   \item \code{\link{magma_path}} - Locate MAGMA binary
+#'   \item \code{\link{magma_gene}} - Run MAGMA gene analysis
+#' }
+#'
+#' \strong{Data Preparation:}
+#' \itemize{
+#'   \item \code{\link{magcat_load_pathways}} - Load built-in PMN pathway definitions
+#'   \item \code{\link{gff3_to_geneloc}} - Convert GFF3 to MAGMA gene location file
+#'   \item \code{\link{get_gene_lengths}} - Extract gene lengths from GFF3
+#'   \item \code{\link{magcat_adjust_gene_p}} - Adjust gene p-values for gene length/NSNPS
+#' }
+#'
+#' @section Built-in Pathway Databases:
+#' MAGCAT includes Plant Metabolic Network (PMN) pathway definitions for:
+#' \itemize{
+#'   \item Maize (CornCyc)
+#'   \item Sorghum (SorghumBicolorCyc)
+#'   \item Arabidopsis (AraCyc)
+#'   \item General plant species (PlantCyc)
+#' }
+#'
+#' @section Typical Workflow:
+#' \enumerate{
+#'   \item Prepare gene location file from GFF3 using \code{\link{gff3_to_geneloc}}
+#'   \item Run MAGMA gene analysis using \code{\link{magma_gene}}
+#'   \item (Optional) Adjust gene p-values using \code{\link{magcat_adjust_gene_p}}
+#'   \item Run pathway analysis using one or more pathway testing methods
+#'   \item (Optional) Combine results using \code{\link{magcat_omni2_pathways}}
+#' }
+#'
+#' @author Nirwan Tandukar \email{tandukar.nirwan@@gmail.com}
+#'
+#' @seealso
+#' Useful links:
+#' \itemize{
+#'   \item \url{https://github.com/nirwantandukar/MAGCAT}
+#'   \item Report bugs at \url{https://github.com/nirwantandukar/MAGCAT/issues}
+#' }
+#'
+#' @name MAGCAT-package
+#' @aliases MAGCAT
+NULL

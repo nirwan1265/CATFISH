@@ -2,14 +2,15 @@
 
 #' Path to built-in PMN pathway file
 #'
-#' @param species Which built-in DB to use. For now:
-#'   \itemize{
-#'     \item{"maize"}   {corncyc\_pathways.20230103}
-#'     \item{"sorghum"} {sorghumbicolorcyc\_pathways.20230103}
-#'     \item{"arabidopsis"} {aracyc\_pathways.20230103}
-#'     \item{"plant"}  {plantcyc\_pathways.20230103}
-#'   }
+#' @param species Which built-in DB to use. One of:
+#' \itemize{
+#'   \item{"maize"}{"corncyc_pathways.20230103"}
+#'   \item{"sorghum"}{"sorghumbicolorcyc_pathways.20230103"}
+#'   \item{"arabidopsis"}{"aracyc_pathways.20230103"}
+#'   \item{"plant"}{"plantcyc_pathways.20230103"}
+#' }
 #'
+#' @return A file path to the selected PMN pathway file in the MAGCAT package.
 #' @keywords internal
 magcat_pmn_file <- function(
   species = c("maize", "sorghum", "arabidopsis", "plant")
@@ -25,7 +26,7 @@ magcat_pmn_file <- function(
   )
 
   path <- system.file("extdata/pathway", fname, package = "MAGCAT")
-  if (path == "") {
+  if (identical(path, "")) {
     stop("Could not find ", fname, " in inst/extdata/pathway of MAGCAT.",
          call. = FALSE)
   }
@@ -34,11 +35,8 @@ magcat_pmn_file <- function(
 
 #' Load PMN pathways as a long data.frame
 #'
-#' Load PMN pathways as a long data.frame
-#'
 #' Reads a Plant Metabolic Network (PMN) pathway file from
-#' `inst/extdata/pathway` and returns a long table of
-#' (pathway, gene) membership.
+#' `inst/extdata/pathway` and returns a long table of (pathway, gene) membership.
 #'
 #' @param species One of "maize", "sorghum", "arabidopsis", "plant".
 #' @param gene_col Which column from the PMN file to use for gene IDs.
@@ -50,12 +48,26 @@ magcat_pmn_file <- function(
 #' @param drop_unknown If TRUE, drop rows with missing/unknown gene IDs.
 #'
 #' @return A data.frame with columns:
-#'   \describe{
-#'     \item{pathway_id}{PMN pathway ID (e.g., "PWY-7634")}
-#'     \item{pathway_name}{Human-readable pathway name}
-#'     \item{gene_id}{Gene identifier from `gene_col`}
-#'   }
+#' \describe{
+#'   \item{pathway_id}{PMN pathway ID (e.g., "PWY-7634")}
+#'   \item{pathway_name}{Human-readable pathway name}
+#'   \item{gene_id}{Gene identifier from `gene_col`}
+#' }
 #'
+#' @examples
+#' \dontrun{
+#' # Load maize PMN pathways
+#' maize_pathways <- magcat_load_pathways(species = "maize")
+#' head(maize_pathways)
+#'
+#' # Load arabidopsis pathways with specific gene column
+#' arab_pathways <- magcat_load_pathways(
+#'   species = "arabidopsis",
+#'   gene_col = "Gene-id"
+#' )
+#' }
+#'
+#' @seealso \code{\link{magcat_acat_pathways}}, \code{\link{magcat_fisher_pathways}}
 #' @export
 magcat_load_pathways <- function(
   species      = c("maize", "sorghum", "arabidopsis", "plant"),
@@ -63,7 +75,6 @@ magcat_load_pathways <- function(
   drop_unknown = TRUE
 ) {
   species <- match.arg(species)
-
   fpath <- magcat_pmn_file(species)
 
   x <- suppressWarnings(
@@ -108,26 +119,25 @@ magcat_load_pathways <- function(
     stringsAsFactors = FALSE
   )
 
-  if (drop_unknown) {
-    bad <- is.na(df$gene_id) |
-      df$gene_id == "" |
-      df$gene_id == "unknown"
+  if (isTRUE(drop_unknown)) {
+    bad <- is.na(df$gene_id) | df$gene_id == "" | df$gene_id == "unknown"
     df <- df[!bad, , drop = FALSE]
   }
 
   df
 }
 
-
-
 ## ---------- p-value cleaner -----------------------------------------
 
 #' Clean p-values for ACAT
 #'
-#' @param p numeric vector of p-values (NA allowed).
-#' @param min_p lower cap for very small p-values (default 1e-15).
+#' ACAT uses Cauchy transforms that can behave poorly at exactly 0 or 1.
+#' This helper removes NA values and caps extreme p-values.
 #'
-#' @return cleaned numeric vector (NAs removed, extremes capped).
+#' @param p Numeric vector of p-values (NA allowed). Names are preserved.
+#' @param min_p Lower cap for very small p-values (default 1e-15).
+#'
+#' @return Cleaned numeric vector (NAs removed, extremes capped).
 #' @keywords internal
 fix_p_for_acat <- function(p, min_p = 1e-15) {
   p <- p[!is.na(p)]
@@ -143,50 +153,118 @@ fix_p_for_acat <- function(p, min_p = 1e-15) {
   p
 }
 
+## ---------- internal helpers ----------------------------------------
+
+#' @keywords internal
+.magcat_assert_cols <- function(df, cols, df_name = "data.frame") {
+  missing <- setdiff(cols, names(df))
+  if (length(missing) > 0L) {
+    stop(df_name, " is missing required column(s): ",
+         paste(missing, collapse = ", "),
+         call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+#' @keywords internal
+.magcat_pathways_to_list <- function(pathways) {
+  if (is.data.frame(pathways)) {
+    .magcat_assert_cols(pathways, c("pathway_id", "gene_id"), "pathways")
+
+    if (!"pathway_name" %in% names(pathways)) {
+      pathways$pathway_name <- pathways$pathway_id
+    }
+
+    p_list  <- split(as.character(pathways$gene_id), pathways$pathway_id)
+
+    # pathway_name: first name per id (named character vector)
+    p_names <- tapply(pathways$pathway_name, pathways$pathway_id, function(x) x[1])
+
+    list(p_list = p_list, p_names = p_names)
+  } else if (is.list(pathways)) {
+    p_list <- pathways
+    nm <- names(p_list)
+    if (is.null(nm)) {
+      nm <- paste0("PWY_", seq_along(p_list))
+      names(p_list) <- nm
+    }
+    # For list input, names are used as pathway_name (and pathway_id).
+    p_names <- stats::setNames(nm, nm)
+
+    list(p_list = p_list, p_names = p_names)
+  } else {
+    stop("'pathways' must be either a list or a data.frame.", call. = FALSE)
+  }
+}
+
 ## ---------- Pathway-level ACAT wrapper ------------------------------
 
-#' ACAT pathway test on MAGMA gene p-values
+#' ACAT pathway test on gene-level p-values
 #'
-#' @param gene_results data.frame with at least a gene column and a p-value column.
-#'   Typically a MAGMA `.genes.out` file, where p-values are in column "P".
-#' @param pathways either
-#'   \itemize{
-#'     \item a named list: each element is a character vector of gene IDs
-#'       in that pathway, OR
-#'     \item a data.frame with columns `pathway_id`, `gene_id`
-#'       (and optional `pathway_name`).
-#'   }
-#' @param species optional; one of "maize", "sorghum", "arabidopsis", "plant".
+#' Computes a self-contained pathway p-value per gene set by combining the
+#' member gene p-values using ACAT (Cauchy combination).
+#'
+#' Gene IDs are matched case-insensitively: both `gene_results[[gene_col]]` and
+#' `pathways` gene IDs are normalized to lower-case before matching. Genes that
+#' do not appear in `gene_results` are dropped for that pathway.
+#'
+#' @param gene_results data.frame with at least a gene ID column and a p-value column.
+#'   For MAGMA `.genes.out`, these are commonly `GENE` and `P`.
+#' @param pathways Either:
+#' \itemize{
+#'   \item A named list: each element is a character vector of gene IDs in that pathway, OR
+#'   \item A data.frame with columns `pathway_id`, `gene_id` (and optional `pathway_name`).
+#' }
+#' @param species Optional; one of "maize", "sorghum", "arabidopsis", "plant".
 #'   If provided, built-in PMN pathways are loaded via `magcat_load_pathways()`.
-#'   You must provide either `pathways` OR `species`, but not both.
-#' @param pmn_gene_col optional; passed to `magcat_load_pathways(gene_col=...)`
-#'   when `species` is used. If NULL, PMN loader will prefer "Gene-name"
-#'   and fall back to "Gene-id".
-#' @param gene_col column name in `gene_results` containing gene IDs
-#'   (default "GENE").
-#' @param p_col column name in `gene_results` containing gene-level p-values
-#'   (default "P").
-#' @param min_p lower cap for very small p-values before ACAT (default 1e-15).
-#' @param do_fix logical; if TRUE (default), clean p-values with
-#'   `fix_p_for_acat()`.
-#' @param B integer; number of permutations for empirical p-values.
-#'   Default 0 (no permutations).
-#' @param seed optional integer random seed for permutations (ignored if B == 0).
-#' @param output logical; if TRUE, write a CSV of results to `out_dir`.
-#' @param out_dir directory to write CSV when `output = TRUE`
-#'   (default "magcat_acat").
+#'   Provide either `pathways` OR `species`, but not both.
+#' @param pmn_gene_col Optional; passed to `magcat_load_pathways(gene_col=...)`
+#'   when `species` is used. If NULL, PMN loader prefers "Gene-name" then "Gene-id".
+#' @param gene_col Column name in `gene_results` containing gene IDs (default "GENE").
+#' @param p_col Column name in `gene_results` containing gene-level p-values (default "P").
+#' @param min_p Lower cap for very small p-values before ACAT (default 1e-15).
+#' @param do_fix If TRUE (default), clean/cap p-values with `fix_p_for_acat()`.
+#' @param output If TRUE, write a CSV of results to `out_dir`.
+#' @param out_dir Directory to write CSV when `output = TRUE` (default "magcat_acat").
 #'
-#' @return data.frame with columns:
-#'   \describe{
-#'     \item{pathway_id}{pathway identifier}
-#'     \item{pathway_name}{pathway name (if available, otherwise same as id)}
-#'     \item{n_genes}{number of genes used in ACAT for this pathway}
-#'     \item{gene_names}{semicolon-separated gene IDs used in this pathway}
-#'     \item{acat_p}{ACAT p-value}
-#'     \item{perm_p}{permutation p-value (NA if B == 0)}
-#'   }
-#'   Sorted by `acat_p` in decreasing order (largest p first; NA at bottom).
-#'   If `output = TRUE`, an attribute `"file"` is attached with the CSV path.
+#' @return A data.frame with columns:
+#' \describe{
+#'   \item{pathway_id}{Pathway identifier}
+#'   \item{pathway_name}{Pathway name (if available; otherwise equals `pathway_id`)}
+#'   \item{n_genes}{Number of genes used in ACAT for this pathway}
+#'   \item{gene_names}{Semicolon-separated gene IDs actually used (from `gene_results`)}
+#'   \item{acat_p}{ACAT p-value}
+#' }
+#' Rows are sorted by `acat_p` in increasing order (smallest p first; NA at bottom).
+#' If `output = TRUE`, an attribute `"file"` is attached with the CSV path.
+#'
+#' @examples
+#' \dontrun{
+#' # Load gene results from MAGMA output
+#' gene_results <- read.delim("magma_output.genes.out")
+#'
+#' # Run ACAT on maize PMN pathways
+#' acat_res <- magcat_acat_pathways(
+#'   gene_results = gene_results,
+#'   species = "maize",
+#'   gene_col = "GENE",
+#'   p_col = "P"
+#' )
+#' head(acat_res)
+#'
+#' # Run with custom pathways
+#' my_pathways <- list(
+#'   pathway1 = c("gene1", "gene2", "gene3"),
+#'   pathway2 = c("gene4", "gene5")
+#' )
+#' acat_custom <- magcat_acat_pathways(
+#'   gene_results = gene_results,
+#'   pathways = my_pathways
+#' )
+#' }
+#'
+#' @seealso \code{\link{magcat_fisher_pathways}}, \code{\link{magcat_minp_pathways}},
+#'   \code{\link{magcat_omni2_pathways}}, \code{\link{magcat_load_pathways}}
 #' @export
 magcat_acat_pathways <- function(gene_results,
                                  pathways     = NULL,
@@ -196,8 +274,6 @@ magcat_acat_pathways <- function(gene_results,
                                  p_col        = "P",
                                  min_p        = 1e-15,
                                  do_fix       = TRUE,
-                                 B            = 0L,
-                                 seed         = NULL,
                                  output       = FALSE,
                                  out_dir      = "magcat_acat") {
   if (!requireNamespace("ACAT", quietly = TRUE)) {
@@ -219,156 +295,102 @@ magcat_acat_pathways <- function(gene_results,
 
   # If user gave species, load PMN pathways
   if (is.null(pathways) && !is.null(species)) {
-    if (is.null(pmn_gene_col)) {
-      pathways <- magcat_load_pathways(species = species)
+    pathways <- if (is.null(pmn_gene_col)) {
+      magcat_load_pathways(species = species)
     } else {
-      pathways <- magcat_load_pathways(
-        species  = species,
-        gene_col = pmn_gene_col
-      )
+      magcat_load_pathways(species = species, gene_col = pmn_gene_col)
     }
   }
 
   ## -------- standardize gene_results ----------
-  if (!all(c(gene_col, p_col) %in% names(gene_results))) {
-    stop("gene_results must contain columns '", gene_col,
-         "' and '", p_col, "'.",
-         call. = FALSE)
+  .magcat_assert_cols(gene_results, c(gene_col, p_col), "gene_results")
+
+  genes_all <- as.character(gene_results[[gene_col]])
+  p_all     <- as.numeric(gene_results[[p_col]])
+
+  if (anyNA(p_all) && all(is.na(p_all))) {
+    stop("All values in gene_results[['", p_col, "']] are NA.", call. = FALSE)
   }
 
-  gr <- gene_results
-  genes_all <- as.character(gr[[gene_col]])
-  p_all     <- gr[[p_col]]
-
-  # normalized (lowercase) gene IDs for matching
+  # normalize (lowercase) gene IDs for matching
   genes_all_norm <- tolower(genes_all)
-  gene_p_vec     <- stats::setNames(p_all, genes_all_norm)
+
+  # handle possible duplicate gene IDs robustly: keep the minimum p-value per gene
+  ok <- !is.na(genes_all_norm) & genes_all_norm != "" & !is.na(p_all)
+  if (!any(ok)) {
+    stop("No valid (non-NA) gene IDs and p-values found in gene_results.", call. = FALSE)
+  }
+
+  p_min <- tapply(p_all[ok], genes_all_norm[ok], min, na.rm = TRUE)
+  gene_p_vec <- p_min
 
   # map from normalized -> canonical gene ID (first occurrence)
-  gene_map <- tapply(genes_all, genes_all_norm, function(x) x[1])
+  gene_map <- tapply(genes_all[ok], genes_all_norm[ok], function(x) x[1])
 
   ## -------- pathways -> named list + names ----------
-  if (is.data.frame(pathways)) {
-    if (!"pathway_id" %in% names(pathways) ||
-        !"gene_id"    %in% names(pathways)) {
-      stop("If 'pathways' is a data.frame it must have columns ",
-           "'pathway_id' and 'gene_id'.",
-           call. = FALSE)
-    }
-    if (!"pathway_name" %in% names(pathways)) {
-      pathways$pathway_name <- pathways$pathway_id
-    }
+  pw <- .magcat_pathways_to_list(pathways)
+  p_list  <- pw$p_list
+  p_names <- pw$p_names
 
-    p_list  <- split(pathways$gene_id, pathways$pathway_id)
-    p_names <- tapply(
-      pathways$pathway_name,
-      pathways$pathway_id,
-      FUN = function(x) x[1]
-    )
-  } else if (is.list(pathways)) {
-    p_list  <- pathways
-    p_names <- names(pathways)
-    if (is.null(p_names)) {
-      p_names <- paste0("PWY_", seq_along(pathways))
-      names(p_list) <- p_names
-    }
-  } else {
-    stop("'pathways' must be either a list or a data.frame.",
-         call. = FALSE)
-  }
-
-  ## normalize gene_ids in pathways to lower-case too
+  # normalize pathway gene_ids to lower-case
   p_list <- lapply(p_list, function(g) tolower(as.character(g)))
 
-  ## -------- prepare result container ----------
-  n_pw <- length(p_list)
-  res  <- data.frame(
-    pathway_id   = names(p_list),
-    pathway_name = if (is.null(p_names)) names(p_list) else unname(p_names),
+  ## -------- result container ----------
+  pw_ids <- names(p_list)
+  pw_names <- unname(p_names[pw_ids])
+  pw_names[is.na(pw_names) | pw_names == ""] <- pw_ids[is.na(pw_names) | pw_names == ""]
+
+  res <- data.frame(
+    pathway_id   = pw_ids,
+    pathway_name = pw_names,
     n_genes      = NA_integer_,
     gene_names   = NA_character_,
     acat_p       = NA_real_,
-    perm_p       = NA_real_,
     stringsAsFactors = FALSE
   )
 
-  ## -------- permutations set-up ----------
-  if (!is.null(seed) && B > 0L) {
-    set.seed(seed)
-  }
-
-  if (B > 0L) {
-    pool_p <- p_all[!is.na(p_all)]
-    pool_p <- fix_p_for_acat(pool_p, min_p = min_p)
-    n_pool <- length(pool_p)
-    if (n_pool == 0L) {
-      stop("No non-NA p-values in gene_results for permutations.",
-           call. = FALSE)
-    }
-  }
-
   ## -------- loop over pathways ----------
-  for (i in seq_len(n_pw)) {
+  for (i in seq_along(p_list)) {
     genes_i_norm <- p_list[[i]]
-    p_i          <- gene_p_vec[genes_i_norm]
 
-    # drop NAs (genes in pathway that don't appear in MAGMA output)
-    keep <- !is.na(p_i)
-    p_i  <- p_i[keep]
+    # vector of p-values for genes present in gene_results
+    p_i <- gene_p_vec[genes_i_norm]
+    p_i <- p_i[!is.na(p_i)]
 
     d <- length(p_i)
     res$n_genes[i] <- d
 
     if (d == 0L) {
       res$acat_p[i]     <- NA_real_
-      res$perm_p[i]     <- NA_real_
       res$gene_names[i] <- NA_character_
       next
     }
 
-    # canonical gene IDs (original case) for the genes actually used
+    # canonical gene IDs (original case) for genes actually used
     used_norm <- names(p_i)
     canon_ids <- unname(gene_map[used_norm])
-    canon_ids <- unique(canon_ids[!is.na(canon_ids)])
+    canon_ids <- unique(canon_ids[!is.na(canon_ids) & canon_ids != ""])
     res$gene_names[i] <- paste(canon_ids, collapse = ";")
 
-    if (do_fix) {
+    if (isTRUE(do_fix)) {
       p_i <- fix_p_for_acat(p_i, min_p = min_p)
     }
 
     # ACAT p-value
     res$acat_p[i] <- ACAT::ACAT(Pvals = p_i)
-
-    # permutation-based empirical p-value (optional)
-    if (B > 0L) {
-      perm_vals <- replicate(
-        B,
-        {
-          idx <- sample(seq_along(pool_p), size = d, replace = FALSE)
-          p_perm <- pool_p[idx]
-          ACAT::ACAT(Pvals = p_perm)
-        }
-      )
-
-      # empirical p: how many permuted p <= observed
-      res$perm_p[i] <- (1 + sum(perm_vals <= res$acat_p[i])) / (B + 1)
-    }
   }
 
-  ## -------- sort by acat_p (decreasing) ----------
+  ## -------- sort by acat_p (smallest first) ----------
   ord <- order(res$acat_p, decreasing = FALSE, na.last = TRUE)
   res <- res[ord, , drop = FALSE]
 
   ## -------- optional CSV output ----------
-  if (output) {
+  if (isTRUE(output)) {
     if (!dir.exists(out_dir)) {
       dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
     }
     species_tag <- if (is.null(species)) "custom" else species
-    out_path <- file.path(
-      out_dir,
-      paste0("magcat_acat_pathways_", species_tag, ".csv")
-    )
+    out_path <- file.path(out_dir, paste0("magcat_acat_pathways_", species_tag, ".csv"))
     utils::write.csv(res, out_path, row.names = FALSE)
     attr(res, "file") <- out_path
   }

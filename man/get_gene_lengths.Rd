@@ -38,3 +38,26 @@ Reads a (possibly huge) GFF3 and returns a table of gene coordinates + length.
 Uses a proper GFF3 parser (rtracklayer) if available; otherwise uses fread(cmd=...)
 to strip comment lines for speed and compatibility with older data.table.
 }
+\examples{
+\dontrun{
+# Extract gene lengths from a GFF3 file
+gene_lengths <- get_gene_lengths(
+  gff3_file = "reference.gff3",
+  feature = "gene",
+  id_key = "ID"
+)
+head(gene_lengths)
+
+# Write output to file
+gene_lengths <- get_gene_lengths(
+  gff3_file = "reference.gff3",
+  output = TRUE,
+  output_dir = "output",
+  file_name = "my_gene_lengths.tsv"
+)
+}
+
+}
+\seealso{
+\code{\link{gff3_to_geneloc}}, \code{\link{magcat_adjust_gene_p}}
+}

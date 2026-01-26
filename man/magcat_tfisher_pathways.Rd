@@ -108,3 +108,25 @@ empirical TPM p-value.
 This implementation does NOT depend on TFisher or metap; everything is done
 in base R. The permutation p-value is the one you should trust for inference.
 }
+\examples{
+\dontrun{
+# Load gene results from MAGMA output
+gene_results <- read.delim("magma_output.genes.out")
+
+# Run truncated Fisher (TPM) on maize PMN pathways
+tfisher_res <- magcat_tfisher_pathways(
+  gene_results = gene_results,
+  species = "maize",
+  gene_col = "GENE",
+  p_col = "P",
+  ptrunc = 0.05,
+  B_perm = 1000
+)
+head(tfisher_res)
+}
+
+}
+\seealso{
+\code{\link{magcat_soft_tfisher_pathways}},
+\code{\link{magcat_soft_tfisher_adaptive_pathways}}
+}

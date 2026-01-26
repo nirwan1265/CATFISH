@@ -1,6 +1,24 @@
 #' Locate MAGMA binary
 #'
+#' Finds the path to the MAGMA executable. MAGMA can be located by:
+#' \enumerate{
+#'   \item Setting the R option \code{options(magma.path = "/path/to/magma")}
+#'   \item Having 'magma' in your system PATH
+#' }
+#'
 #' @return Full path to the magma executable
+#'
+#' @examples
+#' \dontrun{
+#' # Get MAGMA path
+#' mp <- magma_path()
+#' print(mp)
+#'
+#' # Set custom MAGMA path
+#' options(magma.path = "/usr/local/bin/magma")
+#' }
+#'
+#' @seealso \code{\link{magma_gene}}
 #' @export
 magma_path <- function() {
   # 1) user can set an option in .Rprofile:

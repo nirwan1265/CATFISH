@@ -16,8 +16,9 @@
 #'   (default "GENE").
 #' @param p_col column name in `gene_results` containing gene-level p-values
 #'   (default "P").
-#' @param effect_col column with effect size / Z-statistic to derive direction
-#'   (default "ZSTAT"). Only used when `is_onetail = FALSE`.
+#' @param effect_col character. Column name containing effect sizes (beta/log-odds
+#'   or Z-statistic) to derive effect directions. Default "ZSTAT". Required when
+#'   `is_onetail = FALSE` for directional weighted Fisher combination.
 #' @param weight_col optional column in `gene_results` to use as weight
 #'   (e.g. "NSNPS"). If NULL, all weights = 1 (classic Fisher).
 #' @param is_onetail logical; passed to `wFisher(is.onetail=...)`.
@@ -37,6 +38,32 @@
 #'   * overall_eff_direction
 #'   Sorted by `wfisher_p` ascending (most significant first).
 #'   If `output = TRUE`, an attribute `"file"` is attached with the CSV path.
+#'
+#' @examples
+#' \dontrun{
+#' # Load gene results from MAGMA output
+#' gene_results <- read.delim("magma_output.genes.out")
+#'
+#' # Run weighted Fisher on maize PMN pathways
+#' wfisher_res <- magcat_wfisher_pathways(
+#'   gene_results = gene_results,
+#'   species = "maize",
+#'   gene_col = "GENE",
+#'   p_col = "P",
+#'   effect_col = "ZSTAT",
+#'   is_onetail = FALSE
+#' )
+#' head(wfisher_res)
+#'
+#' # With weights from NSNPS column
+#' wfisher_weighted <- magcat_wfisher_pathways(
+#'   gene_results = gene_results,
+#'   species = "maize",
+#'   weight_col = "NSNPS"
+#' )
+#' }
+#'
+#' @seealso \code{\link{magcat_fisher_pathways}}
 #' @export
 magcat_wfisher_pathways <- function(gene_results,
                                     pathways     = NULL,

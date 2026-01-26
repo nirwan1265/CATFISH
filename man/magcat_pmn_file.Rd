@@ -7,13 +7,16 @@
 magcat_pmn_file(species = c("maize", "sorghum", "arabidopsis", "plant"))
 }
 \arguments{
-\item{species}{Which built-in DB to use. For now:
+\item{species}{Which built-in DB to use. One of:
 \itemize{
-\item{"maize"}   {corncyc\_pathways.20230103}
-\item{"sorghum"} {sorghumbicolorcyc\_pathways.20230103}
-\item{"arabidopsis"} {aracyc\_pathways.20230103}
-\item{"plant"}  {plantcyc\_pathways.20230103}
+\item{"maize"}{"corncyc_pathways.20230103"}
+\item{"sorghum"}{"sorghumbicolorcyc_pathways.20230103"}
+\item{"arabidopsis"}{"aracyc_pathways.20230103"}
+\item{"plant"}{"plantcyc_pathways.20230103"}
 }}
+}
+\value{
+A file path to the selected PMN pathway file in the MAGCAT package.
 }
 \description{
 Path to built-in PMN pathway file

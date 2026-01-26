@@ -51,6 +51,25 @@
 #'   Sorted by `tfisher_p_perm` ascending if B_perm > 0,
 #'   otherwise by `tfisher_stat` (descending).
 #'   If `output = TRUE`, an attribute `"file"` is attached with the CSV path.
+#'
+#' @examples
+#' \dontrun{
+#' # Load gene results from MAGMA output
+#' gene_results <- read.delim("magma_output.genes.out")
+#'
+#' # Run soft TFisher on maize PMN pathways
+#' soft_tfisher_res <- magcat_soft_tfisher_pathways(
+#'   gene_results = gene_results,
+#'   species = "maize",
+#'   gene_col = "GENE",
+#'   p_col = "P",
+#'   tau1 = 0.05
+#' )
+#' head(soft_tfisher_res)
+#' }
+#'
+#' @seealso \code{\link{magcat_tfisher_pathways}},
+#'   \code{\link{magcat_soft_tfisher_adaptive_pathways}}
 #' @export
 magcat_soft_tfisher_pathways <- function(gene_results,
                                          pathways         = NULL,
