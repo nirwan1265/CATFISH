@@ -508,10 +508,10 @@
 # ----------------------------
 pmn_gene_col     = "Gene-name"
 builtin_magma_set_annot_path <- function(
-  species = c("maize","sorghum","arabidopsis","plant")
+  species = c("maize","sorghum","arabidopsis","plant","fly")
 ) {
   species <- match.arg(tolower(species),
-                       c("maize","sorghum","arabidopsis","plant"))
+                       c("maize","sorghum","arabidopsis","plant","fly"))
 
   fname <- switch(
     species,
@@ -538,10 +538,10 @@ builtin_magma_set_annot_path <- function(
 
 
 builtin_pathway_long_path <- function(
-  species = c("maize","sorghum","arabidopsis","plant")
+  species = c("maize","sorghum","arabidopsis","plant","fly")
 ) {
   species <- match.arg(tolower(species),
-                       c("maize","sorghum","arabidopsis","plant"))
+                       c("maize","sorghum","arabidopsis","plant","fly"))
 
   fname <- switch(
     species,

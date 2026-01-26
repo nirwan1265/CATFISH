@@ -5,18 +5,19 @@
 \title{Load PMN pathways as a long data.frame}
 \usage{
 magcat_load_pathways(
-  species = c("maize", "sorghum", "arabidopsis", "plant"),
+  species = c("maize", "sorghum", "arabidopsis", "plant", "fly"),
   gene_col = NULL,
   drop_unknown = TRUE
 )
 }
 \arguments{
-\item{species}{One of "maize", "sorghum", "arabidopsis", "plant".}
+\item{species}{One of "maize", "sorghum", "arabidopsis", "plant", "fly".}
 
 \item{gene_col}{Which column from the PMN file to use for gene IDs.
 If NULL (default), the function will:
 \itemize{
-\item use "Gene-name" if present;
+\item use "Gene-name" if present (PMN format);
+\item use "gene" if present (Fly format);
 \item otherwise fall back to "Gene-id".
 }}
 
@@ -25,7 +26,7 @@ If NULL (default), the function will:
 \value{
 A data.frame with columns:
 \describe{
-\item{pathway_id}{PMN pathway ID (e.g., "PWY-7634")}
+\item{pathway_id}{Pathway ID (e.g., "PWY-7634")}
 \item{pathway_name}{Human-readable pathway name}
 \item{gene_id}{Gene identifier from \code{gene_col}}
 }
@@ -45,6 +46,9 @@ arab_pathways <- magcat_load_pathways(
   species = "arabidopsis",
   gene_col = "Gene-id"
 )
+
+# Load fly pathways (FlyCyc)
+fly_pathways <- magcat_load_pathways(species = "fly")
 }
 
 }

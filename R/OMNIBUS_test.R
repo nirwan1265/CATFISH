@@ -77,9 +77,9 @@
 #'   }
 #'   Provide \code{pathways} \strong{or} \code{species} (not both).
 #'
-#' @param species Character. If \code{pathways} is \code{NULL}, a species keyword (e.g. \code{"maize"})
-#'   used to auto-load built-in pathway sets (e.g., PMN). Provide \code{species} \strong{or}
-#'   \code{pathways} (not both).
+#' @param species Character. If \code{pathways} is \code{NULL}, a species keyword
+#'   (one of "maize", "sorghum", "arabidopsis", "plant", "fly") used to auto-load built-in
+#'   pathway sets. Provide \code{species} \strong{or} \code{pathways} (not both).
 #'
 #' @param pmn_gene_col Character. When \code{species} is used, the name of the gene identifier column
 #'   in the built-in PMN pathway table (e.g., \code{"Gene-name"}). Ignored if \code{pathways} is provided.
@@ -1835,7 +1835,7 @@ magcat_omni2_pathways <- function(gene_results,
   stouffer_alternative <- match.arg(stouffer_alternative)
 
   if (!is.null(species)) {
-    species <- match.arg(species, c("maize","sorghum","arabidopsis","plant"))
+    species <- match.arg(species, c("maize","sorghum","arabidopsis","plant","fly"))
   }
 
   min_p <- as.numeric(min_p)

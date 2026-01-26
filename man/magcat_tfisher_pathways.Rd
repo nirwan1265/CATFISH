@@ -33,7 +33,7 @@ in that pathway, OR
 (and optional \code{pathway_name}).
 }}
 
-\item{species}{optional; one of "maize", "sorghum", "arabidopsis", "plant".
+\item{species}{optional; one of "maize", "sorghum", "arabidopsis", "plant", "fly".
 If provided, built-in PMN pathways are loaded via \code{magcat_load_pathways()}.
 You must provide either \code{pathways} OR \code{species}, but not both.}
 

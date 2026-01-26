@@ -7,7 +7,7 @@
 #'     in that pathway, OR
 #'   * a data.frame with columns `pathway_id`, `gene_id`
 #'     (and optional `pathway_name`).
-#' @param species optional; one of "maize", "sorghum", "arabidopsis", "plant".
+#' @param species optional; one of "maize", "sorghum", "arabidopsis", "plant", "fly".
 #'   If provided, built-in PMN pathways are loaded via `magcat_load_pathways()`.
 #'   You must provide either `pathways` OR `species`, but not both.
 #' @param pmn_gene_col optional; passed to `magcat_load_pathways(gene_col=...)`
@@ -90,7 +90,7 @@ magcat_wfisher_pathways <- function(gene_results,
   if (is.null(pathways) && is.null(species)) {
     stop("You must provide either:\n",
          "  * 'pathways' (list/data.frame), OR\n",
-         "  * 'species' = 'maize' | 'sorghum' | 'arabidopsis' | 'plant'.",
+         "  * 'species' = 'maize' | 'sorghum' | 'arabidopsis' | 'plant' | 'fly'.",
          call. = FALSE)
   }
 

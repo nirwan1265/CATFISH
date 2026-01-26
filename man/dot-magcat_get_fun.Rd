@@ -19,9 +19,9 @@ also contain \code{z_col}. If you want weighted Stouffer, it must contain \code{
 }
 Provide \code{pathways} \strong{or} \code{species} (not both).}
 
-\item{species}{Character. If \code{pathways} is \code{NULL}, a species keyword (e.g. \code{"maize"})
-used to auto-load built-in pathway sets (e.g., PMN). Provide \code{species} \strong{or}
-\code{pathways} (not both).}
+\item{species}{Character. If \code{pathways} is \code{NULL}, a species keyword
+(one of "maize", "sorghum", "arabidopsis", "plant", "fly") used to auto-load built-in
+pathway sets. Provide \code{species} \strong{or} \code{pathways} (not both).}
 
 \item{pmn_gene_col}{Character. When \code{species} is used, the name of the gene identifier column
 in the built-in PMN pathway table (e.g., \code{"Gene-name"}). Ignored if \code{pathways} is provided.}

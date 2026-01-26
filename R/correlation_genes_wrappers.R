@@ -1,7 +1,54 @@
+#' Extract gene-gene correlations from MAGMA .genes.raw files
+#'
+#' Parses MAGMA's banded correlation output (.genes.raw) and extracts
+#' pairwise gene correlations into a simple 3-column format (gene1, gene2, r).
+#' This file is required for MVN-based resampling in \code{\link{magcat_omni2_pathways}}.
+#'
+#' @param genes_raw_file Path to MAGMA .genes.raw file (one chromosome).
+#' @param out_pairs_file Output path for the correlation pairs file.
+#' @param fixed_fields Integer. Number of fixed fields before correlation values
+#'   in MAGMA output (default 9 for multi=snp-wise model).
+#' @param gene_regex Regular expression to identify gene IDs. Use organism-specific
+#'   patterns:
+#'   \itemize{
+#'     \item Maize: \code{"^Zm"}
+#'     \item Fly: \code{"^FBgn"}
+#'     \item Arabidopsis: \code{"^AT"}
+#'     \item Sorghum: \code{"^SORBI"}
+#'   }
+#' @param keep_abs_r_ge Numeric. Only keep correlations with |r| >= this value.
+#'   Default 0 keeps all correlations.
+#' @param overwrite Logical. Overwrite output file if it exists.
+#' @param verbose Logical. Print progress messages.
+#'
+#' @return Invisibly returns the path to the output file.
+#'
+#' @details
+#' MAGMA stores gene-gene correlations in a banded format within .genes.raw files.
+#' This function parses that format and outputs a simple tab-separated file with
+#' columns: gene1, gene2, r.
+#'
+#' For multi-chromosome analyses, run this function on each chromosome's .raw file
+#' and concatenate the results (dropping headers after the first file).
+#'
+#' @examples
+#' \dontrun{
+#' # Process a single chromosome
+#' magma_genesraw_to_cor_pairs_banded(
+#'   genes_raw_file = "magma_output_chr1.genes.raw",
+#'   out_pairs_file = "gene_cor_chr1.txt",
+#'   gene_regex = "^Zm"  # Maize genes
+#' )
+#'
+#' # Combine multiple chromosomes - see usage2.R for full example
+#' }
+#'
+#' @seealso \code{\link{magcat_omni2_pathways}} for using the correlation file
+#' @export
 magma_genesraw_to_cor_pairs_banded <- function(genes_raw_file,
                                                out_pairs_file,
                                                fixed_fields = 9L,
-                                               gene_regex = "^FBgn",   # adjust if needed
+                                               gene_regex = "^FBgn",
                                                keep_abs_r_ge = 0,
                                                overwrite = TRUE,
                                                verbose = TRUE) {

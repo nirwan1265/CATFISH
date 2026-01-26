@@ -8,12 +8,13 @@
 #'   \item{"sorghum"}{"sorghumbicolorcyc_pathways.20230103"}
 #'   \item{"arabidopsis"}{"aracyc_pathways.20230103"}
 #'   \item{"plant"}{"plantcyc_pathways.20230103"}
+#'   \item{"fly"}{"Fly_Cyc.tsv"}
 #' }
 #'
 #' @return A file path to the selected PMN pathway file in the MAGCAT package.
 #' @keywords internal
 magcat_pmn_file <- function(
-  species = c("maize", "sorghum", "arabidopsis", "plant")
+  species = c("maize", "sorghum", "arabidopsis", "plant", "fly")
 ) {
   species <- match.arg(species)
 
@@ -22,7 +23,8 @@ magcat_pmn_file <- function(
     maize       = "corncyc_pathways.20230103",
     sorghum     = "sorghumbicolorcyc_pathways.20230103",
     arabidopsis = "aracyc_pathways.20230103",
-    plant       = "plantcyc_pathways.20230103"
+    plant       = "plantcyc_pathways.20230103",
+    fly         = "Fly_Cyc.tsv"
   )
 
   path <- system.file("extdata/pathway", fname, package = "MAGCAT")
@@ -38,18 +40,19 @@ magcat_pmn_file <- function(
 #' Reads a Plant Metabolic Network (PMN) pathway file from
 #' `inst/extdata/pathway` and returns a long table of (pathway, gene) membership.
 #'
-#' @param species One of "maize", "sorghum", "arabidopsis", "plant".
+#' @param species One of "maize", "sorghum", "arabidopsis", "plant", "fly".
 #' @param gene_col Which column from the PMN file to use for gene IDs.
 #'   If NULL (default), the function will:
 #'   \itemize{
-#'     \item use "Gene-name" if present;
+#'     \item use "Gene-name" if present (PMN format);
+#'     \item use "gene" if present (Fly format);
 #'     \item otherwise fall back to "Gene-id".
 #'   }
 #' @param drop_unknown If TRUE, drop rows with missing/unknown gene IDs.
 #'
 #' @return A data.frame with columns:
 #' \describe{
-#'   \item{pathway_id}{PMN pathway ID (e.g., "PWY-7634")}
+#'   \item{pathway_id}{Pathway ID (e.g., "PWY-7634")}
 #'   \item{pathway_name}{Human-readable pathway name}
 #'   \item{gene_id}{Gene identifier from `gene_col`}
 #' }
@@ -65,12 +68,15 @@ magcat_pmn_file <- function(
 #'   species = "arabidopsis",
 #'   gene_col = "Gene-id"
 #' )
+#'
+#' # Load fly pathways (FlyCyc)
+#' fly_pathways <- magcat_load_pathways(species = "fly")
 #' }
 #'
 #' @seealso \code{\link{magcat_acat_pathways}}, \code{\link{magcat_fisher_pathways}}
 #' @export
 magcat_load_pathways <- function(
-  species      = c("maize", "sorghum", "arabidopsis", "plant"),
+  species      = c("maize", "sorghum", "arabidopsis", "plant", "fly"),
   gene_col     = NULL,
   drop_unknown = TRUE
 ) {
@@ -86,38 +92,53 @@ magcat_load_pathways <- function(
     )
   )
 
-  # 1) pick gene_col
-  if (is.null(gene_col)) {
-    candidates <- c("Gene-name", "Gene-id")
-    gene_col <- intersect(candidates, names(x))[1]
-    if (is.na(gene_col)) {
+  # Handle fly format (different column names)
+  if (species == "fly") {
+    # Fly_Cyc.tsv has: pathway_name, pathway_id, gene
+    if (is.null(gene_col)) gene_col <- "gene"
+    if (!gene_col %in% names(x)) {
+      stop("Fly pathway file does not contain column: ", gene_col, call. = FALSE)
+    }
+    df <- data.frame(
+      pathway_id   = x[["pathway_id"]],
+      pathway_name = x[["pathway_name"]],
+      gene_id      = x[[gene_col]],
+      stringsAsFactors = FALSE
+    )
+  } else {
+    # PMN format (maize, sorghum, arabidopsis, plant)
+    if (is.null(gene_col)) {
+      candidates <- c("Gene-name", "Gene-id")
+      gene_col <- intersect(candidates, names(x))[1]
+      if (is.na(gene_col)) {
+        stop(
+          "Pathway file ", basename(fpath),
+          " does not contain any of: ", paste(candidates, collapse = ", "),
+          call. = FALSE
+        )
+      }
+    } else if (!gene_col %in% names(x)) {
       stop(
-        "Pathway file ", basename(fpath),
-        " does not contain any of: ", paste(candidates, collapse = ", "),
+        "Requested gene_col = '", gene_col,
+        "' is not a column in ", basename(fpath), ".",
         call. = FALSE
       )
     }
-  } else if (!gene_col %in% names(x)) {
-    stop(
-      "Requested gene_col = '", gene_col,
-      "' is not a column in ", basename(fpath), ".",
-      call. = FALSE
+
+    needed <- c("Pathway-id", "Pathway-name", gene_col)
+    if (!all(needed %in% names(x))) {
+      stop("Pathway file ", basename(fpath), " does not contain columns: ",
+           paste(needed, collapse = ", "),
+           call. = FALSE)
+    }
+
+    df <- data.frame(
+      pathway_id   = x[["Pathway-id"]],
+      pathway_name = x[["Pathway-name"]],
+      gene_id      = x[[gene_col]],
+      stringsAsFactors = FALSE
     )
   }
-
-  needed <- c("Pathway-id", "Pathway-name", gene_col)
-  if (!all(needed %in% names(x))) {
-    stop("Pathway file ", basename(fpath), " does not contain columns: ",
-         paste(needed, collapse = ", "),
-         call. = FALSE)
-  }
-
-  df <- data.frame(
-    pathway_id   = x[["Pathway-id"]],
-    pathway_name = x[["Pathway-name"]],
-    gene_id      = x[[gene_col]],
-    stringsAsFactors = FALSE
-  )
 
   if (isTRUE(drop_unknown)) {
     bad <- is.na(df$gene_id) | df$gene_id == "" | df$gene_id == "unknown"
@@ -289,7 +310,7 @@ magcat_acat_pathways <- function(gene_results,
   if (is.null(pathways) && is.null(species)) {
     stop("You must provide either:\n",
          "  * 'pathways' (list/data.frame), OR\n",
-         "  * 'species' = 'maize' | 'sorghum' | 'arabidopsis' | 'plant'.",
+         "  * 'species' = 'maize' | 'sorghum' | 'arabidopsis' | 'plant' | 'fly'.",
          call. = FALSE)
   }
 

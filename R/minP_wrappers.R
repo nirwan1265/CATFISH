@@ -22,7 +22,7 @@
 #'   \item A named list: each element is a character vector of gene IDs in that pathway, OR
 #'   \item A data.frame with columns \code{pathway_id}, \code{gene_id} (and optional \code{pathway_name}).
 #' }
-#' @param species Optional; one of "maize", "sorghum", "arabidopsis", "plant".
+#' @param species Optional; one of "maize", "sorghum", "arabidopsis", "plant", "fly".
 #'   If provided, built-in PMN pathways are loaded via \code{magcat_load_pathways()}.
 #'   Provide either \code{pathways} OR \code{species}, but not both.
 #' @param pmn_gene_col Optional; passed to \code{magcat_load_pathways(gene_col=...)}
@@ -85,7 +85,7 @@ magcat_minp_pathways <- function(gene_results,
   if (is.null(pathways) && is.null(species)) {
     stop("You must provide either:\n",
          "  * 'pathways' (list/data.frame), OR\n",
-         "  * 'species' = 'maize' | 'sorghum' | 'arabidopsis' | 'plant'.",
+         "  * 'species' = 'maize' | 'sorghum' | 'arabidopsis' | 'plant' | 'fly'.",
          call. = FALSE)
   }
 

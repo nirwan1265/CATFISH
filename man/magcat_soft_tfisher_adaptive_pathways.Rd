@@ -28,7 +28,7 @@ For MAGMA \code{.genes.out}, these are commonly \code{GENE} and \code{P}.}
 \item A data.frame with columns \code{pathway_id}, \code{gene_id} (and optional \code{pathway_name}).
 }}
 
-\item{species}{Optional; one of "maize", "sorghum", "arabidopsis", "plant".
+\item{species}{Optional; one of "maize", "sorghum", "arabidopsis", "plant", "fly".
 If provided, built-in PMN pathways are loaded via \code{magcat_load_pathways()}.
 Provide either \code{pathways} OR \code{species}, but not both.}
 

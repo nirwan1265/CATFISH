@@ -4,7 +4,7 @@
 \alias{magcat_pmn_file}
 \title{Path to built-in PMN pathway file}
 \usage{
-magcat_pmn_file(species = c("maize", "sorghum", "arabidopsis", "plant"))
+magcat_pmn_file(species = c("maize", "sorghum", "arabidopsis", "plant", "fly"))
 }
 \arguments{
 \item{species}{Which built-in DB to use. One of:
@@ -13,6 +13,7 @@ magcat_pmn_file(species = c("maize", "sorghum", "arabidopsis", "plant"))
 \item{"sorghum"}{"sorghumbicolorcyc_pathways.20230103"}
 \item{"arabidopsis"}{"aracyc_pathways.20230103"}
 \item{"plant"}{"plantcyc_pathways.20230103"}
+\item{"fly"}{"Fly_Cyc.tsv"}
 }}
 }
 \value{

@@ -94,7 +94,7 @@ magcat_tpm_stat <- function(p, ptrunc = 0.5) {
 #'     \item a data.frame with columns \code{pathway_id}, \code{gene_id}
 #'           (and optional \code{pathway_name}).
 #'   }
-#' @param species optional; one of "maize", "sorghum", "arabidopsis", "plant".
+#' @param species optional; one of "maize", "sorghum", "arabidopsis", "plant", "fly".
 #'   If provided, built-in PMN pathways are loaded via \code{magcat_load_pathways()}.
 #'   You must provide either \code{pathways} OR \code{species}, but not both.
 #' @param pmn_gene_col optional; passed to \code{magcat_load_pathways(gene_col=...)}
@@ -183,7 +183,7 @@ magcat_tfisher_pathways <- function(gene_results,
   if (is.null(pathways) && is.null(species)) {
     stop("You must provide either:\n",
          "  * 'pathways' (list/data.frame), OR\n",
-         "  * 'species' = 'maize' | 'sorghum' | 'arabidopsis' | 'plant'.",
+         "  * 'species' = 'maize' | 'sorghum' | 'arabidopsis' | 'plant' | 'fly'.",
          call. = FALSE)
   }
 
