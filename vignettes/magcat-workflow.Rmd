@@ -1,0 +1,321 @@
+---
+title: "MAGCAT: Pathway Analysis Workflow"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{MAGCAT: Pathway Analysis Workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+## Introduction
+MAGCAT (MAGMA-based Gene and pathway Analysis with ACAT aggregation) provides a comprehensive toolkit for post-GWAS pathway enrichment analysis. It implements multiple p-value combination methods and combines them into an omnibus test with optional permutation-based calibration to account for gene-gene correlations.
+
+## Installation
+
+```{r installation}
+# Install from GitHub (when available)
+# devtools::install_github("nirwantandukar/MAGCAT")
+
+# Load the package
+library(MAGCAT)
+```
+
+## Workflow Overview
+
+A typical MAGCAT workflow consists of:
+
+1. **Prepare gene location file** from GFF3 annotations
+2. **Run MAGMA annotation** to map SNPs to genes
+3. **Run MAGMA gene analysis** to get gene-level p-values
+4. **Combine chromosome results** into a single file
+5. **Optionally adjust p-values** for gene length/SNP density
+6. **Run pathway tests** (individual or omnibus)
+
+## Step 1: Create Gene Location File
+
+Convert a GFF3 annotation file to MAGMA's gene location format:
+
+```{r gff3-conversion}
+# Convert GFF3 to MAGMA gene location format
+loc <- gff3_to_geneloc(
+  gff        = "path/to/annotation.gff3",
+  out        = "inst/extdata/species.genes.loc",
+  strict_chr = FALSE
+)
+```
+
+## Step 2: MAGMA Annotation
+
+Map SNPs to genes using MAGMA:
+```{r magma-annotate}
+# Set MAGMA path (required)
+options(magma.path = "/path/to/magma")
+
+# Run MAGMA annotation
+ann <- magma_annotate(
+  stats_file = "path/to/gwas_results.csv",
+  rename_columns = c(
+    CHR = "CHR",
+    SNP = "SNP",
+    POS = "Positions",
+    PVALUE = "P-Value"
+  ),
+  gene_loc     = "inst/extdata/species.genes.loc",
+  chr_map_path = "inst/extdata/species.genes.loc.chr_map.tsv",
+  out_prefix   = "my_analysis",
+  out_dir      = "annot",
+  window       = c(10, 10),  # 10kb upstream/downstream
+  sep          = ",",
+  nonhuman     = TRUE
+)
+```
+
+## Step 3: MAGMA Gene Analysis
+
+Run MAGMA to compute gene-level statistics:
+
+```{r magma-gene}
+# Run MAGMA gene analysis per chromosome
+magma_gene(
+  bfile      = "path/to/genotype_file",
+  gene_annot = ann$gene_annot,
+  stats_file = "path/to/gwas_results.csv",
+  sep        = ",",
+  n_total    = 500,  # sample size
+  rename_columns = c(CHR = "CHR", SNP = "SNP", PVALUE = "P-Value"),
+  out_prefix = "my_analysis",
+  out_dir    = "magma_genes_by_chr",
+  gene_model = "multi=snp-wise",
+  chroms     = 1:10,
+  n_threads  = 10
+)
+```
+
+## Step 4: Combine Chromosome Results
+
+```{r combine-results}
+# List all chromosome result files
+files <- list.files(
+  path = "magma_genes_by_chr",
+  pattern = "^my_analysis_chr.*\\.genes\\.out$",
+  full.names = TRUE
+)
+
+# Read and combine
+gene_list <- lapply(files, function(f) {
+  utils::read.table(f, header = TRUE, stringsAsFactors = FALSE)
+})
+genes_all <- do.call(rbind, gene_list)
+
+# Deduplicate: keep smallest P per gene
+genes_all <- genes_all[order(genes_all$GENE, genes_all$P), ]
+genes_all <- genes_all[!duplicated(genes_all$GENE), ]
+```
+
+## Step 5: Optional P-value Adjustment
+
+Adjust gene p-values for confounders like gene length and SNP density:
+
+```{r adjust-p}
+# Get gene lengths from GFF3
+gene_lengths <- get_gene_lengths(
+  gff3_file  = "path/to/annotation.gff3",
+  output     = TRUE,
+  output_dir = "inst/extdata",
+  file_name  = "gene_lengths.tsv"
+)
+
+# Adjust p-values
+adj_out <- magcat_adjust_gene_p(
+  gene_results = genes_all,
+  gene_lengths = gene_lengths,
+  gene_col     = "GENE",
+  nsnp_col     = "NSNPS",
+  p_col        = "P",
+  z_col        = "ZSTAT",
+  len_gene_col = "gene_id",
+  len_col      = "length"
+)
+
+# Extract adjusted results
+genes_adj <- adj_out[, c("GENE", "ZSTAT", "P")]
+```
+
+## Step 6: Individual Pathway Tests
+
+### ACAT (Aggregated Cauchy Association Test)
+
+```{r acat-test}
+acat_res <- magcat_acat_pathways(
+
+  gene_results = genes_adj,
+  species      = "maize",  # or "arabidopsis", "sorghum", "plant"
+  gene_col     = "GENE",
+  p_col        = "P",
+  min_p        = 1e-15,
+  output       = TRUE,
+  out_dir      = "acat_results"
+)
+head(acat_res)
+```
+
+### Fisher's Method
+
+```{r fisher-test}
+fisher_res <- magcat_fisher_pathways(
+  gene_results = genes_adj,
+  species      = "maize",
+  gene_col     = "GENE",
+  p_col        = "P",
+  min_p        = 1e-15,
+  output       = TRUE,
+  out_dir      = "magcat_fisher"
+)
+```
+
+### Stouffer's Z Method
+
+```{r stouffer-test}
+stouffer_res <- magcat_stoufferZ_pathways(
+  gene_results = genes_adj,
+  species      = "maize",
+  gene_col     = "GENE",
+  z_col        = "ZSTAT",
+  weight_col   = NULL,
+  alternative  = "greater",
+  output       = TRUE,
+  out_dir      = "magcat_stouffer"
+)
+```
+
+### Minimum P-value (minP)
+
+```{r minp-test}
+minp_res <- magcat_minp_pathways(
+  gene_results = genes_adj,
+  species      = "maize",
+  gene_col     = "GENE",
+  p_col        = "P",
+  min_p        = 1e-15,
+  do_fix       = TRUE,
+  output       = TRUE,
+  out_dir      = "magcat_minp"
+)
+```
+
+### Adaptive Soft TFisher
+
+```{r tfisher-test}
+tfisher_res <- magcat_soft_tfisher_adaptive_pathways(
+
+  gene_results = genes_adj,
+  species      = "maize",
+  gene_col     = "GENE",
+  p_col        = "P",
+  tau_grid     = c(0.01, 0.05, 0.1, 0.2),
+  do_fix       = TRUE,
+  output       = TRUE,
+  out_dir      = "magcat_tfisher"
+)
+```
+
+## Step 7: Omnibus Test (Recommended)
+
+The omnibus test combines all five methods with permutation-based calibration:
+
+```{r omnibus-test}
+omni_res <- magcat_omni2_pathways(
+  gene_results = genes_adj,
+  species      = "maize",
+  pmn_gene_col = "Gene-name",
+  gene_col     = "GENE",
+  p_raw_col    = "P",
+  z_col        = "ZSTAT",
+
+  # Test parameters
+  tau_grid     = c(0.1, 0.05, 0.02, 0.01, 0.005, 0.001),
+  min_p        = 1e-15,
+  do_fix       = TRUE,
+  stouffer_alternative = "greater",
+
+  # Omnibus combination method
+  omnibus      = "ACAT",  # or "minP"
+
+  # Permutation calibration
+  B_perm       = 10000L,
+  perm_mode    = "mvn",   # "global", "mvn", "both", or "none"
+  magma_cor_file = "path/to/gene_correlations.txt",
+  make_PD      = TRUE,
+
+  seed         = 123,
+  output       = TRUE,
+  out_dir      = "magcat_omnibus_results"
+)
+
+head(omni_res)
+```
+
+## Using Custom Pathways
+
+Instead of built-in PMN pathways, you can provide custom pathways:
+
+```{r custom-pathways}
+# As a data.frame
+custom_pw <- data.frame(
+  pathway_id   = c("PWY1", "PWY1", "PWY2", "PWY2", "PWY2"),
+  pathway_name = c("Pathway 1", "Pathway 1", "Pathway 2", "Pathway 2", "Pathway 2"),
+  gene_id      = c("gene1", "gene2", "gene3", "gene4", "gene5")
+)
+
+# Or as a named list
+custom_pw_list <- list(
+  PWY1 = c("gene1", "gene2"),
+  PWY2 = c("gene3", "gene4", "gene5")
+)
+
+# Use with any test
+acat_custom <- magcat_acat_pathways(
+  gene_results = genes_adj,
+  pathways     = custom_pw,  # use custom instead of species
+  gene_col     = "GENE",
+  p_col        = "P"
+)
+```
+
+## Output Interpretation
+
+All functions return a data.frame with:
+
+- `pathway_id`: Pathway identifier
+- `pathway_name`: Human-readable pathway name
+- `n_genes`: Number of genes in the pathway with valid p-values
+- `gene_names`: Semicolon-separated list of gene IDs used
+- Test-specific statistics and p-values
+
+For the omnibus test, additional columns include:
+- `omni_p_analytic`: Analytic omnibus p-value
+- `omni_p_global`: Global permutation-calibrated p-value
+- `omni_p_mvn`: MVN-calibrated p-value (accounts for gene correlations)
+- Individual test p-values (ACAT, Fisher, Stouffer, minP, TFisher)
+
+## Best Practices
+
+1. **Always use permutation calibration** (`B_perm >= 10000`) for publication-quality results
+2. **Use MVN mode** (`perm_mode = "mvn"`) when genes are correlated (typical in GWAS)
+3. **Adjust for gene length** if you observe correlation between gene size and significance
+4. **Use the omnibus test** rather than cherry-picking individual tests
+5. **Apply FDR correction** to the final p-values for multiple testing
+
+## Session Info
+
+```{r session-info, eval=TRUE}
+sessionInfo()
+```

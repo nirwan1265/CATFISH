@@ -91,6 +91,7 @@ plot_theme <- theme_minimal(base_size = 24) +
   )
 
 
+
 p1 <- ggplot(top_bubbles, aes(x = mlog10p, y = pathway_name_ord)) +
   geom_point(aes(size = n_genes, color = mlog10p, shape = hit_type), alpha = 0.95) +
   facet_wrap(~sex, scales = "free_y") +
@@ -913,3 +914,8 @@ total_grid
 
 ggsave("venn_omni_vs_methods_female_male_fixedcolors.png",
        total_grid, width = 18, height = 8, dpi = 300)
+
+
+
+library(GAPIT)
+?GAPIT()

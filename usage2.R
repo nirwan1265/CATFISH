@@ -25,6 +25,15 @@
 ## -----------------------------------------------------------------------------
 
 # Load packages
+devtools::document()
+devtools::load_all()
+library(metapro)
+library(sumFREGAT)
+library(metap)
+library(rtracklayer)
+library(ggplot2)
+library(TFisher)
+library(data.table)
 library(MAGCAT)
 library(dplyr)
 
@@ -371,3 +380,5 @@ print(sig_pathways[, c("pathway_id", "pathway_name", "n_genes", "omni_p_final", 
 ## Rice          | "^Os"       | Os01g0100100
 ##
 ## =============================================================================
+
+?MAGCAT::magcat_acat_pathways()

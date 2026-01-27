@@ -10,11 +10,11 @@ library(rtracklayer)
 library(ggplot2)
 library(TFisher)
 library(data.table)
+library(dplyr)
 # 1. See where it's installed
 .libPaths()
 
 options(magma.path="/Users/nirwantandukar/Documents/software/magma_v1.10_mac/magma")
-
 
 
 
@@ -305,6 +305,8 @@ magma_gene(
   n_threads  = 6
 )
 
+args(MAGCAT::magma_gene)
+
 # FLY
 magma_gene(
   bfile      = "/Users/nirwantandukar/Documents/Research/data/DGRP/Genotype/genotype_DGRP",
@@ -590,6 +592,7 @@ at_pw <- at_pw %>%
   ) %>%
   filter(!is.na(gene_id), gene_id != "") %>%
   distinct()
+
 
 # Run ACAT per pathway (no permutations first):
 pw_res <- magcat_acat_pathways(
@@ -884,6 +887,8 @@ mni_omni <- magcat_omni2_pathways(
   out_dir        = "magcat_omnibus_results_Fly"
 )
 
+head(at_pw)
+
 # Arabidopsis
 mni_omni <- magcat_omni2_pathways(
   gene_results   = genes_adj,
@@ -903,15 +908,18 @@ mni_omni <- magcat_omni2_pathways(
   include_magma_in_omni = FALSE,
   include_magma_in_perm = FALSE,                # only for analytic omnibus, no MAGMA in permutations
   omnibus        = "minP",                      # or "minP"
-  B_perm         = 10000L,                        # number of permutations for omnibus
+  B_perm         = 100L,                        # number of permutations for omnibus
   perm_mode      = "mvn",                       # or "global", "both", "none"
   magma_cor_file = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize//magma_gene_cor_pairs_MLM_arabidopsis.txt",  # 3-column file gene1 gene2 r
   make_PD        = TRUE,
+  mvn_marginal = "uniform", # NEW
+  mvn_calibrate_components = TRUE, # NEW
   seed           = 123,
   output         = TRUE,
-  out_dir        = "magcat_omnibus_results_Arabidopsis"
+  out_dir        = "magcat_omnibus_results_Arabidopsis_B100"
 )
 
+head(mni_omni)
 
 args(MAGCAT::magcat_omni2_pathways)
 
