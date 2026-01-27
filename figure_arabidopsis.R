@@ -15,7 +15,7 @@ library(ggplot2)
 # -----------------------
 # INPUT
 # -----------------------
-at_cold <- "magcat_omnibus_results_Arabidopsis/omni_minp_mvn.csv"
+at_cold <- "catfish_omnibus_results_Arabidopsis/omni_minp_mvn.csv"
 at_raw  <- readr::read_csv(at_cold, show_col_types = FALSE)
 
 # -----------------------

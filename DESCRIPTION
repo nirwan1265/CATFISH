@@ -1,9 +1,9 @@
-Package: MAGCAT
+Package: CATFISH
 Title: MAGMA-Based Gene and Pathway Analysis with ACAT Aggregation
 Version: 0.1.0
 Authors@R:
     person("Nirwan", "Tandukar", , "tandukar.nirwan@gmail.com", role = c("aut", "cre"))
-Description: MAGCAT provides an R interface to MAGMA (Multi-marker Analysis of
+Description: CATFISH provides an R interface to MAGMA (Multi-marker Analysis of
     GenoMic Annotation) for post-GWAS pathway enrichment analysis. It implements
     multiple p-value combination methods (ACAT, Fisher, Stouffer, minP, adaptive
     soft TFisher) and combines them into an omnibus test with optional
@@ -11,8 +11,8 @@ Description: MAGCAT provides an R interface to MAGMA (Multi-marker Analysis of
     correlations. Built-in support for Plant Metabolic Network (PMN) pathways
     for maize, sorghum, arabidopsis, and general plant species.
 License: MIT + file LICENSE
-URL: https://github.com/nirwantandukar/MAGCAT
-BugReports: https://github.com/nirwantandukar/MAGCAT/issues
+URL: https://github.com/nirwantandukar/CATFISH
+BugReports: https://github.com/nirwantandukar/CATFISH/issues
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

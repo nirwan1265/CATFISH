@@ -34,7 +34,9 @@ annot/*.annot
 
 # Results directories
 acat_results_GLM/
-magcat_omnibus_results_*/
+catfish_omnibus_results_*/
 
 # Vignettes (if large)
 vignettes/*.html
+/doc/
+/Meta/

@@ -6,8 +6,8 @@ library(ComplexUpset)
 
 
 # Pathway comparisong
-f_female <- "magcat_omnibus_results_Fly/omni_minp_mvn_female.csv"
-f_male   <- "magcat_omnibus_results_Fly/omni_minp_mvn_male.csv"
+f_female <- "catfish_omnibus_results_Fly/omni_minp_mvn_female.csv"
+f_male   <- "catfish_omnibus_results_Fly/omni_minp_mvn_male.csv"
 
 safe_p <- function(p, min_p = 1e-300) {
   p <- suppressWarnings(as.numeric(p))

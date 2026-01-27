@@ -22,9 +22,9 @@
 #'   \item A data.frame with columns \code{pathway_id}, \code{gene_id} (and optional \code{pathway_name}).
 #' }
 #' @param species Optional; one of "maize", "sorghum", "arabidopsis", "plant", "fly".
-#'   If provided, built-in PMN pathways are loaded via \code{magcat_load_pathways()}.
+#'   If provided, built-in PMN pathways are loaded via \code{catfish_load_pathways()}.
 #'   Provide either \code{pathways} OR \code{species}, but not both.
-#' @param pmn_gene_col Optional; passed to \code{magcat_load_pathways(gene_col=...)}
+#' @param pmn_gene_col Optional; passed to \code{catfish_load_pathways(gene_col=...)}
 #'   when \code{species} is used. If NULL, the PMN loader prefers "Gene-name" then "Gene-id".
 #' @param gene_col Column name in \code{gene_results} containing gene IDs (default "GENE").
 #' @param p_col Column name in \code{gene_results} containing gene-level p-values (default "P").
@@ -35,7 +35,7 @@
 #'   to ensure values lie strictly in (0,1).
 #' @param output If TRUE, write a CSV of results to \code{out_dir}.
 #' @param out_dir Directory to write CSV when \code{output = TRUE}
-#'   (default "magcat_tfisher_soft_adaptive").
+#'   (default "catfish_tfisher_soft_adaptive").
 #'
 #' @return A data.frame with columns:
 #' \describe{
@@ -60,7 +60,7 @@
 #' gene_results <- read.delim("magma_output.genes.out")
 #'
 #' # Run adaptive soft TFisher on maize PMN pathways
-#' tfisher_adapt_res <- magcat_soft_tfisher_adaptive_pathways(
+#' tfisher_adapt_res <- catfish_soft_tfisher_adaptive_pathways(
 #'   gene_results = gene_results,
 #'   species = "maize",
 #'   gene_col = "GENE",
@@ -69,17 +69,17 @@
 #' head(tfisher_adapt_res)
 #'
 #' # With custom tau grid
-#' tfisher_custom <- magcat_soft_tfisher_adaptive_pathways(
+#' tfisher_custom <- catfish_soft_tfisher_adaptive_pathways(
 #'   gene_results = gene_results,
 #'   species = "maize",
 #'   tau_grid = c(0.1, 0.05, 0.01)
 #' )
 #' }
 #'
-#' @seealso \code{\link{magcat_tfisher_pathways}},
-#'   \code{\link{magcat_soft_tfisher_pathways}}
+#' @seealso \code{\link{catfish_tfisher_pathways}},
+#'   \code{\link{catfish_soft_tfisher_pathways}}
 #' @export
-magcat_soft_tfisher_adaptive_pathways <- function(gene_results,
+catfish_soft_tfisher_adaptive_pathways <- function(gene_results,
                                                  pathways     = NULL,
                                                  species      = NULL,
                                                  pmn_gene_col = NULL,
@@ -89,9 +89,9 @@ magcat_soft_tfisher_adaptive_pathways <- function(gene_results,
                                                  min_p        = 1e-15,
                                                  do_fix       = TRUE,
                                                  output       = FALSE,
-                                                 out_dir      = "magcat_tfisher_soft_adaptive") {
+                                                 out_dir      = "catfish_tfisher_soft_adaptive") {
   if (!requireNamespace("TFisher", quietly = TRUE)) {
-    stop("Package 'TFisher' is required for magcat_soft_tfisher_adaptive_pathways().",
+    stop("Package 'TFisher' is required for catfish_soft_tfisher_adaptive_pathways().",
          call. = FALSE)
   }
 
@@ -108,9 +108,9 @@ magcat_soft_tfisher_adaptive_pathways <- function(gene_results,
 
   if (is.null(pathways) && !is.null(species)) {
     pathways <- if (is.null(pmn_gene_col)) {
-      magcat_load_pathways(species = species)
+      catfish_load_pathways(species = species)
     } else {
-      magcat_load_pathways(species = species, gene_col = pmn_gene_col)
+      catfish_load_pathways(species = species, gene_col = pmn_gene_col)
     }
   }
 
@@ -242,7 +242,7 @@ magcat_soft_tfisher_adaptive_pathways <- function(gene_results,
       dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
     }
     species_tag <- if (is.null(species)) "custom" else species
-    out_path <- file.path(out_dir, paste0("magcat_tfisher_soft_adaptive_pathways_", species_tag, ".csv"))
+    out_path <- file.path(out_dir, paste0("catfish_tfisher_soft_adaptive_pathways_", species_tag, ".csv"))
     utils::write.csv(res, out_path, row.names = FALSE)
     attr(res, "file") <- out_path
   }

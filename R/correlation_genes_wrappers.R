@@ -2,7 +2,7 @@
 #'
 #' Parses MAGMA's banded correlation output (.genes.raw) and extracts
 #' pairwise gene correlations into a simple 3-column format (gene1, gene2, r).
-#' This file is required for MVN-based resampling in \code{\link{magcat_omni2_pathways}}.
+#' This file is required for MVN-based resampling in \code{\link{catfish_omni2_pathways}}.
 #'
 #' @param genes_raw_file Path to MAGMA .genes.raw file (one chromosome).
 #' @param out_pairs_file Output path for the correlation pairs file.
@@ -43,7 +43,7 @@
 #' # Combine multiple chromosomes - see usage2.R for full example
 #' }
 #'
-#' @seealso \code{\link{magcat_omni2_pathways}} for using the correlation file
+#' @seealso \code{\link{catfish_omni2_pathways}} for using the correlation file
 #' @export
 magma_genesraw_to_cor_pairs_banded <- function(genes_raw_file,
                                                out_pairs_file,

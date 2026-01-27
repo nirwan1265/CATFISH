@@ -1,8 +1,8 @@
 ## =============================================================================
-## MAGCAT/CATFISH Workflow: Complete Pipeline for Pathway Enrichment Analysis
+## CATFISH/CATFISH Workflow: Complete Pipeline for Pathway Enrichment Analysis
 ## =============================================================================
 ##
-## This script demonstrates the full MAGCAT workflow for three organisms:
+## This script demonstrates the full CATFISH workflow for three organisms:
 ##   1. Maize (Zea mays)
 ##   2. Drosophila (Fly)
 ##   3. Arabidopsis thaliana
@@ -19,14 +19,14 @@
 ##   9. Run omnibus pathway test
 ##
 ## Key Functions (from R/ directory):
-##   - pathway_loaders.R:     magcat_load_pathways(), magcat_pmn_file()
-##   - ACAT_wrappers.R:       magcat_acat_pathways(), fix_p_for_acat()
-##   - Fisher_wrappers.R:     magcat_fisher_pathways()
-##   - minP_wrappers.R:       magcat_minp_pathways()
-##   - Stouffer_wrappers.R:   magcat_stoufferZ_pathways()
-##   - adaptive_soft_TFisher_wrappers.R: magcat_soft_tfisher_adaptive_pathways()
+##   - pathway_loaders.R:     catfish_load_pathways(), catfish_pmn_file()
+##   - ACAT_wrappers.R:       catfish_acat_pathways(), fix_p_for_acat()
+##   - Fisher_wrappers.R:     catfish_fisher_pathways()
+##   - minP_wrappers.R:       catfish_minp_pathways()
+##   - Stouffer_wrappers.R:   catfish_stoufferZ_pathways()
+##   - adaptive_soft_TFisher_wrappers.R: catfish_soft_tfisher_adaptive_pathways()
 ##   - correlation_genes_wrappers.R: magma_genesraw_to_cor_pairs_banded()
-##   - OMNIBUS_test.R:        magcat_omni2_pathways()
+##   - OMNIBUS_test.R:        catfish_omni2_pathways()
 ##
 ## =============================================================================
 
@@ -35,11 +35,11 @@
 ## STEP 1: Setup
 ## -----------------------------------------------------------------------------
 
-# Install MAGCAT if needed
+# Install CATFISH if needed
 # devtools::install_github("nirwan1265/CATFISH")
 
 # Load packages
-library(MAGCAT)
+library(CATFISH)
 library(dplyr)
 
 # Optional packages (for specific features)
@@ -59,7 +59,7 @@ magma_path()
 ## -----------------------------------------------------------------------------
 
 # Choose your organism: "maize", "fly", or "arabidopsis"
-ORGANISM <- "maize"  # <<< CHANGE THIS TO SWITCH ORGANISMS
+ORGANISM <- "arabidopsis"  # <<< CHANGE THIS TO SWITCH ORGANISMS
 
 # Define paths based on organism
 if (ORGANISM == "maize") {
@@ -111,7 +111,7 @@ if (ORGANISM == "maize") {
 out_prefix  <- paste0(ORGANISM, "_analysis")
 annot_dir   <- "annot"
 magma_dir   <- paste0("magma_genes_", ORGANISM)
-results_dir <- paste0("magcat_results_", ORGANISM)
+results_dir <- paste0("catfish_results_", ORGANISM)
 
 
 ## -----------------------------------------------------------------------------
@@ -212,7 +212,7 @@ gene_lengths <- get_gene_lengths(
 )
 
 # Adjust p-values (removes confounding from gene size)
-adj_out <- magcat_adjust_gene_p(
+adj_out <- catfish_adjust_gene_p(
  gene_results = genes_all,
  gene_lengths = gene_lengths,
  gene_col     = "GENE",
@@ -304,7 +304,7 @@ print(cor_preview)
 ##   - "plant"       : PlantCyc general (PMN)
 ##   - "fly"         : FlyCyc (Drosophila)
 
-pathways <- magcat_load_pathways(species = species_pw)
+pathways <- catfish_load_pathways(species = species_pw)
 
 cat("Loaded", length(unique(pathways$pathway_id)), "pathways\n")
 cat("Total pathway-gene mappings:", nrow(pathways), "\n")
@@ -328,7 +328,7 @@ head(pathways)
 ##
 ## Results are calibrated using MVN resampling to account for gene-gene LD.
 
-omni_results <- magcat_omni2_pathways(
+omni_results <- catfish_omni2_pathways(
  gene_results   = genes_adj,
  species        = species_pw,
  gene_col       = "GENE",
@@ -351,6 +351,46 @@ omni_results <- magcat_omni2_pathways(
  make_PD        = TRUE,           # Ensure positive-definite correlation matrix
  mvn_marginal   = "uniform",      # Marginal distribution for null p-values
 
+ ## MVN Calibration Strategy:
+ ##
+ ## There are TWO ways to apply MVN-based LD correction, controlled by
+ ## the mvn_calibrate_components parameter:
+ ##
+ ## Strategy 1: mvn_calibrate_components = FALSE (default, used here)
+ ##   - All 5 component tests (ACAT, Fisher, TFisher, MinP, Stouffer)
+ ##     are computed analytically on the observed data
+ ##   - They are combined into one analytic omnibus p-value
+ ##   - MVN null replicates generate null omnibus p-values
+ ##   - The observed omnibus is calibrated against the null omnibus distribution
+ ##   - Result: component p-values are analytic (NOT LD-corrected),
+ ##     only the final omnibus is LD-corrected
+ ##   - Faster; good for exploratory analysis
+ ##
+ ## Strategy 2: mvn_calibrate_components = TRUE
+ ##   - All 5 component tests are computed analytically on observed data
+ ##   - MVN null replicates generate null p-values for EACH component
+ ##   - Each observed component p-value is calibrated against its own
+ ##     null distribution (e.g., observed ACAT p vs null ACAT p-values)
+ ##   - The 5 MVN-calibrated component p-values are then combined into omnibus
+ ##   - That omnibus is further calibrated against null omnibus draws
+ ##   - Result: both component AND omnibus p-values are LD-corrected
+ ##   - More rigorous; recommended for publication
+ ##
+ ## Why does this matter?
+ ##   Different combination methods have different sensitivity to gene-gene
+ ##   correlation (LD). Fisher's method is heavily affected by LD (correlated
+ ##   genes inflate the chi-squared sum), while ACAT is more robust. By
+ ##   calibrating each component individually (Strategy 2), you remove
+ ##   method-specific LD bias before combining.
+ ##
+ ## Output columns by strategy:
+ ##   Strategy 1: acat_p, fisher_p, etc. = analytic (uncorrected)
+ ##               omni_p_mvn = LD-corrected omnibus
+ ##   Strategy 2: acat_p_mvn_cal, fisher_p_mvn_cal, etc. = LD-corrected per component
+ ##               omni_p_mvn = LD-corrected omnibus (from calibrated components)
+ ##
+ mvn_calibrate_components = FALSE,  # Set TRUE for publication (Strategy 2)
+
  # Output
  seed           = 123,
  output         = TRUE,
@@ -362,13 +402,72 @@ head(omni_results)
 
 
 ## -----------------------------------------------------------------------------
+## STEP 10b (Optional): Re-run with component-level MVN calibration
+## -----------------------------------------------------------------------------
+##
+## For publication-quality results, re-run with mvn_calibrate_components = TRUE.
+## This calibrates each of the 5 component tests individually against their
+## own MVN null distributions before combining into the omnibus.
+##
+# omni_results_s2 <- catfish_omni2_pathways(
+#   gene_results   = genes_adj,
+#   species        = species_pw,
+#   gene_col       = "GENE",
+#   p_raw_col      = "P",
+#   z_col          = "ZSTAT",
+#   tau_grid       = c(0.1, 0.05, 0.02, 0.01, 0.005, 0.001),
+#   min_p          = 1e-15,
+#   do_fix         = TRUE,
+#   stouffer_alternative = "greater",
+#   omnibus        = "ACAT",
+#   perm_mode      = "mvn",
+#   B_perm         = 10000L,
+#   magma_cor_file = cor_pairs_file,
+#   make_PD        = TRUE,
+#   mvn_marginal   = "uniform",
+#   mvn_calibrate_components = TRUE,   # <<< Strategy 2
+#   seed           = 123,
+#   output         = TRUE,
+#   out_dir        = paste0(results_dir, "_strategy2")
+# )
+#
+# # Compare component p-values: analytic vs MVN-calibrated
+# head(omni_results_s2[, c("pathway_id",
+#                           "acat_p", "acat_p_mvn_cal",
+#                           "fisher_p", "fisher_p_mvn_cal",
+#                           "omni_p_mvn")])
+
+
+## -----------------------------------------------------------------------------
 ## STEP 11: Identify significant pathways
 ## -----------------------------------------------------------------------------
 
-# The omnibus returns calibrated p-values
-# Use omni_p_mvn for MVN-calibrated, or omni_p_final for best available
+## Output column reference:
+##
+## Component p-values (analytic):
+##   acat_p, fisher_p, minp_p_analytic, stouffer_p_analytic, tfisher_p_analytic
+##
+## MVN-calibrated component p-values (only with mvn_calibrate_components = TRUE):
+##   acat_p_mvn_cal, fisher_p_mvn_cal, minp_p_mvn_cal, stouffer_p_mvn_cal, tfisher_p_mvn_cal
+##
+## Omnibus p-values:
+##   omni_p_analytic     - no LD correction
+##   omni_p_global       - global permutation-calibrated
+##   omni_p_mvn          - MVN-calibrated (LD-aware)
+##   omni_p_final        - best available (MVN > global > analytic)
+##
+## Multiple testing corrections (on omni_p_final):
+##   omni_p_final_BH, omni_p_final_q_storey, omni_p_final_q_bky10, omni_p_final_q_ihw10
+##
+## Diagnostics:
+##   dominant_component  - which method gave the smallest p-value
+##   agreement_score     - fraction of methods with p < 0.05
+##   calibration_impact  - how calibration changed significance
+##   genes_used          - semicolon-separated gene IDs
+##   gene_pvals_used     - semicolon-separated gene p-values
 
-# Add FDR correction
+# Use omni_p_final (automatically picks best available calibration)
+# FDR is already computed as omni_p_final_BH, but you can also do it manually:
 omni_results$fdr <- p.adjust(omni_results$omni_p_mvn, method = "BH")
 
 # Filter significant pathways

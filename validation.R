@@ -1,8 +1,8 @@
 ## =============================================================================
-## MAGCAT/CATFISH Validation & Diagnostics
+## CATFISH/CATFISH Validation & Diagnostics
 ## =============================================================================
 ##
-## This script provides validation analyses to demonstrate that the MAGCAT
+## This script provides validation analyses to demonstrate that the CATFISH
 ## pipeline is working correctly. It includes:
 ##
 ##   1. Gene-level adjustment validation (lm diagnostics)
@@ -13,7 +13,7 @@
 ##
 ## =============================================================================
 
-library(MAGCAT)
+library(CATFISH)
 library(ggplot2)
 library(dplyr)
 
@@ -21,7 +21,7 @@ library(dplyr)
 ## SECTION 1: Gene-Level Adjustment Validation
 ## =============================================================================
 ##
-## The magcat_adjust_gene_p() function regresses out gene length and SNP count
+## The catfish_adjust_gene_p() function regresses out gene length and SNP count
 ## confounding from MAGMA gene-level Z-scores. This section validates that
 ## the adjustment successfully removes these biases.
 
@@ -30,29 +30,40 @@ library(dplyr)
 #' Creates diagnostic plots showing that gene length and SNP count biases
 #' are removed after adjustment.
 #'
-#' @param adj_result Output from magcat_adjust_gene_p() containing $fit
+#' @param adj_result Output from catfish_adjust_gene_p() containing $fit
 #' @param output_dir Directory to save plots (NULL for no saving)
 #' @return List of ggplot objects and correlation statistics
 validate_gene_adjustment <- function(adj_result, output_dir = NULL) {
 
- if (is.null(adj_result$fit)) {
-   stop("adj_result must contain $fit (lm object from magcat_adjust_gene_p)")
+ # Extract lm object: stored as list-column $fit (each element is the same lm)
+ # or as attr(adj_result, "lm_fit")
+ lm_fit <- attr(adj_result, "lm_fit")
+ if (is.null(lm_fit) && "fit" %in% names(adj_result)) {
+   lm_fit <- adj_result$fit[[1]]
+ }
+ if (is.null(lm_fit) || !inherits(lm_fit, "lm")) {
+   stop("adj_result must contain the lm fit from catfish_adjust_gene_p()")
  }
 
- lm_fit <- adj_result$fit
-
  # Build diagnostic data frame
- df_diag <- cbind(
-   model.frame(lm_fit),
+ # Model formula is: y ~ nsnps + len
+ #   y     = abs(Z_raw)
+ #   nsnps = log1p(NSNPS)
+ #   len   = log1p(gene_length)
+ mf <- model.frame(lm_fit)
+ df_diag <- data.frame(
+   y       = mf$y,
+   nsnps   = mf$nsnps,
+   len     = mf$len,
    Z_fitted = fitted(lm_fit),
    Z_resid  = resid(lm_fit)
  )
 
  # Calculate correlations before/after adjustment
- cor_before_len  <- cor(df_diag$Z_raw, df_diag$log_gene_length, use = "complete.obs")
- cor_after_len   <- cor(df_diag$Z_resid, df_diag$log_gene_length, use = "complete.obs")
- cor_before_nsnp <- cor(df_diag$Z_raw, df_diag$log_nsnp, use = "complete.obs")
- cor_after_nsnp  <- cor(df_diag$Z_resid, df_diag$log_nsnp, use = "complete.obs")
+ cor_before_len  <- cor(df_diag$y, df_diag$len, use = "complete.obs")
+ cor_after_len   <- cor(df_diag$Z_resid, df_diag$len, use = "complete.obs")
+ cor_before_nsnp <- cor(df_diag$y, df_diag$nsnps, use = "complete.obs")
+ cor_after_nsnp  <- cor(df_diag$Z_resid, df_diag$nsnps, use = "complete.obs")
 
  correlations <- data.frame(
    variable = c("Gene Length", "Gene Length", "SNP Count", "SNP Count"),
@@ -60,27 +71,27 @@ validate_gene_adjustment <- function(adj_result, output_dir = NULL) {
    correlation = c(cor_before_len, cor_after_len, cor_before_nsnp, cor_after_nsnp)
  )
 
- # Plot 1: Raw Z vs log(gene length)
- p1 <- ggplot(df_diag, aes(x = log_gene_length, y = Z_raw)) +
+ # Plot 1: Raw |Z| vs log1p(gene length)
+ p1 <- ggplot(df_diag, aes(x = len, y = y)) +
    geom_hex(bins = 50) +
    geom_smooth(method = "lm", se = FALSE, color = "red", linewidth = 1) +
    scale_fill_viridis_c() +
    labs(
-     x = "log(Gene Length)",
-     y = "Raw MAGMA Z-score",
-     title = "Before Adjustment: Z vs Gene Length",
+     x = "log1p(Gene Length)",
+     y = "|Z| (Raw MAGMA)",
+     title = "Before Adjustment: |Z| vs Gene Length",
      subtitle = sprintf("Correlation: r = %.3f", cor_before_len)
    ) +
    theme_minimal() +
    theme(plot.title = element_text(face = "bold"))
 
- # Plot 2: Adjusted Z vs log(gene length)
- p2 <- ggplot(df_diag, aes(x = log_gene_length, y = Z_resid)) +
+ # Plot 2: Adjusted Z vs log1p(gene length)
+ p2 <- ggplot(df_diag, aes(x = len, y = Z_resid)) +
    geom_hex(bins = 50) +
    geom_smooth(method = "lm", se = FALSE, color = "red", linewidth = 1) +
    scale_fill_viridis_c() +
    labs(
-     x = "log(Gene Length)",
+     x = "log1p(Gene Length)",
      y = "Adjusted Z-score (Residual)",
      title = "After Adjustment: Z vs Gene Length",
      subtitle = sprintf("Correlation: r = %.3f (bias removed)", cor_after_len)
@@ -88,27 +99,27 @@ validate_gene_adjustment <- function(adj_result, output_dir = NULL) {
    theme_minimal() +
    theme(plot.title = element_text(face = "bold"))
 
- # Plot 3: Raw Z vs log(#SNPs)
- p3 <- ggplot(df_diag, aes(x = log_nsnp, y = Z_raw)) +
+ # Plot 3: Raw |Z| vs log1p(#SNPs)
+ p3 <- ggplot(df_diag, aes(x = nsnps, y = y)) +
    geom_hex(bins = 50) +
    geom_smooth(method = "lm", se = FALSE, color = "red", linewidth = 1) +
    scale_fill_viridis_c() +
    labs(
-     x = "log(# SNPs per Gene)",
-     y = "Raw MAGMA Z-score",
-     title = "Before Adjustment: Z vs SNP Count",
+     x = "log1p(# SNPs per Gene)",
+     y = "|Z| (Raw MAGMA)",
+     title = "Before Adjustment: |Z| vs SNP Count",
      subtitle = sprintf("Correlation: r = %.3f", cor_before_nsnp)
    ) +
    theme_minimal() +
    theme(plot.title = element_text(face = "bold"))
 
- # Plot 4: Adjusted Z vs log(#SNPs)
- p4 <- ggplot(df_diag, aes(x = log_nsnp, y = Z_resid)) +
+ # Plot 4: Adjusted Z vs log1p(#SNPs)
+ p4 <- ggplot(df_diag, aes(x = nsnps, y = Z_resid)) +
    geom_hex(bins = 50) +
    geom_smooth(method = "lm", se = FALSE, color = "red", linewidth = 1) +
    scale_fill_viridis_c() +
    labs(
-     x = "log(# SNPs per Gene)",
+     x = "log1p(# SNPs per Gene)",
      y = "Adjusted Z-score (Residual)",
      title = "After Adjustment: Z vs SNP Count",
      subtitle = sprintf("Correlation: r = %.3f (bias removed)", cor_after_nsnp)
@@ -204,7 +215,7 @@ qq_plot <- function(pvals, title = "QQ Plot", show_lambda = TRUE) {
 
 #' Create QQ plots for pathway p-values from omnibus results
 #'
-#' @param omni_results Output from magcat_omni2_pathways()
+#' @param omni_results Output from catfish_omni2_pathways()
 #' @param output_dir Directory to save plots (NULL for no saving)
 #' @return List of ggplot objects
 validate_pvalue_calibration <- function(omni_results, output_dir = NULL) {
@@ -261,7 +272,7 @@ validate_pvalue_calibration <- function(omni_results, output_dir = NULL) {
 
 #' Compare p-values across methods
 #'
-#' @param omni_results Output from magcat_omni2_pathways()
+#' @param omni_results Output from catfish_omni2_pathways()
 #' @param output_dir Directory to save plots (NULL for no saving)
 #' @return List containing correlation matrix and plots
 compare_methods <- function(omni_results, output_dir = NULL) {
@@ -355,7 +366,7 @@ compare_methods <- function(omni_results, output_dir = NULL) {
 
 #' Create volcano-style plot for pathway results
 #'
-#' @param omni_results Output from magcat_omni2_pathways()
+#' @param omni_results Output from catfish_omni2_pathways()
 #' @param p_col Which p-value column to use
 #' @param fdr_threshold FDR threshold for significance
 #' @param output_dir Directory to save plot
@@ -413,7 +424,7 @@ pathway_volcano <- function(omni_results,
 
 #' Create bar plot of top pathways
 #'
-#' @param omni_results Output from magcat_omni2_pathways()
+#' @param omni_results Output from catfish_omni2_pathways()
 #' @param p_col Which p-value column to use
 #' @param top_n Number of top pathways to show
 #' @param output_dir Directory to save plot
@@ -472,7 +483,7 @@ top_pathways_barplot <- function(omni_results,
 
 #' Compare analytic vs MVN-calibrated p-values
 #'
-#' @param omni_results Output from magcat_omni2_pathways() with MVN enabled
+#' @param omni_results Output from catfish_omni2_pathways() with MVN enabled
 #' @param output_dir Directory to save plots
 #' @return List of plots and statistics
 validate_mvn_calibration <- function(omni_results, output_dir = NULL) {
@@ -557,7 +568,7 @@ validate_mvn_calibration <- function(omni_results, output_dir = NULL) {
 #'
 #' @param gene_results Gene-level results from MAGMA
 #' @param gene_lengths Gene length data
-#' @param omni_results Output from magcat_omni2_pathways()
+#' @param omni_results Output from catfish_omni2_pathways()
 #' @param output_dir Directory to save all plots and report
 #' @return List of all validation results
 run_full_validation <- function(gene_results = NULL,
@@ -568,14 +579,14 @@ run_full_validation <- function(gene_results = NULL,
  results <- list()
 
  cat("=============================================================\n")
- cat("           MAGCAT Validation Report\n")
+ cat("           CATFISH Validation Report\n")
  cat("=============================================================\n\n")
 
  # 1. Gene adjustment validation (if inputs provided)
  if (!is.null(gene_results) && !is.null(gene_lengths)) {
    cat("Running gene adjustment validation...\n")
 
-   adj_out <- magcat_adjust_gene_p(
+   adj_out <- catfish_adjust_gene_p(
      gene_results = gene_results,
      gene_lengths = gene_lengths,
      gene_col     = "GENE",
@@ -639,24 +650,26 @@ run_full_validation <- function(gene_results = NULL,
 ## # After running the main workflow (usage2.R), validate results:
 ##
 ## # 1. Validate gene-level adjustment
-## adj_out <- magcat_adjust_gene_p(
-##   gene_results = genes_all,
-##   gene_lengths = gene_lengths,
-##   gene_col = "GENE", nsnp_col = "NSNPS",
-##   p_col = "P", z_col = "ZSTAT"
-## )
-## adj_validation <- validate_gene_adjustment(adj_out, output_dir = "validation")
-##
-## # 2. Run full validation on omnibus results
-## validation <- run_full_validation(
-##   gene_results = genes_all,
-##   gene_lengths = gene_lengths,
-##   omni_results = omni_results,
-##   output_dir   = "validation_results"
-## )
-##
-## # 3. View individual plots
-## print(validation$adjustment$plots$gene_length_before)
-## print(validation$adjustment$plots$gene_length_after)
-## print(validation$qq_plots$omni_mvn)
-## print(validation$volcano)
+adj_out <- catfish_adjust_gene_p(
+  gene_results = genes_all,
+  gene_lengths = maize_gene_len,
+  gene_col = "GENE", nsnp_col = "NSNPS",
+  p_col = "P", z_col = "ZSTAT"
+)
+head(adj_out)
+
+adj_validation <- validate_gene_adjustment(adj_out, output_dir = "validation")
+
+# 2. Run full validation on omnibus results
+validation <- run_full_validation(
+  gene_results = genes_all,
+  gene_lengths = maize_gene_len,
+  omni_results = omni_results,
+  output_dir   = "validation_results"
+)
+
+# 3. View individual plots
+print(validation$adjustment$plots$gene_length_before)
+print(validation$adjustment$plots$gene_length_after)
+print(validation$qq_plots$omni_mvn)
+print(validation$volcano)

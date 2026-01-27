@@ -93,12 +93,12 @@ test_that("gff3_to_geneloc validates recode_chr argument", {
 })
 
 # ============================================================
-# Tests for magcat_adjust_gene_p
+# Tests for catfish_adjust_gene_p
 # ============================================================
 
-test_that("magcat_adjust_gene_p validates inputs", {
+test_that("catfish_adjust_gene_p validates inputs", {
   expect_error(
-    magcat_adjust_gene_p(
+    catfish_adjust_gene_p(
       gene_results = "not_a_dataframe",
       gene_lengths = data.frame(gene_id = "a", length = 100)
     ),
@@ -106,7 +106,7 @@ test_that("magcat_adjust_gene_p validates inputs", {
   )
 
   expect_error(
-    magcat_adjust_gene_p(
+    catfish_adjust_gene_p(
       gene_results = data.frame(GENE = "a", P = 0.1, NSNPS = 10),
       gene_lengths = "not_a_dataframe"
     ),
@@ -114,7 +114,7 @@ test_that("magcat_adjust_gene_p validates inputs", {
   )
 })
 
-test_that("magcat_adjust_gene_p validates required columns", {
+test_that("catfish_adjust_gene_p validates required columns", {
   gene_results <- data.frame(
     WRONG_COL = c("gene1", "gene2"),
     P = c(0.1, 0.05),
@@ -126,12 +126,12 @@ test_that("magcat_adjust_gene_p validates required columns", {
   )
 
   expect_error(
-    magcat_adjust_gene_p(gene_results, gene_lengths),
+    catfish_adjust_gene_p(gene_results, gene_lengths),
     "missing column"
   )
 })
 
-test_that("magcat_adjust_gene_p returns correct structure", {
+test_that("catfish_adjust_gene_p returns correct structure", {
   gene_results <- data.frame(
     GENE = c("gene1", "gene2", "gene3", "gene4", "gene5"),
     P = c(0.01, 0.05, 0.1, 0.5, 0.9),
@@ -145,7 +145,7 @@ test_that("magcat_adjust_gene_p returns correct structure", {
     stringsAsFactors = FALSE
   )
 
-  result <- magcat_adjust_gene_p(gene_results, gene_lengths)
+  result <- catfish_adjust_gene_p(gene_results, gene_lengths)
 
   expect_s3_class(result, "data.frame")
   expect_true("gene_id" %in% names(result))
@@ -154,7 +154,7 @@ test_that("magcat_adjust_gene_p returns correct structure", {
   expect_true(!is.null(attr(result, "lm_fit")))
 })
 
-test_that("magcat_adjust_gene_p p_adj values are valid", {
+test_that("catfish_adjust_gene_p p_adj values are valid", {
   gene_results <- data.frame(
     GENE = paste0("gene", 1:10),
     P = runif(10, 0.001, 0.999),
@@ -168,7 +168,7 @@ test_that("magcat_adjust_gene_p p_adj values are valid", {
     stringsAsFactors = FALSE
   )
 
-  result <- magcat_adjust_gene_p(gene_results, gene_lengths)
+  result <- catfish_adjust_gene_p(gene_results, gene_lengths)
 
   p_adj <- result$p_adj[!is.na(result$p_adj)]
   expect_true(all(p_adj >= 0 & p_adj <= 1))

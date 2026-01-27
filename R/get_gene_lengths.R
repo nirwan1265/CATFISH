@@ -34,7 +34,7 @@
 #' )
 #' }
 #'
-#' @seealso \code{\link{gff3_to_geneloc}}, \code{\link{magcat_adjust_gene_p}}
+#' @seealso \code{\link{gff3_to_geneloc}}, \code{\link{catfish_adjust_gene_p}}
 #' @export
 get_gene_lengths <- function(gff3_file,
                              feature         = "gene",

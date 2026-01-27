@@ -63,22 +63,22 @@ test_that("fix_p_for_acat handles all-NA input", {
 })
 
 # ============================================================
-# Tests for magcat_load_pathways
+# Tests for catfish_load_pathways
 # ============================================================
 
-test_that("magcat_load_pathways validates species argument", {
+test_that("catfish_load_pathways validates species argument", {
   expect_error(
-    magcat_load_pathways(species = "invalid_species"),
+    catfish_load_pathways(species = "invalid_species"),
     "should be one of"
   )
 })
 
-test_that("magcat_load_pathways returns correct structure", {
-  skip_if_not_installed("MAGCAT")
+test_that("catfish_load_pathways returns correct structure", {
+  skip_if_not_installed("CATFISH")
 
   # This will only work if package is installed with data
   result <- tryCatch(
-    magcat_load_pathways(species = "maize"),
+    catfish_load_pathways(species = "maize"),
     error = function(e) NULL
   )
 
@@ -91,16 +91,16 @@ test_that("magcat_load_pathways returns correct structure", {
 })
 
 # ============================================================
-# Tests for magcat_acat_pathways
+# Tests for catfish_acat_pathways
 # ============================================================
 
-test_that("magcat_acat_pathways requires ACAT package", {
+test_that("catfish_acat_pathways requires ACAT package", {
   skip_if_not_installed("ACAT")
 
   gene_results <- mock_gene_results(10)
   pathways <- mock_pathways(gene_results$GENE)
 
-  result <- magcat_acat_pathways(
+  result <- catfish_acat_pathways(
     gene_results = gene_results,
     pathways = pathways
   )
@@ -108,13 +108,13 @@ test_that("magcat_acat_pathways requires ACAT package", {
   expect_s3_class(result, "data.frame")
 })
 
-test_that("magcat_acat_pathways returns correct columns", {
+test_that("catfish_acat_pathways returns correct columns", {
   skip_if_not_installed("ACAT")
 
   gene_results <- mock_gene_results(10)
   pathways <- mock_pathways(gene_results$GENE)
 
-  result <- magcat_acat_pathways(
+  result <- catfish_acat_pathways(
     gene_results = gene_results,
     pathways = pathways
   )
@@ -123,7 +123,7 @@ test_that("magcat_acat_pathways returns correct columns", {
   expect_true(all(expected_cols %in% names(result)))
 })
 
-test_that("magcat_acat_pathways handles list pathways", {
+test_that("catfish_acat_pathways handles list pathways", {
   skip_if_not_installed("ACAT")
 
   gene_results <- mock_gene_results(10)
@@ -133,7 +133,7 @@ test_that("magcat_acat_pathways handles list pathways", {
     pwy3 = c("gene6", "gene7", "gene8", "gene9")
   )
 
-  result <- magcat_acat_pathways(
+  result <- catfish_acat_pathways(
     gene_results = gene_results,
     pathways = pathways
   )
@@ -141,7 +141,7 @@ test_that("magcat_acat_pathways handles list pathways", {
   expect_equal(nrow(result), 3)
 })
 
-test_that("magcat_acat_pathways handles data.frame pathways", {
+test_that("catfish_acat_pathways handles data.frame pathways", {
   skip_if_not_installed("ACAT")
 
   gene_results <- mock_gene_results(10)
@@ -152,7 +152,7 @@ test_that("magcat_acat_pathways handles data.frame pathways", {
     stringsAsFactors = FALSE
   )
 
-  result <- magcat_acat_pathways(
+  result <- catfish_acat_pathways(
     gene_results = gene_results,
     pathways = pathways_df
   )
@@ -160,21 +160,21 @@ test_that("magcat_acat_pathways handles data.frame pathways", {
   expect_equal(nrow(result), 2)
 })
 
-test_that("magcat_acat_pathways errors without pathways or species", {
+test_that("catfish_acat_pathways errors without pathways or species", {
   gene_results <- mock_gene_results(10)
 
   expect_error(
-    magcat_acat_pathways(gene_results = gene_results),
+    catfish_acat_pathways(gene_results = gene_results),
     "must provide either"
   )
 })
 
-test_that("magcat_acat_pathways errors with both pathways and species", {
+test_that("catfish_acat_pathways errors with both pathways and species", {
   gene_results <- mock_gene_results(10)
   pathways <- list(pwy1 = c("gene1", "gene2"))
 
   expect_error(
-    magcat_acat_pathways(
+    catfish_acat_pathways(
       gene_results = gene_results,
       pathways = pathways,
       species = "maize"
@@ -183,19 +183,19 @@ test_that("magcat_acat_pathways errors with both pathways and species", {
   )
 })
 
-test_that("magcat_acat_pathways validates required columns", {
+test_that("catfish_acat_pathways validates required columns", {
   skip_if_not_installed("ACAT")
 
   gene_results <- data.frame(WRONG_COL = c("a", "b"), P = c(0.1, 0.2))
   pathways <- list(pwy1 = c("a", "b"))
 
   expect_error(
-    magcat_acat_pathways(gene_results = gene_results, pathways = pathways),
+    catfish_acat_pathways(gene_results = gene_results, pathways = pathways),
     "missing required column"
   )
 })
 
-test_that("magcat_acat_pathways handles pathways with no matching genes", {
+test_that("catfish_acat_pathways handles pathways with no matching genes", {
   skip_if_not_installed("ACAT")
 
   gene_results <- mock_gene_results(5)
@@ -204,7 +204,7 @@ test_that("magcat_acat_pathways handles pathways with no matching genes", {
     pwy_no_match = c("nonexistent1", "nonexistent2")
   )
 
-  result <- magcat_acat_pathways(
+  result <- catfish_acat_pathways(
     gene_results = gene_results,
     pathways = pathways
   )
@@ -214,7 +214,7 @@ test_that("magcat_acat_pathways handles pathways with no matching genes", {
   expect_true(any(result$n_genes == 0) || any(is.na(result$acat_p)))
 })
 
-test_that("magcat_acat_pathways is case-insensitive for gene matching", {
+test_that("catfish_acat_pathways is case-insensitive for gene matching", {
   skip_if_not_installed("ACAT")
 
   gene_results <- data.frame(
@@ -225,7 +225,7 @@ test_that("magcat_acat_pathways is case-insensitive for gene matching", {
 
   pathways <- list(pwy1 = c("gene1", "gene2"))  # lowercase
 
-  result <- magcat_acat_pathways(
+  result <- catfish_acat_pathways(
     gene_results = gene_results,
     pathways = pathways
   )
@@ -233,7 +233,7 @@ test_that("magcat_acat_pathways is case-insensitive for gene matching", {
   expect_equal(result$n_genes[1], 2)
 })
 
-test_that("magcat_acat_pathways results are sorted by p-value", {
+test_that("catfish_acat_pathways results are sorted by p-value", {
   skip_if_not_installed("ACAT")
 
   set.seed(123)
@@ -250,7 +250,7 @@ test_that("magcat_acat_pathways results are sorted by p-value", {
     pwy4 = paste0("gene", 16:20)
   )
 
-  result <- magcat_acat_pathways(
+  result <- catfish_acat_pathways(
     gene_results = gene_results,
     pathways = pathways
   )

@@ -132,5 +132,5 @@ result <- magma_gene(
 
 }
 \seealso{
-\code{\link{magma_path}}, \code{\link{magcat_acat_pathways}}
+\code{\link{magma_path}}, \code{\link{catfish_acat_pathways}}
 }

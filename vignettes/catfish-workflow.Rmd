@@ -1,8 +1,8 @@
 ---
-title: "MAGCAT: Pathway Analysis Workflow"
+title: "CATFISH: Pathway Analysis Workflow"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{MAGCAT: Pathway Analysis Workflow}
+  %\VignetteIndexEntry{CATFISH: Pathway Analysis Workflow}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -16,21 +16,21 @@ knitr::opts_chunk$set(
 ```
 
 ## Introduction
-MAGCAT (MAGMA-based Gene and pathway Analysis with ACAT aggregation) provides a comprehensive toolkit for post-GWAS pathway enrichment analysis. It implements multiple p-value combination methods and combines them into an omnibus test with optional permutation-based calibration to account for gene-gene correlations.
+CATFISH (MAGMA-based Gene and pathway Analysis with ACAT aggregation) provides a comprehensive toolkit for post-GWAS pathway enrichment analysis. It implements multiple p-value combination methods and combines them into an omnibus test with optional permutation-based calibration to account for gene-gene correlations.
 
 ## Installation
 
 ```{r installation}
 # Install from GitHub (when available)
-# devtools::install_github("nirwantandukar/MAGCAT")
+# devtools::install_github("nirwantandukar/CATFISH")
 
 # Load the package
-library(MAGCAT)
+library(CATFISH)
 ```
 
 ## Workflow Overview
 
-A typical MAGCAT workflow consists of:
+A typical CATFISH workflow consists of:
 
 1. **Prepare gene location file** from GFF3 annotations
 2. **Run MAGMA annotation** to map SNPs to genes
@@ -134,7 +134,7 @@ gene_lengths <- get_gene_lengths(
 )
 
 # Adjust p-values
-adj_out <- magcat_adjust_gene_p(
+adj_out <- catfish_adjust_gene_p(
   gene_results = genes_all,
   gene_lengths = gene_lengths,
   gene_col     = "GENE",
@@ -154,7 +154,7 @@ genes_adj <- adj_out[, c("GENE", "ZSTAT", "P")]
 ### ACAT (Aggregated Cauchy Association Test)
 
 ```{r acat-test}
-acat_res <- magcat_acat_pathways(
+acat_res <- catfish_acat_pathways(
 
   gene_results = genes_adj,
   species      = "maize",  # or "arabidopsis", "sorghum", "plant"
@@ -170,21 +170,21 @@ head(acat_res)
 ### Fisher's Method
 
 ```{r fisher-test}
-fisher_res <- magcat_fisher_pathways(
+fisher_res <- catfish_fisher_pathways(
   gene_results = genes_adj,
   species      = "maize",
   gene_col     = "GENE",
   p_col        = "P",
   min_p        = 1e-15,
   output       = TRUE,
-  out_dir      = "magcat_fisher"
+  out_dir      = "catfish_fisher"
 )
 ```
 
 ### Stouffer's Z Method
 
 ```{r stouffer-test}
-stouffer_res <- magcat_stoufferZ_pathways(
+stouffer_res <- catfish_stoufferZ_pathways(
   gene_results = genes_adj,
   species      = "maize",
   gene_col     = "GENE",
@@ -192,14 +192,14 @@ stouffer_res <- magcat_stoufferZ_pathways(
   weight_col   = NULL,
   alternative  = "greater",
   output       = TRUE,
-  out_dir      = "magcat_stouffer"
+  out_dir      = "catfish_stouffer"
 )
 ```
 
 ### Minimum P-value (minP)
 
 ```{r minp-test}
-minp_res <- magcat_minp_pathways(
+minp_res <- catfish_minp_pathways(
   gene_results = genes_adj,
   species      = "maize",
   gene_col     = "GENE",
@@ -207,14 +207,14 @@ minp_res <- magcat_minp_pathways(
   min_p        = 1e-15,
   do_fix       = TRUE,
   output       = TRUE,
-  out_dir      = "magcat_minp"
+  out_dir      = "catfish_minp"
 )
 ```
 
 ### Adaptive Soft TFisher
 
 ```{r tfisher-test}
-tfisher_res <- magcat_soft_tfisher_adaptive_pathways(
+tfisher_res <- catfish_soft_tfisher_adaptive_pathways(
 
   gene_results = genes_adj,
   species      = "maize",
@@ -223,7 +223,7 @@ tfisher_res <- magcat_soft_tfisher_adaptive_pathways(
   tau_grid     = c(0.01, 0.05, 0.1, 0.2),
   do_fix       = TRUE,
   output       = TRUE,
-  out_dir      = "magcat_tfisher"
+  out_dir      = "catfish_tfisher"
 )
 ```
 
@@ -232,7 +232,7 @@ tfisher_res <- magcat_soft_tfisher_adaptive_pathways(
 The omnibus test combines all five methods with permutation-based calibration:
 
 ```{r omnibus-test}
-omni_res <- magcat_omni2_pathways(
+omni_res <- catfish_omni2_pathways(
   gene_results = genes_adj,
   species      = "maize",
   pmn_gene_col = "Gene-name",
@@ -254,13 +254,84 @@ omni_res <- magcat_omni2_pathways(
   perm_mode    = "mvn",   # "global", "mvn", "both", or "none"
   magma_cor_file = "path/to/gene_correlations.txt",
   make_PD      = TRUE,
+  mvn_marginal = "uniform",
+
+  # MVN calibration strategy (see below)
+  mvn_calibrate_components = FALSE,
 
   seed         = 123,
   output       = TRUE,
-  out_dir      = "magcat_omnibus_results"
+  out_dir      = "catfish_omnibus_results"
 )
 
 head(omni_res)
+```
+
+### MVN Calibration Strategies
+
+There are two ways to apply MVN-based LD correction, controlled by `mvn_calibrate_components`:
+
+**Strategy 1: Calibrate omnibus only (`mvn_calibrate_components = FALSE`, default)**
+
+1. Compute all 5 component test p-values analytically on observed data
+2. Combine them into a single omnibus p-value (analytic)
+3. Simulate null gene p-values from MVN(0, R_S) where R_S is the gene-gene
+   correlation matrix for the pathway
+4. For each null replicate, compute all 5 component tests and combine into
+   a null omnibus p-value
+5. Calibrate: compare observed omnibus against the null omnibus distribution
+
+This is faster and appropriate when the main concern is the final omnibus
+result. The component p-values (`acat_p`, `fisher_p`, etc.) remain analytic
+(not LD-corrected).
+
+**Strategy 2: Calibrate each component first (`mvn_calibrate_components = TRUE`)**
+
+1. Compute all 5 component test p-values analytically on observed data
+2. Simulate null gene p-values from MVN(0, R_S) for the pathway
+3. For each component, calibrate its observed p-value against its own null
+   distribution (e.g., observed ACAT p vs null ACAT p-values)
+4. Combine the 5 MVN-calibrated component p-values into the omnibus
+5. Calibrate that omnibus against a null omnibus built from per-draw
+   calibrated components
+
+This is more rigorous because each combination method has different
+sensitivity to gene-gene correlation. For example, Fisher's method is
+more affected by LD than ACAT. Calibrating components individually
+removes method-specific LD bias before combining.
+
+**Output columns by strategy:**
+
+| Column | Strategy 1 | Strategy 2 |
+|--------|-----------|-----------|
+| `acat_p`, `fisher_p`, etc. | Analytic (uncorrected) | Analytic (uncorrected) |
+| `acat_p_mvn_cal`, `fisher_p_mvn_cal`, etc. | `NA` | MVN-calibrated per component |
+| `omni_p_mvn` | Calibrated omnibus | Calibrated omnibus (from calibrated components) |
+
+**Recommendation:** Use Strategy 2 (`mvn_calibrate_components = TRUE`) for
+publication-quality results. Use Strategy 1 for exploratory analysis or
+when computation time is a concern.
+
+```{r omnibus-strategy2, eval=FALSE}
+# Strategy 2: Calibrate components individually (more rigorous)
+omni_res_s2 <- catfish_omni2_pathways(
+  gene_results = genes_adj,
+  species      = "maize",
+  gene_col     = "GENE",
+  p_raw_col    = "P",
+  z_col        = "ZSTAT",
+  omnibus      = "ACAT",
+  B_perm       = 10000L,
+  perm_mode    = "mvn",
+  magma_cor_file = "path/to/gene_correlations.txt",
+  mvn_calibrate_components = TRUE,  # <<< KEY DIFFERENCE
+  seed         = 123
+)
+
+# Now you get MVN-calibrated component p-values
+head(omni_res_s2[, c("pathway_id", "acat_p", "acat_p_mvn_cal",
+                       "fisher_p", "fisher_p_mvn_cal",
+                       "omni_p_mvn")])
 ```
 
 ## Using Custom Pathways
@@ -282,7 +353,7 @@ custom_pw_list <- list(
 )
 
 # Use with any test
-acat_custom <- magcat_acat_pathways(
+acat_custom <- catfish_acat_pathways(
   gene_results = genes_adj,
   pathways     = custom_pw,  # use custom instead of species
   gene_col     = "GENE",
@@ -301,10 +372,32 @@ All functions return a data.frame with:
 - Test-specific statistics and p-values
 
 For the omnibus test, additional columns include:
-- `omni_p_analytic`: Analytic omnibus p-value
-- `omni_p_global`: Global permutation-calibrated p-value
-- `omni_p_mvn`: MVN-calibrated p-value (accounts for gene correlations)
-- Individual test p-values (ACAT, Fisher, Stouffer, minP, TFisher)
+
+**Component p-values (analytic):**
+- `acat_p`, `fisher_p`, `minp_p_analytic`, `stouffer_p_analytic`, `tfisher_p_analytic`
+
+**MVN-calibrated component p-values (only when `mvn_calibrate_components = TRUE`):**
+- `acat_p_mvn_cal`, `fisher_p_mvn_cal`, `minp_p_mvn_cal`, `stouffer_p_mvn_cal`, `tfisher_p_mvn_cal`
+
+**Omnibus p-values:**
+- `omni_p_analytic`: Analytic omnibus (no LD correction)
+- `omni_p_global`: Global permutation-calibrated
+- `omni_p_mvn`: MVN-calibrated (accounts for gene-gene LD)
+- `omni_p_final`: Best available (MVN > global > analytic)
+
+**Multiple testing corrections (applied to `omni_p_final`):**
+- `omni_p_final_BH`: Benjamini-Hochberg FDR
+- `omni_p_final_q_storey`: Storey's q-value
+- `omni_p_final_q_bky10`: Benjamini-Krieger-Yekutieli at q=0.10
+- `omni_p_final_q_ihw10`: IHW using pathway size as covariate
+
+**Diagnostics:**
+- `dominant_component`: Which method gave the smallest p-value
+- `agreement_score`: Fraction of methods with p < 0.05
+- `agreement_k` / `agreement_m`: Count of significant / available methods
+- `calibration_impact`: How calibration changed significance status
+- `genes_used`: Semicolon-separated gene IDs in the pathway
+- `gene_pvals_used`: Semicolon-separated gene p-values
 
 ## Best Practices
 

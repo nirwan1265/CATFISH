@@ -59,5 +59,5 @@ gene_lengths <- get_gene_lengths(
 
 }
 \seealso{
-\code{\link{gff3_to_geneloc}}, \code{\link{magcat_adjust_gene_p}}
+\code{\link{gff3_to_geneloc}}, \code{\link{catfish_adjust_gene_p}}
 }

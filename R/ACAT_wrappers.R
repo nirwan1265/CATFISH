@@ -40,7 +40,7 @@ fix_p_for_acat <- function(p, min_p = 1e-15) {
 ## ---------- internal helpers ----------------------------------------
 
 #' @keywords internal
-.magcat_assert_cols <- function(df, cols, df_name = "data.frame") {
+.catfish_assert_cols <- function(df, cols, df_name = "data.frame") {
   missing <- setdiff(cols, names(df))
   if (length(missing) > 0L) {
     stop(
@@ -53,9 +53,9 @@ fix_p_for_acat <- function(p, min_p = 1e-15) {
 }
 
 #' @keywords internal
-.magcat_pathways_to_list <- function(pathways) {
+.catfish_pathways_to_list <- function(pathways) {
   if (is.data.frame(pathways)) {
-    .magcat_assert_cols(pathways, c("pathway_id", "gene_id"), "pathways")
+    .catfish_assert_cols(pathways, c("pathway_id", "gene_id"), "pathways")
 
     if (!"pathway_name" %in% names(pathways)) {
       pathways$pathway_name <- pathways$pathway_id
@@ -111,10 +111,10 @@ fix_p_for_acat <- function(p, min_p = 1e-15) {
 #' }
 #' @param species Character. One of "maize", "sorghum", "arabidopsis",
 #'   "plant", or "fly". If provided, built-in pathways are loaded via
-#'   \code{\link{magcat_load_pathways}}. Provide either \code{pathways}
+#'   \code{\link{catfish_load_pathways}}. Provide either \code{pathways}
 #'   OR \code{species}, but not both.
 #' @param pmn_gene_col Character or NULL. Passed to
-#'   \code{magcat_load_pathways(gene_col=...)} when \code{species} is used.
+#'   \code{catfish_load_pathways(gene_col=...)} when \code{species} is used.
 #'   If NULL, the loader uses default gene column for each species.
 #' @param gene_col Character. Column name in \code{gene_results} containing
 #'   gene IDs. Default \code{"GENE"}.
@@ -126,7 +126,7 @@ fix_p_for_acat <- function(p, min_p = 1e-15) {
 #'   \code{\link{fix_p_for_acat}}.
 #' @param output Logical. If TRUE, write a CSV of results to \code{out_dir}.
 #' @param out_dir Character. Directory to write CSV when \code{output = TRUE}.
-#'   Default \code{"magcat_acat"}.
+#'   Default \code{"catfish_acat"}.
 #'
 #' @return A data.frame with columns:
 #' \describe{
@@ -147,7 +147,7 @@ fix_p_for_acat <- function(p, min_p = 1e-15) {
 #' gene_results <- read.delim("magma_output.genes.out")
 #'
 #' # Run ACAT on maize PMN pathways
-#' acat_res <- magcat_acat_pathways(
+#' acat_res <- catfish_acat_pathways(
 #'   gene_results = gene_results,
 #'   species = "maize",
 #'   gene_col = "GENE",
@@ -160,19 +160,19 @@ fix_p_for_acat <- function(p, min_p = 1e-15) {
 #'   pathway1 = c("gene1", "gene2", "gene3"),
 #'   pathway2 = c("gene4", "gene5")
 #' )
-#' acat_custom <- magcat_acat_pathways(
+#' acat_custom <- catfish_acat_pathways(
 #'   gene_results = gene_results,
 #'   pathways = my_pathways
 #' )
 #' }
 #'
 #' @seealso
-#' \code{\link{magcat_load_pathways}} for loading pathway definitions
+#' \code{\link{catfish_load_pathways}} for loading pathway definitions
 #'
-#' \code{\link{magcat_fisher_pathways}}, \code{\link{magcat_minp_pathways}},
-#' \code{\link{magcat_omni2_pathways}} for other p-value combination methods
+#' \code{\link{catfish_fisher_pathways}}, \code{\link{catfish_minp_pathways}},
+#' \code{\link{catfish_omni2_pathways}} for other p-value combination methods
 #' @export
-magcat_acat_pathways <- function(gene_results,
+catfish_acat_pathways <- function(gene_results,
                                  pathways     = NULL,
                                  species      = NULL,
                                  pmn_gene_col = NULL,
@@ -181,10 +181,10 @@ magcat_acat_pathways <- function(gene_results,
                                  min_p        = 1e-15,
                                  do_fix       = TRUE,
                                  output       = FALSE,
-                                 out_dir      = "magcat_acat") {
+                                 out_dir      = "catfish_acat") {
   if (!requireNamespace("ACAT", quietly = TRUE)) {
     stop(
-      "Package 'ACAT' is required for magcat_acat_pathways(). ",
+      "Package 'ACAT' is required for catfish_acat_pathways(). ",
       "Please install it with install.packages('ACAT').",
       call. = FALSE
     )
@@ -206,14 +206,14 @@ magcat_acat_pathways <- function(gene_results,
   # If user gave species, load pathways
   if (is.null(pathways) && !is.null(species)) {
     pathways <- if (is.null(pmn_gene_col)) {
-      magcat_load_pathways(species = species)
+      catfish_load_pathways(species = species)
     } else {
-      magcat_load_pathways(species = species, gene_col = pmn_gene_col)
+      catfish_load_pathways(species = species, gene_col = pmn_gene_col)
     }
   }
 
   ## -------- standardize gene_results ----------
-  .magcat_assert_cols(gene_results, c(gene_col, p_col), "gene_results")
+  .catfish_assert_cols(gene_results, c(gene_col, p_col), "gene_results")
 
   genes_all <- as.character(gene_results[[gene_col]])
   p_all     <- as.numeric(gene_results[[p_col]])
@@ -241,7 +241,7 @@ magcat_acat_pathways <- function(gene_results,
   gene_map <- tapply(genes_all[ok], genes_all_norm[ok], function(x) x[1])
 
   ## -------- pathways -> named list + names ----------
-  pw <- .magcat_pathways_to_list(pathways)
+  pw <- .catfish_pathways_to_list(pathways)
   p_list  <- pw$p_list
   p_names <- pw$p_names
 
@@ -306,7 +306,7 @@ magcat_acat_pathways <- function(gene_results,
     species_tag <- if (is.null(species)) "custom" else species
     out_path <- file.path(
       out_dir,
-      paste0("magcat_acat_pathways_", species_tag, ".csv")
+      paste0("catfish_acat_pathways_", species_tag, ".csv")
     )
     utils::write.csv(res, out_path, row.names = FALSE)
     attr(res, "file") <- out_path

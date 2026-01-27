@@ -13,7 +13,7 @@
 #'   If FALSE, append unseen labels after known ones.
 #' @param auto_sort_extra If TRUE, extra labels are appended in sorted order.
 #' @return A named character vector: names = original labels, values = new labels.
-magcat_make_chr_map <- function(chr_vec,
+catfish_make_chr_map <- function(chr_vec,
                                 chr_order = NULL,
                                 chr_map = NULL,
                                 strict = FALSE,
@@ -93,7 +93,7 @@ magcat_make_chr_map <- function(chr_vec,
 #' @param chr_map named character vector original->new
 #' @param strict if TRUE error on unknown labels; if FALSE keep unknown as-is
 #' @return character vector
-magcat_apply_chr_map <- function(chr_vec, chr_map, strict = TRUE) {
+catfish_apply_chr_map <- function(chr_vec, chr_map, strict = TRUE) {
   x <- as.character(chr_vec)
   y <- unname(chr_map[x])
 
@@ -235,20 +235,20 @@ gff3_to_geneloc <- function(gff,
     res$CHR <- res$CHR_ORIG
   } else if (recode_chr == "order") {
     if (is.null(chr_order)) stop("recode_chr='order' requires chr_order.", call. = FALSE)
-    chr_map_used <- magcat_make_chr_map(res$CHR_ORIG, chr_order = chr_order, strict = strict_chr)
-    res$CHR <- magcat_apply_chr_map(res$CHR_ORIG, chr_map_used, strict = TRUE)
+    chr_map_used <- catfish_make_chr_map(res$CHR_ORIG, chr_order = chr_order, strict = strict_chr)
+    res$CHR <- catfish_apply_chr_map(res$CHR_ORIG, chr_map_used, strict = TRUE)
   } else if (recode_chr == "map") {
     if (is.null(chr_map)) stop("recode_chr='map' requires chr_map.", call. = FALSE)
-    chr_map_used <- magcat_make_chr_map(res$CHR_ORIG, chr_map = chr_map, strict = strict_chr)
-    res$CHR <- magcat_apply_chr_map(res$CHR_ORIG, chr_map_used, strict = TRUE)
+    chr_map_used <- catfish_make_chr_map(res$CHR_ORIG, chr_map = chr_map, strict = strict_chr)
+    res$CHR <- catfish_apply_chr_map(res$CHR_ORIG, chr_map_used, strict = TRUE)
   } else {
     # auto: if already all numeric, keep; else recode
     chr_num <- suppressWarnings(as.integer(res$CHR_ORIG))
     if (all(!is.na(chr_num))) {
       res$CHR <- res$CHR_ORIG
     } else {
-      chr_map_used <- magcat_make_chr_map(res$CHR_ORIG, strict = strict_chr)
-      res$CHR <- magcat_apply_chr_map(res$CHR_ORIG, chr_map_used, strict = TRUE)
+      chr_map_used <- catfish_make_chr_map(res$CHR_ORIG, strict = strict_chr)
+      res$CHR <- catfish_apply_chr_map(res$CHR_ORIG, chr_map_used, strict = TRUE)
     }
   }
 

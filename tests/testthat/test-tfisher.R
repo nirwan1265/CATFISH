@@ -12,17 +12,17 @@ mock_gene_results <- function(n = 10) {
 }
 
 # ============================================================
-# Tests for magcat_tfisher_pathways (truncated Fisher / TPM)
+# Tests for catfish_tfisher_pathways (truncated Fisher / TPM)
 # ============================================================
 
-test_that("magcat_tfisher_pathways returns correct columns", {
+test_that("catfish_tfisher_pathways returns correct columns", {
   gene_results <- mock_gene_results(10)
   pathways <- list(
     pwy1 = c("gene1", "gene2", "gene3"),
     pwy2 = c("gene4", "gene5")
   )
 
-  result <- magcat_tfisher_pathways(
+  result <- catfish_tfisher_pathways(
     gene_results = gene_results,
     pathways = pathways,
     B_perm = 0  # Skip permutations for speed
@@ -33,7 +33,7 @@ test_that("magcat_tfisher_pathways returns correct columns", {
   expect_true(all(expected_cols %in% names(result)))
 })
 
-test_that("magcat_tfisher_pathways returns correct number of rows", {
+test_that("catfish_tfisher_pathways returns correct number of rows", {
   gene_results <- mock_gene_results(10)
   pathways <- list(
     pwy1 = c("gene1", "gene2"),
@@ -41,7 +41,7 @@ test_that("magcat_tfisher_pathways returns correct number of rows", {
     pwy3 = c("gene5", "gene6", "gene7")
   )
 
-  result <- magcat_tfisher_pathways(
+  result <- catfish_tfisher_pathways(
     gene_results = gene_results,
     pathways = pathways,
     B_perm = 0
@@ -50,21 +50,21 @@ test_that("magcat_tfisher_pathways returns correct number of rows", {
   expect_equal(nrow(result), 3)
 })
 
-test_that("magcat_tfisher_pathways errors without pathways or species", {
+test_that("catfish_tfisher_pathways errors without pathways or species", {
   gene_results <- mock_gene_results(10)
 
   expect_error(
-    magcat_tfisher_pathways(gene_results = gene_results),
+    catfish_tfisher_pathways(gene_results = gene_results),
     "must provide either"
   )
 })
 
-test_that("magcat_tfisher_pathways errors with both pathways and species", {
+test_that("catfish_tfisher_pathways errors with both pathways and species", {
   gene_results <- mock_gene_results(10)
   pathways <- list(pwy1 = c("gene1", "gene2"))
 
   expect_error(
-    magcat_tfisher_pathways(
+    catfish_tfisher_pathways(
       gene_results = gene_results,
       pathways = pathways,
       species = "maize"
@@ -73,7 +73,7 @@ test_that("magcat_tfisher_pathways errors with both pathways and species", {
   )
 })
 
-test_that("magcat_tfisher_pathways respects ptrunc parameter", {
+test_that("catfish_tfisher_pathways respects ptrunc parameter", {
   gene_results <- data.frame(
     GENE = paste0("gene", 1:5),
     P = c(0.01, 0.03, 0.06, 0.1, 0.5),  # 2 below 0.05, 3 below 0.1
@@ -82,14 +82,14 @@ test_that("magcat_tfisher_pathways respects ptrunc parameter", {
 
   pathways <- list(pwy1 = paste0("gene", 1:5))
 
-  result_05 <- magcat_tfisher_pathways(
+  result_05 <- catfish_tfisher_pathways(
     gene_results = gene_results,
     pathways = pathways,
     ptrunc = 0.05,
     B_perm = 0
   )
 
-  result_10 <- magcat_tfisher_pathways(
+  result_10 <- catfish_tfisher_pathways(
     gene_results = gene_results,
     pathways = pathways,
     ptrunc = 0.1,
@@ -101,12 +101,12 @@ test_that("magcat_tfisher_pathways respects ptrunc parameter", {
   expect_equal(result_10$nincl[1], 3)
 })
 
-test_that("magcat_tfisher_pathways permutations produce valid p-values", {
+test_that("catfish_tfisher_pathways permutations produce valid p-values", {
   set.seed(42)
   gene_results <- mock_gene_results(20)
   pathways <- list(pwy1 = paste0("gene", 1:5))
 
-  result <- magcat_tfisher_pathways(
+  result <- catfish_tfisher_pathways(
     gene_results = gene_results,
     pathways = pathways,
     B_perm = 100,  # Small number for speed
@@ -118,16 +118,16 @@ test_that("magcat_tfisher_pathways permutations produce valid p-values", {
 })
 
 # ============================================================
-# Tests for magcat_soft_tfisher_pathways
+# Tests for catfish_soft_tfisher_pathways
 # ============================================================
 
-test_that("magcat_soft_tfisher_pathways requires TFisher package", {
+test_that("catfish_soft_tfisher_pathways requires TFisher package", {
   skip_if_not_installed("TFisher")
 
   gene_results <- mock_gene_results(10)
   pathways <- list(pwy1 = c("gene1", "gene2", "gene3"))
 
-  result <- magcat_soft_tfisher_pathways(
+  result <- catfish_soft_tfisher_pathways(
     gene_results = gene_results,
     pathways = pathways,
     B_perm = 0
@@ -136,13 +136,13 @@ test_that("magcat_soft_tfisher_pathways requires TFisher package", {
   expect_s3_class(result, "data.frame")
 })
 
-test_that("magcat_soft_tfisher_pathways returns correct columns", {
+test_that("catfish_soft_tfisher_pathways returns correct columns", {
   skip_if_not_installed("TFisher")
 
   gene_results <- mock_gene_results(10)
   pathways <- list(pwy1 = c("gene1", "gene2", "gene3"))
 
-  result <- magcat_soft_tfisher_pathways(
+  result <- catfish_soft_tfisher_pathways(
     gene_results = gene_results,
     pathways = pathways,
     B_perm = 0
@@ -154,16 +154,16 @@ test_that("magcat_soft_tfisher_pathways returns correct columns", {
 })
 
 # ============================================================
-# Tests for magcat_soft_tfisher_adaptive_pathways
+# Tests for catfish_soft_tfisher_adaptive_pathways
 # ============================================================
 
-test_that("magcat_soft_tfisher_adaptive_pathways requires TFisher package", {
+test_that("catfish_soft_tfisher_adaptive_pathways requires TFisher package", {
   skip_if_not_installed("TFisher")
 
   gene_results <- mock_gene_results(10)
   pathways <- list(pwy1 = c("gene1", "gene2", "gene3"))
 
-  result <- magcat_soft_tfisher_adaptive_pathways(
+  result <- catfish_soft_tfisher_adaptive_pathways(
     gene_results = gene_results,
     pathways = pathways
   )
@@ -171,13 +171,13 @@ test_that("magcat_soft_tfisher_adaptive_pathways requires TFisher package", {
   expect_s3_class(result, "data.frame")
 })
 
-test_that("magcat_soft_tfisher_adaptive_pathways returns correct columns", {
+test_that("catfish_soft_tfisher_adaptive_pathways returns correct columns", {
   skip_if_not_installed("TFisher")
 
   gene_results <- mock_gene_results(10)
   pathways <- list(pwy1 = c("gene1", "gene2", "gene3"))
 
-  result <- magcat_soft_tfisher_adaptive_pathways(
+  result <- catfish_soft_tfisher_adaptive_pathways(
     gene_results = gene_results,
     pathways = pathways
   )
@@ -187,7 +187,7 @@ test_that("magcat_soft_tfisher_adaptive_pathways returns correct columns", {
   expect_true(all(expected_cols %in% names(result)))
 })
 
-test_that("magcat_soft_tfisher_adaptive_pathways uses tau_grid", {
+test_that("catfish_soft_tfisher_adaptive_pathways uses tau_grid", {
   skip_if_not_installed("TFisher")
 
   gene_results <- mock_gene_results(10)
@@ -195,7 +195,7 @@ test_that("magcat_soft_tfisher_adaptive_pathways uses tau_grid", {
 
   custom_tau <- c(0.1, 0.05, 0.01)
 
-  result <- magcat_soft_tfisher_adaptive_pathways(
+  result <- catfish_soft_tfisher_adaptive_pathways(
     gene_results = gene_results,
     pathways = pathways,
     tau_grid = custom_tau

@@ -16,7 +16,7 @@ builtin_geneloc_path <- function(species) {
     arabidopsis = "arabidopsis.genes.loc"
   )
 
-  path <- system.file("extdata", fname, package = "MAGCAT")
+  path <- system.file("extdata", fname, package = "CATFISH")
 
   if (path == "") {
     stop("Built-in gene-loc file not found for species = '", species,
@@ -54,14 +54,14 @@ builtin_geneloc_path <- function(species) {
 # #' @param nonhuman NULL TRUE FALSE
 # #'
 # #' @export
-magcat_is_all_numeric_chr <- function(x) {
+catfish_is_all_numeric_chr <- function(x) {
   x <- as.character(x)
   x <- x[!is.na(x) & nzchar(x)]
   if (!length(x)) return(TRUE)
   all(grepl("^[0-9]+$", x))
 }
 
-magcat_read_chr_map_tsv <- function(chr_map_path) {
+catfish_read_chr_map_tsv <- function(chr_map_path) {
   if (is.null(chr_map_path) || !nzchar(chr_map_path)) {
     stop("chr_map_path is NULL/empty.", call. = FALSE)
   }
@@ -101,7 +101,7 @@ magcat_read_chr_map_tsv <- function(chr_map_path) {
   setNames(chr_magma, chr_original)
 }
 
-magcat_apply_chr_map <- function(chr_vec, chr_map, strict = TRUE) {
+catfish_apply_chr_map <- function(chr_vec, chr_map, strict = TRUE) {
   x <- as.character(chr_vec)
   y <- unname(chr_map[x])
 
@@ -225,8 +225,8 @@ magma_annotate <- function(stats_file,
   )[[2]]
   gl_chr <- sub("^chr", "", as.character(gl_chr), ignore.case = TRUE)
 
-  gene_chr_numeric <- magcat_is_all_numeric_chr(gl_chr)
-  stats_chr_numeric <- magcat_is_all_numeric_chr(chr_vec)
+  gene_chr_numeric <- catfish_is_all_numeric_chr(gl_chr)
+  stats_chr_numeric <- catfish_is_all_numeric_chr(chr_vec)
 
   if (gene_chr_numeric && !stats_chr_numeric) {
     if (is.null(chr_map_path)) {
@@ -236,8 +236,8 @@ magma_annotate <- function(stats_file,
         call. = FALSE
       )
     }
-    chr_map <- magcat_read_chr_map_tsv(chr_map_path)
-    chr_vec <- magcat_apply_chr_map(chr_vec, chr_map, strict = strict_chr)
+    chr_map <- catfish_read_chr_map_tsv(chr_map_path)
+    chr_vec <- catfish_apply_chr_map(chr_vec, chr_map, strict = strict_chr)
   }
 
   # ---- build SNP-loc file ----
@@ -566,7 +566,7 @@ magma_annotate <- function(stats_file,
 #' )
 #' }
 #'
-#' @seealso \code{\link{magma_path}}, \code{\link{magcat_acat_pathways}}
+#' @seealso \code{\link{magma_path}}, \code{\link{catfish_acat_pathways}}
 #' @export
 magma_gene <- function(bfile,
                        gene_annot,
@@ -648,9 +648,9 @@ magma_gene <- function(bfile,
       varlist = c(
         "magma_gene", "magma_path",
         "builtin_geneloc_path",
-        "magcat_is_all_numeric_chr",
-        "magcat_read_chr_map_tsv",
-        "magcat_apply_chr_map"
+        "catfish_is_all_numeric_chr",
+        "catfish_read_chr_map_tsv",
+        "catfish_apply_chr_map"
       ),
       envir = environment()
     )
@@ -767,7 +767,7 @@ magma_gene <- function(bfile,
 
       # Determine if gene_annot is numeric-coded by looking for a chr_map (that’s your convention)
       # If stats CHR is non-numeric and chr_map exists -> recode stats CHR + chr_keep.
-      stats_chr_numeric <- magcat_is_all_numeric_chr(chr_vec)
+      stats_chr_numeric <- catfish_is_all_numeric_chr(chr_vec)
 
       if (!stats_chr_numeric) {
         if (is.null(chr_map_path) || !file.exists(chr_map_path)) {
@@ -777,9 +777,9 @@ magma_gene <- function(bfile,
             call. = FALSE
           )
         }
-        chr_map <- magcat_read_chr_map_tsv(chr_map_path)
-        chr_vec <- magcat_apply_chr_map(chr_vec, chr_map, strict = strict_chr)
-        chr_keep_mapped <- magcat_apply_chr_map(as.character(chr_keep), chr_map, strict = strict_chr)
+        chr_map <- catfish_read_chr_map_tsv(chr_map_path)
+        chr_vec <- catfish_apply_chr_map(chr_vec, chr_map, strict = strict_chr)
+        chr_keep_mapped <- catfish_apply_chr_map(as.character(chr_keep), chr_map, strict = strict_chr)
       } else {
         chr_keep_mapped <- as.character(chr_keep)
       }

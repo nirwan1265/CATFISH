@@ -1,6 +1,6 @@
 ---
-title: "MAGCAT Workflow: From GWAS to Pathway Enrichment"
-author: "MAGCAT Package"
+title: "CATFISH Workflow: From GWAS to Pathway Enrichment"
+author: "CATFISH Package"
 date: "`r Sys.Date()`"
 output:
   github_document:
@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 
 ## Overview
 
-This document provides a complete workflow for running pathway enrichment analysis using MAGCAT. The pipeline consists of:
+This document provides a complete workflow for running pathway enrichment analysis using CATFISH. The pipeline consists of:
 
 1. **Data Preparation** - Convert GFF3 to gene locations
 2. **MAGMA Gene Analysis** - Map SNPs to genes and compute gene-level p-values
@@ -30,14 +30,14 @@ This document provides a complete workflow for running pathway enrichment analys
 
 ## Prerequisites
 
-### Install MAGCAT
+### Install CATFISH
 
-```{r install-magcat}
+```{r install-catfish}
 # Install from GitHub
-devtools::install_github("nirwantandukar/MAGCAT")
+devtools::install_github("nirwantandukar/CATFISH")
 
 # Load the package
-library(MAGCAT)
+library(CATFISH)
 ```
 
 ### Install MAGMA
@@ -99,7 +99,7 @@ gff3_to_geneloc(
 ## Step 2: MAGMA Annotation
 
 Annotate SNPs to genes based on genomic position.
-(This step is done via command line or using MAGCAT's internal functions)
+(This step is done via command line or using CATFISH's internal functions)
 
 ```{r step2-annotate, eval=FALSE}
 # Command line example (not R code):
@@ -167,7 +167,7 @@ gene_lengths <- get_gene_lengths(
 )
 
 # Adjust gene p-values
-adjusted <- magcat_adjust_gene_p(
+adjusted <- catfish_adjust_gene_p(
 
   gene_results = gene_results,
   gene_lengths = gene_lengths,
@@ -189,7 +189,7 @@ gene_results$P_adj <- adjusted$p_adj[match(gene_results$GENE, adjusted$gene_id)]
 
 ```{r step5-pmn-pathways}
 # Load maize pathways from Plant Metabolic Network
-pathways <- magcat_load_pathways(species = "maize")
+pathways <- catfish_load_pathways(species = "maize")
 
 # Available species: "maize", "sorghum", "arabidopsis", "plant"
 head(pathways)
@@ -224,7 +224,7 @@ custom_pathways_df <- data.frame(
 ### ACAT (Cauchy Combination)
 
 ```{r step6-acat}
-acat_results <- magcat_acat_pathways(
+acat_results <- catfish_acat_pathways(
  gene_results = gene_results,
   species = "maize",          # Or: pathways = custom_pathways
   gene_col = "GENE",
@@ -237,7 +237,7 @@ head(acat_results)
 ### Fisher's Method
 
 ```{r step6-fisher}
-fisher_results <- magcat_fisher_pathways(
+fisher_results <- catfish_fisher_pathways(
   gene_results = gene_results,
   species = "maize",
   gene_col = "GENE",
@@ -250,7 +250,7 @@ head(fisher_results)
 ### Minimum P-value (Tippett/Wilkinson)
 
 ```{r step6-minp}
-minp_results <- magcat_minp_pathways(
+minp_results <- catfish_minp_pathways(
   gene_results = gene_results,
   species = "maize",
   gene_col = "GENE",
@@ -263,7 +263,7 @@ head(minp_results)
 ### Stouffer's Z-score Method
 
 ```{r step6-stouffer}
-stouffer_results <- magcat_stoufferZ_pathways(
+stouffer_results <- catfish_stoufferZ_pathways(
   gene_results = gene_results,
   species = "maize",
   gene_col = "GENE",
@@ -277,7 +277,7 @@ head(stouffer_results)
 ### Adaptive Soft TFisher
 
 ```{r step6-tfisher}
-tfisher_results <- magcat_soft_tfisher_adaptive_pathways(
+tfisher_results <- catfish_soft_tfisher_adaptive_pathways(
   gene_results = gene_results,
   species = "maize",
   gene_col = "GENE",
@@ -297,7 +297,7 @@ The omnibus test combines multiple methods and optionally uses permutation-based
 ### Basic Omnibus (Analytic Only)
 
 ```{r step7-omnibus-basic}
-omni_results <- magcat_omni2_pathways(
+omni_results <- catfish_omni2_pathways(
   gene_results = gene_results,
   species = "maize",
   gene_col = "GENE",
@@ -313,7 +313,7 @@ head(omni_results)
 ### Omnibus with Global Resampling
 
 ```{r step7-omnibus-global}
-omni_global <- magcat_omni2_pathways(
+omni_global <- catfish_omni2_pathways(
   gene_results = gene_results,
   species = "maize",
   gene_col = "GENE",
@@ -338,7 +338,7 @@ For MVN resampling, you need gene-gene correlation data from MAGMA.
 #   --gene-cor output/gene_correlations
 
 # Then run omnibus with MVN
-omni_mvn <- magcat_omni2_pathways(
+omni_mvn <- catfish_omni2_pathways(
   gene_results = gene_results,
   species = "maize",
   gene_col = "GENE",
@@ -357,7 +357,7 @@ head(omni_mvn)
 ### Full Omnibus (Both Methods)
 
 ```{r step7-omnibus-both}
-omni_full <- magcat_omni2_pathways(
+omni_full <- catfish_omni2_pathways(
   gene_results = gene_results,
   species = "maize",
   gene_col = "GENE",
@@ -367,7 +367,7 @@ omni_full <- magcat_omni2_pathways(
   B_perm = 10000,
   magma_cor_file = "output/gene_correlations.genes.raw",
   output = TRUE,              # Save results to CSV
-  out_dir = "output/magcat_results"
+  out_dir = "output/catfish_results"
 )
 ```
 
@@ -421,13 +421,13 @@ sig_fdr <- omni_full[omni_full$fdr < 0.05, ]
 Here's a minimal complete workflow:
 
 ```{r complete-example}
-library(MAGCAT)
+library(CATFISH)
 
 # 1. Load gene results (from MAGMA output)
 gene_results <- read.delim("magma_output.genes.out")
 
 # 2. Run omnibus pathway analysis
-results <- magcat_omni2_pathways(
+results <- catfish_omni2_pathways(
   gene_results = gene_results,
   species = "maize",
   gene_col = "GENE",

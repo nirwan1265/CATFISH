@@ -12,17 +12,17 @@ mock_gene_results <- function(n = 10) {
 }
 
 # ============================================================
-# Tests for magcat_minp_pathways
+# Tests for catfish_minp_pathways
 # ============================================================
 
-test_that("magcat_minp_pathways returns correct columns", {
+test_that("catfish_minp_pathways returns correct columns", {
   gene_results <- mock_gene_results(10)
   pathways <- list(
     pwy1 = c("gene1", "gene2", "gene3"),
     pwy2 = c("gene4", "gene5")
   )
 
-  result <- magcat_minp_pathways(
+  result <- catfish_minp_pathways(
     gene_results = gene_results,
     pathways = pathways
   )
@@ -32,7 +32,7 @@ test_that("magcat_minp_pathways returns correct columns", {
   expect_true(all(expected_cols %in% names(result)))
 })
 
-test_that("magcat_minp_pathways returns correct number of rows", {
+test_that("catfish_minp_pathways returns correct number of rows", {
   gene_results <- mock_gene_results(10)
   pathways <- list(
     pwy1 = c("gene1", "gene2"),
@@ -40,7 +40,7 @@ test_that("magcat_minp_pathways returns correct number of rows", {
     pwy3 = c("gene5", "gene6", "gene7")
   )
 
-  result <- magcat_minp_pathways(
+  result <- catfish_minp_pathways(
     gene_results = gene_results,
     pathways = pathways
   )
@@ -48,7 +48,7 @@ test_that("magcat_minp_pathways returns correct number of rows", {
   expect_equal(nrow(result), 3)
 })
 
-test_that("magcat_minp_pathways handles data.frame pathways", {
+test_that("catfish_minp_pathways handles data.frame pathways", {
   gene_results <- mock_gene_results(10)
   pathways_df <- data.frame(
     pathway_id = c("pwy1", "pwy1", "pwy2", "pwy2"),
@@ -57,7 +57,7 @@ test_that("magcat_minp_pathways handles data.frame pathways", {
     stringsAsFactors = FALSE
   )
 
-  result <- magcat_minp_pathways(
+  result <- catfish_minp_pathways(
     gene_results = gene_results,
     pathways = pathways_df
   )
@@ -65,21 +65,21 @@ test_that("magcat_minp_pathways handles data.frame pathways", {
   expect_equal(nrow(result), 2)
 })
 
-test_that("magcat_minp_pathways errors without pathways or species", {
+test_that("catfish_minp_pathways errors without pathways or species", {
   gene_results <- mock_gene_results(10)
 
   expect_error(
-    magcat_minp_pathways(gene_results = gene_results),
+    catfish_minp_pathways(gene_results = gene_results),
     "must provide either"
   )
 })
 
-test_that("magcat_minp_pathways errors with both pathways and species", {
+test_that("catfish_minp_pathways errors with both pathways and species", {
   gene_results <- mock_gene_results(10)
   pathways <- list(pwy1 = c("gene1", "gene2"))
 
   expect_error(
-    magcat_minp_pathways(
+    catfish_minp_pathways(
       gene_results = gene_results,
       pathways = pathways,
       species = "maize"
@@ -88,17 +88,17 @@ test_that("magcat_minp_pathways errors with both pathways and species", {
   )
 })
 
-test_that("magcat_minp_pathways validates required columns", {
+test_that("catfish_minp_pathways validates required columns", {
   gene_results <- data.frame(WRONG_COL = c("a", "b"), P = c(0.1, 0.2))
   pathways <- list(pwy1 = c("a", "b"))
 
   expect_error(
-    magcat_minp_pathways(gene_results = gene_results, pathways = pathways),
+    catfish_minp_pathways(gene_results = gene_results, pathways = pathways),
     "must contain columns"
   )
 })
 
-test_that("magcat_minp_pathways minp_stat is actual minimum", {
+test_that("catfish_minp_pathways minp_stat is actual minimum", {
   gene_results <- data.frame(
     GENE = c("gene1", "gene2", "gene3"),
     P = c(0.5, 0.01, 0.3),  # 0.01 is minimum
@@ -107,7 +107,7 @@ test_that("magcat_minp_pathways minp_stat is actual minimum", {
 
   pathways <- list(pwy1 = c("gene1", "gene2", "gene3"))
 
-  result <- magcat_minp_pathways(
+  result <- catfish_minp_pathways(
     gene_results = gene_results,
     pathways = pathways
   )
@@ -115,7 +115,7 @@ test_that("magcat_minp_pathways minp_stat is actual minimum", {
   expect_equal(result$minp_stat[1], 0.01, tolerance = 1e-10)
 })
 
-test_that("magcat_minp_pathways p-values are in valid range", {
+test_that("catfish_minp_pathways p-values are in valid range", {
   set.seed(42)
   gene_results <- mock_gene_results(20)
   pathways <- list(
@@ -123,7 +123,7 @@ test_that("magcat_minp_pathways p-values are in valid range", {
     pwy2 = paste0("gene", 6:10)
   )
 
-  result <- magcat_minp_pathways(
+  result <- catfish_minp_pathways(
     gene_results = gene_results,
     pathways = pathways
   )
@@ -132,7 +132,7 @@ test_that("magcat_minp_pathways p-values are in valid range", {
   expect_true(all(p_vals >= 0 & p_vals <= 1))
 })
 
-test_that("magcat_minp_pathways is case-insensitive", {
+test_that("catfish_minp_pathways is case-insensitive", {
   gene_results <- data.frame(
     GENE = c("GENE1", "GENE2", "GENE3"),
     P = c(0.01, 0.05, 0.1),
@@ -141,7 +141,7 @@ test_that("magcat_minp_pathways is case-insensitive", {
 
   pathways <- list(pwy1 = c("gene1", "gene2"))
 
-  result <- magcat_minp_pathways(
+  result <- catfish_minp_pathways(
     gene_results = gene_results,
     pathways = pathways
   )
@@ -149,7 +149,7 @@ test_that("magcat_minp_pathways is case-insensitive", {
   expect_equal(result$n_genes[1], 2)
 })
 
-test_that("magcat_minp_pathways results are sorted by p-value", {
+test_that("catfish_minp_pathways results are sorted by p-value", {
   set.seed(123)
   gene_results <- mock_gene_results(20)
   pathways <- list(
@@ -158,7 +158,7 @@ test_that("magcat_minp_pathways results are sorted by p-value", {
     pwy3 = paste0("gene", 11:15)
   )
 
-  result <- magcat_minp_pathways(
+  result <- catfish_minp_pathways(
     gene_results = gene_results,
     pathways = pathways
   )
@@ -167,11 +167,11 @@ test_that("magcat_minp_pathways results are sorted by p-value", {
   expect_true(all(diff(p_vals) >= 0))
 })
 
-test_that("magcat_minp_pathways reports method used", {
+test_that("catfish_minp_pathways reports method used", {
   gene_results <- mock_gene_results(10)
   pathways <- list(pwy1 = c("gene1", "gene2", "gene3"))
 
-  result <- magcat_minp_pathways(
+  result <- catfish_minp_pathways(
     gene_results = gene_results,
     pathways = pathways
   )

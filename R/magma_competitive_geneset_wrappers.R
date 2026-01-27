@@ -466,10 +466,10 @@
 # -------------------------
 # Example usage (your case):
 # -------------------------
-# maize_pw <- magcat_load_pathways("maize", gene_col = "Gene-name")
+# maize_pw <- catfish_load_pathways("maize", gene_col = "Gene-name")
 #
 # out <- magma_geneset_competitive(
-#   gene_results_raw = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/N_maize_MLM_ALLCHR.multi_snp_wise.genes",
+#   gene_results_raw = "/Users/nirwantandukar/Documents/Research/results/MAGMA/CATFISH/magma_multi_snp_wise_genes_by_chr_N_maize/N_maize_MLM_ALLCHR.multi_snp_wise.genes",
 #   set_annot        = "annot/maize_pathways.sets.annot.WIDE",  # OR set_annot = NULL to auto-build
 #   out_prefix       = "N_maize_MLM_ALLCHR.PMN_COMP",
 #   out_dir          = "magma_geneset",
@@ -531,7 +531,7 @@ builtin_magma_set_annot_path <- function(
   }
 
   # 2) INSTALLED package
-  path <- system.file("extdata", "MAGMA_pathway", fname, package = "MAGCAT")
+  path <- system.file("extdata", "MAGMA_pathway", fname, package = "CATFISH")
   if (path == "") stop("Built-in set-annot not found: ", fname, call. = FALSE)
   path
 }
@@ -554,7 +554,7 @@ builtin_pathway_long_path <- function(
   dev_path <- file.path("inst", "extdata", "MAGMA_pathway", fname)
   if (file.exists(dev_path)) return(normalizePath(dev_path, winslash = "/", mustWork = TRUE))
 
-  path <- system.file("extdata", "MAGMA_pathway", fname, package = "MAGCAT")
+  path <- system.file("extdata", "MAGMA_pathway", fname, package = "CATFISH")
   if (path == "") stop("Built-in pathway long table not found: ", fname, call. = FALSE)
   path
 }
@@ -601,7 +601,7 @@ magma_geneset_competitive <- function(gene_results_raw,
     set_annot <- builtin_magma_set_annot_path(species)
   }
   if (is.null(pathways) && !is.null(species)) {
-    pathways <- magcat_load_pathways(species = species, gene_col = pmn_gene_col)
+    pathways <- catfish_load_pathways(species = species, gene_col = pmn_gene_col)
   }
 
   if (is.null(set_annot) || !file.exists(set_annot)) {

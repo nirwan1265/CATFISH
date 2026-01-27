@@ -16,7 +16,7 @@
 #'
 #' NOTE: The analytic p-value assumes (approximately) independent \eqn{Z_g} within a pathway.
 #' If genes are correlated (e.g., LD-induced correlation in MAGMA gene statistics), then this
-#' analytic p-value may be anti-conservative. In MAGCAT/CATFISH, correlation-aware calibration
+#' analytic p-value may be anti-conservative. In CATFISH/CATFISH, correlation-aware calibration
 #' should be handled in your MVN/Omni layer (not inside this wrapper).
 #'
 #' @param gene_results data.frame with at least a gene ID column and a Z-statistic column.
@@ -27,9 +27,9 @@
 #'   \item A data.frame with columns \code{pathway_id}, \code{gene_id} (and optional \code{pathway_name}).
 #' }
 #' @param species Optional; one of "maize", "sorghum", "arabidopsis", "plant", "fly".
-#'   If provided, built-in PMN pathways are loaded via \code{magcat_load_pathways()}.
+#'   If provided, built-in PMN pathways are loaded via \code{catfish_load_pathways()}.
 #'   Provide either \code{pathways} OR \code{species}, but not both.
-#' @param pmn_gene_col Optional; passed to \code{magcat_load_pathways(gene_col=...)}
+#' @param pmn_gene_col Optional; passed to \code{catfish_load_pathways(gene_col=...)}
 #'   when \code{species} is used. If NULL, the PMN loader prefers "Gene-name"
 #'   then "Gene-id".
 #' @param gene_col Column name in \code{gene_results} containing gene IDs (default "GENE").
@@ -41,7 +41,7 @@
 #' @param alternative One of \code{"greater"}, \code{"two.sided"}, \code{"less"}.
 #'   \code{"greater"} tests for positive enrichment (default "greater").
 #' @param output If TRUE, write a CSV of results to \code{out_dir}.
-#' @param out_dir Directory to write CSV when \code{output = TRUE} (default "magcat_stouffer_z").
+#' @param out_dir Directory to write CSV when \code{output = TRUE} (default "catfish_stouffer_z").
 #'
 #' @return A data.frame with columns:
 #' \describe{
@@ -62,7 +62,7 @@
 #' gene_results <- read.delim("magma_output.genes.out")
 #'
 #' # Run Stouffer's Z method on maize PMN pathways
-#' stouffer_res <- magcat_stoufferZ_pathways(
+#' stouffer_res <- catfish_stoufferZ_pathways(
 #'   gene_results = gene_results,
 #'   species = "maize",
 #'   gene_col = "GENE",
@@ -71,16 +71,16 @@
 #' head(stouffer_res)
 #'
 #' # With weighted Stouffer (e.g., by number of SNPs)
-#' stouffer_weighted <- magcat_stoufferZ_pathways(
+#' stouffer_weighted <- catfish_stoufferZ_pathways(
 #'   gene_results = gene_results,
 #'   species = "maize",
 #'   weight_col = "NSNPS"
 #' )
 #' }
 #'
-#' @seealso \code{\link{magcat_acat_pathways}}, \code{\link{magcat_fisher_pathways}}
+#' @seealso \code{\link{catfish_acat_pathways}}, \code{\link{catfish_fisher_pathways}}
 #' @export
-magcat_stoufferZ_pathways <- function(gene_results,
+catfish_stoufferZ_pathways <- function(gene_results,
                                       pathways     = NULL,
                                       species      = NULL,
                                       pmn_gene_col = NULL,
@@ -90,7 +90,7 @@ magcat_stoufferZ_pathways <- function(gene_results,
                                       min_abs_w    = 1e-8,
                                       alternative  = c("greater", "two.sided", "less"),
                                       output       = FALSE,
-                                      out_dir      = "magcat_stouffer_z") {
+                                      out_dir      = "catfish_stouffer_z") {
 
   alternative <- match.arg(alternative)
 
@@ -108,9 +108,9 @@ magcat_stoufferZ_pathways <- function(gene_results,
   # If user gave species, load PMN pathways
   if (is.null(pathways) && !is.null(species)) {
     pathways <- if (is.null(pmn_gene_col)) {
-      magcat_load_pathways(species = species)
+      catfish_load_pathways(species = species)
     } else {
-      magcat_load_pathways(species = species, gene_col = pmn_gene_col)
+      catfish_load_pathways(species = species, gene_col = pmn_gene_col)
     }
   }
 
@@ -270,7 +270,7 @@ magcat_stoufferZ_pathways <- function(gene_results,
       dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
     }
     species_tag <- if (is.null(species)) "custom" else species
-    out_path <- file.path(out_dir, paste0("magcat_stoufferZ_pathways_", species_tag, ".csv"))
+    out_path <- file.path(out_dir, paste0("catfish_stoufferZ_pathways_", species_tag, ".csv"))
     utils::write.csv(res, out_path, row.names = FALSE)
     attr(res, "file") <- out_path
   }

@@ -43,7 +43,7 @@
 #' gene_lengths <- get_gene_lengths("reference.gff3")
 #'
 #' # Adjust gene p-values
-#' adjusted <- magcat_adjust_gene_p(
+#' adjusted <- catfish_adjust_gene_p(
 #'   gene_results = gene_results,
 #'   gene_lengths = gene_lengths,
 #'   gene_col = "GENE",
@@ -57,7 +57,7 @@
 #'
 #' @seealso \code{\link{magma_gene}}, \code{\link{get_gene_lengths}}
 #' @export
-magcat_adjust_gene_p <- function(gene_results,
+catfish_adjust_gene_p <- function(gene_results,
                                  gene_lengths,
                                  gene_col     = "GENE",
                                  nsnp_col     = "NSNPS",
@@ -67,17 +67,17 @@ magcat_adjust_gene_p <- function(gene_results,
                                  len_col      = "length",
                                  log1p_covars = TRUE) {
 
-  if (!is.data.frame(gene_results)) stop("magcat_adjust_gene_p(): gene_results must be a data.frame.", call. = FALSE)
-  if (!is.data.frame(gene_lengths)) stop("magcat_adjust_gene_p(): gene_lengths must be a data.frame.", call. = FALSE)
+  if (!is.data.frame(gene_results)) stop("catfish_adjust_gene_p(): gene_results must be a data.frame.", call. = FALSE)
+  if (!is.data.frame(gene_lengths)) stop("catfish_adjust_gene_p(): gene_lengths must be a data.frame.", call. = FALSE)
 
   for (nm in c(gene_col, nsnp_col, p_col)) {
     if (!(nm %in% names(gene_results))) {
-      stop("magcat_adjust_gene_p(): missing column in gene_results: ", nm, call. = FALSE)
+      stop("catfish_adjust_gene_p(): missing column in gene_results: ", nm, call. = FALSE)
     }
   }
   for (nm in c(len_gene_col, len_col)) {
     if (!(nm %in% names(gene_lengths))) {
-      stop("magcat_adjust_gene_p(): missing column in gene_lengths: ", nm, call. = FALSE)
+      stop("catfish_adjust_gene_p(): missing column in gene_lengths: ", nm, call. = FALSE)
     }
   }
 
@@ -125,7 +125,7 @@ magcat_adjust_gene_p <- function(gene_results,
   ok <- is.finite(y) & is.finite(nsnps) & is.finite(glen)
 
   if (!any(ok)) {
-    stop("magcat_adjust_gene_p(): no complete cases after merging covariates.", call. = FALSE)
+    stop("catfish_adjust_gene_p(): no complete cases after merging covariates.", call. = FALSE)
   }
 
   df <- data.frame(y = y[ok], nsnps = nsnps[ok], len = glen[ok])

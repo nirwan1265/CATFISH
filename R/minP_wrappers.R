@@ -23,9 +23,9 @@
 #'   \item A data.frame with columns \code{pathway_id}, \code{gene_id} (and optional \code{pathway_name}).
 #' }
 #' @param species Optional; one of "maize", "sorghum", "arabidopsis", "plant", "fly".
-#'   If provided, built-in PMN pathways are loaded via \code{magcat_load_pathways()}.
+#'   If provided, built-in PMN pathways are loaded via \code{catfish_load_pathways()}.
 #'   Provide either \code{pathways} OR \code{species}, but not both.
-#' @param pmn_gene_col Optional; passed to \code{magcat_load_pathways(gene_col=...)}
+#' @param pmn_gene_col Optional; passed to \code{catfish_load_pathways(gene_col=...)}
 #'   when \code{species} is used. If NULL, the PMN loader prefers "Gene-name"
 #'   then "Gene-id".
 #' @param gene_col Column name in \code{gene_results} containing gene IDs (default "GENE").
@@ -34,7 +34,7 @@
 #' @param do_fix If TRUE (default), clean/cap p-values using \code{fix_p_for_acat()}
 #'   to ensure values lie strictly in (0,1).
 #' @param output If TRUE, write a CSV of results to \code{out_dir}.
-#' @param out_dir Directory to write CSV when \code{output = TRUE} (default "magcat_minp").
+#' @param out_dir Directory to write CSV when \code{output = TRUE} (default "catfish_minp").
 #'
 #' @return A data.frame with columns:
 #' \describe{
@@ -56,7 +56,7 @@
 #' gene_results <- read.delim("magma_output.genes.out")
 #'
 #' # Run minP (Tippett/Wilkinson) on maize PMN pathways
-#' minp_res <- magcat_minp_pathways(
+#' minp_res <- catfish_minp_pathways(
 #'   gene_results = gene_results,
 #'   species = "maize",
 #'   gene_col = "GENE",
@@ -65,9 +65,9 @@
 #' head(minp_res)
 #' }
 #'
-#' @seealso \code{\link{magcat_acat_pathways}}, \code{\link{magcat_fisher_pathways}}
+#' @seealso \code{\link{catfish_acat_pathways}}, \code{\link{catfish_fisher_pathways}}
 #' @export
-magcat_minp_pathways <- function(gene_results,
+catfish_minp_pathways <- function(gene_results,
                                  pathways     = NULL,
                                  species      = NULL,
                                  pmn_gene_col = NULL,
@@ -76,7 +76,7 @@ magcat_minp_pathways <- function(gene_results,
                                  min_p        = 1e-15,
                                  do_fix       = TRUE,
                                  output       = FALSE,
-                                 out_dir      = "magcat_minp") {
+                                 out_dir      = "catfish_minp") {
 
   ## -------- decide pathway source: pathways vs species ----------
   if (!is.null(pathways) && !is.null(species)) {
@@ -92,9 +92,9 @@ magcat_minp_pathways <- function(gene_results,
   # If user gave species, load PMN pathways
   if (is.null(pathways) && !is.null(species)) {
     pathways <- if (is.null(pmn_gene_col)) {
-      magcat_load_pathways(species = species)
+      catfish_load_pathways(species = species)
     } else {
-      magcat_load_pathways(species = species, gene_col = pmn_gene_col)
+      catfish_load_pathways(species = species, gene_col = pmn_gene_col)
     }
   }
 
@@ -221,7 +221,7 @@ magcat_minp_pathways <- function(gene_results,
       dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
     }
     species_tag <- if (is.null(species)) "custom" else species
-    out_path <- file.path(out_dir, paste0("magcat_minp_pathways_", species_tag, ".csv"))
+    out_path <- file.path(out_dir, paste0("catfish_minp_pathways_", species_tag, ".csv"))
     utils::write.csv(res, out_path, row.names = FALSE)
     attr(res, "file") <- out_path
   }

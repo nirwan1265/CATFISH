@@ -1177,7 +1177,7 @@ write.table(
 gff3_path <- system.file(
   "extdata", "GFF3",
   "Zea_mays.Zm-B73-REFERENCE-NAM-5.0.62.chr.gff3",
-  package = "MAGCAT"
+  package = "CATFISH"
 )
 
 maize_gene_len <- get_gene_lengths(
@@ -1199,7 +1199,7 @@ genes_all <- read.table(
 )
 
 # Adjsut the pvalue based on gene length and number of snps
-adj_out <- magcat_adjust_gene_p(
+adj_out <- catfish_adjust_gene_p(
   gene_results = genes_all,
   gene_lengths = maize_gene_len,
   gene_col     = "GENE",
@@ -1216,7 +1216,7 @@ lm_fit    <- adj_out$fit      # lm(Z_raw ~ log_gene_length + log_nsnp)
 write.csv(genes_adj, "genes_adj.csv", row.names = FALSE)
 
 ## - MAGMA gene p-values are known to correlate weakly with gene size and SNP density.
-## - magcat_adjust_gene_p():
+## - catfish_adjust_gene_p():
 ##   * Fits a linear model: Z_raw ~ log(gene length) + log(#SNPs).
 ##   * Uses residuals (Z_adj) as “size/SNP-adjusted” Z-scores.
 ##   * Converts Z_adj back to P_adj = 2*pnorm(-|Z_adj|).
@@ -1227,7 +1227,7 @@ write.csv(genes_adj, "genes_adj.csv", row.names = FALSE)
 ## 6. Load pathway definitions from PMN/CornCyc or use saved files
 ############################################################
 
-maize_pw <- magcat_load_pathways(
+maize_pw <- catfish_load_pathways(
   species  = "maize",
   gene_col = "Gene-name"  # column in the PMN gene-set file that matches MAGMA gene IDs
 )
@@ -1255,10 +1255,10 @@ omni_minp <- omni_pathways(
   B_perm            = 10000L,
   seed              = 123,
   perm_mode    = "mvn",       # mvn or 
-  magma_genes_out = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/magma_N_maize.txt",
+  magma_genes_out = "/Users/nirwantandukar/Documents/Research/results/MAGMA/CATFISH/magma_multi_snp_wise_genes_by_chr_N_maize/magma_N_maize.txt",
   remove_singletons = TRUE,
   output            = TRUE,
-  out_dir           = "magcat_omni_full"
+  out_dir           = "catfish_omni_full"
 )
 
 ## In a single call omni_pathways gives you:
@@ -1280,7 +1280,7 @@ omni_minp <- omni_pathways(
 
 ### 8A. ACAT per pathway
 
-pw_res_acat_adj <- magcat_acat_pathways(
+pw_res_acat_adj <- catfish_acat_pathways(
   gene_results = genes_adj,     # adjusted Pvalue
   species      = "maize",
   gene_col     = "GENE",
@@ -1293,7 +1293,7 @@ pw_res_acat_adj <- magcat_acat_pathways(
 
 ### 8B. Fisher pathways
 
-wf_res_raw <- magcat_wfisher_pathways(
+wf_res_raw <- catfish_wfisher_pathways(
   gene_results = genes_adj,   # raw P
   species      = "maize",
   gene_col     = "GENE",
@@ -1305,7 +1305,7 @@ wf_res_raw <- magcat_wfisher_pathways(
 
 ### 8C. Truncated Fisher (soft) / TFisher(soft)
 
-soft_tf_res_adj <- magcat_soft_tfisher_pathways(
+soft_tf_res_adj <- catfish_soft_tfisher_pathways(
   gene_results     = genes_adj,
   species          = "maize",
   gene_col         = "GENE",
@@ -1315,12 +1315,12 @@ soft_tf_res_adj <- magcat_soft_tfisher_pathways(
   seed             = 123,
   analytic_logical = TRUE,
   output           = TRUE,
-  out_dir          = "magcat_tfisher_soft"
+  out_dir          = "catfish_tfisher_soft"
 )
 
 ### 8D. Stouffer (sum of Z across genes)
 
-stouf_res <- magcat_stouffer_pathways(
+stouf_res <- catfish_stouffer_pathways(
   gene_results = genes_adj,
   species      = "maize",
   gene_col     = "GENE",
@@ -1329,12 +1329,12 @@ stouf_res <- magcat_stouffer_pathways(
   B_perm       = 10000L,    # permutations for empirical pvalue
   seed         = 123,
   output       = TRUE,
-  out_dir      = "magcat_stouffer"
+  out_dir      = "catfish_stouffer"
 )
 
 ### 8E. Gene-level minP per pathway
 
-minp_res <- magcat_minp_pathways(
+minp_res <- catfish_minp_pathways(
   gene_results = genes_adj,
   species      = "maize",
   gene_col     = "GENE",
@@ -1343,7 +1343,7 @@ minp_res <- magcat_minp_pathways(
   min_p        = 1e-15,
   do_fix       = TRUE,
   output       = TRUE,
-  out_dir      = "magcat_minp_maize"
+  out_dir      = "catfish_minp_maize"
 )
 
 ```

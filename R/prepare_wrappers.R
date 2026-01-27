@@ -1,5 +1,5 @@
 # ## ============================================================
-# ##  MAGCAT: prepared (cached) pathway-testing wrappers
+# ##  CATFISH: prepared (cached) pathway-testing wrappers
 # ##  Methods supported here (6):
 # ##    1) ACAT
 # ##    2) Fisher
@@ -9,7 +9,7 @@
 # ##    6) MAGMA competitive gene-set test (requires MAGMA + set.annot)
 # ##
 # ##  This file defines:
-# ##    - magcat_prepare_core()
+# ##    - catfish_prepare_core()
 # ##    - *_prepare() / *_run_prepared() pairs for each method
 # ##
 # ##  Notes:
@@ -26,11 +26,11 @@
 # #' canonical gene-id mapping, and named vectors for p / Z / weights.
 # #'
 # #' Requires:
-# #'   - magcat_load_pathways()  (from ACAT_wrappers.R)
+# #'   - catfish_load_pathways()  (from ACAT_wrappers.R)
 # #'   - fix_p_for_acat()        (from ACAT_wrappers.R)
 # #'
 # #' @keywords internal
-# magcat_prepare_core <- function(gene_results,
+# catfish_prepare_core <- function(gene_results,
 #                                 pathways     = NULL,
 #                                 species      = NULL,
 #                                 pmn_gene_col = NULL,
@@ -47,10 +47,10 @@
 #     stop("Need 'pathways' (list/data.frame) or 'species' (built-in).", call. = FALSE)
 #   }
 #   if (is.null(pathways)) {
-#     if (!exists("magcat_load_pathways", mode = "function")) {
-#       stop("magcat_prepare_core(): missing magcat_load_pathways().", call. = FALSE)
+#     if (!exists("catfish_load_pathways", mode = "function")) {
+#       stop("catfish_prepare_core(): missing catfish_load_pathways().", call. = FALSE)
 #     }
-#     pathways <- magcat_load_pathways(
+#     pathways <- catfish_load_pathways(
 #       species  = species,
 #       gene_col = pmn_gene_col
 #     )
@@ -175,7 +175,7 @@
 #       p_list       = p_list,
 #       p_names      = p_names
 #     ),
-#     class = "magcat_core_prep"
+#     class = "catfish_core_prep"
 #   )
 # }
 
@@ -184,7 +184,7 @@
 # ## ============================================================
 
 # #' @export
-# magcat_acat_prepare <- function(gene_results,
+# catfish_acat_prepare <- function(gene_results,
 #                                 pathways     = NULL,
 #                                 species      = NULL,
 #                                 pmn_gene_col = NULL,
@@ -194,13 +194,13 @@
 #                                 do_fix       = TRUE) {
 
 #   if (!requireNamespace("ACAT", quietly = TRUE)) {
-#     stop("magcat_acat_prepare(): requires ACAT package.", call. = FALSE)
+#     stop("catfish_acat_prepare(): requires ACAT package.", call. = FALSE)
 #   }
 #   if (!exists("fix_p_for_acat", mode = "function")) {
-#     stop("magcat_acat_prepare(): missing fix_p_for_acat().", call. = FALSE)
+#     stop("catfish_acat_prepare(): missing fix_p_for_acat().", call. = FALSE)
 #   }
 
-#   core <- magcat_prepare_core(
+#   core <- catfish_prepare_core(
 #     gene_results  = gene_results,
 #     pathways      = pathways,
 #     species       = species,
@@ -213,17 +213,17 @@
 
 #   structure(
 #     c(core, list(min_p = min_p, do_fix = do_fix)),
-#     class = c("magcat_acat_prep", class(core))
+#     class = c("catfish_acat_prep", class(core))
 #   )
 # }
 
 # #' @export
-# magcat_acat_run_prepared <- function(prep,
+# catfish_acat_run_prepared <- function(prep,
 #                                      output  = FALSE,
-#                                      out_dir = "magcat_acat") {
+#                                      out_dir = "catfish_acat") {
 
-#   if (!inherits(prep, "magcat_acat_prep")) {
-#     stop("magcat_acat_run_prepared(): 'prep' must come from magcat_acat_prepare().", call. = FALSE)
+#   if (!inherits(prep, "catfish_acat_prep")) {
+#     stop("catfish_acat_run_prepared(): 'prep' must come from catfish_acat_prepare().", call. = FALSE)
 #   }
 
 #   p_list  <- prep$p_list
@@ -284,7 +284,7 @@
 
 #   if (output) {
 #     if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-#     out_path <- file.path(out_dir, "magcat_acat_prepared.csv")
+#     out_path <- file.path(out_dir, "catfish_acat_prepared.csv")
 #     utils::write.csv(res, out_path, row.names = FALSE)
 #     attr(res, "file") <- out_path
 #   }
@@ -297,7 +297,7 @@
 # ## ============================================================
 
 # #' @export
-# magcat_fisher_prepare <- function(gene_results,
+# catfish_fisher_prepare <- function(gene_results,
 #                                   pathways     = NULL,
 #                                   species      = NULL,
 #                                   pmn_gene_col = NULL,
@@ -307,10 +307,10 @@
 #                                   do_fix       = TRUE) {
 
 #   if (!exists("fix_p_for_acat", mode = "function")) {
-#     stop("magcat_fisher_prepare(): missing fix_p_for_acat().", call. = FALSE)
+#     stop("catfish_fisher_prepare(): missing fix_p_for_acat().", call. = FALSE)
 #   }
 
-#   core <- magcat_prepare_core(
+#   core <- catfish_prepare_core(
 #     gene_results  = gene_results,
 #     pathways      = pathways,
 #     species       = species,
@@ -323,17 +323,17 @@
 
 #   structure(
 #     c(core, list(min_p = min_p, do_fix = do_fix)),
-#     class = c("magcat_fisher_prep", class(core))
+#     class = c("catfish_fisher_prep", class(core))
 #   )
 # }
 
 # #' @export
-# magcat_fisher_run_prepared <- function(prep,
+# catfish_fisher_run_prepared <- function(prep,
 #                                        output  = FALSE,
-#                                        out_dir = "magcat_fisher") {
+#                                        out_dir = "catfish_fisher") {
 
-#   if (!inherits(prep, "magcat_fisher_prep")) {
-#     stop("magcat_fisher_run_prepared(): 'prep' must come from magcat_fisher_prepare().", call. = FALSE)
+#   if (!inherits(prep, "catfish_fisher_prep")) {
+#     stop("catfish_fisher_run_prepared(): 'prep' must come from catfish_fisher_prepare().", call. = FALSE)
 #   }
 
 #   p_list  <- prep$p_list
@@ -386,7 +386,7 @@
 
 #   if (output) {
 #     if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-#     out_path <- file.path(out_dir, "magcat_fisher_prepared.csv")
+#     out_path <- file.path(out_dir, "catfish_fisher_prepared.csv")
 #     utils::write.csv(res, out_path, row.names = FALSE)
 #     attr(res, "file") <- out_path
 #   }
@@ -399,7 +399,7 @@
 # ## ============================================================
 
 # #' @export
-# magcat_soft_tfisher_adaptive_prepare <- function(gene_results,
+# catfish_soft_tfisher_adaptive_prepare <- function(gene_results,
 #                                                  pathways     = NULL,
 #                                                  species      = NULL,
 #                                                  pmn_gene_col = NULL,
@@ -410,10 +410,10 @@
 #                                                  do_fix       = TRUE) {
 
 #   if (!requireNamespace("TFisher", quietly = TRUE)) {
-#     stop("magcat_soft_tfisher_adaptive_prepare(): requires TFisher package.", call. = FALSE)
+#     stop("catfish_soft_tfisher_adaptive_prepare(): requires TFisher package.", call. = FALSE)
 #   }
 #   if (!exists("fix_p_for_acat", mode = "function")) {
-#     stop("magcat_soft_tfisher_adaptive_prepare(): missing fix_p_for_acat().", call. = FALSE)
+#     stop("catfish_soft_tfisher_adaptive_prepare(): missing fix_p_for_acat().", call. = FALSE)
 #   }
 
 #   tau_grid <- as.numeric(tau_grid)
@@ -421,7 +421,7 @@
 #   if (!length(tau_grid)) stop("tau_grid must contain values in (0,1).", call. = FALSE)
 #   tau_grid <- sort(unique(tau_grid), decreasing = TRUE)
 
-#   core <- magcat_prepare_core(
+#   core <- catfish_prepare_core(
 #     gene_results  = gene_results,
 #     pathways      = pathways,
 #     species       = species,
@@ -434,17 +434,17 @@
 
 #   structure(
 #     c(core, list(tau_grid = tau_grid, min_p = min_p, do_fix = do_fix)),
-#     class = c("magcat_soft_tfisher_adaptive_prep", class(core))
+#     class = c("catfish_soft_tfisher_adaptive_prep", class(core))
 #   )
 # }
 
 # #' @export
-# magcat_soft_tfisher_adaptive_run_prepared <- function(prep,
+# catfish_soft_tfisher_adaptive_run_prepared <- function(prep,
 #                                                       output  = FALSE,
-#                                                       out_dir = "magcat_soft_tfisher_adaptive") {
+#                                                       out_dir = "catfish_soft_tfisher_adaptive") {
 
-#   if (!inherits(prep, "magcat_soft_tfisher_adaptive_prep")) {
-#     stop("..._run_prepared(): 'prep' must come from magcat_soft_tfisher_adaptive_prepare().", call. = FALSE)
+#   if (!inherits(prep, "catfish_soft_tfisher_adaptive_prep")) {
+#     stop("..._run_prepared(): 'prep' must come from catfish_soft_tfisher_adaptive_prepare().", call. = FALSE)
 #   }
 
 #   p_list  <- prep$p_list
@@ -521,7 +521,7 @@
 
 #   if (output) {
 #     if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-#     out_path <- file.path(out_dir, "magcat_soft_tfisher_adaptive_prepared.csv")
+#     out_path <- file.path(out_dir, "catfish_soft_tfisher_adaptive_prepared.csv")
 #     utils::write.csv(res, out_path, row.names = FALSE)
 #     attr(res, "file") <- out_path
 #   }
@@ -534,7 +534,7 @@
 # ## ============================================================
 
 # #' @export
-# magcat_minp_prepare <- function(gene_results,
+# catfish_minp_prepare <- function(gene_results,
 #                                 pathways     = NULL,
 #                                 species      = NULL,
 #                                 pmn_gene_col = NULL,
@@ -544,10 +544,10 @@
 #                                 do_fix       = TRUE) {
 
 #   if (!exists("fix_p_for_acat", mode = "function")) {
-#     stop("magcat_minp_prepare(): missing fix_p_for_acat().", call. = FALSE)
+#     stop("catfish_minp_prepare(): missing fix_p_for_acat().", call. = FALSE)
 #   }
 
-#   core <- magcat_prepare_core(
+#   core <- catfish_prepare_core(
 #     gene_results  = gene_results,
 #     pathways      = pathways,
 #     species       = species,
@@ -560,17 +560,17 @@
 
 #   structure(
 #     c(core, list(min_p = min_p, do_fix = do_fix)),
-#     class = c("magcat_minp_prep", class(core))
+#     class = c("catfish_minp_prep", class(core))
 #   )
 # }
 
 # #' @export
-# magcat_minp_run_prepared <- function(prep,
+# catfish_minp_run_prepared <- function(prep,
 #                                      output  = FALSE,
-#                                      out_dir = "magcat_minp") {
+#                                      out_dir = "catfish_minp") {
 
-#   if (!inherits(prep, "magcat_minp_prep")) {
-#     stop("magcat_minp_run_prepared(): 'prep' must come from magcat_minp_prepare().", call. = FALSE)
+#   if (!inherits(prep, "catfish_minp_prep")) {
+#     stop("catfish_minp_run_prepared(): 'prep' must come from catfish_minp_prepare().", call. = FALSE)
 #   }
 
 #   .analytic_minp <- function(p_vec) {
@@ -637,7 +637,7 @@
 
 #   if (output) {
 #     if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-#     out_path <- file.path(out_dir, "magcat_minp_prepared.csv")
+#     out_path <- file.path(out_dir, "catfish_minp_prepared.csv")
 #     utils::write.csv(res, out_path, row.names = FALSE)
 #     attr(res, "file") <- out_path
 #   }
@@ -650,7 +650,7 @@
 # ## ============================================================
 
 # #' @export
-# magcat_stoufferZ_prepare <- function(gene_results,
+# catfish_stoufferZ_prepare <- function(gene_results,
 #                                      pathways     = NULL,
 #                                      species      = NULL,
 #                                      pmn_gene_col = NULL,
@@ -660,7 +660,7 @@
 #                                      weight_col   = NULL,
 #                                      min_abs_w    = 1e-8) {
 
-#   core <- magcat_prepare_core(
+#   core <- catfish_prepare_core(
 #     gene_results  = gene_results,
 #     pathways      = pathways,
 #     species       = species,
@@ -673,17 +673,17 @@
 
 #   structure(
 #     c(core, list(min_abs_w = min_abs_w)),
-#     class = c("magcat_stoufferZ_prep", class(core))
+#     class = c("catfish_stoufferZ_prep", class(core))
 #   )
 # }
 
 # #' @export
-# magcat_stoufferZ_run_prepared <- function(prep,
+# catfish_stoufferZ_run_prepared <- function(prep,
 #                                           output  = FALSE,
-#                                           out_dir = "magcat_stouffer_z") {
+#                                           out_dir = "catfish_stouffer_z") {
 
-#   if (!inherits(prep, "magcat_stoufferZ_prep")) {
-#     stop("magcat_stoufferZ_run_prepared(): 'prep' must come from magcat_stoufferZ_prepare().", call. = FALSE)
+#   if (!inherits(prep, "catfish_stoufferZ_prep")) {
+#     stop("catfish_stoufferZ_run_prepared(): 'prep' must come from catfish_stoufferZ_prepare().", call. = FALSE)
 #   }
 
 #   z_list  <- prep$p_list
@@ -771,7 +771,7 @@
 
 #   if (output) {
 #     if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-#     out_path <- file.path(out_dir, "magcat_stoufferZ_prepared.csv")
+#     out_path <- file.path(out_dir, "catfish_stoufferZ_prepared.csv")
 #     utils::write.csv(res, out_path, row.names = FALSE)
 #     attr(res, "file") <- out_path
 #   }
@@ -784,7 +784,7 @@
 # ## ============================================================
 
 # #' @export
-# magcat_magma_competitive_prepare <- function(gene_results,
+# catfish_magma_competitive_prepare <- function(gene_results,
 #                                              gene_results_raw,
 #                                              set_annot        = NULL,
 #                                              pathways         = NULL,
@@ -798,7 +798,7 @@
 #                                              tidy_suffix      = ".tidy.tsv") {
 
 #   if (!exists("magma_geneset_competitive", mode = "function")) {
-#     stop("magcat_magma_competitive_prepare(): missing magma_geneset_competitive().", call. = FALSE)
+#     stop("catfish_magma_competitive_prepare(): missing magma_geneset_competitive().", call. = FALSE)
 #   }
 #   if (!file.exists(gene_results_raw)) {
 #     stop("gene_results_raw file does not exist: ", gene_results_raw, call. = FALSE)
@@ -812,10 +812,10 @@
 #     stop("Need pathways (data.frame/list) or species for MAGMA competitive.", call. = FALSE)
 #   }
 #   if (is.null(pathways)) {
-#     if (!exists("magcat_load_pathways", mode = "function")) {
-#       stop("magcat_magma_competitive_prepare(): missing magcat_load_pathways().", call. = FALSE)
+#     if (!exists("catfish_load_pathways", mode = "function")) {
+#       stop("catfish_magma_competitive_prepare(): missing catfish_load_pathways().", call. = FALSE)
 #     }
-#     pathways <- magcat_load_pathways(species = species, gene_col = pmn_gene_col)
+#     pathways <- catfish_load_pathways(species = species, gene_col = pmn_gene_col)
 #   }
 
 #   # ensure long data.frame for magma wrapper
@@ -858,22 +858,22 @@
 #       write_tidy       = write_tidy,
 #       tidy_suffix      = tidy_suffix
 #     ),
-#     class = "magcat_magma_competitive_prep"
+#     class = "catfish_magma_competitive_prep"
 #   )
 # }
 
 # #' @export
-# magcat_magma_competitive_run_prepared <- function(prep,
+# catfish_magma_competitive_run_prepared <- function(prep,
 #                                                   output_dir    = NULL,
 #                                                   output_prefix = NULL,
 #                                                   write_tidy    = NULL) {
 
-#   if (!inherits(prep, "magcat_magma_competitive_prep")) {
-#     stop("magcat_magma_competitive_run_prepared(): 'prep' must come from magcat_magma_competitive_prepare().",
+#   if (!inherits(prep, "catfish_magma_competitive_prep")) {
+#     stop("catfish_magma_competitive_run_prepared(): 'prep' must come from catfish_magma_competitive_prepare().",
 #          call. = FALSE)
 #   }
 #   if (!exists("magma_geneset_competitive", mode = "function")) {
-#     stop("magcat_magma_competitive_run_prepared(): missing magma_geneset_competitive().", call. = FALSE)
+#     stop("catfish_magma_competitive_run_prepared(): missing magma_geneset_competitive().", call. = FALSE)
 #   }
 
 #   # allow overrides
@@ -914,11 +914,11 @@
 # # #' named p-vector creation, canonical gene-id map, and permutation pools.
 # # #'
 # # #' Requires your existing:
-# # #'   - magcat_load_pathways()
+# # #'   - catfish_load_pathways()
 # # #'   - fix_p_for_acat()
 # # #'
 # # #' @keywords internal
-# # magcat_prepare_core <- function(gene_results,
+# # catfish_prepare_core <- function(gene_results,
 # #                                 pathways     = NULL,
 # #                                 species      = NULL,
 # #                                 pmn_gene_col = NULL,
@@ -934,10 +934,10 @@
 # #     stop("You must provide either 'pathways' or 'species'.", call. = FALSE)
 # #   }
 # #   if (is.null(pathways) && !is.null(species)) {
-# #     if (!exists("magcat_load_pathways", mode = "function")) {
-# #       stop("magcat_prepare_core(): missing magcat_load_pathways().", call. = FALSE)
+# #     if (!exists("catfish_load_pathways", mode = "function")) {
+# #       stop("catfish_prepare_core(): missing catfish_load_pathways().", call. = FALSE)
 # #     }
-# #     pathways <- magcat_load_pathways(
+# #     pathways <- catfish_load_pathways(
 # #       species  = species,
 # #       gene_col = pmn_gene_col
 # #     )
@@ -1021,7 +1021,7 @@
 # #       idx_pool_na  = idx_pool_na,
 # #       idx_pool_01  = idx_pool_valid
 # #     ),
-# #     class = "magcat_core_prep"
+# #     class = "catfish_core_prep"
 # #   )
 # # }
 
@@ -1032,7 +1032,7 @@
 
 # # #' Prepare Fisher pathway test objects
 # # #' @export
-# # magcat_fisher_prepare <- function(gene_results,
+# # catfish_fisher_prepare <- function(gene_results,
 # #                                   pathways     = NULL,
 # #                                   species      = NULL,
 # #                                   pmn_gene_col = NULL,
@@ -1041,7 +1041,7 @@
 # #                                   min_p        = 1e-15,
 # #                                   do_fix       = TRUE) {
 
-# #   core <- magcat_prepare_core(
+# #   core <- catfish_prepare_core(
 # #     gene_results  = gene_results,
 # #     pathways      = pathways,
 # #     species       = species,
@@ -1053,22 +1053,22 @@
 
 # #   structure(
 # #     c(core, list(min_p = min_p, do_fix = do_fix)),
-# #     class = c("magcat_fisher_prep", class(core))
+# #     class = c("catfish_fisher_prep", class(core))
 # #   )
 # # }
 
 # # #' Run Fisher pathway test from a prepared object
 # # #' @export
-# # magcat_fisher_run_prepared <- function(prep,
+# # catfish_fisher_run_prepared <- function(prep,
 # #                                        output  = FALSE,
-# #                                        out_dir = "magcat_fisher") {
+# #                                        out_dir = "catfish_fisher") {
 
-# #   if (!inherits(prep, "magcat_fisher_prep")) {
-# #     stop("magcat_fisher_run_prepared(): 'prep' must come from magcat_fisher_prepare().",
+# #   if (!inherits(prep, "catfish_fisher_prep")) {
+# #     stop("catfish_fisher_run_prepared(): 'prep' must come from catfish_fisher_prepare().",
 # #          call. = FALSE)
 # #   }
 # #   if (!exists("fix_p_for_acat", mode = "function")) {
-# #     stop("magcat_fisher_run_prepared(): missing fix_p_for_acat().", call. = FALSE)
+# #     stop("catfish_fisher_run_prepared(): missing fix_p_for_acat().", call. = FALSE)
 # #   }
 
 # #   p_list  <- prep$p_list
@@ -1114,7 +1114,7 @@
 
 # #   if (output) {
 # #     if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-# #     utils::write.csv(res, file.path(out_dir, "magcat_fisher_prepared.csv"), row.names = FALSE)
+# #     utils::write.csv(res, file.path(out_dir, "catfish_fisher_prepared.csv"), row.names = FALSE)
 # #   }
 # #   res
 # # }
@@ -1126,7 +1126,7 @@
 
 # # #' Prepare minP pathway test objects
 # # #' @export
-# # magcat_minp_prepare <- function(gene_results,
+# # catfish_minp_prepare <- function(gene_results,
 # #                                 pathways     = NULL,
 # #                                 species      = NULL,
 # #                                 pmn_gene_col = NULL,
@@ -1135,7 +1135,7 @@
 # #                                 min_p        = 1e-15,
 # #                                 do_fix       = TRUE) {
 
-# #   core <- magcat_prepare_core(
+# #   core <- catfish_prepare_core(
 # #     gene_results  = gene_results,
 # #     pathways      = pathways,
 # #     species       = species,
@@ -1147,22 +1147,22 @@
 
 # #   structure(
 # #     c(core, list(min_p = min_p, do_fix = do_fix)),
-# #     class = c("magcat_minp_prep", class(core))
+# #     class = c("catfish_minp_prep", class(core))
 # #   )
 # # }
 
 # # #' Run minP pathway test from a prepared object (analytic)
 # # #' @export
-# # magcat_minp_run_prepared <- function(prep,
+# # catfish_minp_run_prepared <- function(prep,
 # #                                      output  = FALSE,
-# #                                      out_dir = "magcat_minp") {
+# #                                      out_dir = "catfish_minp") {
 
-# #   if (!inherits(prep, "magcat_minp_prep")) {
-# #     stop("magcat_minp_run_prepared(): 'prep' must come from magcat_minp_prepare().",
+# #   if (!inherits(prep, "catfish_minp_prep")) {
+# #     stop("catfish_minp_run_prepared(): 'prep' must come from catfish_minp_prepare().",
 # #          call. = FALSE)
 # #   }
 # #   if (!exists("fix_p_for_acat", mode = "function")) {
-# #     stop("magcat_minp_run_prepared(): missing fix_p_for_acat().", call. = FALSE)
+# #     stop("catfish_minp_run_prepared(): missing fix_p_for_acat().", call. = FALSE)
 # #   }
 
 # #   .analytic_minp <- function(p_vec) {
@@ -1221,7 +1221,7 @@
 
 # #   if (output) {
 # #     if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-# #     utils::write.csv(res, file.path(out_dir, "magcat_minp_prepared.csv"), row.names = FALSE)
+# #     utils::write.csv(res, file.path(out_dir, "catfish_minp_prepared.csv"), row.names = FALSE)
 # #   }
 # #   res
 # # }
@@ -1233,7 +1233,7 @@
 
 # # #' Prepare soft-TFisher pathway test objects
 # # #' @export
-# # magcat_soft_tfisher_prepare <- function(gene_results,
+# # catfish_soft_tfisher_prepare <- function(gene_results,
 # #                                         pathways     = NULL,
 # #                                         species      = NULL,
 # #                                         pmn_gene_col = NULL,
@@ -1244,10 +1244,10 @@
 # #                                         do_fix       = TRUE) {
 
 # #   if (!requireNamespace("TFisher", quietly = TRUE)) {
-# #     stop("magcat_soft_tfisher_prepare(): requires TFisher package.", call. = FALSE)
+# #     stop("catfish_soft_tfisher_prepare(): requires TFisher package.", call. = FALSE)
 # #   }
 
-# #   core <- magcat_prepare_core(
+# #   core <- catfish_prepare_core(
 # #     gene_results  = gene_results,
 # #     pathways      = pathways,
 # #     species       = species,
@@ -1259,22 +1259,22 @@
 
 # #   structure(
 # #     c(core, list(tau1 = tau1, min_p = min_p, do_fix = do_fix)),
-# #     class = c("magcat_soft_tfisher_prep", class(core))
+# #     class = c("catfish_soft_tfisher_prep", class(core))
 # #   )
 # # }
 
 # # #' Run soft-TFisher pathway test from a prepared object (analytic)
 # # #' @export
-# # magcat_soft_tfisher_run_prepared <- function(prep,
+# # catfish_soft_tfisher_run_prepared <- function(prep,
 # #                                              output  = FALSE,
-# #                                              out_dir = "magcat_tfisher_soft") {
+# #                                              out_dir = "catfish_tfisher_soft") {
 
-# #   if (!inherits(prep, "magcat_soft_tfisher_prep")) {
-# #     stop("magcat_soft_tfisher_run_prepared(): 'prep' must come from magcat_soft_tfisher_prepare().",
+# #   if (!inherits(prep, "catfish_soft_tfisher_prep")) {
+# #     stop("catfish_soft_tfisher_run_prepared(): 'prep' must come from catfish_soft_tfisher_prepare().",
 # #          call. = FALSE)
 # #   }
 # #   if (!exists("fix_p_for_acat", mode = "function")) {
-# #     stop("magcat_soft_tfisher_run_prepared(): missing fix_p_for_acat().", call. = FALSE)
+# #     stop("catfish_soft_tfisher_run_prepared(): missing fix_p_for_acat().", call. = FALSE)
 # #   }
 
 # #   p_list  <- prep$p_list
@@ -1324,7 +1324,7 @@
 
 # #   if (output) {
 # #     if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-# #     utils::write.csv(res, file.path(out_dir, "magcat_tfisher_soft_prepared.csv"), row.names = FALSE)
+# #     utils::write.csv(res, file.path(out_dir, "catfish_tfisher_soft_prepared.csv"), row.names = FALSE)
 # #   }
 # #   res
 # # }
@@ -1336,7 +1336,7 @@
 
 # # #' Prepare Stouffer pathway test objects
 # # #' @export
-# # magcat_stouffer_prepare <- function(gene_results,
+# # catfish_stouffer_prepare <- function(gene_results,
 # #                                     pathways     = NULL,
 # #                                     species      = NULL,
 # #                                     pmn_gene_col = NULL,
@@ -1347,10 +1347,10 @@
 # #                                     do_fix       = TRUE) {
 
 # #   if (!requireNamespace("metap", quietly = TRUE)) {
-# #     stop("magcat_stouffer_prepare(): requires metap package.", call. = FALSE)
+# #     stop("catfish_stouffer_prepare(): requires metap package.", call. = FALSE)
 # #   }
 
-# #   core <- magcat_prepare_core(
+# #   core <- catfish_prepare_core(
 # #     gene_results  = gene_results,
 # #     pathways      = pathways,
 # #     species       = species,
@@ -1362,22 +1362,22 @@
 
 # #   structure(
 # #     c(core, list(min_p = min_p, do_fix = do_fix)),
-# #     class = c("magcat_stouffer_prep", class(core))
+# #     class = c("catfish_stouffer_prep", class(core))
 # #   )
 # # }
 
 # # #' Run Stouffer pathway test from a prepared object (analytic)
 # # #' @export
-# # magcat_stouffer_run_prepared <- function(prep,
+# # catfish_stouffer_run_prepared <- function(prep,
 # #                                          output  = FALSE,
-# #                                          out_dir = "magcat_stouffer") {
+# #                                          out_dir = "catfish_stouffer") {
 
-# #   if (!inherits(prep, "magcat_stouffer_prep")) {
-# #     stop("magcat_stouffer_run_prepared(): 'prep' must come from magcat_stouffer_prepare().",
+# #   if (!inherits(prep, "catfish_stouffer_prep")) {
+# #     stop("catfish_stouffer_run_prepared(): 'prep' must come from catfish_stouffer_prepare().",
 # #          call. = FALSE)
 # #   }
 # #   if (!exists("fix_p_for_acat", mode = "function")) {
-# #     stop("magcat_stouffer_run_prepared(): missing fix_p_for_acat().", call. = FALSE)
+# #     stop("catfish_stouffer_run_prepared(): missing fix_p_for_acat().", call. = FALSE)
 # #   }
 
 # #   p_list  <- prep$p_list
@@ -1440,7 +1440,7 @@
 
 # #   if (output) {
 # #     if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-# #     utils::write.csv(res, file.path(out_dir, "magcat_stouffer_prepared.csv"), row.names = FALSE)
+# #     utils::write.csv(res, file.path(out_dir, "catfish_stouffer_prepared.csv"), row.names = FALSE)
 # #   }
 # #   res
 # # }
@@ -1452,16 +1452,16 @@
 
 # # #' Run ACAT pathway test from a prepared object
 # # #' @export
-# # magcat_acat_run_prepared <- function(prep,
+# # catfish_acat_run_prepared <- function(prep,
 # #                                      output  = FALSE,
-# #                                      out_dir = "magcat_acat") {
+# #                                      out_dir = "catfish_acat") {
 
 # #   if (is.null(prep$idx_list) || is.null(prep$p_all_u) || is.null(prep$pathway_id)) {
-# #     stop("magcat_acat_run_prepared(): 'prep' does not look like output of magcat_acat_prepare().",
+# #     stop("catfish_acat_run_prepared(): 'prep' does not look like output of catfish_acat_prepare().",
 # #          call. = FALSE)
 # #   }
 # #   if (!requireNamespace("ACAT", quietly = TRUE)) {
-# #     stop("magcat_acat_run_prepared(): requires ACAT package.", call. = FALSE)
+# #     stop("catfish_acat_run_prepared(): requires ACAT package.", call. = FALSE)
 # #   }
 
 # #   idx_list <- prep$idx_list
@@ -1503,7 +1503,7 @@
 
 # #   if (output) {
 # #     if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-# #     utils::write.csv(res, file.path(out_dir, "magcat_acat_prepared.csv"), row.names = FALSE)
+# #     utils::write.csv(res, file.path(out_dir, "catfish_acat_prepared.csv"), row.names = FALSE)
 # #   }
 
 # #   res
@@ -1512,7 +1512,7 @@
 
 # # #' Prepare ACAT pathway test objects (fast reusable setup)
 # # #' @export
-# # magcat_acat_prepare <- function(gene_results,
+# # catfish_acat_prepare <- function(gene_results,
 # #                                 pathways     = NULL,
 # #                                 species      = NULL,
 # #                                 pmn_gene_col = NULL,
@@ -1529,10 +1529,10 @@
 # #     stop("You must provide either 'pathways' OR 'species'.", call. = FALSE)
 # #   }
 # #   if (is.null(pathways) && !is.null(species)) {
-# #     if (!exists("magcat_load_pathways", mode = "function")) {
-# #       stop("magcat_acat_prepare(): missing magcat_load_pathways().", call. = FALSE)
+# #     if (!exists("catfish_load_pathways", mode = "function")) {
+# #       stop("catfish_acat_prepare(): missing catfish_load_pathways().", call. = FALSE)
 # #     }
-# #     pathways <- magcat_load_pathways(
+# #     pathways <- catfish_load_pathways(
 # #       species  = species,
 # #       gene_col = pmn_gene_col
 # #     )
@@ -1543,7 +1543,7 @@
 # #     stop("gene_results must contain columns '", gene_col, "' and '", p_col, "'.", call. = FALSE)
 # #   }
 # #   if (!exists("fix_p_for_acat", mode = "function")) {
-# #     stop("magcat_acat_prepare(): missing fix_p_for_acat().", call. = FALSE)
+# #     stop("catfish_acat_prepare(): missing fix_p_for_acat().", call. = FALSE)
 # #   }
 
 # #   genes_all  <- as.character(gene_results[[gene_col]])
@@ -1608,6 +1608,6 @@
 # #       min_p        = min_p,
 # #       do_fix       = do_fix
 # #     ),
-# #     class = "magcat_acat_prep"
+# #     class = "catfish_acat_prep"
 # #   )
 # # }

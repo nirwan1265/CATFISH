@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(MAGCAT)
+library(CATFISH)
 
-test_check("MAGCAT")
+test_check("CATFISH")

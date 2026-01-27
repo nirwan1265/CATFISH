@@ -10,7 +10,7 @@
 
 #' Path to built-in pathway file
 #'
-#' Returns the file path to a built-in pathway database bundled with MAGCAT.
+#' Returns the file path to a built-in pathway database bundled with CATFISH.
 #'
 #' @param species Which built-in database to use:
 #' \describe{
@@ -21,22 +21,22 @@
 #'   \item{"fly"}{FlyCyc Drosophila pathways (Fly_Cyc.tsv)}
 #' }
 #'
-#' @return Character. File path to the selected pathway file in the MAGCAT
+#' @return Character. File path to the selected pathway file in the CATFISH
 #'   package installation.
 #'
 #' @examples
 #' \dontrun{
 #' # Get path to maize pathway file
-#' maize_file <- magcat_pmn_file("maize")
+#' maize_file <- catfish_pmn_file("maize")
 #'
 #' # Get path to fly pathway file
-#' fly_file <- magcat_pmn_file("fly")
+#' fly_file <- catfish_pmn_file("fly")
 #' }
 #'
-#' @seealso \code{\link{magcat_load_pathways}} for loading pathways as a
+#' @seealso \code{\link{catfish_load_pathways}} for loading pathways as a
 #'   data.frame
 #' @export
-magcat_pmn_file <- function(
+catfish_pmn_file <- function(
     species = c("maize", "sorghum", "arabidopsis", "plant", "fly")
 ) {
 
@@ -51,10 +51,10 @@ magcat_pmn_file <- function(
     fly         = "Fly_Cyc.tsv"
   )
 
-  path <- system.file("extdata/pathway", fname, package = "MAGCAT")
+  path <- system.file("extdata/pathway", fname, package = "CATFISH")
   if (identical(path, "")) {
     stop(
-      "Could not find ", fname, " in inst/extdata/pathway of MAGCAT.",
+      "Could not find ", fname, " in inst/extdata/pathway of CATFISH.",
       call. = FALSE
     )
   }
@@ -64,7 +64,7 @@ magcat_pmn_file <- function(
 
 #' Load pathways as a data.frame
 #'
-#' Reads a pathway file from the MAGCAT package and returns a long-format
+#' Reads a pathway file from the CATFISH package and returns a long-format
 #' data.frame of pathway-gene memberships. Supports Plant Metabolic Network
 #' (PMN) pathway files for plants and FlyCyc for Drosophila.
 #'
@@ -88,7 +88,7 @@ magcat_pmn_file <- function(
 #'
 #' @details
 #' Pathway data files are stored in \code{inst/extdata/pathway/} within
-#' the MAGCAT package. The supported species and their source databases are:
+#' the CATFISH package. The supported species and their source databases are:
 #' \itemize{
 #'   \item \strong{maize}: CornCyc from Plant Metabolic Network
 #'   \item \strong{sorghum}: SorghumBicolorCyc from PMN
@@ -100,17 +100,17 @@ magcat_pmn_file <- function(
 #' @examples
 #' \dontrun{
 #' # Load maize PMN pathways
-#' maize_pathways <- magcat_load_pathways(species = "maize")
+#' maize_pathways <- catfish_load_pathways(species = "maize")
 #' head(maize_pathways)
 #'
 #' # Load arabidopsis pathways with specific gene column
-#' arab_pathways <- magcat_load_pathways(
+#' arab_pathways <- catfish_load_pathways(
 #'   species = "arabidopsis",
 #'   gene_col = "Gene-id"
 #' )
 #'
 #' # Load fly pathways (FlyCyc)
-#' fly_pathways <- magcat_load_pathways(species = "fly")
+#' fly_pathways <- catfish_load_pathways(species = "fly")
 #' head(fly_pathways)
 #'
 #' # Check how many pathways and genes
@@ -119,18 +119,18 @@ magcat_pmn_file <- function(
 #' }
 #'
 #' @seealso
-#' \code{\link{magcat_pmn_file}} for getting the raw file path
+#' \code{\link{catfish_pmn_file}} for getting the raw file path
 #'
-#' \code{\link{magcat_acat_pathways}}, \code{\link{magcat_fisher_pathways}},
-#' \code{\link{magcat_minp_pathways}} for pathway enrichment tests
+#' \code{\link{catfish_acat_pathways}}, \code{\link{catfish_fisher_pathways}},
+#' \code{\link{catfish_minp_pathways}} for pathway enrichment tests
 #' @export
-magcat_load_pathways <- function(
+catfish_load_pathways <- function(
     species      = c("maize", "sorghum", "arabidopsis", "plant", "fly"),
     gene_col     = NULL,
     drop_unknown = TRUE
 ) {
   species <- match.arg(species)
-  fpath <- magcat_pmn_file(species)
+  fpath <- catfish_pmn_file(species)
 
   x <- suppressWarnings(
     utils::read.delim(

@@ -1,5 +1,5 @@
 ## ============================================================
-##  MAGCAT omnibus (fresh, fast, 6-method, with global + MVN resampling)
+##  CATFISH omnibus (fresh, fast, 6-method, with global + MVN resampling)
 ##
 ##  Methods (component p-values per pathway):
 ##    1) ACAT (gene-level)
@@ -16,7 +16,7 @@
 ##    - mvn_resampling: simulate correlated Z ~ MVN(0, R_S) using gene-gene correlations
 ##      (requires magma_cor_file or magma_cor_pairs)
 ##
-#' MAGCAT omnibus pathway p-values (6-method framework; optional global + MVN calibration)
+#' CATFISH omnibus pathway p-values (6-method framework; optional global + MVN calibration)
 #'
 #' Computes pathway-level p-values from gene-level statistics using up to six component
 #' methods and combines them into a single omnibus p-value per pathway. Optionally,
@@ -182,16 +182,16 @@
 #' }
 #'
 # ============================================================
-# MAGCAT omnibus (fast, 6-method; global + MVN calibration for OMNIBUS only)
-#   - Component methods are computed by YOUR MAGCAT wrappers (analytic only)
+# CATFISH omnibus (fast, 6-method; global + MVN calibration for OMNIBUS only)
+#   - Component methods are computed by YOUR CATFISH wrappers (analytic only)
 #   - Permutations/resampling are ONLY for the OMNIBUS
 # ============================================================
 
 # ----------------------------
-# Helper: safely grab MAGCAT functions (exported wrappers)
+# Helper: safely grab CATFISH functions (exported wrappers)
 # Note: These functions are all in the same package, so we just use get()
 # ----------------------------
-.magcat_get_fun <- function(fname) {
+.catfish_get_fun <- function(fname) {
   if (exists(fname, mode = "function", envir = parent.frame())) {
     return(get(fname, mode = "function", envir = parent.frame()))
   }
@@ -238,7 +238,7 @@
 # ----------------------------
 # p-fixing (uses your fix_p_for_acat if available)
 # ----------------------------
-.magcat_fix_p <- function(p, min_p = 1e-15, do_fix = TRUE) {
+.catfish_fix_p <- function(p, min_p = 1e-15, do_fix = TRUE) {
   p <- suppressWarnings(as.numeric(p))
   p <- p[is.finite(p) & !is.na(p)]
   if (!length(p)) return(numeric(0))
@@ -260,7 +260,7 @@
   p
 }
 
-.magcat_bh <- function(p) {
+.catfish_bh <- function(p) {
   p <- as.numeric(p)
   out <- rep(NA_real_, length(p))
   idx <- which(is.finite(p) & !is.na(p))
@@ -272,7 +272,7 @@
 ## NEW tests
 ## ----------------------------
 
-.magcat_qvalue <- function(p) {
+.catfish_qvalue <- function(p) {
   p <- as.numeric(p)
   out <- rep(NA_real_, length(p))
   idx <- which(is.finite(p) & !is.na(p))
@@ -290,7 +290,7 @@
 }
 
 # BKY / two-stage BH (Benjamini-Krieger-Yekutieli style)
-.magcat_bky <- function(p, q = 0.10) {
+.catfish_bky <- function(p, q = 0.10) {
   p <- as.numeric(p)
   out <- rep(NA_real_, length(p))
   idx <- which(is.finite(p) & !is.na(p))
@@ -312,7 +312,7 @@
   out
 }
 
-.magcat_ihw <- function(p, covar) {
+.catfish_ihw <- function(p, covar) {
   p <- as.numeric(p)
   covar <- as.numeric(covar)
   out <- rep(NA_real_, length(p))
@@ -329,16 +329,12 @@
   out
 }
 
-## ----------------------------
-## NEW tests END
-## ----------------------------
-
 
 # ----------------------------
 # Omnibus across METHODS (ACAT or Sidak-minP)
 # ----------------------------
-.magcat_acat_combine <- function(p, min_p = 1e-15, do_fix = TRUE) {
-  p <- .magcat_fix_p(p, min_p = min_p, do_fix = do_fix)
+.catfish_acat_combine <- function(p, min_p = 1e-15, do_fix = TRUE) {
+  p <- .catfish_fix_p(p, min_p = min_p, do_fix = do_fix)
   p <- p[p > 0 & p < 1]
   if (!length(p)) return(NA_real_)
   tstat <- mean(tan((0.5 - p) * pi))
@@ -347,8 +343,8 @@
   as.numeric(out)
 }
 
-.magcat_minp_sidak <- function(p, min_p = 1e-15, do_fix = TRUE) {
-  p <- .magcat_fix_p(p, min_p = min_p, do_fix = do_fix)
+.catfish_minp_sidak <- function(p, min_p = 1e-15, do_fix = TRUE) {
+  p <- .catfish_fix_p(p, min_p = min_p, do_fix = do_fix)
   p <- p[p > 0 & p < 1]
   k <- length(p)
   if (k < 1L) return(NA_real_)
@@ -356,14 +352,14 @@
   1 - (1 - pmin)^k
 }
 
-.magcat_omni_methods <- function(p_methods, omnibus = c("ACAT", "minP"), min_p = 1e-15, do_fix = TRUE) {
+.catfish_omni_methods <- function(p_methods, omnibus = c("ACAT", "minP"), min_p = 1e-15, do_fix = TRUE) {
   omnibus <- match.arg(omnibus)
-  pv <- .magcat_fix_p(p_methods, min_p = min_p, do_fix = do_fix)
+  pv <- .catfish_fix_p(p_methods, min_p = min_p, do_fix = do_fix)
   pv <- pv[pv > 0 & pv < 1]
   if (!length(pv)) return(NA_real_)
 
   if (omnibus == "ACAT") {
-    .magcat_acat_combine(pv, min_p = min_p, do_fix = do_fix)
+    .catfish_acat_combine(pv, min_p = min_p, do_fix = do_fix)
   } else {
     k <- length(pv)
     pmin <- min(pv)
@@ -386,19 +382,6 @@
   (1 + sum(p_null <= p_obs)) / (B + 1)
 }
 
-# OLD VERSION
-# # for each null draw b, return its own calibrated p_b = (1 + #{b': p_{b'} <= p_b})/(B+1)
-# .emp_p_null_lower <- function(p_null) {
-#   p_null <- as.numeric(p_null)
-#   B <- length(p_null)
-#   if (B < 1L) return(numeric(0))
-#   # NA/inf become 1 (uninformative)
-#   p2 <- p_null
-#   bad <- !is.finite(p2) | is.na(p2)
-#   if (any(bad)) p2[bad] <- 1
-#   (1 + rank(p2, ties.method = "max")) / (B + 1)
-# }
-
 
 # NEW VERSION
 .emp_p_null_lower <- function(p_null) {
@@ -414,11 +397,6 @@
   as.numeric(rank_max) / (B + 1)
 }
 
-
-
-####################################################################################
-####### END
-####################################################################################
 
 
 # ----------------------------
@@ -456,49 +434,9 @@
   tab
 }
 
-# Old without shrinkage
-# .magma_build_R_from_pairs <- function(genes, cor_pairs, make_PD = TRUE) {
-#   genes <- as.character(genes)
-#   genes <- genes[!is.na(genes) & genes != ""]
-#   d <- length(genes)
-#   if (d < 2L) return(NULL)
 
-#   R <- diag(1, d)
-#   rownames(R) <- genes
-#   colnames(R) <- genes
 
-#   if (!is.null(cor_pairs) && nrow(cor_pairs)) {
-#     pos <- stats::setNames(seq_len(d), genes)
-
-#     g1 <- as.character(cor_pairs$gene1)
-#     g2 <- as.character(cor_pairs$gene2)
-#     r  <- suppressWarnings(as.numeric(cor_pairs$r))
-
-#     keep <- is.finite(r) & !is.na(r) & (g1 %in% genes) & (g2 %in% genes)
-#     if (any(keep)) {
-#       g1 <- g1[keep]; g2 <- g2[keep]; r <- r[keep]
-#       i <- unname(pos[g1]); j <- unname(pos[g2])
-#       ok <- is.finite(i) & is.finite(j) & !is.na(i) & !is.na(j) & (i != j)
-#       i <- i[ok]; j <- j[ok]; r <- r[ok]
-
-#       if (length(i)) {
-#         r <- pmax(pmin(r, 0.999), -0.999)
-#         R[cbind(i, j)] <- r
-#         R[cbind(j, i)] <- r
-#       }
-#     }
-#   }
-
-#   if (isTRUE(make_PD)) {
-#     if (!requireNamespace("Matrix", quietly = TRUE)) stop("Matrix package required for make_PD=TRUE.", call. = FALSE)
-#     npd <- Matrix::nearPD(R, corr = TRUE)
-#     R <- as.matrix(npd$mat)
-#   }
-
-#   R
-# }
-
-# New with shinkage
+# Function with shinkage
 .magma_build_R_from_pairs <- function(genes, cor_pairs, make_PD = TRUE, eps = 1e-6) {
   genes <- as.character(genes)
   genes <- genes[!is.na(genes) & genes != ""]
@@ -564,7 +502,7 @@
 # ----------------------------
 # Global sampler helper (WITHOUT replacement per permutation)
 # ----------------------------
-.magcat_sample_idx_mat <- function(n_pool, d, B) {
+.catfish_sample_idx_mat <- function(n_pool, d, B) {
   n_pool <- as.integer(n_pool)
   d      <- as.integer(d)
   B      <- as.integer(B)
@@ -581,7 +519,7 @@
 # ----------------------------
 # prepare (fast reuse)
 # ----------------------------
-magcat_omni2_prepare <- function(gene_results,
+catfish_omni2_prepare <- function(gene_results,
                                 pathways = NULL,
                                 species = NULL,
                                 pmn_gene_col = NULL,
@@ -606,11 +544,11 @@ magcat_omni2_prepare <- function(gene_results,
 
   # load pathways if species (use wrapper helper from this package)
   if (is.null(pathways)) {
-    # magcat_load_pathways is defined in this package (ACAT_wrappers.R)
-    if (exists("magcat_load_pathways", mode = "function")) {
-      pathways <- magcat_load_pathways(species = species, gene_col = pmn_gene_col)
+    # catfish_load_pathways is defined in this package (ACAT_wrappers.R)
+    if (exists("catfish_load_pathways", mode = "function")) {
+      pathways <- catfish_load_pathways(species = species, gene_col = pmn_gene_col)
     } else {
-      stop("Could not find magcat_load_pathways(). This should not happen.", call. = FALSE)
+      stop("Could not find catfish_load_pathways(). This should not happen.", call. = FALSE)
     }
   }
 
@@ -768,14 +706,14 @@ magcat_omni2_prepare <- function(gene_results,
       gene_results_core  = gene_results_core,
       pathways_list_raw  = pathways_list_raw
     ),
-    class = "magcat_omni2_prep"
+    class = "catfish_omni2_prep"
   )
 }
 
 # ----------------------------
 # Run (components from YOUR wrappers; perms only for omnibus)
 # ----------------------------
-magcat_omni2_run <- function(prep,
+catfish_omni2_run <- function(prep,
                             omnibus = c("ACAT","minP"),
                             # component wrapper params
                             do_fix = TRUE,
@@ -797,9 +735,9 @@ magcat_omni2_run <- function(prep,
                              mvn_calibrate_components = FALSE,   # <<<<<< ADD THIS LINE
                             make_PD = TRUE,
                             output = FALSE,
-                            out_dir = "magcat_omni2") {
+                            out_dir = "catfish_omni2") {
 
-  if (!inherits(prep, "magcat_omni2_prep")) stop("prep must come from magcat_omni2_prepare().", call. = FALSE)
+  if (!inherits(prep, "catfish_omni2_prep")) stop("prep must come from catfish_omni2_prepare().", call. = FALSE)
   omnibus   <- match.arg(omnibus)
   perm_pool <- match.arg(perm_pool)
   mvn_marginal <- match.arg(mvn_marginal)
@@ -821,16 +759,16 @@ magcat_omni2_run <- function(prep,
   )
 
   # ============================================================
-  # OBSERVED component p-values: CALL YOUR MAGCAT WRAPPERS (analytic only)
+  # OBSERVED component p-values: CALL YOUR CATFISH WRAPPERS (analytic only)
   # ============================================================
-  acat_fun    <- .magcat_get_fun("magcat_acat_pathways")
-  fisher_fun  <- .magcat_get_fun("magcat_fisher_pathways")
-  minp_fun    <- .magcat_get_fun("magcat_minp_pathways")
-  tfisher_fun <- .magcat_get_fun("magcat_soft_tfisher_adaptive_pathways")
-  stouf_fun   <- .magcat_get_fun("magcat_stoufferZ_pathways")
+  acat_fun    <- .catfish_get_fun("catfish_acat_pathways")
+  fisher_fun  <- .catfish_get_fun("catfish_fisher_pathways")
+  minp_fun    <- .catfish_get_fun("catfish_minp_pathways")
+  tfisher_fun <- .catfish_get_fun("catfish_soft_tfisher_adaptive_pathways")
+  stouf_fun   <- .catfish_get_fun("catfish_stoufferZ_pathways")
 
   if (is.null(acat_fun) || is.null(fisher_fun) || is.null(minp_fun) || is.null(tfisher_fun)) {
-    stop("Could not find required MAGCAT wrappers. Load MAGCAT or source your wrapper files first.", call. = FALSE)
+    stop("Could not find required CATFISH wrappers. Load CATFISH or source your wrapper files first.", call. = FALSE)
   }
 
   gene_df <- prep$gene_results_core
@@ -890,7 +828,7 @@ res$minp_p_analytic <- minp_tab$minp_p[match(res$pathway_id, minp_tab$pathway_id
 
 res$stouffer_p_analytic <- NA_real_
 if (!is.null(prep$z_col)) {
-  if (is.null(stouf_fun)) stop("z_col provided but magcat_stoufferZ_pathways() not found.", call. = FALSE)
+  if (is.null(stouf_fun)) stop("z_col provided but catfish_stoufferZ_pathways() not found.", call. = FALSE)
 
   st_tab <- stouf_fun(
     gene_results   = gene_df,
@@ -910,111 +848,6 @@ if (!is.null(prep$z_col)) {
     res$stouffer_p_analytic <- st_tab$stouffer_p_analytic[match(res$pathway_id, st_tab$pathway_id)]
   }
 }
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  ##### OLD
-  # # ACAT
-  # acat_tab <- acat_fun(
-  #   gene_results = gene_df,
-  #   pathways     = pw_list,
-  #   gene_col     = prep$gene_col,
-  #   p_col        = prep$p_use_col,
-  #   min_p        = prep$min_p,
-  #   do_fix       = isTRUE(do_fix),
-  #   B            = 0L,
-  #   seed         = prep$seed,
-  #   output       = FALSE
-  # )
-  # res$acat_p <- acat_tab$acat_p[match(res$pathway_id, acat_tab$pathway_id)]
-
-  # # Fisher
-  # fish_tab <- fisher_fun(
-  #   gene_results = gene_df,
-  #   pathways     = pw_list,
-  #   gene_col     = prep$gene_col,
-  #   p_col        = prep$p_use_col,
-  #   min_p        = prep$min_p,
-  #   do_fix       = isTRUE(do_fix),
-  #   output       = FALSE
-  # )
-  # res$fisher_p <- fish_tab$fisher_p[match(res$pathway_id, fish_tab$pathway_id)]
-
-  # # Adaptive soft TFisher (analytic only; NO per-method permutations)
-  # tf_tab <- tfisher_fun(
-  #   gene_results     = gene_df,
-  #   pathways         = pw_list,
-  #   gene_col         = prep$gene_col,
-  #   p_col            = prep$p_use_col,
-  #   tau_grid         = prep$tau_grid,
-  #   min_p            = prep$min_p,
-  #   do_fix           = isTRUE(do_fix),
-  #   B_perm           = 0L,
-  #   perm_mode        = "resample_global",  # irrelevant when B_perm=0
-  #   magma_genes_out  = NULL,
-  #   magma_cor_file   = NULL,
-  #   make_PD          = make_PD,
-  #   seed             = prep$seed,
-  #   analytic_logical = TRUE,
-  #   output           = FALSE
-  # )
-  # res$tfisher_p_analytic <- tf_tab$tfisher_p_analytic[match(res$pathway_id, tf_tab$pathway_id)]
-  # res$tau_hat            <- tf_tab$tau_hat[match(res$pathway_id, tf_tab$pathway_id)]
-  # res$tfisher_stat_hat   <- tf_tab$tfisher_stat_hat[match(res$pathway_id, tf_tab$pathway_id)]
-
-  # # minP (analytic only; NO per-method permutations)
-  # minp_tab <- minp_fun(
-  #   gene_results     = gene_df,
-  #   pathways         = pw_list,
-  #   gene_col         = prep$gene_col,
-  #   p_col            = prep$p_use_col,
-  #   min_p            = prep$min_p,
-  #   do_fix           = isTRUE(do_fix),
-  #   B_perm           = 0L,
-  #   seed             = prep$seed,
-  #   analytic_logical = TRUE,
-  #   output           = FALSE
-  # )
-  # res$minp_p_analytic <- minp_tab$minp_p_analytic[match(res$pathway_id, minp_tab$pathway_id)]
-
-  # # StoufferZ (analytic only) if z_col provided
-  # res$stouffer_p_analytic <- NA_real_
-  # if (!is.null(prep$z_col)) {
-  #   if (is.null(stouf_fun)) stop("z_col provided but magcat_stoufferZ_pathways() not found.", call. = FALSE)
-
-  #   st_tab <- stouf_fun(
-  #     gene_results    = gene_df,
-  #     pathways        = pw_list,
-  #     gene_col        = prep$gene_col,
-  #     z_col           = prep$z_col,
-  #     weight_col      = prep$weight_col,
-  #     min_abs_w       = stouffer_min_abs_w,
-  #     B_perm          = 0L,
-  #     perm_mode       = "resample_global", # irrelevant when B_perm=0
-  #     magma_genes_out = NULL,
-  #     magma_cor_file  = NULL,
-  #     make_PD         = make_PD,
-  #     seed            = prep$seed,
-  #     alternative     = stouffer_alternative,
-  #     output          = FALSE
-  #   )
-  #   res$stouffer_p_analytic <- st_tab$stouffer_p_analytic[match(res$pathway_id, st_tab$pathway_id)]
-  # }
 
   # MAGMA competitive (optional)
   res$magma_pvalue <- NA_real_
@@ -1041,9 +874,9 @@ if (!is.null(prep$z_col)) {
                res$minp_p_analytic[i],
                res$stouffer_p_analytic[i])
     if (isTRUE(include_magma_eff) && is.finite(res$magma_pvalue[i])) comps <- c(comps, res$magma_pvalue[i])
-    .magcat_omni_methods(comps, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
+    .catfish_omni_methods(comps, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
   }, numeric(1))
-  res$omni_p_analytic_BH <- .magcat_bh(res$omni_p_analytic)
+  res$omni_p_analytic_BH <- .catfish_bh(res$omni_p_analytic)
 
   # ============================================================
   # OMNIBUS calibration: global resampling (ONLY omnibus)
@@ -1079,7 +912,7 @@ if (!is.null(prep$z_col)) {
     if (!is.null(pool_z)) pool_z <- pool_z[ok]
     if (!is.null(pool_w)) pool_w <- pool_w[ok]
 
-    pool_p <- .magcat_fix_p(pool_p, min_p = prep$min_p, do_fix = isTRUE(do_fix))
+    pool_p <- .catfish_fix_p(pool_p, min_p = prep$min_p, do_fix = isTRUE(do_fix))
     if (length(pool_p) < 2L) stop("Global resampling pool has <2 valid p-values.", call. = FALSE)
 
     n_pool <- length(pool_p)
@@ -1118,13 +951,13 @@ if (!is.null(prep$z_col)) {
       omni_obs <- res$omni_p_analytic[i]
       if (!is.finite(omni_obs) || is.na(omni_obs)) next
 
-      idx_mat <- .magcat_sample_idx_mat(n_pool = n_pool, d = d, B = B_global)
+      idx_mat <- .catfish_sample_idx_mat(n_pool = n_pool, d = d, B = B_global)
       if (is.null(idx_mat)) next
 
       P <- matrix(pool_p[idx_mat], nrow = B_global, ncol = d)
 
       # ACAT across genes (fast)
-      pA <- vapply(seq_len(B_global), function(b) .magcat_acat_combine(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix)), numeric(1))
+      pA <- vapply(seq_len(B_global), function(b) .catfish_acat_combine(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix)), numeric(1))
       # Fisher across genes (fast)
       pF <- stats::pchisq(-2 * rowSums(log(P)), df = 2 * d, lower.tail = FALSE)
 
@@ -1132,7 +965,7 @@ if (!is.null(prep$z_col)) {
       pT <- rep(NA_real_, B_global)
       if (!requireNamespace("TFisher", quietly = TRUE)) stop("TFisher required for omnibus TFisher null.", call. = FALSE)
       for (b in seq_len(B_global)) {
-        pb <- .magcat_fix_p(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix))
+        pb <- .catfish_fix_p(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix))
         if (length(pb) < 2L) next
 
         # compute adaptive p (min over tau) using TFisher directly
@@ -1163,154 +996,15 @@ if (!is.null(prep$z_col)) {
       omni_null <- vapply(seq_len(B_global), function(b) {
         comps <- c(pA[b], pF[b], pT[b], pM[b], pS[b])
         if (isTRUE(include_magma_eff) && is.finite(res$magma_pvalue[i])) comps <- c(comps, res$magma_pvalue[i])
-        .magcat_omni_methods(comps, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
+        .catfish_omni_methods(comps, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
       }, numeric(1))
 
       res$omni_p_global[i] <- (1 + sum(omni_null <= omni_obs, na.rm = TRUE)) / (B_global + 1)
     }
 
-    res$omni_p_global_BH <- .magcat_bh(res$omni_p_global)
+    res$omni_p_global_BH <- .catfish_bh(res$omni_p_global)
   }
 
-  # ============================================================
-  # OLD VERSION
-  # ============================================================
-  # ============================================================
-  # OMNIBUS calibration: MVN resampling (LD-aware; ONLY omnibus)
-  # ============================================================
-  # res$omni_p_mvn <- NA_real_
-  # res$omni_p_mvn_BH <- NA_real_
-
-  # if (B_mvn > 0L) {
-
-  #   cor_pairs <- .magma_read_gene_cor_pairs(magma_cor_file = magma_cor_file, magma_cor_pairs = magma_cor_pairs)
-  #   if (is.null(cor_pairs) || !nrow(cor_pairs)) stop("MVN resampling requires magma_cor_file or magma_cor_pairs.", call. = FALSE)
-
-  #   if (!is.null(prep$seed)) set.seed(prep$seed)
-
-  #   for (i in seq_len(nrow(res))) {
-
-  #     d <- res$n_genes[i]
-  #     if (!is.finite(d) || d < prep$min_genes) next
-
-  #     omni_obs <- res$omni_p_analytic[i]
-  #     if (!is.finite(omni_obs) || is.na(omni_obs)) next
-
-  #     genes_S <- prep$g_list_raw[[res$pathway_id[i]]]
-  #     genes_S <- as.character(genes_S)
-  #     genes_S <- genes_S[!is.na(genes_S) & genes_S != ""]
-  #     if (length(genes_S) < prep$min_genes) next
-
-  #     R <- .magma_build_R_from_pairs(genes = genes_S, cor_pairs = cor_pairs, make_PD = make_PD)
-  #     if (is.null(R)) next
-
-  #     Z <- .magma_simulate_Z_from_R(R, B = B_mvn)
-  #     if (is.null(Z)) next
-
-  #     if (mvn_marginal == "uniform") {
-  #       P <- .mvn_z_to_p(Z, min_p = prep$min_p)
-  #     } else {
-  #       if (!is.null(pool_p)) {
-  #         pool_this <- pool_p
-  #       } else {
-  #         # empirical pool from observed p-values (excluding pathway genes is ideal; minimal version here)
-  #         pool_this <- prep$gene_p_all_use
-  #       }
-  #       P <- .mvn_z_to_empirical_p(Z, pool_p = pool_this, min_p = prep$min_p)
-  #     }
-
-  #     # ACAT/Fisher/minP from P
-  #     pA <- vapply(seq_len(B_mvn), function(b) .magcat_acat_combine(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix)), numeric(1))
-  #     pF <- stats::pchisq(-2 * rowSums(log(P)), df = 2 * ncol(P), lower.tail = FALSE)
-
-  #     # TFisher adaptive from P
-  #     pT <- rep(NA_real_, B_mvn)
-  #     if (!requireNamespace("TFisher", quietly = TRUE)) stop("TFisher required for omnibus TFisher null.", call. = FALSE)
-  #     for (b in seq_len(B_mvn)) {
-  #       pb <- .magcat_fix_p(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix))
-  #       if (length(pb) < 2L) next
-
-  #       best <- Inf
-  #       for (tau in prep$tau_grid) {
-  #         st <- TFisher::stat.soft(p = pb, tau1 = tau)
-  #         pv <- 1 - as.numeric(TFisher::p.soft(q = st, n = length(pb), tau1 = tau, M = NULL))
-  #         if (is.finite(pv) && pv < best) best <- pv
-  #       }
-  #       pT[b] <- best
-  #     }
-
-  #     pM <- {
-  #       k <- ncol(P)
-  #       pmin <- apply(P, 1, min)
-  #       1 - (1 - pmin)^k
-  #     }
-
-  #     # Stouffer from MVN Z (use observed pathway weights if provided)
-  #     pS <- rep(NA_real_, B_mvn)
-  #     if (!is.null(prep$z_col) && !is.null(prep$z_list)) {
-  #       w_i <- NULL
-  #       if (!is.null(prep$w_list)) w_i <- prep$w_list[[res$pathway_id[i]]]
-
-  #       # clean weights like wrapper
-  #       if (!is.null(w_i)) {
-  #         w_i <- suppressWarnings(as.numeric(w_i))
-  #         bad <- !is.finite(w_i) | is.na(w_i) | abs(w_i) <= stouffer_min_abs_w
-  #         if (any(bad)) {
-  #           w_ok <- abs(w_i[!bad])
-  #           repl <- if (length(w_ok)) stats::median(w_ok) else 1
-  #           w_i[bad] <- repl
-  #         }
-  #       }
-
-  #       Zs <- if (is.null(w_i)) {
-  #         rowSums(Z) / sqrt(ncol(Z))
-  #       } else {
-  #         as.numeric(Z %*% w_i) / sqrt(sum(w_i^2))
-  #       }
-
-  #       if (stouffer_alternative == "greater") {
-  #         pS <- stats::pnorm(Zs, lower.tail = FALSE)
-  #       } else if (stouffer_alternative == "less") {
-  #         pS <- stats::pnorm(Zs, lower.tail = TRUE)
-  #       } else {
-  #         pS <- 2 * stats::pnorm(-abs(Zs))
-  #       }
-  #     }
-
-  #     omni_null <- vapply(seq_len(B_mvn), function(b) {
-  #       comps <- c(pA[b], pF[b], pT[b], pM[b], pS[b])
-  #       if (isTRUE(include_magma_eff) && is.finite(res$magma_pvalue[i])) comps <- c(comps, res$magma_pvalue[i])
-  #       .magcat_omni_methods(comps, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
-  #     }, numeric(1))
-
-  #     res$omni_p_mvn[i] <- (1 + sum(omni_null <= omni_obs, na.rm = TRUE)) / (B_mvn + 1)
-  #   }
-
-  #   res$omni_p_mvn_BH <- .magcat_bh(res$omni_p_mvn)
-  # }
-
-  # # final p priority: MVN > global > analytic
-  # res$omni_p_final <- res$omni_p_analytic
-  # if (B_global > 0L) res$omni_p_final <- res$omni_p_global
-  # if (B_mvn > 0L)    res$omni_p_final <- res$omni_p_mvn
-  # res$omni_p_final_BH <- .magcat_bh(res$omni_p_final)
-
-  # res <- res[order(res$omni_p_final, decreasing = FALSE, na.last = TRUE), , drop = FALSE]
-
-  # if (isTRUE(output)) {
-  #   if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-  #   tag <- paste0("omni_", tolower(omnibus),
-  #                 if (B_mvn > 0L) "_mvn" else if (B_global > 0L) "_global" else "_analytic")
-  #   out_path <- file.path(out_dir, paste0(tag, ".csv"))
-  #   utils::write.csv(res, out_path, row.names = FALSE)
-  #   attr(res, "file") <- out_path
-  # }
-
-  # res
-
-  # ============================================================
-  # NEW VERSION- INDIVIDUAL SIMULATION
-  # ============================================================
 
   # ============================================================
   # MVN resampling (LD-aware): option to calibrate COMPONENTS first
@@ -1361,15 +1055,6 @@ if (!is.null(prep$z_col)) {
       Z <- .magma_simulate_Z_from_R(R, B = B_mvn)
       if (is.null(Z)) next
 
-      # OLD one
-      # map MVN Z -> p matrix for p-based methods
-      # if (mvn_marginal == "uniform") {
-      #   P <- .mvn_z_to_p(Z, min_p = prep$min_p)
-      # } else {
-      #   pool_this <- if (!is.null(pool_p)) pool_p else prep$gene_p_all_use
-      #   P <- .mvn_z_to_empirical_p(Z, pool_p = pool_this, min_p = prep$min_p)
-      # }
-
 
       # map MVN Z -> p matrix for p-based methods
       if (mvn_marginal == "uniform") {
@@ -1399,7 +1084,7 @@ if (!is.null(prep$z_col)) {
 
       # --- NULL component p-values (same “analytic formulas” you already use) ---
       pA_null <- vapply(seq_len(B_mvn), function(b) {
-        .magcat_acat_combine(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix))
+        .catfish_acat_combine(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix))
       }, numeric(1))
 
       pF_null <- stats::pchisq(-2 * rowSums(log(P)), df = 2 * ncol(P), lower.tail = FALSE)
@@ -1407,7 +1092,7 @@ if (!is.null(prep$z_col)) {
       pT_null <- rep(NA_real_, B_mvn)
       if (!requireNamespace("TFisher", quietly = TRUE)) stop("TFisher required for omnibus TFisher null.", call. = FALSE)
       for (b in seq_len(B_mvn)) {
-        pb <- .magcat_fix_p(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix))
+        pb <- .catfish_fix_p(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix))
         if (length(pb) < 2L) next
         best <- Inf
         for (tau in prep$tau_grid) {
@@ -1477,7 +1162,7 @@ if (!is.null(prep$z_col)) {
         comps_obs <- comps_obs[is.finite(comps_obs) & !is.na(comps_obs)]
         if (!length(comps_obs)) next
 
-        omni_obs <- .magcat_omni_methods(comps_obs, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
+        omni_obs <- .catfish_omni_methods(comps_obs, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
         res$omni_p_mvn_compcal[i] <- omni_obs
 
         # per-draw component-calibrated p vectors (keeps cross-method dependence automatically)
@@ -1493,7 +1178,7 @@ if (!is.null(prep$z_col)) {
           comps_b <- c(pA_cal_null[b], pF_cal_null[b], pT_cal_null[b], pM_cal_null[b], pS_cal_null[b])
           comps_b <- comps_b[is.finite(comps_b) & !is.na(comps_b)]
           if (!length(comps_b)) next
-          omni_null[b] <- .magcat_omni_methods(comps_b, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
+          omni_null[b] <- .catfish_omni_methods(comps_b, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
         }
 
         res$omni_p_mvn[i] <- (1 + sum(omni_null <= omni_obs, na.rm = TRUE)) / (B_mvn + 1)
@@ -1508,14 +1193,14 @@ if (!is.null(prep$z_col)) {
           comps <- c(pA_null[b], pF_null[b], pT_null[b], pM_null[b], pS_null[b])
           comps <- comps[is.finite(comps) & !is.na(comps)]
           if (!length(comps)) return(NA_real_)
-          .magcat_omni_methods(comps, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
+          .catfish_omni_methods(comps, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
         }, numeric(1))
 
         res$omni_p_mvn[i] <- (1 + sum(omni_null <= omni_obs, na.rm = TRUE)) / (B_mvn + 1)
       }
     }
 
-    res$omni_p_mvn_BH <- .magcat_bh(res$omni_p_mvn)
+    res$omni_p_mvn_BH <- .catfish_bh(res$omni_p_mvn)
   }
 
   # ============================================================
@@ -1524,14 +1209,14 @@ if (!is.null(prep$z_col)) {
   res$omni_p_final <- res$omni_p_analytic
   if (B_global > 0L) res$omni_p_final <- res$omni_p_global
   if (B_mvn    > 0L) res$omni_p_final <- res$omni_p_mvn
-  res$omni_p_final_BH <- .magcat_bh(res$omni_p_final)
+  res$omni_p_final_BH <- .catfish_bh(res$omni_p_final)
 
   # more lenient options
-  res$omni_p_final_q_storey <- .magcat_qvalue(res$omni_p_final)
-  res$omni_p_final_q_bky10  <- .magcat_bky(res$omni_p_final, q = 0.10)
+  res$omni_p_final_q_storey <- .catfish_qvalue(res$omni_p_final)
+  res$omni_p_final_q_bky10  <- .catfish_bky(res$omni_p_final, q = 0.10)
 
   # IHW using pathway size as a covariate (log scale is typical)
-  res$omni_p_final_q_ihw10  <- .magcat_ihw(res$omni_p_final, covar = log1p(res$n_genes))
+  res$omni_p_final_q_ihw10  <- .catfish_ihw(res$omni_p_final, covar = log1p(res$n_genes))
 
   
 
@@ -1623,15 +1308,10 @@ if (!is.null(prep$z_col)) {
 
   return(res)
 
-
-  # ============================================================
-  # NEW VERSION- END
-  # ============================================================
-
 }
 
 
-#' MAGCAT omnibus pathway p-values (6-method framework; optional global + MVN calibration)
+#' CATFISH omnibus pathway p-values (6-method framework; optional global + MVN calibration)
 #'
 #' Compute pathway-level p-values from gene-level results using up to six component
 #' methods (ACAT, Fisher, adaptive soft TFisher, minP, Stouffer Z, optional MAGMA
@@ -1687,10 +1367,10 @@ if (!is.null(prep$z_col)) {
 #'
 #' @param species Optional character (provide \code{species} OR \code{pathways}), one of
 #'   \code{"maize"}, \code{"sorghum"}, \code{"arabidopsis"}, \code{"plant"}.
-#'   When provided, pathways are loaded via \code{magcat_load_pathways()}.
+#'   When provided, pathways are loaded via \code{catfish_load_pathways()}.
 #'
 #' @param pmn_gene_col Optional character. When \code{species} is used, passed to
-#'   \code{magcat_load_pathways(species=..., gene_col=pmn_gene_col)}.
+#'   \code{catfish_load_pathways(species=..., gene_col=pmn_gene_col)}.
 #'
 #' @param gene_col Character. Gene ID column in \code{gene_results}. Default \code{"GENE"}.
 #' @param p_raw_col Character. Raw p-value column in \code{gene_results}. Default \code{"P"}.
@@ -1739,13 +1419,13 @@ if (!is.null(prep$z_col)) {
 #'
 #' @param seed Integer or NULL. Random seed.
 #' @param output Logical. If TRUE, writes CSV to \code{out_dir} and attaches \code{"file"} attribute. Default FALSE.
-#' @param out_dir Character. Output directory. Default \code{"magcat_omni2"}.
+#' @param out_dir Character. Output directory. Default \code{"catfish_omni2"}.
 #'
 #' @return data.frame with one row per pathway, including:
 #' \itemize{
 #'   \item component p-values (analytic): \code{acat_p}, \code{fisher_p}, \code{tfisher_p_analytic}, \code{minp_p_analytic}, \code{stouffer_p_analytic}
 #'   \item optional \code{magma_pvalue}
-#'   \item \code{omni_p_analytic}, \code{omni_p_global}, \code{omni_p_mvn}, and \code{omni_p_final} (+ BH/qvalue extras if you kept them in \code{magcat_omni2_run})
+#'   \item \code{omni_p_analytic}, \code{omni_p_global}, \code{omni_p_mvn}, and \code{omni_p_final} (+ BH/qvalue extras if you kept them in \code{catfish_omni2_run})
 #' }
 #'
 #' @examples
@@ -1754,7 +1434,7 @@ if (!is.null(prep$z_col)) {
 #' gene_results <- read.delim("magma_output.genes.out")
 #'
 #' # Run omnibus test with analytic p-values only (no permutation)
-#' omni_res <- magcat_omni2_pathways(
+#' omni_res <- catfish_omni2_pathways(
 #'   gene_results = gene_results,
 #'   species = "maize",
 #'   gene_col = "GENE",
@@ -1765,7 +1445,7 @@ if (!is.null(prep$z_col)) {
 #' head(omni_res)
 #'
 #' # With MVN-based calibration (requires gene-gene correlations)
-#' omni_mvn <- magcat_omni2_pathways(
+#' omni_mvn <- catfish_omni2_pathways(
 #'   gene_results = gene_results,
 #'   species = "maize",
 #'   perm_mode = "mvn",
@@ -1774,7 +1454,7 @@ if (!is.null(prep$z_col)) {
 #' )
 #'
 #' # With global resampling
-#' omni_global <- magcat_omni2_pathways(
+#' omni_global <- catfish_omni2_pathways(
 #'   gene_results = gene_results,
 #'   species = "maize",
 #'   perm_mode = "global",
@@ -1782,10 +1462,10 @@ if (!is.null(prep$z_col)) {
 #' )
 #' }
 #'
-#' @seealso \code{\link{magcat_acat_pathways}}, \code{\link{magcat_fisher_pathways}},
-#'   \code{\link{magcat_minp_pathways}}, \code{\link{magcat_stoufferZ_pathways}}
+#' @seealso \code{\link{catfish_acat_pathways}}, \code{\link{catfish_fisher_pathways}},
+#'   \code{\link{catfish_minp_pathways}}, \code{\link{catfish_stoufferZ_pathways}}
 #' @export
-magcat_omni2_pathways <- function(gene_results,
+catfish_omni2_pathways <- function(gene_results,
                                  pathways = NULL,
                                  species = NULL,
                                  pmn_gene_col = NULL,
@@ -1824,7 +1504,7 @@ magcat_omni2_pathways <- function(gene_results,
                                  make_PD = TRUE,
                                  seed = NULL,
                                  output = FALSE,
-                                 out_dir = "magcat_omni2") {
+                                 out_dir = "catfish_omni2") {
 
   # ---- basic arg matching / validation ----
   omnibus   <- match.arg(omnibus)
@@ -1894,14 +1574,14 @@ magcat_omni2_pathways <- function(gene_results,
   }
 
   # ---- prepare (standardizes gene_results + pathways) ----
-  if (!exists("magcat_omni2_prepare", mode = "function")) {
-    stop("magcat_omni2_prepare() not found. Source your MAGCAT omnibus code first.", call. = FALSE)
+  if (!exists("catfish_omni2_prepare", mode = "function")) {
+    stop("catfish_omni2_prepare() not found. Source your CATFISH omnibus code first.", call. = FALSE)
   }
-  if (!exists("magcat_omni2_run", mode = "function")) {
-    stop("magcat_omni2_run() not found. Source your MAGCAT omnibus code first.", call. = FALSE)
+  if (!exists("catfish_omni2_run", mode = "function")) {
+    stop("catfish_omni2_run() not found. Source your CATFISH omnibus code first.", call. = FALSE)
   }
 
-  prep <- magcat_omni2_prepare(
+  prep <- catfish_omni2_prepare(
     gene_results = gene_results,
     pathways = pathways,
     species = species,
@@ -1920,7 +1600,7 @@ magcat_omni2_pathways <- function(gene_results,
 
   # ---- MVN empirical pool choice (only when pool_p is NULL) ----
   # If you want "raw" empirical pool and raw is available, we swap the internal pool used by MVN mapping.
-  # This preserves the per-pathway exclusion logic inside magcat_omni2_run().
+  # This preserves the per-pathway exclusion logic inside catfish_omni2_run().
   if (B_mvn > 0L && mvn_marginal == "empirical" && is.null(pool_p) && mvn_pool == "raw") {
     if (!is.null(prep$gene_p_all_raw)) {
       prep$gene_p_all_use <- prep$gene_p_all_raw
@@ -1930,7 +1610,7 @@ magcat_omni2_pathways <- function(gene_results,
   }
 
   # ---- run (components analytic; permutations ONLY for omnibus) ----
-  magcat_omni2_run(
+  catfish_omni2_run(
     prep = prep,
     omnibus = omnibus,
     do_fix = do_fix,

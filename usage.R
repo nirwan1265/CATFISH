@@ -2,7 +2,7 @@ devtools::document()
 devtools::load_all()
 
 
-library(MAGCAT)
+library(CATFISH)
 library(metapro)
 library(sumFREGAT)
 library(metap)
@@ -305,7 +305,7 @@ magma_gene(
   n_threads  = 6
 )
 
-args(MAGCAT::magma_gene)
+args(CATFISH::magma_gene)
 
 # FLY
 magma_gene(
@@ -338,8 +338,8 @@ magma_gene(
 
 # Combine all the chromosome
 ## Vector of MAGMA gene files (chr1–chr10)
-files <- sprintf("/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/N_maize_MLM_chr%d.multi_snp_wise.genes.out", 1:10)
-#files <- sprintf("/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_genes_by_chr/N_maize_GLM_chr%d.multi_snp_wise.genes.out", 1:10)
+files <- sprintf("/Users/nirwantandukar/Documents/Research/results/MAGMA/CATFISH/magma_multi_snp_wise_genes_by_chr_N_maize/N_maize_MLM_chr%d.multi_snp_wise.genes.out", 1:10)
+#files <- sprintf("/Users/nirwantandukar/Documents/Research/results/MAGMA/CATFISH/magma_genes_by_chr/N_maize_GLM_chr%d.multi_snp_wise.genes.out", 1:10)
 
 # Fly
 files <- list.files(path = "/Users/nirwantandukar/Documents/Research/results/DGRP/MAGMA/Fly_magma_genes_by_chr_male",
@@ -389,7 +389,7 @@ nrow(genes_all)
 length(unique(genes_all$GENE))
 # write.table(
 #   genes_all,
-#   file      = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/magma_N__GLM_maize.txt",
+#   file      = "/Users/nirwantandukar/Documents/Research/results/MAGMA/CATFISH/magma_multi_snp_wise_genes_by_chr_N_maize/magma_N__GLM_maize.txt",
 #   sep       = "\t",      # tab-separated
 #   quote     = FALSE,     # don't quote strings
 #   row.names = FALSE      # don't write row numbers
@@ -439,7 +439,7 @@ head(maize_gene_len)
 head(genes_all)
 
 ### Adjust pvalues based on Gene length and NSPS
-adj_out <- magcat_adjust_gene_p(
+adj_out <- catfish_adjust_gene_p(
   gene_results = genes_all,
   gene_lengths = maize_gene_len,
   gene_col     = "GENE",
@@ -565,12 +565,12 @@ ggplot(genes_adj, aes(x = P, y = P_adj)) +
 
 
 # MAGMA gene-level results (your merged file, with GENE / P / CHR etc.)
-# genes_all <- read.table("/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/magma_N_maize.txt",
+# genes_all <- read.table("/Users/nirwantandukar/Documents/Research/results/MAGMA/CATFISH/magma_multi_snp_wise_genes_by_chr_N_maize/magma_N_maize.txt",
 #                         header = TRUE, stringsAsFactors = FALSE)
 head(genes_all)
 
 # Load maize pathways from CornCyc (inst/extdata/pathway/corncyc_...)
-maize_pw <- magcat_load_pathways("maize", gene_col = "Gene-name")
+maize_pw <- catfish_load_pathways("maize", gene_col = "Gene-name")
 head(maize_pw)
 
 # Fly
@@ -595,7 +595,7 @@ at_pw <- at_pw %>%
 
 
 # Run ACAT per pathway (no permutations first):
-pw_res <- magcat_acat_pathways(
+pw_res <- catfish_acat_pathways(
   gene_results = genes_adj,
   species      = "maize",
   gene_col     = "GENE",
@@ -604,21 +604,21 @@ pw_res <- magcat_acat_pathways(
   output       = TRUE,
   out_dir      = "acat_results_GLM"
 )
-args(MAGCAT::magcat_acat_pathways)
+args(CATFISH::catfish_acat_pathways)
 
 # Fisher
-f_res= magcat_fisher_pathways( genes_adj,
+f_res= catfish_fisher_pathways( genes_adj,
   species         = "maize",
   gene_col        = "GENE",
   p_col           = "P",
   min_p        = 1e-15,
   output          = TRUE,
-  out_dir         = "magcat_fisher"
+  out_dir         = "catfish_fisher"
 )
-args(MAGCAT::magcat_fisher_pathways)
+args(CATFISH::catfish_fisher_pathways)
 
 # Stouffer
-stouf_res <- magcat_stoufferZ_pathways(
+stouf_res <- catfish_stoufferZ_pathways(
   gene_results = genes_adj,
   species      = "maize",
   gene_col     = "GENE",
@@ -628,12 +628,12 @@ stouf_res <- magcat_stoufferZ_pathways(
   seed         = NULL,
   alternative = "greater",
   output       = TRUE,
-  out_dir      = "magcat_stouffer"
+  out_dir      = "catfish_stouffer"
 )
-args(MAGCAT::magcat_stoufferZ_pathways)
+args(CATFISH::catfish_stoufferZ_pathways)
 
 # MinP
-minp_res <- magcat_minp_pathways(
+minp_res <- catfish_minp_pathways(
   gene_results = genes_adj,  # your .genes.out as data.frame
   species      = "maize",      # or "sorghum"/"arabidopsis"/"plant"
   gene_col     = "GENE",
@@ -642,13 +642,13 @@ minp_res <- magcat_minp_pathways(
   min_p        = 1e-15,
   do_fix       = TRUE,
   output       = TRUE,
-  out_dir      = "magcat_minp_maize"
+  out_dir      = "catfish_minp_maize"
 )
-args(MAGCAT::magcat_minp_pathways)
+args(CATFISH::catfish_minp_pathways)
 
 
 ## Adaptive soft-TFisher (analytic only, NO permutations)
-tf_adapt_res <- magcat_soft_tfisher_adaptive_pathways(
+tf_adapt_res <- catfish_soft_tfisher_adaptive_pathways(
   gene_results     = genes_adj,
   species          = "maize",
   gene_col         = "GENE",
@@ -661,24 +661,24 @@ tf_adapt_res <- magcat_soft_tfisher_adaptive_pathways(
   seed             = NULL,
   analytic_logical = TRUE,
   output           = TRUE,
-  out_dir          = "magcat_tfisher_adaptive"
+  out_dir          = "catfish_tfisher_adaptive"
 )
-args(MAGCAT::magcat_soft_tfisher_adaptive_pathways)
+args(CATFISH::catfish_soft_tfisher_adaptive_pathways)
 
 
 
 head(tf_adapt_res)
 colnames(tf_adapt_res)
 attr(tf_adapt_res, "file")
-args(MAGCAT::magcat_soft_tfisher_adaptive_pathways)
-?MAGCAT::magma_geneset_competitive()
+args(CATFISH::catfish_soft_tfisher_adaptive_pathways)
+?CATFISH::magma_geneset_competitive()
 
 ### MAGMA-competitive
 ## First combine the raw files my guy
 ## Combine per-chromosome MAGMA gene results (.genes.raw-style) into one file
 ## (works for your custom v1.10 format with "# VERSION" and correlation tail)
 
-# in_dir  <- "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize"
+# in_dir  <- "/Users/nirwantandukar/Documents/Research/results/MAGMA/CATFISH/magma_multi_snp_wise_genes_by_chr_N_maize"
 # pattern <- "^N_maize_MLM_chr[0-9]+\\.multi_snp_wise.genes.raw"
 # out_file <- file.path(in_dir, "N_maize_MLM_ALLCHR.multi_snp_wise.genes")
 
@@ -731,7 +731,7 @@ args(MAGCAT::magcat_soft_tfisher_adaptive_pathways)
 # dt <- unique(dt)
 
 # # (optional but recommended) keep only genes that exist in your .genes.raw
-# genes_raw <- "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/N_maize_MLM_ALLCHR.multi_snp_wise.genes"
+# genes_raw <- "/Users/nirwantandukar/Documents/Research/results/MAGMA/CATFISH/magma_multi_snp_wise_genes_by_chr_N_maize/N_maize_MLM_ALLCHR.multi_snp_wise.genes"
 # raw_lines <- readLines(genes_raw, warn = FALSE)
 # raw_dat   <- raw_lines[!grepl("^#", raw_lines) & nzchar(raw_lines)]
 # genes_ok  <- unique(sub("\\s+.*$", "", raw_dat))
@@ -757,14 +757,14 @@ args(MAGCAT::magcat_soft_tfisher_adaptive_pathways)
 
 # MAGMA
 out <- magma_geneset_competitive(
-  gene_results_raw = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/N_maize_MLM_ALLCHR.multi_snp_wise.genes",
+  gene_results_raw = "/Users/nirwantandukar/Documents/Research/results/MAGMA/CATFISH/magma_multi_snp_wise_genes_by_chr_N_maize/N_maize_MLM_ALLCHR.multi_snp_wise.genes",
   out_prefix       = "N_maize_MLM_ALLCHR.PMN_COMP",
   out_dir          = "magma_geneset",
   species          = "maize",
   genes_all        = genes_all,
   write_tidy       = TRUE
 )
-args(MAGCAT::magma_geneset_competitive)
+args(CATFISH::magma_geneset_competitive)
 
 ### Run OMNI
 
@@ -778,7 +778,7 @@ head(genes_adj)
 
 # Run correlation calculations
 # Maize
-raw_dir <- "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/"
+raw_dir <- "/Users/nirwantandukar/Documents/Research/results/MAGMA/CATFISH/magma_multi_snp_wise_genes_by_chr_N_maize/"
 chr_files <- Sys.glob(file.path(raw_dir, "N_maize_MLM_chr*.multi_snp_wise.genes.raw"))
 
 # Fly
@@ -833,7 +833,7 @@ writeLines(x, out_pairs, useBytes = TRUE, sep = "\n")
 
 # Run the whole OMNI on all chromosome
 # Maize
-mni_omni <- magcat_omni2_pathways(
+mni_omni <- catfish_omni2_pathways(
   gene_results   = genes_adj,
   species        = "maize",                     # load PMN maize pathways automatically
   pmn_gene_col   = "Gene-name",                 # column in PMN file
@@ -852,15 +852,15 @@ mni_omni <- magcat_omni2_pathways(
   omnibus        = "ACAT",                      # or "minP"
   B_perm         = 5000L,                        # number of permutations for omnibus
   perm_mode      = "global",                       # or "global", "both", "none"
-  magma_cor_file = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/magma_gene_cor_pairs_MLM.txt",  # 3-column file gene1 gene2 r
+  magma_cor_file = "/Users/nirwantandukar/Documents/Research/results/MAGMA/CATFISH/magma_multi_snp_wise_genes_by_chr_N_maize/magma_gene_cor_pairs_MLM.txt",  # 3-column file gene1 gene2 r
   make_PD        = TRUE,
   seed           = 123,
   output         = TRUE,
-  out_dir        = "magcat_omnibus_results"
+  out_dir        = "catfish_omnibus_results"
 )
 
 # Fly
-mni_omni <- magcat_omni2_pathways(
+mni_omni <- catfish_omni2_pathways(
   gene_results   = genes_adj,
   species        = NULL,                     # load PMN maize pathways automatically
   pathways       = fly_pw,
@@ -880,17 +880,17 @@ mni_omni <- magcat_omni2_pathways(
   omnibus        = "ACAT",                      # or "minP"
   B_perm         = 10000L,                        # number of permutations for omnibus
   perm_mode      = "mvn",                       # or "global", "both", "none"
-  magma_cor_file = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize//magma_gene_cor_pairs_MLM_Fly_male.txt",  # 3-column file gene1 gene2 r
+  magma_cor_file = "/Users/nirwantandukar/Documents/Research/results/MAGMA/CATFISH/magma_multi_snp_wise_genes_by_chr_N_maize//magma_gene_cor_pairs_MLM_Fly_male.txt",  # 3-column file gene1 gene2 r
   make_PD        = TRUE,
   seed           = 123,
   output         = TRUE,
-  out_dir        = "magcat_omnibus_results_Fly"
+  out_dir        = "catfish_omnibus_results_Fly"
 )
 
 head(at_pw)
 
 # Arabidopsis
-mni_omni <- magcat_omni2_pathways(
+omni_results <- catfish_omni2_pathways(
   gene_results   = genes_adj,
   species        = NULL,                     # load PMN maize pathways automatically
   pathways       = at_pw,
@@ -908,24 +908,24 @@ mni_omni <- magcat_omni2_pathways(
   include_magma_in_omni = FALSE,
   include_magma_in_perm = FALSE,                # only for analytic omnibus, no MAGMA in permutations
   omnibus        = "minP",                      # or "minP"
-  B_perm         = 100L,                        # number of permutations for omnibus
+  B_perm         = 10000L,                        # number of permutations for omnibus
   perm_mode      = "mvn",                       # or "global", "both", "none"
-  magma_cor_file = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize//magma_gene_cor_pairs_MLM_arabidopsis.txt",  # 3-column file gene1 gene2 r
+  magma_cor_file = "/Users/nirwantandukar/Documents/Research/results/MAGMA/CATFISH/magma_multi_snp_wise_genes_by_chr_N_maize//magma_gene_cor_pairs_MLM_arabidopsis.txt",  # 3-column file gene1 gene2 r
   make_PD        = TRUE,
   mvn_marginal = "uniform", # NEW
   mvn_calibrate_components = TRUE, # NEW
   seed           = 123,
   output         = TRUE,
-  out_dir        = "magcat_omnibus_results_Arabidopsis_B100"
+  out_dir        = "catfish_omnibus_results_Arabidopsis_B10000"
 )
 
 head(mni_omni)
 
-args(MAGCAT::magcat_omni2_pathways)
+args(CATFISH::catfish_omni2_pathways)
 
 
 
-res <- magcat_omni2_pathways(
+res <- catfish_omni2_pathways(
   gene_results = genes_adj,
   species      = "maize",
   gene_col     = "GENE",
@@ -941,8 +941,11 @@ res <- magcat_omni2_pathways(
   include_magma_in_perm = FALSE,    # keep FALSE (recommended)
 
   perm_pool      = "obs",
-  magma_cor_file="/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/magma_gene_cor_pairs_MLM.txt",
+  magma_cor_file="/Users/nirwantandukar/Documents/Research/results/MAGMA/CATFISH/magma_multi_snp_wise_genes_by_chr_N_maize/magma_gene_cor_pairs_MLM.txt",
   make_PD         = TRUE,
   mvn_marginal    = "uniform",
-  seed=123, output=TRUE, out_dir="magcat_omni2_results_MLM"
+  seed=123, output=TRUE, out_dir="catfish_omni2_results_MLM"
 )
+
+devtools::install(build_vignettes = TRUE)                                             
+browseVignettes("CATFISH") 
