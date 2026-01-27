@@ -9,7 +9,7 @@ fix_p_for_acat(p, min_p = 1e-15)
 \arguments{
 \item{p}{Numeric vector of p-values (NA allowed). Names are preserved.}
 
-\item{min_p}{Lower cap for very small p-values (default 1e-15).}
+\item{min_p}{Numeric. Lower cap for very small p-values (default 1e-15).}
 }
 \value{
 Cleaned numeric vector (NAs removed, extremes capped).
@@ -18,4 +18,9 @@ Cleaned numeric vector (NAs removed, extremes capped).
 ACAT uses Cauchy transforms that can behave poorly at exactly 0 or 1.
 This helper removes NA values and caps extreme p-values.
 }
-\keyword{internal}
+\examples{
+# Cap extreme p-values
+p_raw <- c(0, 1e-20, 0.05, 0.5, 1, NA)
+p_clean <- fix_p_for_acat(p_raw)
+
+}

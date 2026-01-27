@@ -18,54 +18,66 @@ magcat_acat_pathways(
 )
 }
 \arguments{
-\item{gene_results}{data.frame with at least a gene ID column and a p-value column.
-For MAGMA \code{.genes.out}, these are commonly \code{GENE} and \code{P}.}
+\item{gene_results}{data.frame with at least a gene ID column and a
+p-value column. For MAGMA \code{.genes.out}, these are commonly
+\code{GENE} and \code{P}.}
 
 \item{pathways}{Either:
 \itemize{
-\item A named list: each element is a character vector of gene IDs in that pathway, OR
-\item A data.frame with columns \code{pathway_id}, \code{gene_id} (and optional \code{pathway_name}).
+\item A named list: each element is a character vector of gene IDs
+in that pathway, OR
+\item A data.frame with columns \code{pathway_id}, \code{gene_id}
+(and optional \code{pathway_name}).
 }}
 
-\item{species}{Optional; one of "maize", "sorghum", "arabidopsis", "plant".
-If provided, built-in PMN pathways are loaded via \code{magcat_load_pathways()}.
-Provide either \code{pathways} OR \code{species}, but not both.}
+\item{species}{Character. One of "maize", "sorghum", "arabidopsis",
+"plant", or "fly". If provided, built-in pathways are loaded via
+\code{\link{magcat_load_pathways}}. Provide either \code{pathways}
+OR \code{species}, but not both.}
 
-\item{pmn_gene_col}{Optional; passed to \code{magcat_load_pathways(gene_col=...)}
-when \code{species} is used. If NULL, PMN loader prefers "Gene-name" then "Gene-id".}
+\item{pmn_gene_col}{Character or NULL. Passed to
+\code{magcat_load_pathways(gene_col=...)} when \code{species} is used.
+If NULL, the loader uses default gene column for each species.}
 
-\item{gene_col}{Column name in \code{gene_results} containing gene IDs (default "GENE").}
+\item{gene_col}{Character. Column name in \code{gene_results} containing
+gene IDs. Default \code{"GENE"}.}
 
-\item{p_col}{Column name in \code{gene_results} containing gene-level p-values (default "P").}
+\item{p_col}{Character. Column name in \code{gene_results} containing
+gene-level p-values. Default \code{"P"}.}
 
-\item{min_p}{Lower cap for very small p-values before ACAT (default 1e-15).}
+\item{min_p}{Numeric. Lower cap for very small p-values before ACAT.
+Default 1e-15.}
 
-\item{do_fix}{If TRUE (default), clean/cap p-values with \code{fix_p_for_acat()}.}
+\item{do_fix}{Logical. If TRUE (default), clean/cap p-values with
+\code{\link{fix_p_for_acat}}.}
 
-\item{output}{If TRUE, write a CSV of results to \code{out_dir}.}
+\item{output}{Logical. If TRUE, write a CSV of results to \code{out_dir}.}
 
-\item{out_dir}{Directory to write CSV when \code{output = TRUE} (default "magcat_acat").}
+\item{out_dir}{Character. Directory to write CSV when \code{output = TRUE}.
+Default \code{"magcat_acat"}.}
 }
 \value{
 A data.frame with columns:
 \describe{
 \item{pathway_id}{Pathway identifier}
-\item{pathway_name}{Pathway name (if available; otherwise equals \code{pathway_id})}
+\item{pathway_name}{Pathway name (if available; otherwise equals
+\code{pathway_id})}
 \item{n_genes}{Number of genes used in ACAT for this pathway}
-\item{gene_names}{Semicolon-separated gene IDs actually used (from \code{gene_results})}
+\item{gene_names}{Semicolon-separated gene IDs actually used}
 \item{acat_p}{ACAT p-value}
 }
-Rows are sorted by \code{acat_p} in increasing order (smallest p first; NA at bottom).
-If \code{output = TRUE}, an attribute \code{"file"} is attached with the CSV path.
+Rows are sorted by \code{acat_p} in increasing order (smallest p first;
+NA at bottom). If \code{output = TRUE}, an attribute \code{"file"} is
+attached with the CSV path.
 }
 \description{
 Computes a self-contained pathway p-value per gene set by combining the
 member gene p-values using ACAT (Cauchy combination).
 }
 \details{
-Gene IDs are matched case-insensitively: both \code{gene_results[[gene_col]]} and
-\code{pathways} gene IDs are normalized to lower-case before matching. Genes that
-do not appear in \code{gene_results} are dropped for that pathway.
+Gene IDs are matched case-insensitively: both \code{gene_results[[gene_col]]}
+and pathway gene IDs are normalized to lower-case before matching. Genes
+that do not appear in \code{gene_results} are dropped for that pathway.
 }
 \examples{
 \dontrun{
@@ -94,6 +106,8 @@ acat_custom <- magcat_acat_pathways(
 
 }
 \seealso{
+\code{\link{magcat_load_pathways}} for loading pathway definitions
+
 \code{\link{magcat_fisher_pathways}}, \code{\link{magcat_minp_pathways}},
-\code{\link{magcat_omni2_pathways}}, \code{\link{magcat_load_pathways}}
+\code{\link{magcat_omni2_pathways}} for other p-value combination methods
 }
