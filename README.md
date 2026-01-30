@@ -945,21 +945,6 @@ By default, it is **excluded** from the resampling-calibrated omnibus (`include_
 
 ---
 
-\subsection*{5.9 Addressing common questions}
-
-\textbf{Q: Why not just use the best component test?}
-A: Unknown a priori which pattern exists. Omnibus adapts without multiple testing penalty.
-
-\textbf{Q: Why not use component-calibrated p-values for inference?}
-A: They remain correlated. Omnibus calibration directly targets the composite decision rule.
-
-\textbf{Q: Isn't double calibration (component then omnibus) over-conservative?}
-A: Yes, which is why it's optional for diagnostics only. Primary inference uses single omnibus calibration.
-
-\textbf{Q: How many permutations B are needed?}
-A: For $α=0.05$, $B≥1000$ gives stable estimates. For FDR control, $B≥10,000$ recommended.
-
----
 
 ## 6) Multiple testing correction
 
@@ -970,6 +955,25 @@ q_{\mathrm{BH}}(S)=\mathrm{BH}\big(p_{\mathrm{omni,final}}(S)\big)
 $$
 
 Since each pathway produces a single final omnibus p-value, no supplementary penalty is necessary for the quantity of component tests. The post hoc "best-of-tests" selection is inherently addressed by the resampling calibration when activated.
+
+---
+
+## 7) Addressing common questions
+
+**Q: Why not just use the best component test?** <br>
+A: Unknown a priori which pattern exists. Omnibus adapts without multiple testing penalty.
+
+
+**Q: Why not use component-calibrated p-values for inference?** <br>
+A: They remain correlated. Omnibus calibration directly targets the composite decision rule.
+
+
+**Q: Isn't double calibration (component then omnibus) over-conservative?** <br>
+A: Yes, which is why it's optional for diagnostics only. Primary inference uses single omnibus calibration, either at the component level or at the OMNIBUS level.
+
+
+**Q: How many permutations B are needed?** <br>
+A: For $α=0.05$, $B≥1000$ gives stable estimates. For FDR control, $B≥10,000$ recommended.
 
 ---
 
