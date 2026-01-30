@@ -358,7 +358,20 @@ $$
 p_{\mathrm{ACAT}}(S) = \tfrac{1}{2} - \frac{1}{\pi}\arctan\left(T_{\mathrm{ACAT}}(S)\right).
 $$
 
-ACAT is asymptotically dominated by the smallest p-values, and is therefore sensitive to SDAs.
+ACAT is asymptotically dominated by the smallest p-values, and is therefore sensitive to SDAs. In practice, ACAT’s Cauchy transform is undefined at exact boundary p-values (0 or 1) because $\tan\{\pi(1/2-p)\}$ diverges. Therefore, prior to computing $T_{\mathrm{ACAT}}(S)$ we clip gene p-values to a safe open interval:
+
+$$
+p_g \leftarrow \min\{1-p_{\min}\,\max(p_g\,p_{\min})\},\qquad p_{\min}=10^{-15}.
+$$
+
+In addition, if a gene appears multiple times in the pathway input (e.g., duplicate mapping entries), we collapse duplicates so that each gene contributes **once**, using the smallest p-value observed for that gene:
+
+$$
+p_g \leftarrow \min\{p_{g,1},p_{g,2},\ldots\}.
+$$
+
+This ensures that ACAT is computed over the set of **unique genes** in $S$ and avoids inflating evidence by repeated gene entries.
+
 
 ---
 
@@ -380,48 +393,53 @@ $$
 
 where $F_{\chi^2_{2G}}(\cdot)$ is the $\chi^2$ CDF with $2G$ degrees of freedom.
 
-Fisher is sensitive to CMEs.
+Fisher is sensitive to CMEs. To avoid undefined values in $\log(p_g)$ when p-values are extremely small or numerically zero, we apply the same clipping rule as above:
+$$
+p_g \leftarrow \min\{1-p_{\min},\,\max(p_g,\,p_{\min})\},\qquad p_{\min}=10^{-15}.
+$$
+
+If a gene appears multiple times in the input for a pathway (duplicate gene entries), we retain one value per gene by collapsing duplicates using the minimum p-value for that gene before computing $T_{\mathrm{Fisher}}(S)$. Thus Fisher’s statistic is computed on the set of unique pathway genes.
 
 ---
 
 ### 3.3 Adaptive Soft TFisher
 
-A practical limitation of fixed- $\tau$ soft TFisher is that the appropriate tail-focus is contingent upon the *unknown* pathway topology (dense versus sparse, weak versus strong). TFisher proposes a **omnibus, data-adaptive** selection of truncation and weighting parameters, termed **oTFisher**, which autonomously identifies the most advantageous configuration for the observed p-value distribution (ref).
+A practical limitation of choosing a single soft-threshold parameter $\tau$ is that the optimal tail focus depends on the (unknown) pathway signal pattern (sparse vs. diffuse, weak vs. strong). CATFISH therefore uses an **adaptive soft TFisher** defined by evaluating the soft TFisher statistic over a small grid of $\tau$ values and taking the best (smallest) resulting p-value.
 
-#### Soft TFisher family
+#### Soft TFisher statistic (per $\tau$)
 
-For a pathway $S$ with adjusted gene-level p-values $\{p_g\}_{g\in S}$ and a soft-threshold parameter $\tau\in(0,1]$, the soft TFisher statistic is
+For a pathway $S$ with gene-level p-values $\{p_g\}_{g\in S}$ and a soft-threshold $\tau\in(0,1]$, the soft TFisher statistic is
 
-$$W^{\mathrm{soft}}(S;\tau)=\sum_{g\in S}\left[-2\log(p_g)+2\log(\tau)\right]_{+},\qquad (x)_+=\max(x,0)$$
+$$
+W^{\mathrm{soft}}(S;\tau)=\sum_{g\in S}\left[-2\log(p_g)+2\log(\tau)\right]_{+},
+\qquad (x)_+=\max(x,0).
+$$
 
-This is the $\tau_1=\tau_2=\tau$ special case of the TFisher family and implements a continuous down-weighting near the cutoff (soft vs hard truncation). 
+This is a continuous (soft) down-weighting near the cutoff, in contrast to hard truncation.
 
-#### Data-adaptive $\tau$ (oTFisher)
+#### Adaptive selection over a fixed $\tau$ grid
 
-Let $\mathcal{T}=\{\tau_1,\dots,\tau_m\}$ be a small grid of candidate thresholds (e.g. a few small/medium/large values; TFisher shows that a sparse grid is usually sufficient). 
+Let $\mathcal{T}=\{\tau_1,\dots,\tau_m\}$ be a fixed grid of candidate thresholds. In the CATFISH implementation, the default grid is:
 
-For each $\tau_j\in\mathcal{T}$, we compute:
+$$
+\mathcal{T}=\{0.20,\;0.10,\;0.05,\;0.02,\;0.01,\;0.005,\;0.001\}.
+$$
 
-1) the statistic $W^{\mathrm{soft}}(S;\tau_j)$, and  
-2) its **null p-value**
-$$p_{\tau_j}(S)=\Pr\!\left(W^{\mathrm{soft}}(\cdot;\tau_j)\ge W^{\mathrm{soft}}(S;\tau_j)\mid H_0\right),$$
-using the TFisher null calculation for $W_n(\tau_1,\tau_2)$ with $\tau_1=\tau_2=\tau_j$. 
+For each $\tau\in\mathcal{T}$, we compute $W^{\mathrm{soft}}(S;\tau)$ and obtain a corresponding analytic null p-value $p_{\tau}(S)$ using the TFisher package’s calibration for the soft statistic.
+We then define the adaptive soft TFisher component as:
 
-Then, we define the adaptive soft TFisher omnibus as the minimum across the grid as:
+$$
+p_{\mathrm{aTF}}(S)=\min_{\tau\in\mathcal{T}} p_{\tau}(S).
+$$
 
-$$p_{\mathrm{aTF}}(S)=\min_{\tau\in\mathcal{T}} p_{\tau}(S)$$
+Because the values $\{p_{\tau}(S)\}_{\tau\in\mathcal{T}}$ are dependent (they reuse the same gene p-values), the TFisher package provides an analytic omnibus calibration for the minimum across $\tau$. CATFISH uses this resulting $p_{\mathrm{aTF}}(S)$ as the **component** TFisher p-value, and then accounts for LD-induced gene–gene correlation and cross-method dependence at the final omnibus calibration stage (Section 4). To avoid $\log(0)$ and other numerical issues, gene p-values are clipped to:
 
-This is the oTFisher concept, tailored to the soft-thresholding line $\tau_1=\tau_2$. Due to the dependence of the $p_{\tau_j}(S)$ (originating from the same ordered p-values), oTFisher offers an analytic calibration for the minimum across the grid by employing a multivariate normal approximation of the vector comprising component TFisher statistics (calculated through multivariate normal probabilities). In the soft scenario when $\tau_1=\tau_2=\tau$, the mean and covariance are simplified, allowing for efficient computation of the multivariate normal (MVN) probability, such as by Genz-style MVN cumulative distribution function (CDF). 
+$$
+p_g \leftarrow \min\{1-p_{\min},\,\max(p_g,\,p_{\min})\},\qquad p_{\min}=10^{-15}.
+$$
 
-In CATFISH terminology, this provides a adaptive tail sensor without the necessity of hard-coding a single $\tau$ and without the need for extensive permutation for the within-method calibration (we still overlay our MVN/perm framework for the final omnibus across methods).
+If a gene appears multiple times in the pathway input, duplicate entries are collapsed so that each gene contributes once, using the minimum p-value for that gene prior to computing $W^{\mathrm{soft}}(S;\tau)$.
 
-A minimal grid that usually works well in practice is something like:
-
-$$\mathcal{T}=(\{0.01\,0.05\,0.5\,1\})$$
-
-which oTFisher explicitly uses in its soft-thresholding omnibus examples, and which covers “rare-ish hits”, “moderate tail”, and “nearly Fisher”.
-
-The oTFisher is more tailored towards HDS.
 
 ---
 
@@ -451,6 +469,25 @@ $$p_{\mathrm{stouffer}}^{(2\text{-sided})}(S)=2\,\Phi\!\left(-\left|Z_{\mathrm{s
 
 This is not the default for MAGMA-style association-strength Z scores.
 
+In the CATFISH implementation, Stouffer’s test defaults to a **one-sided** alternative, `alternative = "greater"`, i.e. we test whether the pathway’s aggregated MAGMA association-strength scores are unusually large:
+
+$$
+H_0:\; Z_{\mathrm{stouffer}}(S)\sim \mathcal{N}(0,1)
+\qquad \text{vs}\qquad
+H_1:\; Z_{\mathrm{stouffer}}(S) > 0.
+$$
+
+This default is appropriate for MAGMA’s gene-level $Z$ statistics (e.g. `ZSTAT`), which represent **strength of association** (higher = stronger evidence) rather than a signed direction of effect (trait-increasing vs trait-decreasing).  
+
+If the user provides genuinely **signed** gene-level Z-scores (e.g., from an effect-direction-aware gene model), CATFISH can optionally report a **two-sided** Stouffer p-value:
+
+$$
+p_{\mathrm{stouffer}}^{(2\text{-sided})}(S)=2\,\Phi\!\left(-\left|Z_{\mathrm{stouffer}}(S)\right|\right).
+$$
+
+Finally, the analytic Stouffer p-values above rely on the standard Z-test reference calibration, which implicitly assumes **independent** gene-level statistics. In practice, genes within a pathway can be correlated (LD / local genomic structure), so CATFISH treats the analytic Stouffer p-value as a *component summary* and addresses dependence at the **final omnibus calibration stage**
+(Section 4; MVN/global resampling).
+
 ---
 
 ### 3.5 minP / Tippett test
@@ -468,6 +505,16 @@ p_{\mathrm{tippett}} = 1 - (1 - p_{\min})^{G}.
 $$
 
 However, CATFISH does not rely on this analytic mapping for inference because gene-level test statistics within a pathway are typically dependent (see Section~4). The minP statistic is emphasized not because it is uniquely sensitive to dependence (all constituent statistics are), but because it represents a qualitatively distinct mode of evidence that is driven almost entirely by the single most significant gene. Consequently, $(T_{\min}) serves primarily as a detector of sparse, single-gene–driven signals (SDA/SGP-type patterns), thereby complementing aggregate combination procedures (Fisher, Stouffer, softTFisher, ACAT) that are designed to capture more diffuse enrichment. We identify potential single-gene proxy pathways via a leave-one-gene-out diagnostic, in which the top-ranking gene is removed, and the test statistic is recomputed.
+
+CATFISH reports the canonical independence-based calibration for the minimum gene p-value using the Šidák/Tippett transform:
+
+$$
+p_{\mathrm{tippett}}(S) \;=\; 1 - \big(1 - p_{\min}(S)\big)^{G}.
+$$
+
+This analytic mapping is provided as the **component** minP p-value (i.e., treating the $G$ gene tests as independent). As with other component tests, this raw minP p-value does **not** account for LD-induced gene–gene correlation within pathways. Dependence is handled later through the unified null calibration used for the final omnibus (Section 4; MVN/global resampling), where minP is recomputed under the same null draws as the other component statistics.
+
+To prevent duplicated genes from inflating evidence, pathway inputs are collapsed to **unique genes** prior to computing $p_{\min}(S)$: if a gene appears multiple times, we retain a single value using the minimum p-value for that gene. Thus $G$ denotes the number of unique genes in $S$.
 
 ---
 
