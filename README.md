@@ -958,7 +958,36 @@ Since each pathway produces a single final omnibus p-value, no supplementary pen
 
 ---
 
-## 7) Addressing common questions
+## 7) Candidate-gene prioritization by multi-layer evidence (GWAS + MAGMA + Pathways)
+
+To prioritize candidate genes beyond “top SNPs only”, we integrate evidence across three complementary layers: (i) **GWAS locus evidence** (variant/locus-level signal mapped to genes), (ii) **MAGMA gene-level association** (LD-aware aggregation of SNP effects into a gene p-value), and (iii) **pathway-level enrichment** (set-level signal capturing coordinated/polygenic effects across biologically related genes). Each layer detects partially distinct signal patterns, so genes supported by multiple layers are treated as higher-confidence candidates than genes supported by only one layer.
+
+We summarize multi-layer support using an interpretable **support-count + strength score**. For each gene \(g\), we add one point for each analytical layer that passes a predefined significance threshold (GWAS locus support, MAGMA gene-level significance, and pathway membership), and then incorporate modest contributions from the continuous strength of evidence within each layer using $(-\log_{10}(p)$) terms:
+
+```math
+\mathrm{score}(g)
+=
+\mathbf{1}\{\mathrm{GWAS}\}
++
+\mathbf{1}\{\mathrm{MAGMA}\}
++
+\mathbf{1}\{\mathrm{PATH}\}
++
+0.2\cdot\left[-\log_{10}\!\left(p_{\mathrm{MAGMA}}\right)\right]
++
+0.1\cdot\left[-\log_{10}\!\left(p_{\mathrm{GWAS}}\right)\right]
++
+0.1\cdot\left[-\log_{10}\!\left(p_{\mathrm{PATH}}\right)\right].
+```
+
+
+This formulation is intentionally conservative: the **discrete support terms dominate** so that agreement across independent layers matters more than any single extremely small p-value, while the weighted $(-\log_{10}(p)$) components preserve **within-layer ranking** (distinguishing marginal from strong signals). In practice, we prioritize genes with **≥2 layers** of support and rank them by the composite score to produce a focused, biologically grounded candidate list.
+
+**Figure interpretation (Panels A–D).** Panel **A** (UpSet) shows how candidate genes overlap across GWAS hits, MAGMA-significant genes, and genes in the top pathways; most genes are supported by a single layer, while a smaller subset shows multi-layer agreement. Panel **B** compares MAGMA signal for genes inside top pathways versus genes outside; pathway genes exhibit a statistically stronger distribution of MAGMA association, supporting the idea that pathway enrichment captures coordinated gene-level signal. Panel **C** summarizes counts of single-layer versus multi-layer candidates, highlighting that multi-layer support yields a much smaller, higher-confidence set. Panel **D** plots GWAS strength against MAGMA strength per gene and annotates genes by pathway membership/evidence class; genes supported by all layers cluster among the strongest signals, while pathway-supported genes can also appear in moderate-signal regions consistent with coordinated (polygenic) enrichment.
+
+---
+
+## 8) Addressing common questions
 
 **Q: Why not just use the best component test?** <br>
 A: Unknown a priori which pattern exists. Omnibus adapts without multiple testing penalty.
