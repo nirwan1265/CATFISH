@@ -172,3 +172,49 @@ magma_genesraw_to_cor_pairs_banded <- function(genes_raw_file,
 
   invisible(out_pairs_file)
 }
+
+# Usage
+# Directory
+raw_dir <- "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/"
+# Fly
+raw_file="/Users/nirwantandukar/Documents/Research/results/DGRP/MAGMA/Fly_magma_genes_by_chr_female"
+chr_files <- list.files(path = "/Users/nirwantandukar/Documents/Research/results/DGRP/MAGMA/Fly_magma_genes_by_chr_female",
+        pattern = "^Female_starvation_fly_.*\\.genes\\.raw$",
+        full.names = TRUE)
+
+
+out_pairs <- file.path(raw_dir, "magma_gene_cor_pairs_MLM_Fly_female.txt")
+if (file.exists(out_pairs)) file.remove(out_pairs)
+
+first <- TRUE
+for (f in chr_files) {
+  tmp <- paste0(tempfile(), ".txt")
+
+  magma_genesraw_to_cor_pairs_banded(
+    genes_raw_file = f,
+    out_pairs_file = tmp,
+    keep_abs_r_ge  = 0,
+    overwrite      = TRUE,
+    verbose        = FALSE
+  )
+
+  x <- readLines(tmp, warn = FALSE)
+  if (!length(x)) next
+  if (!first) x <- x[-1]  # drop header
+  writeLines(x, out_pairs, useBytes = TRUE, sep = "\n", append = !first)
+  first <- FALSE
+}
+
+head(x)
+out_pairs
+
+x <- x[nzchar(x)]          # <-- drop blank lines
+
+if (!first) x <- x[-1]     # drop header after first file
+
+cat(paste(x, collapse = "\n"), "\n",
+    file = out_pairs, append = !first)
+first <- FALSE
+head(x)
+
+writeLines(x, out_pairs, useBytes = TRUE, sep = "\n")

@@ -604,7 +604,7 @@ pw_res <- catfish_acat_pathways(
   output       = TRUE,
   out_dir      = "acat_results_GLM"
 )
-args(CATFISH::catfish_acat_pathways)
+
 
 # Fisher
 f_res= catfish_fisher_pathways( genes_adj,
@@ -794,7 +794,7 @@ chr_files <- chr_files[order(chr_num)]
 
 
 
-out_pairs <- file.path(raw_dir, "magma_gene_cor_pairs_MLM_Fly.txt")
+out_pairs <- file.path(raw_dir, "magma_gene_cor_pairs_MLM_Fly_female.txt")
 if (file.exists(out_pairs)) file.remove(out_pairs)
 
 first <- TRUE
@@ -907,45 +907,21 @@ omni_results <- catfish_omni2_pathways(
   #magma_out      = out,              # MAGMA competitive p-values
   include_magma_in_omni = FALSE,
   include_magma_in_perm = FALSE,                # only for analytic omnibus, no MAGMA in permutations
-  omnibus        = "minP",                      # or "minP"
+  omnibus        = "ACAT",                      # "ACAT" or "minP"
   B_perm         = 10000L,                        # number of permutations for omnibus
-  perm_mode      = "mvn",                       # or "global", "both", "none"
-  magma_cor_file = "/Users/nirwantandukar/Documents/Research/results/MAGMA/CATFISH/magma_multi_snp_wise_genes_by_chr_N_maize//magma_gene_cor_pairs_MLM_arabidopsis.txt",  # 3-column file gene1 gene2 r
+  perm_mode      = "mvn",                       # "mvn"or "global", "both", "none"
+  magma_cor_file = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/magma_gene_cor_pairs_MLM_arabidopsis.txt",  # 3-column file gene1 gene2 r
   make_PD        = TRUE,
-  mvn_marginal = "uniform", # NEW
+  mvn_marginal = "uniform", # “uniform”, “empirical”
   mvn_calibrate_components = TRUE, # NEW
   seed           = 123,
   output         = TRUE,
   out_dir        = "catfish_omnibus_results_Arabidopsis_B10000"
 )
 
-head(mni_omni)
+head(omni_results)
 
 args(CATFISH::catfish_omni2_pathways)
-
-
-
-res <- catfish_omni2_pathways(
-  gene_results = genes_adj,
-  species      = "maize",
-  gene_col     = "GENE",
-  p_raw_col    = "P",
-  p_adj_col    = "P_adj",
-  z_col        = "Z_adj",
-  omnibus      = "ACAT",
-
-  B_perm    = 100L,
-  perm_mode = "both",
-  magma_out = out,       # data.frame(pathway_id, magma_pvalue)
-  include_magma_in_omni = TRUE,     # include as a 6th component
-  include_magma_in_perm = FALSE,    # keep FALSE (recommended)
-
-  perm_pool      = "obs",
-  magma_cor_file="/Users/nirwantandukar/Documents/Research/results/MAGMA/CATFISH/magma_multi_snp_wise_genes_by_chr_N_maize/magma_gene_cor_pairs_MLM.txt",
-  make_PD         = TRUE,
-  mvn_marginal    = "uniform",
-  seed=123, output=TRUE, out_dir="catfish_omni2_results_MLM"
-)
 
 devtools::install(build_vignettes = TRUE)                                             
 browseVignettes("CATFISH") 
