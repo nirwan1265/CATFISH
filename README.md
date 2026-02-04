@@ -1432,13 +1432,19 @@ minp_res <- catfish_minp_pathways(
 
 ## RESULTS
 
-## Component pathway tests capture complementary signal classes despite shared inputs and joint MVN calibration in Arabidopsis 1001 genome for Bio6 GWAS.
+## Component pathway tests capture unique pathway classes in Arabidopsis 1001 Bio6 GWAS.
 
 We used BIO6 (minimum temperature of the coldest month) as an environmental phenotype for *Arabidopsis thaliana* accessions from the 1001 genome project. BIO6 quantifies the long-term intensity of winter cold at the geographic origin of each accession and is widely employed as a proxy for the strength of cold-environment selection [ref]. Analyses were conducted using accessions from the Arabidopsis 1001 Genomes Project, which constitute a globally distributed natural population spanning broad latitudinal and climatic gradients. This panel comprises accessions originating from both relatively mild and strongly cold winter environments, thereby generating continuous variation in BIO6 across the population [ref]. SNP associations were mapped to genes, gene-level statistics were aggregated into pathway enrichment tests, and pathway-level significance was summarized/compared across methods using our CATFISH framework. To evaluate whether CATFISH’s component tests contribute distinct information rather than redundant evidence, we compared the five component tests (ACAT, Fisher, soft TFisher, minP, and Stouffer) on the *Arabidopsis* BIO6 GWAS (1001 Genomes). All component \(p\)-values were MVN-calibrated using the same dependence-preserving null generator. To evaluate the concordance of pathway prioritization across statistical approaches, we identified the top 15 pathways from each method and visualized their intersections (Fig. A–B). We selected 15 as the cutoff because it is the smallest number of top-ranked pathways that yielded at least one pathway in common across all component tests.
 
-
-![Arabidopsis Lowest Temperature Environmental GWAS](Figures/Fig3/Fig3.png)
-*[Arabidopsis Lowest Temperature Environmental GWAS*
+![Component pathway tests](Figures/Fig1.component_test_arabidopsis/Fig.Compare_component_test_arabidopsis.png)
+*Fig. 1 | Component pathway tests capture unique pathway classes despite shared gene-level inputs.  
+(A) Five-way Venn diagram of overlap among the top 20 significant pathways identified by each component test (ACAT, Fisher, soft TFisher, minP, Stouffer). Numbers indicate the count of pathways in each intersection region, highlighting both a shared core and method-specific discoveries.  
+(B) UpSet plot representation of the same top-20 pathway overlaps shown in (A), displaying intersection sizes (bars) and the corresponding set-membership patterns (dot matrix).  
+(C) Pairwise Jaccard similarity between component test; higher values indicate stronger overlap.  
+(D) Pairwise Spearman rank correlation of pathway significance rankings across all tested pathways.  
+(E) Density estimates of pathway-level significance summarized as $$−log10(p)$$ for each component test.  
+(F) Boxplots of $$−log10(p)$$ across all pathways for each component test, illustrating differences in central tendency and tail behavior among methods.  
+All component p-values are calibrated under the same dependence-preserving multivariate normal (MVN) null generator.*
 
 Set-overlap visualizations indicate that no individual component test is merely a surrogate for another, rather, each test contributes a non-trivial proportion of uniquely identified top pathways, in addition to a core set of shared pathways. This is consistent with the designed functional roles of the component layers. Section 4.1 explains somme of the correlations between the component tests. Thus, the partial overlap in panels A–B is anticipated, reflecting shared underlying biology and common input data, whereas the non-overlapping regions underscore that the different components are capturing distinct archetypes of pathway-level association.
 
