@@ -1,0 +1,51 @@
+"pathway_id","pathway_name","pvalue","method","rank"
+"PWY-5884","wax esters biosynthesis I",0.0020997900209979,"ACAT",1
+"PWY-5064","chlorophyll <i>a</i> biosynthesis II",0.0041995800419958,"ACAT",2
+"PWY-5936","xyloglucan biosynthesis",0.0061993800619938,"ACAT",3
+"PWY-622","starch biosynthesis",0.0077992200779922,"ACAT",4
+"PWY-7193","pyrimidine ribonucleosides salvage I",0.0137986201379862,"ACAT",5
+"PWY-5084","2-oxoglutarate decarboxylation to succinyl-CoA",0.01999800019998,"ACAT",6
+"PWY-7343","UDP-&alpha;-D-glucose biosynthesis I",0.0351964803519648,"ACAT",7
+"PWY-5863","superpathway of phylloquinol biosynthesis",0.0391960803919608,"ACAT",8
+"PWY-6121","5-aminoimidazole ribonucleotide biosynthesis I",0.043995600439956,"ACAT",9
+"PWY-6122","5-aminoimidazole ribonucleotide biosynthesis II",0.0451954804519548,"ACAT",10
+"PWY-5884","wax esters biosynthesis I",0.0021997800219978,"Fisher",1
+"PWY-5064","chlorophyll <i>a</i> biosynthesis II",0.0115988401159884,"Fisher",2
+"PWY-5084","2-oxoglutarate decarboxylation to succinyl-CoA",0.0778922107789221,"Fisher",3
+"PWY-4","UDP-&alpha;-D-galacturonate biosynthesis II (from D-galacturonate)",0.0778922107789221,"Fisher",4
+"PYRIDNUCSYN-PWY","NAD <i>de novo</i> biosynthesis I (from aspartate)",0.0920907909209079,"Fisher",5
+"PWY-6623","salicylate glucosides biosynthesis II",0.118488151184882,"Fisher",6
+"PWY-6477","gibberellin inactivation II (methylation)",0.128287171282872,"Fisher",7
+"PWY-6121","5-aminoimidazole ribonucleotide biosynthesis I",0.154884511548845,"Fisher",8
+"PWY-6122","5-aminoimidazole ribonucleotide biosynthesis II",0.161483851614839,"Fisher",9
+"PWY-6287","neurosporene biosynthesis",0.161683831616838,"Fisher",10
+"PWY-5884","wax esters biosynthesis I",9.99900009999e-05,"TFisher",1
+"PWY-5936","xyloglucan biosynthesis",0.0002999700029997,"TFisher",2
+"PWY-622","starch biosynthesis",0.0012998700129987,"TFisher",3
+"PWY-7193","pyrimidine ribonucleosides salvage I",0.086991300869913,"TFisher",4
+"PWY-6235","hydroxyjasmonate sulfate biosynthesis",0.133786621337866,"TFisher",5
+"PWY-1801","formaldehyde oxidation II (glutathione-dependent)",0.184481551844816,"TFisher",6
+"HEXPPSYN-PWY","hexaprenyl diphosphate biosynthesis",0.185781421857814,"TFisher",7
+"PWY4FS-12","VTC2 cycle",0.186881311868813,"TFisher",8
+"XYLCAT-PWY","D-xylose degradation I",0.186881311868813,"TFisher",9
+"PWY-4","UDP-&alpha;-D-galacturonate biosynthesis II (from D-galacturonate)",0.187281271872813,"TFisher",10
+"PWY-5884","wax esters biosynthesis I",0.0038996100389961,"minP",1
+"PWY-5064","chlorophyll <i>a</i> biosynthesis II",0.0041995800419958,"minP",2
+"PWY-5936","xyloglucan biosynthesis",0.0042995700429957,"minP",3
+"PWY-622","starch biosynthesis",0.0076992300769923,"minP",4
+"PWY-7193","pyrimidine ribonucleosides salvage I",0.0133986601339866,"minP",5
+"PWY-5084","2-oxoglutarate decarboxylation to succinyl-CoA",0.0196980301969803,"minP",6
+"PWY-5863","superpathway of phylloquinol biosynthesis",0.0331966803319668,"minP",7
+"PWY-7343","UDP-&alpha;-D-glucose biosynthesis I",0.0335966403359664,"minP",8
+"PWY-6287","neurosporene biosynthesis",0.0363963603639636,"minP",9
+"PWY-6122","5-aminoimidazole ribonucleotide biosynthesis II",0.040995900409959,"minP",10
+"PWY-5884","wax esters biosynthesis I",0.0016998300169983,"Stouffer",1
+"PWY-5064","chlorophyll <i>a</i> biosynthesis II",0.0117988201179882,"Stouffer",2
+"PWY-4","UDP-&alpha;-D-galacturonate biosynthesis II (from D-galacturonate)",0.018998100189981,"Stouffer",3
+"PWY-6623","salicylate glucosides biosynthesis II",0.0330966903309669,"Stouffer",4
+"PWY-6121","5-aminoimidazole ribonucleotide biosynthesis I",0.0353964603539646,"Stouffer",5
+"PWY-6122","5-aminoimidazole ribonucleotide biosynthesis II",0.0360963903609639,"Stouffer",6
+"PWY-82","UDP-&beta;-L-arabinose biosynthesis II (from &beta;-L-arabinose)",0.0371962803719628,"Stouffer",7
+"GLYCOLYSIS","glycolysis I (from glucose 6-phosphate)",0.0382961703829617,"Stouffer",8
+"PWY-6902","chitin degradation II (Vibrio)",0.0383961603839616,"Stouffer",9
+"SUCSYN-PWY","sucrose biosynthesis I (from photosynthesis)",0.0465953404659534,"Stouffer",10

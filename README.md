@@ -11,7 +11,7 @@ This Markdown is structured into:
 
 ## INTRODUCTION
 
-**CATFISH** (Combining <ins>**C**</ins>auchy combination (ACAT), <ins>**A**</ins>daptive TFisher (soft) test, <ins>**F**</ins>isher's test, m<ins>**I**</ins>n-P, and <ins>**S**</ins>touffer's method for <ins>**H**</ins>olistic pathway analysis) is a multi-test pathway framework built on LD-aware MAGMA gene-level GWAS statistics adjusted for gene length and SNP density that combines ACAT, soft TFisher, Fisher, Stouffer and minP. It then uses an omnibus test based on permutation-calibrated minP or ACAT to collapse these multiple pathway tests into a single, correlation-robust enrichment p-value that is sensitive to both sparse and polygenic pathway patterns. In short, CATFISH casts a wide net across complementary tests and reels in a single pathway p-value.
+**CATFISH** (Combining <ins>**C**</ins>auchy combination test (ACAT), <ins>**A**</ins>daptive TFisher (soft) test, <ins>**F**</ins>isher's test, m<ins>**I**</ins>n-P, and <ins>**S**</ins>touffer's method for <ins>**H**</ins>olistic pathway analysis) is a multi-test pathway framework built on LD-aware MAGMA gene-level GWAS statistics adjusted for gene length and SNP density that combines ACAT, soft TFisher, Fisher, Stouffer and minP. It then uses an omnibus test based on permutation-calibrated minP or ACAT to collapse these multiple pathway tests into a single, correlation-robust enrichment p-value that is sensitive to both sparse and polygenic pathway patterns. In short, CATFISH casts a wide net across complementary tests and reels in a single pathway p-value.
 
 CATFISH uses:
 
@@ -358,7 +358,20 @@ $$
 p_{\mathrm{ACAT}}(S) = \tfrac{1}{2} - \frac{1}{\pi}\arctan\left(T_{\mathrm{ACAT}}(S)\right).
 $$
 
-ACAT is asymptotically dominated by the smallest p-values, and is therefore sensitive to SDAs.
+ACAT is asymptotically dominated by the smallest p-values, and is therefore sensitive to SDAs. In practice, ACAT’s Cauchy transform is undefined at exact boundary p-values (0 or 1) because $\tan\{\pi(1/2-p)\}$ diverges. Therefore, prior to computing $T_{\mathrm{ACAT}}(S)$ we clip gene p-values to a safe open interval:
+
+$$
+p_g \leftarrow \min\{1-p_{\min}\,\max(p_g\,p_{\min})\},\qquad p_{\min}=10^{-15}.
+$$
+
+In addition, if a gene appears multiple times in the pathway input (e.g., duplicate mapping entries), we collapse duplicates so that each gene contributes **once**, using the smallest p-value observed for that gene:
+
+$$
+p_g \leftarrow \min\{p_{g,1},p_{g,2},\ldots\}.
+$$
+
+This ensures that ACAT is computed over the set of **unique genes** in $S$ and avoids inflating evidence by repeated gene entries.
+
 
 ---
 
@@ -380,48 +393,53 @@ $$
 
 where $F_{\chi^2_{2G}}(\cdot)$ is the $\chi^2$ CDF with $2G$ degrees of freedom.
 
-Fisher is sensitive to CMEs.
+Fisher is sensitive to CMEs. To avoid undefined values in $\log(p_g)$ when p-values are extremely small or numerically zero, we apply the same clipping rule as above:
+$$
+p_g \leftarrow \min\{1-p_{\min},\,\max(p_g,\,p_{\min})\},\qquad p_{\min}=10^{-15}.
+$$
+
+If a gene appears multiple times in the input for a pathway (duplicate gene entries), we retain one value per gene by collapsing duplicates using the minimum p-value for that gene before computing $T_{\mathrm{Fisher}}(S)$. Thus Fisher’s statistic is computed on the set of unique pathway genes.
 
 ---
 
 ### 3.3 Adaptive Soft TFisher
 
-A practical limitation of fixed- $\tau$ soft TFisher is that the appropriate tail-focus is contingent upon the *unknown* pathway topology (dense versus sparse, weak versus strong). TFisher proposes a **omnibus, data-adaptive** selection of truncation and weighting parameters, termed **oTFisher**, which autonomously identifies the most advantageous configuration for the observed p-value distribution (ref).
+A practical limitation of choosing a single soft-threshold parameter $\tau$ is that the optimal tail focus depends on the (unknown) pathway signal pattern (sparse vs. diffuse, weak vs. strong). CATFISH therefore uses an **adaptive soft TFisher** defined by evaluating the soft TFisher statistic over a small grid of $\tau$ values and taking the best (smallest) resulting p-value.
 
-#### Soft TFisher family
+#### Soft TFisher statistic (per $\tau$)
 
-For a pathway $S$ with adjusted gene-level p-values $\{p_g\}_{g\in S}$ and a soft-threshold parameter $\tau\in(0,1]$, the soft TFisher statistic is
+For a pathway $S$ with gene-level p-values $\{p_g\}_{g\in S}$ and a soft-threshold $\tau\in(0,1]$, the soft TFisher statistic is
 
-$$W^{\mathrm{soft}}(S;\tau)=\sum_{g\in S}\left[-2\log(p_g)+2\log(\tau)\right]_{+},\qquad (x)_+=\max(x,0)$$
+$$
+W^{\mathrm{soft}}(S;\tau)=\sum_{g\in S}\left[-2\log(p_g)+2\log(\tau)\right]_{+},
+\qquad (x)_+=\max(x,0).
+$$
 
-This is the $\tau_1=\tau_2=\tau$ special case of the TFisher family and implements a continuous down-weighting near the cutoff (soft vs hard truncation). 
+This is a continuous (soft) down-weighting near the cutoff, in contrast to hard truncation.
 
-#### Data-adaptive $\tau$ (oTFisher)
+#### Adaptive selection over a fixed $\tau$ grid
 
-Let $\mathcal{T}=\{\tau_1,\dots,\tau_m\}$ be a small grid of candidate thresholds (e.g. a few small/medium/large values; TFisher shows that a sparse grid is usually sufficient). 
+Let $\mathcal{T}=\{\tau_1,\dots,\tau_m\}$ be a fixed grid of candidate thresholds. In the CATFISH implementation, the default grid is:
 
-For each $\tau_j\in\mathcal{T}$, we compute:
+$$
+\mathcal{T}=\{0.20,\;0.10,\;0.05,\;0.02,\;0.01,\;0.005,\;0.001\}.
+$$
 
-1) the statistic $W^{\mathrm{soft}}(S;\tau_j)$, and  
-2) its **null p-value**
-$$p_{\tau_j}(S)=\Pr\!\left(W^{\mathrm{soft}}(\cdot;\tau_j)\ge W^{\mathrm{soft}}(S;\tau_j)\mid H_0\right),$$
-using the TFisher null calculation for $W_n(\tau_1,\tau_2)$ with $\tau_1=\tau_2=\tau_j$. 
+For each $\tau\in\mathcal{T}$, we compute $W^{\mathrm{soft}}(S;\tau)$ and obtain a corresponding analytic null p-value $p_{\tau}(S)$ using the TFisher package’s calibration for the soft statistic.
+We then define the adaptive soft TFisher component as:
 
-Then, we define the adaptive soft TFisher omnibus as the minimum across the grid as:
+$$
+p_{\mathrm{aTF}}(S)=\min_{\tau\in\mathcal{T}} p_{\tau}(S).
+$$
 
-$$p_{\mathrm{aTF}}(S)=\min_{\tau\in\mathcal{T}} p_{\tau}(S)$$
+Because the values $\{p_{\tau}(S)\}_{\tau\in\mathcal{T}}$ are dependent (they reuse the same gene p-values), the TFisher package provides an analytic omnibus calibration for the minimum across $\tau$. CATFISH uses this resulting $p_{\mathrm{aTF}}(S)$ as the **component** TFisher p-value, and then accounts for LD-induced gene–gene correlation and cross-method dependence at the final omnibus calibration stage (Section 4). To avoid $\log(0)$ and other numerical issues, gene p-values are clipped to:
 
-This is the oTFisher concept, tailored to the soft-thresholding line $\tau_1=\tau_2$. Due to the dependence of the $p_{\tau_j}(S)$ (originating from the same ordered p-values), oTFisher offers an analytic calibration for the minimum across the grid by employing a multivariate normal approximation of the vector comprising component TFisher statistics (calculated through multivariate normal probabilities). In the soft scenario when $\tau_1=\tau_2=\tau$, the mean and covariance are simplified, allowing for efficient computation of the multivariate normal (MVN) probability, such as by Genz-style MVN cumulative distribution function (CDF). 
+$$
+p_g \leftarrow \min\{1-p_{\min},\,\max(p_g,\,p_{\min})\},\qquad p_{\min}=10^{-15}.
+$$
 
-In CATFISH terminology, this provides a adaptive tail sensor without the necessity of hard-coding a single $\tau$ and without the need for extensive permutation for the within-method calibration (we still overlay our MVN/perm framework for the final omnibus across methods).
+If a gene appears multiple times in the pathway input, duplicate entries are collapsed so that each gene contributes once, using the minimum p-value for that gene prior to computing $W^{\mathrm{soft}}(S;\tau)$.
 
-A minimal grid that usually works well in practice is something like:
-
-$$\mathcal{T}=(\{0.01\,0.05\,0.5\,1\})$$
-
-which oTFisher explicitly uses in its soft-thresholding omnibus examples, and which covers “rare-ish hits”, “moderate tail”, and “nearly Fisher”.
-
-The oTFisher is more tailored towards HDS.
 
 ---
 
@@ -451,6 +469,25 @@ $$p_{\mathrm{stouffer}}^{(2\text{-sided})}(S)=2\,\Phi\!\left(-\left|Z_{\mathrm{s
 
 This is not the default for MAGMA-style association-strength Z scores.
 
+In the CATFISH implementation, Stouffer’s test defaults to a **one-sided** alternative, `alternative = "greater"`, i.e. we test whether the pathway’s aggregated MAGMA association-strength scores are unusually large:
+
+$$
+H_0:\; Z_{\mathrm{stouffer}}(S)\sim \mathcal{N}(0,1)
+\qquad \text{vs}\qquad
+H_1:\; Z_{\mathrm{stouffer}}(S) > 0.
+$$
+
+This default is appropriate for MAGMA’s gene-level $Z$ statistics (e.g. `ZSTAT`), which represent **strength of association** (higher = stronger evidence) rather than a signed direction of effect (trait-increasing vs trait-decreasing).  
+
+If the user provides genuinely **signed** gene-level Z-scores (e.g., from an effect-direction-aware gene model), CATFISH can optionally report a **two-sided** Stouffer p-value:
+
+$$
+p_{\mathrm{stouffer}}^{(2\text{-sided})}(S)=2\,\Phi\!\left(-\left|Z_{\mathrm{stouffer}}(S)\right|\right).
+$$
+
+Finally, the analytic Stouffer p-values above rely on the standard Z-test reference calibration, which implicitly assumes **independent** gene-level statistics. In practice, genes within a pathway can be correlated (LD / local genomic structure), so CATFISH treats the analytic Stouffer p-value as a *component summary* and addresses dependence at the **final omnibus calibration stage**
+(Section 4; MVN/global resampling).
+
 ---
 
 ### 3.5 minP / Tippett test
@@ -468,6 +505,16 @@ p_{\mathrm{tippett}} = 1 - (1 - p_{\min})^{G}.
 $$
 
 However, CATFISH does not rely on this analytic mapping for inference because gene-level test statistics within a pathway are typically dependent (see Section~4). The minP statistic is emphasized not because it is uniquely sensitive to dependence (all constituent statistics are), but because it represents a qualitatively distinct mode of evidence that is driven almost entirely by the single most significant gene. Consequently, $(T_{\min}) serves primarily as a detector of sparse, single-gene–driven signals (SDA/SGP-type patterns), thereby complementing aggregate combination procedures (Fisher, Stouffer, softTFisher, ACAT) that are designed to capture more diffuse enrichment. We identify potential single-gene proxy pathways via a leave-one-gene-out diagnostic, in which the top-ranking gene is removed, and the test statistic is recomputed.
+
+CATFISH reports the canonical independence-based calibration for the minimum gene p-value using the Šidák/Tippett transform:
+
+$$
+p_{\mathrm{tippett}}(S) \;=\; 1 - \big(1 - p_{\min}(S)\big)^{G}.
+$$
+
+This analytic mapping is provided as the **component** minP p-value (i.e., treating the $G$ gene tests as independent). As with other component tests, this raw minP p-value does **not** account for LD-induced gene–gene correlation within pathways. Dependence is handled later through the unified null calibration used for the final omnibus (Section 4; MVN/global resampling), where minP is recomputed under the same null draws as the other component statistics.
+
+To prevent duplicated genes from inflating evidence, pathway inputs are collapsed to **unique genes** prior to computing $p_{\min}(S)$: if a gene appears multiple times, we retain a single value using the minimum p-value for that gene. Thus $G$ denotes the number of unique genes in $S$.
 
 ---
 
@@ -898,21 +945,6 @@ By default, it is **excluded** from the resampling-calibrated omnibus (`include_
 
 ---
 
-\subsection*{5.9 Addressing common questions}
-
-\textbf{Q: Why not just use the best component test?}
-A: Unknown a priori which pattern exists. Omnibus adapts without multiple testing penalty.
-
-\textbf{Q: Why not use component-calibrated p-values for inference?}
-A: They remain correlated. Omnibus calibration directly targets the composite decision rule.
-
-\textbf{Q: Isn't double calibration (component then omnibus) over-conservative?}
-A: Yes, which is why it's optional for diagnostics only. Primary inference uses single omnibus calibration.
-
-\textbf{Q: How many permutations B are needed?}
-A: For $α=0.05$, $B≥1000$ gives stable estimates. For FDR control, $B≥10,000$ recommended.
-
----
 
 ## 6) Multiple testing correction
 
@@ -923,6 +955,54 @@ q_{\mathrm{BH}}(S)=\mathrm{BH}\big(p_{\mathrm{omni,final}}(S)\big)
 $$
 
 Since each pathway produces a single final omnibus p-value, no supplementary penalty is necessary for the quantity of component tests. The post hoc "best-of-tests" selection is inherently addressed by the resampling calibration when activated.
+
+---
+
+## 7) Candidate-gene prioritization by multi-layer evidence (GWAS + MAGMA + Pathways)
+
+To prioritize candidate genes beyond “top SNPs only”, we integrate evidence across three complementary layers: (i) **GWAS locus evidence** (variant/locus-level signal mapped to genes), (ii) **MAGMA gene-level association** (LD-aware aggregation of SNP effects into a gene p-value), and (iii) **pathway-level enrichment** (set-level signal capturing coordinated/polygenic effects across biologically related genes). Each layer detects partially distinct signal patterns, so genes supported by multiple layers are treated as higher-confidence candidates than genes supported by only one layer.
+
+We summarize multi-layer support using an interpretable **support-count + strength score**. For each gene \(g\), we add one point for each analytical layer that passes a predefined significance threshold (GWAS locus support, MAGMA gene-level significance, and pathway membership), and then incorporate modest contributions from the continuous strength of evidence within each layer using $(-\log_{10}(p)$) terms:
+
+```math
+\mathrm{score}(g)
+=
+\mathbf{1}\{\mathrm{GWAS}\}
++
+\mathbf{1}\{\mathrm{MAGMA}\}
++
+\mathbf{1}\{\mathrm{PATH}\}
++
+0.2\cdot\left[-\log_{10}\!\left(p_{\mathrm{MAGMA}}\right)\right]
++
+0.1\cdot\left[-\log_{10}\!\left(p_{\mathrm{GWAS}}\right)\right]
++
+0.1\cdot\left[-\log_{10}\!\left(p_{\mathrm{PATH}}\right)\right].
+```
+
+
+This formulation is intentionally conservative: the **discrete support terms dominate** so that agreement across independent layers matters more than any single extremely small p-value, while the weighted $(-\log_{10}(p)$) components preserve **within-layer ranking** (distinguishing marginal from strong signals). In practice, we prioritize genes with **≥2 layers** of support and rank them by the composite score to produce a focused, biologically grounded candidate list.
+
+**Figure interpretation (Panels A–D).** Panel **A** (UpSet) shows how candidate genes overlap across GWAS hits, MAGMA-significant genes, and genes in the top pathways; most genes are supported by a single layer, while a smaller subset shows multi-layer agreement. Panel **B** compares MAGMA signal for genes inside top pathways versus genes outside; pathway genes exhibit a statistically stronger distribution of MAGMA association, supporting the idea that pathway enrichment captures coordinated gene-level signal. Panel **C** summarizes counts of single-layer versus multi-layer candidates, highlighting that multi-layer support yields a much smaller, higher-confidence set. Panel **D** plots GWAS strength against MAGMA strength per gene and annotates genes by pathway membership/evidence class; genes supported by all layers cluster among the strongest signals, while pathway-supported genes can also appear in moderate-signal regions consistent with coordinated (polygenic) enrichment.
+
+---
+
+## 8) Addressing common questions
+
+**Q: Why not just use the best component test?** <br>
+A: Unknown a priori which pattern exists. Omnibus adapts without multiple testing penalty.
+
+
+**Q: Why not use component-calibrated p-values for inference?** <br>
+A: They remain correlated. Omnibus calibration directly targets the composite decision rule.
+
+
+**Q: Isn't double calibration (component then omnibus) over-conservative?** <br>
+A: Yes, which is why it's optional for diagnostics only. Primary inference uses single omnibus calibration, either at the component level or at the OMNIBUS level.
+
+
+**Q: How many permutations B are needed?** <br>
+A: For $α=0.05$, $B≥1000$ gives stable estimates. For FDR control, $B≥10,000$ recommended.
 
 ---
 
@@ -1351,6 +1431,26 @@ minp_res <- catfish_minp_pathways(
 ---
 
 ## RESULTS
+
+## Component pathway tests capture complementary signal classes despite shared inputs and joint MVN calibration in Arabidopsis 1001 genome for Bio6 GWAS.
+
+We used BIO6 (minimum temperature of the coldest month) as an environmental phenotype for *Arabidopsis thaliana* accessions. BIO6 quantifies the long-term intensity of winter cold at the geographic origin of each accession and is widely employed as a proxy for the strength of cold-environment selection. Analyses were conducted using accessions from the Arabidopsis 1001 Genomes Project, which constitute a globally distributed natural population spanning broad latitudinal and climatic gradients. This panel comprises accessions originating from both relatively mild and strongly cold winter environments, thereby generating continuous variation in BIO6 across the population. SNP associations were mapped to genes, gene-level statistics were aggregated into pathway enrichment tests, and pathway-level significance was summarized/compared across methods using our CATFISH framework.
+
+![Arabidopsis Lowest Temperature Environmental GWAS](Figures/Fig3/Fig3.png)
+*[Arabidopsis Lowest Temperature Environmental GWAS*
+
+
+To evaluate whether CATFISH’s component pathway tests contribute genuinely distinct information (rather than redundant re-expressions of the same gene-level evidence), we compared five component tests (ACAT, Fisher, soft TFisher, minP, and Stouffer) on the Arabidopsis BIO6 GWAS (1001 Genomes). All component (p)-values were MVN-calibrated using the same dependence-preserving null generator, and the omnibus combined the *raw* (pre-MVN) component (p)-values before applying the same MVN calibration to the omnibus statistic. This design ensures (i) fair comparison across tests under matched null dependence, and (ii) that any observed differences among component hits reflect differences in *signal sensitivity* rather than calibration artifacts. To characterize the consistency with which pathways are prioritized across statistical approaches, we extracted the top 15 pathways from each method and visualized their overlap. We chose the number 15 because that the lowest number of pathways that gave us atleast 1 common pathway in all component tests.
+
+We assessed overlap among the strongest discoveries by taking the top 20 significant pathways from each component test. Set overlap visualizations (Fig. A–B) show that no single component test simply recapitulates another: each test contributes a non-trivial fraction of unique top pathways, alongside a core of shared hits. This is consistent with the intended behavior of the component layer: **minP and ACAT preferentially detect “driver-like” pathways dominated by one (or a few) very small gene-level (p_g)**; **Fisher and TFisher preferentially detect pathways with a broader tail of moderate-to-strong gene signals (TFisher concentrating weight toward smaller (p_g) via truncation/reweighting)**; and **Stouffer preferentially detects diffuse, directionally consistent enrichment when gene-level (Z_g) statistics align in sign and accumulate across many genes**. In other words, the partial overlap in A–B is expected (shared biology and shared inputs), but the *unique* regions demonstrate that different components are pulling out different pathway-level archetypes.
+
+To quantify similarity beyond binary overlap, we computed pairwise Jaccard similarity on the top-20 sets (Fig. C) and Spearman rank correlation of pathway rankings across *all* pathways (Fig. D). The Jaccard matrix (C) captures agreement at the “discovery set” level, while Spearman (D) captures concordance across the full ranking spectrum. These two views are complementary and together support a clean interpretation: **ACAT and minP show the strongest proximity** (high set overlap and higher rank concordance), consistent with both being tail-driven statistics sensitive to a single extreme gene. **Fisher and TFisher also show partial concordance**, consistent with both being monotone functions of aggregated (\log(p_g)), with TFisher acting as a truncated/weighted Fisher that strengthens emphasis on the most significant subset. Meanwhile, **Stouffer tends to be less aligned with the tail-driven tests**, reflecting its distinct dependence on signed (Z_g) aggregation rather than purely on the smallest (p_g). Importantly, moderate correlations do not contradict complementarity: they reflect the *deterministic coupling* induced by reusing the same underlying gene-level inputs, while the departures from perfect correlation reflect genuinely different weighting schemes and, therefore, different sensitivity profiles.
+
+Finally, we compared the empirical distributions of pathway-level significance across component tests (Fig. E–F). The density plots of (-\log_{10}(p)) (E) and the boxplots (F) indicate that the components differ not only in which pathways rise to the top, but also in how strongly they separate signal from background. In particular, **Fisher shows a strong mass near small (-\log_{10}(p)) with a pronounced enrichment of more significant values**, consistent with sensitivity to pathways containing many moderately associated genes. **TFisher exhibits a heavier extreme tail**, consistent with its truncation/reweighting amplifying pathways containing a concentrated subset of strong gene signals (often producing more extreme pathway (p)-values than Fisher when the signal is “peaky”). **ACAT and minP show tail-driven behavior**, as expected for methods dominated by the smallest gene-level evidence. **Stouffer shows a distinct distributional profile**, reflecting that it is driven by cumulative signed evidence across genes rather than by a single extreme (p_g). Together, these distributional differences reinforce the overlap and correlation results: the components are *not* interchangeable, and their divergence is systematic in ways that match their statistical design.
+
+Critically, these contrasts arise **despite** the fact that component tests are not jointly independent: they are deterministic functions of the same gene-level (p_g) (and sometimes (Z_g)) and, in real data, gene-level inputs are themselves correlated due to LD and shared architecture. The dependence structure described in our framework (deterministic coupling across components plus residual correlation across genes) predicts *some* concordance among methods, and also predicts that post hoc selection/combination requires dependence-aware calibration. The MVN-based unified null calibration addresses this directly by recomputing all component statistics (and the omnibus) from the same correlated null draws, ensuring valid inference under the full selection-and-combination procedure. Within this dependence-aware setting, the observed partial overlaps, structured correlation patterns, and distinct (p)-value distributions provide strong empirical evidence that CATFISH’s component layer captures **complementary pathway-level signal archetypes**, motivating the omnibus as a principled integrator rather than a redundant aggregation.
+
+
 
 ### *Drosophila melanogaster* Starvation Response GWAS example  
 
