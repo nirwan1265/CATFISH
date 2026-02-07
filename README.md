@@ -1448,8 +1448,6 @@ To translate SNP-level associations into gene-level evidence while accounting fo
 
 We next applied CATFISH to translate gene-level MAGMA association statistics into pathway-level inference using five complementary component tests: ACAT, Fisher’s method, TFisher, the minimum p-value (minP) test, and Stouffer’s Z-score method. These statistics are sensitive to distinct genetic signal archetypes (explained in detail above). In the Arabidopsis BIO6 analysis, CATFISH highlighted pathways enriched for cold-associated genetic signal, including processes linked to wax ester biosynthesis and starch metabolism (ref). In Drosophila, CATFISH applied to starvation resistance similarly revealed enrichment of pathways related to amino acid and lipid metabolism, with Stouffer and TFisher frequently providing the strongest support among the component tests (ref). Pathways are ranked by the omnibus p-value, and the final column reports the leading component test, i.e., the statistic yielding the smallest calibrated p-value for that pathway. We observe that the leading component varies across pathways within a dataset and differs between Arabidopsis and Drosophila, demonstrating that CATFISH leverages complementary sensitivity profiles rather than being driven by any single enrichment model. As a result, CATFISH provides a robust and interpretable pathway ranking even when the overall magnitude of association signals differs between GWAS.
 
-![Component pathway tests](Figures/Fig1.component_test_arabidopsis/Fig.Compare_component_test_arabidopsis.png)
-
 
 ## Component pathway tests capture unique pathway classes in Arabidopsis 1001 Bio6 GWAS.
 
