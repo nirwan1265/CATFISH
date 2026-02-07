@@ -71,7 +71,8 @@ it is mapped to \code{B_global} and/or \code{B_mvn} according to \code{perm_mode
 
 \item{perm_mode}{Character. Which resampling/calibration mode to run for the omnibus:
 \code{"none"} (analytic only), \code{"global"} (global gene resampling), \code{"mvn"} (LD-aware MVN resampling),
-or \code{"both"} (run both; final p-value prefers MVN if available).}
+\code{"mvn_global"} (try MVN first, fall back to global if MVN fails for a pathway), or
+\code{"both"} (run both; final p-value prefers MVN if available).}
 
 \item{mvn_marginal}{Character. Only used when \code{perm_mode} includes \code{"mvn"}.
 Controls how simulated MVN Z's are converted to p-values for p-based component methods:
@@ -121,6 +122,8 @@ A data.frame with one row per pathway, including:
 \item \code{omni_p_global} (if global resampling run) and BH-adjusted version
 \item \code{omni_p_mvn} (if MVN resampling run) and BH-adjusted version
 \item \code{omni_p_final} (priority: MVN > global > analytic) and BH-adjusted version
+\item \code{calib_mode} (for \code{perm_mode="mvn_global"}): which calibration was used per pathway
+(\code{"mvn"} or \code{"global"} fallback)
 }
 }
 \description{

@@ -13,6 +13,7 @@ catfish_stoufferZ_pathways(
   z_col = "ZSTAT",
   weight_col = NULL,
   min_abs_w = 1e-08,
+  min_p = 1e-15,
   alternative = c("greater", "two.sided", "less"),
   output = FALSE,
   out_dir = "catfish_stouffer_z"
@@ -45,6 +46,8 @@ then "Gene-id".}
 
 \item{min_abs_w}{Non-finite / NA / <=0 weights are replaced by this small positive value
 (default 1e-8).}
+
+\item{min_p}{Lower cap for extremely small p-values to avoid underflow to 0 (default 1e-15).}
 
 \item{alternative}{One of \code{"greater"}, \code{"two.sided"}, \code{"less"}.
 \code{"greater"} tests for positive enrichment (default "greater").}

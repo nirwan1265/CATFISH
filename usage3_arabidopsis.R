@@ -115,7 +115,7 @@ omni_results <- catfish_omni2_pathways(
   p_raw_col      = "P",                         # use MAGMA P column
   z_col          = "ZSTAT",                     # use MAGMA ZSTAT column for Stouffer
   weight_col     = NULL,                        # optional if you have custom weights
-  tau_grid       = c(0.1, 0.05, 0.02, 0.01, 0.005, 0.001),
+  tau_grid       = c(0.1, 0.05,  0.01),
   min_p          = 1e-15,
   do_fix         = TRUE,
   stouffer_min_abs_w = 1e-8,
@@ -125,14 +125,14 @@ omni_results <- catfish_omni2_pathways(
   include_magma_in_perm = FALSE,                # only for analytic omnibus, no MAGMA in permutations
   omnibus        = "ACAT",                      # "ACAT" or "minP"
   B_perm         = 10000L,                        # number of permutations for omnibus
-  perm_mode      = "mvn",                       # "mvn"or "global", "both", "none"
+  perm_mode      = "mvn_global",                       # "mvn"or "global", "both", "none"
   magma_cor_file = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/magma_gene_cor_pairs_MLM_arabidopsis.txt",  # 3-column file gene1 gene2 r
   make_PD        = TRUE,
   mvn_marginal = "uniform", # “uniform”, “empirical”
   mvn_calibrate_components = TRUE, # NEW
   seed           = 123,
   output         = TRUE,
-  out_dir        = "catfish_omnibus_results_Arabidopsis_B1000"
+  out_dir        = "catfish_omnibus_results_Arabidopsis_B10000"
 )
 
 head(omni_results)

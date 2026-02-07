@@ -176,7 +176,9 @@ catfish_fisher_pathways <- function(gene_results,
 
     # Fisher's method is defined for m >= 1; keep it valid for d=1 too.
     stat <- -2 * sum(log(p_i))
-    res$fisher_p[i] <- stats::pchisq(stat, df = 2 * d, lower.tail = FALSE)
+    fisher_raw <- stats::pchisq(stat, df = 2 * d, lower.tail = FALSE)
+    # Cap at min_p to avoid underflow to 0
+    res$fisher_p[i] <- max(fisher_raw, min_p)
   }
 
   ## -------- sort by fisher_p (smallest first) ----------

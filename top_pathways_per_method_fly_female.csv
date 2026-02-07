@@ -1,0 +1,51 @@
+"pathway_id","pathway_name","pvalue","method","rank"
+"FLYCYC:ARG-PRO-PWY","L-arginine degradation VI (arginase 2 pathway)",0.0626937306269373,"ACAT",1
+"FLYCYC:PWY-6100","L-carnitine biosynthesis",0.126787321267873,"ACAT",2
+"FLYCYC:PWY-7199","pyrimidine deoxyribonucleosides salvage",0.155184481551845,"ACAT",3
+"FLYCYC:PWY-7250","[2Fe-2S] iron-sulfur cluster biosynthesis (mitochondria)",0.182181781821818,"ACAT",4
+"FLYCYC:PWY-7417","phospholipid remodeling (phosphatidate, yeast)",0.19018098190181,"ACAT",5
+"FLYCYC:PWY-8398","α-linolenate metabolites biosynthesis",0.223977602239776,"ACAT",6
+"FLYCYC:PWY-8181","2-methyl-branched fatty acid β-oxidation",0.236576342365763,"ACAT",7
+"FLYCYC:PWY-5691","urate conversion to allantoin I",0.298570142985701,"ACAT",8
+"FLYCYC:PWY-8043","ophthalmate biosynthesis",0.353964603539646,"ACAT",9
+"FLYCYC:PWY-7411","phosphatidate biosynthesis (yeast)",0.376062393760624,"ACAT",10
+"FLYCYC:PWY-7250","[2Fe-2S] iron-sulfur cluster biosynthesis (mitochondria)",0.128687131286871,"Fisher",1
+"FLYCYC:PWY-6100","L-carnitine biosynthesis",0.135886411358864,"Fisher",2
+"FLYCYC:PWY-7199","pyrimidine deoxyribonucleosides salvage",0.138486151384862,"Fisher",3
+"FLYCYC:PWY-7417","phospholipid remodeling (phosphatidate, yeast)",0.174082591740826,"Fisher",4
+"FLYCYC:ARG-PRO-PWY","L-arginine degradation VI (arginase 2 pathway)",0.185181481851815,"Fisher",5
+"FLYCYC:PWY-8398","α-linolenate metabolites biosynthesis",0.243475652434757,"Fisher",6
+"FLYCYC:PWY-6823","molybdopterin biosynthesis",0.282671732826717,"Fisher",7
+"FLYCYC:PWY-5691","urate conversion to allantoin I",0.309369063093691,"Fisher",8
+"FLYCYC:PWY-8043","ophthalmate biosynthesis",0.389261073892611,"Fisher",9
+"FLYCYC:PWY-7411","phosphatidate biosynthesis (yeast)",0.415658434156584,"Fisher",10
+"FLYCYC:ARG-PRO-PWY","L-arginine degradation VI (arginase 2 pathway)",0.14028597140286,"TFisher",1
+"FLYCYC:PWY-7199","pyrimidine deoxyribonucleosides salvage",0.181081891810819,"TFisher",2
+"FLYCYC:PWY66-429","fatty acid biosynthesis initiation (mitochondria)",0.182981701829817,"TFisher",3
+"FLYCYC:ARGININE-SYN4-PWY","L-ornithine biosynthesis II",0.183781621837816,"TFisher",4
+"FLYCYC:PWY-7279","aerobic respiration II (cytochrome c) (yeast)",0.183781621837816,"TFisher",5
+"FLYCYC:PWY-7619","juniperonate biosynthesis",0.184381561843816,"TFisher",6
+"FLYCYC:PWY-7899","protein NEDDylation",0.184481551844816,"TFisher",7
+"FLYCYC:PWY0-1587","N6-L-threonylcarbamoyladenosine37-modified tRNA biosynthesis",0.184981501849815,"TFisher",8
+"FLYCYC:PWY-7919","protein N-glycosylation processing phase (plants and animals)",0.186281371862814,"TFisher",9
+"FLYCYC:PWY-6100","L-carnitine biosynthesis",0.187481251874813,"TFisher",10
+"FLYCYC:ARG-PRO-PWY","L-arginine degradation VI (arginase 2 pathway)",0.0348965103489651,"minP",1
+"FLYCYC:PWY-6100","L-carnitine biosynthesis",0.131786821317868,"minP",2
+"FLYCYC:PWY-8181","2-methyl-branched fatty acid β-oxidation",0.137686231376862,"minP",3
+"FLYCYC:PWY-7199","pyrimidine deoxyribonucleosides salvage",0.186081391860814,"minP",4
+"FLYCYC:PWY-8398","α-linolenate metabolites biosynthesis",0.207279272072793,"minP",5
+"FLYCYC:PWY-5326","sulfite oxidation IV (sulfite oxidase)",0.255474452554745,"minP",6
+"FLYCYC:PWY-7417","phospholipid remodeling (phosphatidate, yeast)",0.327767223277672,"minP",7
+"FLYCYC:PWY-6823","molybdopterin biosynthesis",0.372262773722628,"minP",8
+"FLYCYC:PWY-7250","[2Fe-2S] iron-sulfur cluster biosynthesis (mitochondria)",0.380861913808619,"minP",9
+"FLYCYC:PENTOSE-P-PWY","pentose phosphate pathway",0.384161583841616,"minP",10
+"FLYCYC:PWY-6823","molybdopterin biosynthesis",0.0157984201579842,"Stouffer",1
+"FLYCYC:PWY-7250","[2Fe-2S] iron-sulfur cluster biosynthesis (mitochondria)",0.0320967903209679,"Stouffer",2
+"FLYCYC:PWY-6100","L-carnitine biosynthesis",0.033996600339966,"Stouffer",3
+"FLYCYC:PWY-7199","pyrimidine deoxyribonucleosides salvage",0.0665933406659334,"Stouffer",4
+"FLYCYC:PWY-5691","urate conversion to allantoin I",0.0752924707529247,"Stouffer",5
+"FLYCYC:PWY-8398","α-linolenate metabolites biosynthesis",0.0772922707729227,"Stouffer",6
+"FLYCYC:PWY-6898","thiamine diphosphate salvage III",0.0897910208979102,"Stouffer",7
+"FLYCYC:PWY-7783","plasmalogen degradation",0.0924907509249075,"Stouffer",8
+"FLYCYC:PWY-8043","ophthalmate biosynthesis",0.0994900509949005,"Stouffer",9
+"FLYCYC:PWY-7411","phosphatidate biosynthesis (yeast)",0.111388861113889,"Stouffer",10

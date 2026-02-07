@@ -69,7 +69,7 @@ omni_results <- readRDS(
 
 head(omni_results)
 names(omni_results)
-
+write.csv(omni_results,"omni_results_ACAT.csv",row.names = F)
 # ==============================================================================
 # 2. Define P-value Columns
 # ==============================================================================
@@ -119,6 +119,7 @@ cat("Using OMNIBUS column:", omni_col, "\n")
 
 n_pathways <- nrow(omni_results)
 bonferroni_alpha <- 0.05 / n_pathways
+#nominal_alpha <- 0.1335 # changed to get 20 pathways
 nominal_alpha <- 0.1
 
 cat("\nNumber of pathways:", n_pathways, "\n")
@@ -168,12 +169,12 @@ get_sig_pathways <- function(df, col, threshold = NULL, top_n = 20) {
 }
 
 # Get OMNIBUS significant pathways
-omni_sig <- get_sig_pathways(omni_results, omni_col, sig_threshold, top_n = 20)
+omni_sig <- get_sig_pathways(omni_results, omni_col, sig_threshold, top_n = 40)
 cat("\nOMNIBUS selected pathways:", length(omni_sig), "\n")
 
 # Get component significant pathways
 comp_sig <- lapply(names(comp_cols), function(m) {
-  get_sig_pathways(omni_results, comp_cols[m], sig_threshold, top_n = 20)
+  get_sig_pathways(omni_results, comp_cols[m], sig_threshold, top_n = 40)
 })
 names(comp_sig) <- names(comp_cols)
 
@@ -855,16 +856,7 @@ heat_long <- heat_df %>%
     )
   )
 
-# Winner strip data
-winner_strip <- heat_df %>%
-  mutate(
-    pathway_label = id_to_label[pathway_id],
-    pathway_label = factor(
-      pathway_label, levels = rev(pathway_order)
-    ),
-    method = factor("Winner", levels = "Winner")
-  )
-
+# Component colors (fixed per component)
 comp_colors <- c(
   "ACAT"     = "#E41A1C",
   "Fisher"   = "#377EB8",
@@ -873,7 +865,42 @@ comp_colors <- c(
   "Stouffer" = "#FF7F00"
 )
 
+# For each pathway, find the order of components (1st best, 5th worst)
+comp_names <- c("ACAT", "Fisher", "TFisher", "minP", "Stouffer")
+comp_col_vals <- unname(comp_cols)
+
+# Build rank strip: which component is in each position (1st, 2nd, 3rd, 4th, 5th)
+rank_strip_list <- lapply(seq_len(nrow(winner_df)), function(i) {
+  pvals <- as.numeric(winner_df[i, comp_col_vals])
+  ord <- order(pvals)  # indices sorted by p-value (smallest first)
+  data.frame(
+    pathway_id = winner_df$pathway_id[i],
+    pos_1 = comp_names[ord[1]],
+    pos_2 = comp_names[ord[2]],
+    pos_3 = comp_names[ord[3]],
+    pos_4 = comp_names[ord[4]],
+    pos_5 = comp_names[ord[5]],
+    stringsAsFactors = FALSE
+  )
+})
+rank_strip_df <- do.call(rbind, rank_strip_list)
+rank_strip_df$pathway_label <- id_to_label[rank_strip_df$pathway_id]
+
+# Pivot to long format
+rank_long <- rank_strip_df %>%
+  pivot_longer(
+    cols = starts_with("pos_"),
+    names_to = "position",
+    values_to = "component"
+  ) %>%
+  mutate(
+    pathway_label = factor(pathway_label, levels = rev(pathway_order)),
+    position = factor(position, levels = c("pos_1", "pos_2", "pos_3", "pos_4", "pos_5")),
+    component = factor(component, levels = comp_names)
+  )
+
 p_heat2 <- ggplot() +
+  # Main heatmap
   geom_tile(
     data = heat_long,
     aes(x = method, y = pathway_label, fill = neg_log10_p),
@@ -885,45 +912,40 @@ p_heat2 <- ggplot() +
     name = expression(-log[10](p))
   ) +
   new_scale_fill() +
+  # Rank strip: thin tiles colored by component
   geom_tile(
-    data = winner_strip,
-    aes(x = method, y = pathway_label, fill = winner),
-    width = 0.9, color = "white", linewidth = 0.5
+    data = rank_long,
+    aes(x = position, y = pathway_label, fill = component),
+    width = 0.4, color = "white", linewidth = 0.2
   ) +
-  geom_text(
-    data = winner_strip,
-    aes(x = method, y = pathway_label, label = winner),
-    size = 3, fontface = "bold"
-  ) +
-  scale_fill_manual(values = comp_colors, name = "Best Component") +
+  scale_fill_manual(values = comp_colors, name = "Component") +
   scale_x_discrete(
-    limits = c("OMNIBUS", "ACAT", "Fisher", "TFisher", "minP",
-               "Stouffer", "Winner")
+    limits = c("OMNIBUS", "ACAT", "Fisher", "TFisher", "minP", "Stouffer",
+               "pos_1", "pos_2", "pos_3", "pos_4", "pos_5"),
+    labels = c("OMNIBUS", "ACAT", "Fisher", "TFisher", "minP", "Stouffer",
+               "1", "2", "3", "4", "5")
   ) +
   labs(
-    title = "P-value Heatmap with Best-Component Label",
-    subtitle = paste0(
-      "\"Winner\" column: component with smallest p-value per pathway (",
-      threshold_label, ")"
-    ),
+    title = "P-value Heatmap with Ranking Strip (Arabidopsis)",
+    subtitle = paste0("Right strip: component rank order (1=best, 5=worst) | ", threshold_label),
     x = "Method",
     y = "Pathway"
   ) +
   theme_minimal() +
   theme(
-    axis.text.y    = element_text(size = 7),
-    axis.text.x    = element_text(angle = 45, hjust = 1, size = 10),
-    plot.title     = element_text(hjust = 0.5, face = "bold", size = 14),
-    plot.subtitle  = element_text(hjust = 0.5, size = 10),
+    axis.text.y = element_text(size = 7),
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+    plot.subtitle = element_text(hjust = 0.5, size = 10),
     legend.position = "right"
-  )
+  ) + plot_theme
 
 quartz()
 print(p_heat2)
 
 plot_height2 <- max(8, length(omni_sig) * 0.3)
 ggsave("heatmap_with_winner_strip.png", p_heat2,
-       width = 12, height = plot_height2, dpi = 300)
+       width = 18, height = plot_height2, dpi = 300, bg = "white")
 cat("Heatmap with winner strip saved to heatmap_with_winner_strip.png\n")
 
 # Winner distribution summary
@@ -945,3 +967,4 @@ cat("  - heatmap_omnibus_vs_components.pdf/png\n")
 cat("  - cumulative_support_omnibus.png\n")
 cat("  - jaccard_overlap_omnibus_vs_components.png\n")
 cat("  - heatmap_with_winner_strip.png\n")
+

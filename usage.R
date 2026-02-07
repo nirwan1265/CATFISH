@@ -342,8 +342,8 @@ files <- sprintf("/Users/nirwantandukar/Documents/Research/results/MAGMA/CATFISH
 #files <- sprintf("/Users/nirwantandukar/Documents/Research/results/MAGMA/CATFISH/magma_genes_by_chr/N_maize_GLM_chr%d.multi_snp_wise.genes.out", 1:10)
 
 # Fly
-files <- list.files(path = "/Users/nirwantandukar/Documents/Research/results/DGRP/MAGMA/Fly_magma_genes_by_chr_male",
-        pattern = "^Male_starvation_fly_.*\\.genes\\.out$",
+files <- list.files(path = "/Users/nirwantandukar/Documents/Research/results/DGRP/MAGMA/Fly_magma_genes_by_chr_female",
+        pattern = "^Female_starvation_fly_.*\\.genes\\.out$",
         full.names = TRUE)
 
 # Arabidopsis

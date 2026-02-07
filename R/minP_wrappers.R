@@ -202,11 +202,14 @@ catfish_minp_pathways <- function(gene_results,
     if (have_metap) {
       # metap::minimump returns Tippett/Wilkinson p-value
       p_comb <- tryCatch(metap::minimump(p_i)$p, error = function(e) NA_real_)
-      res$minp_p[i]      <- p_comb
+      # Cap at min_p to avoid underflow to 0
+      res$minp_p[i]      <- max(p_comb, min_p, na.rm = TRUE)
       res$minp_method[i] <- "metap::minimump"
     } else {
       # Sidák fallback: P(min <= pmin) = 1 - (1 - pmin)^d
-      res$minp_p[i]      <- 1 - (1 - pmin)^d
+      p_sidak <- 1 - (1 - pmin)^d
+      # Cap at min_p to avoid underflow to 0
+      res$minp_p[i]      <- max(p_sidak, min_p)
       res$minp_method[i] <- "sidak"
     }
   }

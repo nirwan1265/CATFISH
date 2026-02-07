@@ -291,7 +291,9 @@ catfish_acat_pathways <- function(gene_results,
     }
 
     # ACAT p-value
-    res$acat_p[i] <- ACAT::ACAT(Pvals = p_i)
+    acat_raw <- ACAT::ACAT(Pvals = p_i)
+    # Cap at min_p to avoid underflow to 0
+    res$acat_p[i] <- max(acat_raw, min_p)
   }
 
   ## -------- sort by acat_p (smallest first) ----------

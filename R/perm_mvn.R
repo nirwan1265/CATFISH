@@ -101,6 +101,11 @@ magma_simulate_null_Zp <- function(genes_S,
   genes_S <- rownames(R_S)
   G <- length(genes_S)
 
+
+  # Safety: ensure R_S has no NA/Inf
+  R_S[!is.finite(R_S)] <- 0
+  diag(R_S) <- 1  # ensure diagonal is exactly 1
+
   # rmvnorm needs PD covariance; here covariance = correlation matrix
   if (requireNamespace("mvtnorm", quietly = TRUE)) {
     Zmat <- mvtnorm::rmvnorm(n = B, mean = rep(0, G), sigma = R_S)
@@ -110,8 +115,13 @@ magma_simulate_null_Zp <- function(genes_S,
     stop("Need mvtnorm or MASS for MVN simulation.", call. = FALSE)
   }
 
-  # two-sided p from Z
+  # Safety: clamp any Inf Z values
+  Zmat[!is.finite(Zmat)] <- 0
+
+  # two-sided p from Z, clamped to avoid 0/1 extremes
   Pmat <- 2 * stats::pnorm(-abs(Zmat))
+  Pmat <- pmax(Pmat, 1e-15)  # floor at min_p
+  Pmat <- pmin(Pmat, 1 - 1e-15)  # ceiling
 
   list(Z = Zmat, P = Pmat, genes = genes_S)
 }

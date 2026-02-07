@@ -38,6 +38,7 @@
 #'   (default NULL = equal weights). Examples: \code{sqrt(NSNPS)}, \code{1/SE}, etc.
 #' @param min_abs_w Non-finite / NA / <=0 weights are replaced by this small positive value
 #'   (default 1e-8).
+#' @param min_p Lower cap for extremely small p-values to avoid underflow to 0 (default 1e-15).
 #' @param alternative One of \code{"greater"}, \code{"two.sided"}, \code{"less"}.
 #'   \code{"greater"} tests for positive enrichment (default "greater").
 #' @param output If TRUE, write a CSV of results to \code{out_dir}.
@@ -88,6 +89,7 @@ catfish_stoufferZ_pathways <- function(gene_results,
                                       z_col        = "ZSTAT",
                                       weight_col   = NULL,
                                       min_abs_w    = 1e-8,
+                                      min_p        = 1e-15,
                                       alternative  = c("greater", "two.sided", "less"),
                                       output       = FALSE,
                                       out_dir      = "catfish_stouffer_z") {
@@ -257,7 +259,8 @@ catfish_stoufferZ_pathways <- function(gene_results,
 
     st <- .stouffer_from_z(z_i, w_i)
     res$stouffer_Z[i] <- st$Z
-    res$stouffer_p[i] <- st$p
+    # Cap at min_p to avoid underflow to 0
+    res$stouffer_p[i] <- max(st$p, min_p, na.rm = TRUE)
   }
 
   ## -------- sort by p (smallest first) ----------

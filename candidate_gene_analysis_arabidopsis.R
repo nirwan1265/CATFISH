@@ -37,10 +37,23 @@ library(patchwork)
 # USER PARAMETERS
 # ==============================================================================
 
-GWAS_P_THRESHOLD   <- 1e-7     # GWAS SNP p-value threshold for gene hits
-MAGMA_FDR_THRESHOLD <- 0.005    # MAGMA FDR (Benjamini-Hochberg) threshold
-TOP_K_PATHWAYS      <- 10       # Number of top pathways to include
-WINDOW_SIZE         <- 25000   # SNP-to-gene mapping window (bp)
+# ---------- GWAS layer ----------
+GWAS_MODE           <- "top_pct"   # "threshold" or "top_pct"
+GWAS_P_THRESHOLD    <- 1e-7        # p-value cutoff (GWAS_MODE="threshold")
+GWAS_TOP_PCT        <- 1           # top X% of genes (GWAS_MODE="top_pct")
+
+# ---------- MAGMA layer ----------
+MAGMA_MODE          <- "top_pct"   # "threshold" or "top_pct"
+MAGMA_FDR_THRESHOLD <- 0.005       # FDR cutoff (MAGMA_MODE="threshold")
+MAGMA_TOP_PCT       <- 5           # top X% of genes (MAGMA_MODE="top_pct")
+
+# ---------- Pathway layer ----------
+PATHWAY_MODE          <- "top_k"   # "top_k" or "fdr"
+TOP_K_PATHWAYS        <- 10        # count   (PATHWAY_MODE="top_k")
+PATHWAY_FDR_THRESHOLD <- 0.05      # FDR cutoff (PATHWAY_MODE="fdr")
+
+# ---------- General ----------
+WINDOW_SIZE         <- 25000       # SNP-to-gene mapping window (bp)
 
 
 # ==============================================================================
@@ -221,6 +234,22 @@ cat("  p < 1e-5:", sum(gwas_gene$gwas_min_p < 1e-5), "\n")
 cat("  p < 1e-4:", sum(gwas_gene$gwas_min_p < 1e-4), "\n")
 cat("  p < 1e-3:", sum(gwas_gene$gwas_min_p < 1e-3), "\n")
 
+# Compute effective GWAS threshold based on mode
+if (GWAS_MODE == "top_pct") {
+  gwas_n_top <- ceiling(nrow(gwas_gene) * GWAS_TOP_PCT / 100)
+  gwas_eff_threshold <- sort(gwas_gene$gwas_min_p)[gwas_n_top]
+  cat("\nGWAS mode: top", GWAS_TOP_PCT, "%\n")
+  cat("  Effective p cutoff:",
+      format(gwas_eff_threshold, digits = 3), "\n")
+  cat("  Genes selected:", gwas_n_top,
+      "of", nrow(gwas_gene), "\n")
+} else {
+  gwas_eff_threshold <- GWAS_P_THRESHOLD
+  cat("\nGWAS mode: p-value threshold <", GWAS_P_THRESHOLD, "\n")
+  cat("  Genes selected:",
+      sum(gwas_gene$gwas_min_p < gwas_eff_threshold), "\n")
+}
+
 # ==============================================================================
 # 3. Load MAGMA Gene Results
 # ==============================================================================
@@ -286,6 +315,24 @@ head(magma_gene, 10) %>%
   select(GENE, NSNPS, ZSTAT, magma_p, magma_fdr, magma_bonf) %>%
   print()
 
+# Compute effective MAGMA threshold based on mode
+if (MAGMA_MODE == "top_pct") {
+  magma_n_top <- ceiling(nrow(magma_gene) * MAGMA_TOP_PCT / 100)
+  magma_eff_threshold <- sort(magma_gene$magma_p)[magma_n_top]
+  cat("\nMAGMA mode: top", MAGMA_TOP_PCT, "%\n")
+  cat("  Effective p cutoff:",
+      format(magma_eff_threshold, digits = 3), "\n")
+  cat("  Genes selected:", magma_n_top,
+      "of", nrow(magma_gene), "\n")
+} else {
+  magma_eff_threshold <- NULL
+  cat("\nMAGMA mode: FDR threshold <",
+      MAGMA_FDR_THRESHOLD, "\n")
+  cat("  Genes selected:",
+      sum(magma_gene$magma_fdr < MAGMA_FDR_THRESHOLD),
+      "\n")
+}
+
 # ==============================================================================
 # 4. Load Pathway Results
 # ==============================================================================
@@ -316,12 +363,25 @@ cat("  FDR < 0.10:",
 cat("  Nominal < 0.05:",
   sum(omni_results[[omni_col]] < 0.05, na.rm = TRUE), "\n")
 
-# Get top K pathways
-top_pathways <- omni_results %>%
-arrange(!!sym(omni_col)) %>%
-slice_head(n = TOP_K_PATHWAYS)
+# Select pathways based on mode
+if (PATHWAY_MODE == "fdr") {
+  omni_results$pathway_fdr <- p.adjust(
+    omni_results[[omni_col]], "BH"
+  )
+  top_pathways <- omni_results %>%
+    filter(pathway_fdr < PATHWAY_FDR_THRESHOLD) %>%
+    arrange(!!sym(omni_col))
+  cat("\nPathway mode: FDR <", PATHWAY_FDR_THRESHOLD, "\n")
+  cat("  Significant pathways:", nrow(top_pathways), "\n")
+} else {
+  top_pathways <- omni_results %>%
+    arrange(!!sym(omni_col)) %>%
+    slice_head(n = TOP_K_PATHWAYS)
+  cat("\nPathway mode: top", TOP_K_PATHWAYS, "\n")
+}
 
-cat("\nTop", TOP_K_PATHWAYS, "pathways:\n")
+n_pathways_used <- nrow(top_pathways)
+cat("\nSelected", n_pathways_used, "pathways:\n")
 for (i in seq_len(nrow(top_pathways))) {
 cat("  ", i, ". ", top_pathways$pathway_id[i], " (",
     top_pathways$pathway_name[i], ")\n",
@@ -380,9 +440,14 @@ gene_evidence <- magma_gene %>%
 left_join(gwas_gene, by = "GENE") %>%
 left_join(pathway_gene_support, by = "GENE") %>%
 mutate(
-  # Define hit criteria using top-level parameters
-  hit_gwas    = !is.na(gwas_min_p) & gwas_min_p < GWAS_P_THRESHOLD,
-  hit_magma   = !is.na(magma_fdr) & magma_fdr < MAGMA_FDR_THRESHOLD,
+  # Define hit criteria (mode-aware)
+  hit_gwas = !is.na(gwas_min_p) &
+    gwas_min_p <= gwas_eff_threshold,
+  hit_magma = if (MAGMA_MODE == "top_pct") {
+    !is.na(magma_p) & magma_p <= magma_eff_threshold
+  } else {
+    !is.na(magma_fdr) & magma_fdr < MAGMA_FDR_THRESHOLD
+  },
   hit_pathway = !is.na(n_top_pathways) & n_top_pathways >= 1,
 
   # Support layers count
@@ -401,11 +466,11 @@ arrange(desc(score))
 # ==============================================================================
 
 cat("\n\nHit counts per layer:\n")
-cat("  GWAS (p <", GWAS_P_THRESHOLD, "):",
+cat(" ", gwas_label, ":",
   sum(gene_evidence$hit_gwas, na.rm = TRUE), "\n")
-cat("  MAGMA (FDR <", MAGMA_FDR_THRESHOLD, "):",
+cat(" ", magma_label, ":",
   sum(gene_evidence$hit_magma, na.rm = TRUE), "\n")
-cat("  Pathway (top", TOP_K_PATHWAYS, "):",
+cat(" ", pathway_label, ":",
   sum(gene_evidence$hit_pathway, na.rm = TRUE), "\n")
 
 cat("\nMulti-layer support:\n")
@@ -419,9 +484,21 @@ cat("  ", n, " layers:", count, "\n")
 # ==============================================================================
 
 # Create binary matrix for UpSet
-gwas_label   <- paste0("GWAS (p<", GWAS_P_THRESHOLD, ")")
-magma_label  <- paste0("MAGMA (FDR<", MAGMA_FDR_THRESHOLD, ")")
-pathway_label <- paste0("Pathway (top ", TOP_K_PATHWAYS, ")")
+gwas_label <- if (GWAS_MODE == "top_pct") {
+  paste0("GWAS (top ", GWAS_TOP_PCT, "%)")
+} else {
+  paste0("GWAS (p<", GWAS_P_THRESHOLD, ")")
+}
+magma_label <- if (MAGMA_MODE == "top_pct") {
+  paste0("MAGMA (top ", MAGMA_TOP_PCT, "%)")
+} else {
+  paste0("MAGMA (FDR<", MAGMA_FDR_THRESHOLD, ")")
+}
+pathway_label <- if (PATHWAY_MODE == "fdr") {
+  paste0("Pathway (FDR<", PATHWAY_FDR_THRESHOLD, ")")
+} else {
+  paste0("Pathway (top ", TOP_K_PATHWAYS, ")")
+}
 
 upset_df <- gene_evidence %>%
 transmute(
@@ -770,17 +847,30 @@ cat(strrep("=", 70), "\n\n")
 
 cat("Analysis Parameters:\n")
 cat("  - SNP-to-gene window:", WINDOW_SIZE / 1000, "kb\n")
-cat("  - GWAS p threshold:", GWAS_P_THRESHOLD, "\n")
-cat("  - MAGMA FDR threshold:", MAGMA_FDR_THRESHOLD, "\n")
-cat("  - Top pathways used:", TOP_K_PATHWAYS, "\n")
+if (GWAS_MODE == "top_pct") {
+  cat("  - GWAS: top", GWAS_TOP_PCT, "% of genes\n")
+} else {
+  cat("  - GWAS: p <", GWAS_P_THRESHOLD, "\n")
+}
+if (MAGMA_MODE == "top_pct") {
+  cat("  - MAGMA: top", MAGMA_TOP_PCT, "% of genes\n")
+} else {
+  cat("  - MAGMA: FDR <", MAGMA_FDR_THRESHOLD, "\n")
+}
+if (PATHWAY_MODE == "fdr") {
+  cat("  - Pathways: FDR <", PATHWAY_FDR_THRESHOLD,
+      "(n =", n_pathways_used, ")\n")
+} else {
+  cat("  - Pathways: top", TOP_K_PATHWAYS, "\n")
+}
 cat("  - Gene universe (MAGMA-tested):", nrow(magma_gene), "\n\n")
 
 cat("Evidence Layer Summary:\n")
-cat("  GWAS (p <", GWAS_P_THRESHOLD, "):",
+cat(" ", gwas_label, ":",
   sum(gene_evidence$hit_gwas, na.rm = TRUE), "genes\n")
-cat("  MAGMA (FDR <", MAGMA_FDR_THRESHOLD, "):",
+cat(" ", magma_label, ":",
   sum(gene_evidence$hit_magma, na.rm = TRUE), "genes\n")
-cat("  Pathway (top", TOP_K_PATHWAYS, "):",
+cat(" ", pathway_label, ":",
   sum(gene_evidence$hit_pathway, na.rm = TRUE), "genes\n\n")
 
 cat("Multi-Layer Support:\n")
@@ -793,7 +883,7 @@ cat("Key Finding:\n")
 hidden_count <- sum(gene_evidence$hit_pathway & !gene_evidence$hit_magma,
                   na.rm = TRUE)
 cat("  ", hidden_count, " genes are in significant pathways but NOT individually\n")
-cat("  significant by MAGMA (FDR <", MAGMA_FDR_THRESHOLD, ").\n")
+cat("  significant by", magma_label, ".\n")
 cat("  This demonstrates that pathway analysis captures coordinated/diffuse\n")
 cat("  signals missed by gene-level tests.\n\n")
 

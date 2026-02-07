@@ -26,7 +26,7 @@ catfish_omni2_pathways(
   include_magma_in_perm = FALSE,
   omnibus = c("ACAT", "minP"),
   B_perm = NULL,
-  perm_mode = c("none", "global", "mvn", "both"),
+  perm_mode = c("none", "global", "mvn", "mvn_global", "both"),
   mvn_marginal = c("uniform", "empirical"),
   mvn_pool = c("use", "raw"),
   pool_p = NULL,

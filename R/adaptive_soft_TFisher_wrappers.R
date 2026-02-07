@@ -217,6 +217,8 @@ catfish_soft_tfisher_adaptive_pathways <- function(gene_results,
                                                               n = d, tau1 = tau, M = NULL),
                        numeric(1))
     p_rt_vec <- 1 - as.numeric(cdf_vec)
+    # Cap at min_p to avoid underflow to 0
+    p_rt_vec <- pmax(p_rt_vec, min_p)
 
     jhat <- which.min(p_rt_vec)
     res$tau_hat[i]          <- tau_grid[jhat]
@@ -229,7 +231,9 @@ catfish_soft_tfisher_adaptive_pathways <- function(gene_results,
     res$tfisher_p_min[i] <- Wo
 
     # For Wo (a minimum p-value), smaller is more extreme -> p-value is CDF, not 1-CDF
-    res$tfisher_p_omni[i] <- as.numeric(TFisher::p.soft.omni(q = Wo, n = d, TAU1 = tau_grid, M = NULL))
+    p_omni_raw <- as.numeric(TFisher::p.soft.omni(q = Wo, n = d, TAU1 = tau_grid, M = NULL))
+    # Cap at min_p to avoid underflow to 0
+    res$tfisher_p_omni[i] <- max(p_omni_raw, min_p)
   }
 
   ## -------- sort by omnibus p (smallest first) ----------

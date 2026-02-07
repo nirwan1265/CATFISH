@@ -129,7 +129,8 @@
 #'
 #' @param perm_mode Character. Which resampling/calibration mode to run for the omnibus:
 #'   \code{"none"} (analytic only), \code{"global"} (global gene resampling), \code{"mvn"} (LD-aware MVN resampling),
-#'   or \code{"both"} (run both; final p-value prefers MVN if available).
+#'   \code{"mvn_global"} (try MVN first, fall back to global if MVN fails for a pathway), or
+#'   \code{"both"} (run both; final p-value prefers MVN if available).
 #'
 #' @param mvn_marginal Character. Only used when \code{perm_mode} includes \code{"mvn"}.
 #'   Controls how simulated MVN Z's are converted to p-values for p-based component methods:
@@ -179,6 +180,8 @@
 #'   \item \code{omni_p_global} (if global resampling run) and BH-adjusted version
 #'   \item \code{omni_p_mvn} (if MVN resampling run) and BH-adjusted version
 #'   \item \code{omni_p_final} (priority: MVN > global > analytic) and BH-adjusted version
+#'   \item \code{calib_mode} (for \code{perm_mode="mvn_global"}): which calibration was used per pathway
+#'         (\code{"mvn"} or \code{"global"} fallback)
 #' }
 #'
 # ============================================================
@@ -280,8 +283,16 @@
   if (!length(idx)) return(out)
 
   if (requireNamespace("qvalue", quietly = TRUE)) {
-    qobj <- qvalue::qvalue(p[idx])
-    out[idx] <- as.numeric(qobj$qvalues)
+    qobj <- tryCatch(
+      qvalue::qvalue(p[idx]),
+      error = function(e) NULL
+    )
+    if (!is.null(qobj)) {
+      out[idx] <- as.numeric(qobj$qvalues)
+    } else {
+      # qvalue failed (e.g., pi0 <= 0); fall back to BH
+      out[idx] <- stats::p.adjust(p[idx], method = "BH")
+    }
   } else {
     warning("Package 'qvalue' not installed; falling back to BH.", call. = FALSE)
     out[idx] <- stats::p.adjust(p[idx], method = "BH")
@@ -490,11 +501,18 @@
   d <- ncol(R)
   if (B < 1L || d < 2L) return(NULL)
 
+  # Safety: ensure R has no NA/Inf
+
+  R[!is.finite(R)] <- 0
+  diag(R) <- 1
+
   U <- tryCatch(chol(R), error = function(e) NULL)
   if (is.null(U)) stop("chol(R) failed even after PD-fix. Check correlation input.", call. = FALSE)
 
   Z0 <- matrix(stats::rnorm(B * d), nrow = B, ncol = d)
   Z  <- Z0 %*% U
+  # Safety: clamp any Inf Z values
+  Z[!is.finite(Z)] <- 0
   colnames(Z) <- colnames(R)
   Z
 }
@@ -514,6 +532,100 @@
   } else {
     matrix(sample.int(n_pool, size = B * d, replace = TRUE), nrow = B, ncol = d)
   }
+}
+
+# ----------------------------
+# Stouffer p from Z matrix helper (for global/mvn_global resampling)
+# ----------------------------
+.stouffer_p_from_Zmat_helper <- function(Zmat, w = NULL, alternative = "greater",
+                                         min_abs_w = 1e-8) {
+  if (is.null(Zmat) || !ncol(Zmat)) return(rep(NA_real_, nrow(Zmat)))
+  if (is.null(w)) {
+    Zs <- rowSums(Zmat) / sqrt(ncol(Zmat))
+  } else {
+    w <- suppressWarnings(as.numeric(w))
+    bad <- !is.finite(w) | is.na(w) | abs(w) <= min_abs_w
+    if (any(bad)) {
+      w_ok <- abs(w[!bad])
+      repl <- if (length(w_ok)) stats::median(w_ok) else 1
+      w[bad] <- repl
+    }
+    denom <- sqrt(sum(w^2))
+    Zs <- as.numeric(Zmat %*% w) / denom
+  }
+
+  if (alternative == "greater") {
+    p_out <- stats::pnorm(Zs, lower.tail = FALSE)
+  } else if (alternative == "less") {
+    p_out <- stats::pnorm(Zs, lower.tail = TRUE)
+  } else {
+    p_out <- 2 * stats::pnorm(-abs(Zs))
+  }
+  pmax(pmin(p_out, 1 - 1e-15), 1e-15)
+}
+
+# ----------------------------
+# Single-pathway global resampling helper (for mvn_global fallback)
+# ----------------------------
+.do_global_resampling_pathway <- function(d, B, pool_p, pool_z, pool_w,
+                                          omni_obs, tau_grid, min_p, do_fix,
+                                          omnibus, stouffer_alternative,
+                                          stouffer_min_abs_w, include_magma,
+                                          magma_pval = NA_real_) {
+  n_pool <- length(pool_p)
+  idx_mat <- .catfish_sample_idx_mat(n_pool = n_pool, d = d, B = B)
+  if (is.null(idx_mat)) return(NA_real_)
+
+  P <- matrix(pool_p[idx_mat], nrow = B, ncol = d)
+
+  # ACAT across genes
+  pA <- vapply(seq_len(B), function(b) {
+    .catfish_acat_combine(P[b, ], min_p = min_p, do_fix = do_fix)
+  }, numeric(1))
+
+  # Fisher across genes
+  pF <- stats::pchisq(-2 * rowSums(log(P)), df = 2 * d, lower.tail = FALSE)
+
+  # TFisher adaptive
+  pT <- rep(NA_real_, B)
+  if (requireNamespace("TFisher", quietly = TRUE)) {
+    for (b in seq_len(B)) {
+      pb <- .catfish_fix_p(P[b, ], min_p = min_p, do_fix = do_fix)
+      if (length(pb) < 2L) next
+      best <- Inf
+      for (tau in tau_grid) {
+        st <- TFisher::stat.soft(p = pb, tau1 = tau)
+        pv <- 1 - as.numeric(TFisher::p.soft(q = st, n = length(pb), tau1 = tau, M = NULL))
+        if (is.finite(pv) && pv < best) best <- pv
+      }
+      pT[b] <- best
+    }
+  }
+
+  # minP Sidak
+  pM <- {
+    pmin_vec <- apply(P, 1, min)
+    1 - (1 - pmin_vec)^d
+  }
+
+  # Stouffer
+  pS <- rep(NA_real_, B)
+  if (!is.null(pool_z)) {
+    Zmat <- matrix(pool_z[idx_mat], nrow = B, ncol = d)
+    pS <- .stouffer_p_from_Zmat_helper(Zmat, w = NULL,
+                                       alternative = stouffer_alternative,
+                                       min_abs_w = stouffer_min_abs_w)
+  }
+
+  # Build omnibus null
+  omni_null <- vapply(seq_len(B), function(b) {
+    comps <- c(pA[b], pF[b], pT[b], pM[b], pS[b])
+    if (isTRUE(include_magma) && is.finite(magma_pval)) comps <- c(comps, magma_pval)
+    .catfish_omni_methods(comps, omnibus = omnibus, min_p = min_p, do_fix = do_fix)
+  }, numeric(1))
+
+  # Empirical p-value
+  (1 + sum(omni_null <= omni_obs, na.rm = TRUE)) / (B + 1)
 }
 
 # ----------------------------
@@ -726,6 +838,7 @@ catfish_omni2_run <- function(prep,
                             # omnibus calibration
                             B_global = 0L,
                             B_mvn = 0L,
+                            perm_mode = c("none","global","mvn","mvn_global","both"),
                             perm_pool = c("raw","obs"),
                             mvn_marginal = c("uniform","empirical"),
                             mvn_pool     = c("use","raw"),
@@ -739,6 +852,7 @@ catfish_omni2_run <- function(prep,
 
   if (!inherits(prep, "catfish_omni2_prep")) stop("prep must come from catfish_omni2_prepare().", call. = FALSE)
   omnibus   <- match.arg(omnibus)
+  perm_mode <- match.arg(perm_mode)
   perm_pool <- match.arg(perm_pool)
   mvn_marginal <- match.arg(mvn_marginal)
   mvn_pool     <- match.arg(mvn_pool)
@@ -757,6 +871,9 @@ catfish_omni2_run <- function(prep,
     n_genes      = as.integer(n_genes),
     stringsAsFactors = FALSE
   )
+
+  # Track which calibration mode was used per pathway (for mvn_global mode)
+  res$calib_mode <- NA_character_
 
   # ============================================================
   # OBSERVED component p-values: CALL YOUR CATFISH WRAPPERS (analytic only)
@@ -837,6 +954,7 @@ if (!is.null(prep$z_col)) {
     z_col          = prep$z_col,
     weight_col     = prep$weight_col,
     min_abs_w      = stouffer_min_abs_w,
+    min_p          = prep$min_p,
     alternative    = stouffer_alternative,
     output         = FALSE
   )
@@ -935,12 +1053,14 @@ if (!is.null(prep$z_col)) {
       }
 
       if (stouffer_alternative == "greater") {
-        return(stats::pnorm(Zs, lower.tail = FALSE))
+        p_out <- stats::pnorm(Zs, lower.tail = FALSE)
       } else if (stouffer_alternative == "less") {
-        return(stats::pnorm(Zs, lower.tail = TRUE))
+        p_out <- stats::pnorm(Zs, lower.tail = TRUE)
       } else {
-        return(2 * stats::pnorm(-abs(Zs)))
+        p_out <- 2 * stats::pnorm(-abs(Zs))
       }
+      # Clamp to avoid 0/1 extremes
+      pmax(pmin(p_out, 1 - 1e-15), 1e-15)
     }
 
     for (i in seq_len(nrow(res))) {
@@ -1000,6 +1120,10 @@ if (!is.null(prep$z_col)) {
       }, numeric(1))
 
       res$omni_p_global[i] <- (1 + sum(omni_null <= omni_obs, na.rm = TRUE)) / (B_global + 1)
+      # Set calib_mode for pure global mode (not mvn_global which sets it in MVN section)
+      if (perm_mode == "global") {
+        res$calib_mode[i] <- "global"
+      }
     }
 
     res$omni_p_global_BH <- .catfish_bh(res$omni_p_global)
@@ -1027,6 +1151,33 @@ if (!is.null(prep$z_col)) {
     cor_pairs <- .magma_read_gene_cor_pairs(magma_cor_file = magma_cor_file, magma_cor_pairs = magma_cor_pairs)
     if (is.null(cor_pairs) || !nrow(cor_pairs)) stop("MVN resampling requires magma_cor_file or magma_cor_pairs.", call. = FALSE)
 
+    # For mvn_global mode: prepare global pool for fallback
+    mvn_global_mode <- (perm_mode == "mvn_global")
+    global_pool_p <- NULL
+    global_pool_z <- NULL
+    global_pool_w <- NULL
+
+    if (mvn_global_mode) {
+      if (perm_pool == "raw" && !is.null(prep$p_raw_col) && !is.null(prep$gene_p_all_raw)) {
+        global_pool_p <- suppressWarnings(as.numeric(prep$gene_p_all_raw))
+      } else {
+        global_pool_p <- suppressWarnings(as.numeric(prep$gene_p_all_use))
+      }
+      if (!is.null(prep$z_col) && !is.null(prep$gene_z_all)) {
+        global_pool_z <- suppressWarnings(as.numeric(prep$gene_z_all))
+        if (!is.null(prep$weight_col) && !is.null(prep$gene_w_all)) {
+          global_pool_w <- suppressWarnings(as.numeric(prep$gene_w_all))
+        }
+      }
+      ok <- is.finite(global_pool_p) & !is.na(global_pool_p) & global_pool_p > 0 & global_pool_p < 1
+      if (!is.null(global_pool_z)) ok <- ok & is.finite(global_pool_z) & !is.na(global_pool_z)
+      if (!is.null(global_pool_w)) ok <- ok & is.finite(global_pool_w) & !is.na(global_pool_w)
+      global_pool_p <- global_pool_p[ok]
+      if (!is.null(global_pool_z)) global_pool_z <- global_pool_z[ok]
+      if (!is.null(global_pool_w)) global_pool_w <- global_pool_w[ok]
+      global_pool_p <- .catfish_fix_p(global_pool_p, min_p = prep$min_p, do_fix = isTRUE(do_fix))
+    }
+
     if (!is.null(prep$seed)) set.seed(prep$seed)
 
     for (i in seq_len(nrow(res))) {
@@ -1049,12 +1200,53 @@ if (!is.null(prep$z_col)) {
       genes_S <- genes_S[!is.na(genes_S) & genes_S != ""]
       if (length(genes_S) < prep$min_genes) next
 
-      R <- .magma_build_R_from_pairs(genes = genes_S, cor_pairs = cor_pairs, make_PD = make_PD)
-      if (is.null(R)) next
+      # Helper: fall back to global for this pathway
+      .do_fallback_global <- function() {
+        if (mvn_global_mode && length(global_pool_p) >= 2L) {
+          omni_obs_fallback <- res$omni_p_analytic[i]
+          if (is.finite(omni_obs_fallback)) {
+            magma_pval <- if (!is.null(res$magma_pvalue)) res$magma_pvalue[i] else NA_real_
+            fb_result <- tryCatch(
+              .do_global_resampling_pathway(
+                d = d, B = B_mvn, pool_p = global_pool_p, pool_z = global_pool_z,
+                pool_w = global_pool_w, omni_obs = omni_obs_fallback,
+                tau_grid = prep$tau_grid, min_p = prep$min_p, do_fix = isTRUE(do_fix),
+                omnibus = omnibus, stouffer_alternative = stouffer_alternative,
+                stouffer_min_abs_w = stouffer_min_abs_w,
+                include_magma = isTRUE(include_magma_eff), magma_pval = magma_pval
+              ),
+              error = function(e) NA_real_
+            )
+            res$omni_p_mvn[i] <<- fb_result
+            res$calib_mode[i] <<- "global"
+          }
+        }
+      }
 
-      Z <- .magma_simulate_Z_from_R(R, B = B_mvn)
-      if (is.null(Z)) next
+      # Try MVN, catch any error and fall back to global
+      mvn_result <- tryCatch({
+        R <- .magma_build_R_from_pairs(genes = genes_S, cor_pairs = cor_pairs, make_PD = make_PD)
+        if (is.null(R)) stop("R is NULL")
 
+        Z <- .magma_simulate_Z_from_R(R, B = B_mvn)
+        if (is.null(Z)) stop("Z is NULL")
+
+        list(R = R, Z = Z, success = TRUE)
+      }, error = function(e) {
+        list(R = NULL, Z = NULL, success = FALSE, error = e$message)
+      })
+
+      # If MVN failed, fall back to global
+      if (!mvn_result$success) {
+        .do_fallback_global()
+        next
+      }
+
+      R <- mvn_result$R
+      Z <- mvn_result$Z
+
+      # Wrap entire MVN processing in tryCatch - fall back to global on any error
+      mvn_process_result <- tryCatch({
 
       # map MVN Z -> p matrix for p-based methods
       if (mvn_marginal == "uniform") {
@@ -1138,6 +1330,8 @@ if (!is.null(prep$z_col)) {
         } else {
           pS_null <- 2 * stats::pnorm(-abs(Zs))
         }
+        # Clamp to avoid 0/1 extremes
+        pS_null <- pmax(pmin(pS_null, 1 - 1e-15), 1e-15)
       }
 
       # ============================================================
@@ -1160,7 +1354,7 @@ if (!is.null(prep$z_col)) {
 
         comps_obs <- c(pA_cal_obs, pF_cal_obs, pT_cal_obs, pM_cal_obs, pS_cal_obs)
         comps_obs <- comps_obs[is.finite(comps_obs) & !is.na(comps_obs)]
-        if (!length(comps_obs)) next
+        if (!length(comps_obs)) stop("No valid calibrated component p-values")
 
         omni_obs <- .catfish_omni_methods(comps_obs, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
         res$omni_p_mvn_compcal[i] <- omni_obs
@@ -1182,12 +1376,13 @@ if (!is.null(prep$z_col)) {
         }
 
         res$omni_p_mvn[i] <- (1 + sum(omni_null <= omni_obs, na.rm = TRUE)) / (B_mvn + 1)
+        res$calib_mode[i] <- "mvn"
 
       } else {
 
-        # ORIGINAL behavior: calibrate omnibus directly from null analytic component p’s
+        # ORIGINAL behavior: calibrate omnibus directly from null analytic component p's
         omni_obs <- res$omni_p_analytic[i]
-        if (!is.finite(omni_obs) || is.na(omni_obs)) next
+        if (!is.finite(omni_obs) || is.na(omni_obs)) stop("omni_obs not finite")
 
         omni_null <- vapply(seq_len(B_mvn), function(b) {
           comps <- c(pA_null[b], pF_null[b], pT_null[b], pM_null[b], pS_null[b])
@@ -1197,6 +1392,18 @@ if (!is.null(prep$z_col)) {
         }, numeric(1))
 
         res$omni_p_mvn[i] <- (1 + sum(omni_null <= omni_obs, na.rm = TRUE)) / (B_mvn + 1)
+        res$calib_mode[i] <- "mvn"
+      }
+
+      TRUE  # MVN processing succeeded
+      }, error = function(e) {
+        # MVN processing failed - fall back to global
+        FALSE
+      })
+
+      # If MVN processing failed, fall back to global
+      if (!isTRUE(mvn_process_result)) {
+        .do_fallback_global()
       }
     }
 
@@ -1210,6 +1417,9 @@ if (!is.null(prep$z_col)) {
   if (B_global > 0L) res$omni_p_final <- res$omni_p_global
   if (B_mvn    > 0L) res$omni_p_final <- res$omni_p_mvn
   res$omni_p_final_BH <- .catfish_bh(res$omni_p_final)
+
+  # Fill in calib_mode for pathways that didn't get resampled
+  res$calib_mode[is.na(res$calib_mode)] <- "analytic"
 
   # more lenient options
   res$omni_p_final_q_storey <- .catfish_qvalue(res$omni_p_final)
@@ -1490,7 +1700,7 @@ catfish_omni2_pathways <- function(gene_results,
                                  omnibus = c("ACAT","minP"),
                                  # resampling
                                  B_perm = NULL,
-                                 perm_mode = c("none","global","mvn","both"),
+                                 perm_mode = c("none","global","mvn","mvn_global","both"),
                                  mvn_marginal = c("uniform","empirical"),
                                  mvn_pool     = c("use","raw"),
                                  pool_p       = NULL,
@@ -1539,6 +1749,9 @@ catfish_omni2_pathways <- function(gene_results,
       B_global <- B_perm; B_mvn <- 0L
     } else if (perm_mode == "mvn") {
       B_global <- 0L; B_mvn <- B_perm
+    } else if (perm_mode == "mvn_global") {
+      # mvn_global: try MVN first, fall back to global per-pathway
+      B_global <- B_perm; B_mvn <- B_perm
     } else { # both
       B_global <- B_perm; B_mvn <- B_perm
     }
@@ -1553,6 +1766,10 @@ catfish_omni2_pathways <- function(gene_results,
       B_mvn <- 0L
     } else if (perm_mode == "mvn") {
       B_global <- 0L
+    } else if (perm_mode == "mvn_global") {
+      # mvn_global: need both; logic handles per-pathway
+      if (B_global == 0L) B_global <- B_mvn
+      if (B_mvn == 0L) B_mvn <- B_global
     } else {
       # both: keep as-is
     }
@@ -1621,6 +1838,7 @@ catfish_omni2_pathways <- function(gene_results,
     include_magma_in_perm = include_magma_in_perm,
     B_global = B_global,
     B_mvn = B_mvn,
+    perm_mode = perm_mode,
     perm_pool = perm_pool,
     mvn_marginal = mvn_marginal,
     mvn_pool = mvn_pool,
