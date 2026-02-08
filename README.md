@@ -983,8 +983,6 @@ We summarize multi-layer support using an interpretable **support-count + streng
 
 This formulation is intentionally conservative: the **discrete support terms dominate** so that agreement across independent layers matters more than any single extremely small p-value, while the weighted $(-\log_{10}(p)$) components preserve **within-layer ranking** (distinguishing marginal from strong signals). In practice, we prioritize genes with **≥2 layers** of support and rank them by the composite score to produce a focused, biologically grounded candidate list.
 
-**Figure interpretation (Panels A–D).** Panel **A** (UpSet) shows how candidate genes overlap across GWAS hits, MAGMA-significant genes, and genes in the top pathways; most genes are supported by a single layer, while a smaller subset shows multi-layer agreement. Panel **B** compares MAGMA signal for genes inside top pathways versus genes outside; pathway genes exhibit a statistically stronger distribution of MAGMA association, supporting the idea that pathway enrichment captures coordinated gene-level signal. Panel **C** summarizes counts of single-layer versus multi-layer candidates, highlighting that multi-layer support yields a much smaller, higher-confidence set. Panel **D** plots GWAS strength against MAGMA strength per gene and annotates genes by pathway membership/evidence class; genes supported by all layers cluster among the strongest signals, while pathway-supported genes can also appear in moderate-signal regions consistent with coordinated (polygenic) enrichment.
-
 ---
 
 ## 8) Addressing common questions
@@ -1092,228 +1090,10 @@ magma \
 > **Note:** This is the exact end-to-end pipeline used (MAGMA → gene adjustment → pathway tests → omnibus). Paths, filenames, and column mappings should be edited to match your local files.
 
 ```r
-############################################################
-## CATFISH PIPELINE: MAGMA → SIZE-ADJUSTED GENE P → PATHWAYS
-## (with brief explanation of the key parameters)
-############################################################
-
-## CATFISH gives you:
-##  - R wrappers around the MAGMA binary (magma_annotate, magma_gene)
-##  - Parallel chromosome-wise runs (chroms, n_threads)
-##  - Plant-ready GFF3 → gene loc helpers
-##  - Automatic gene-size/#SNP adjustment
-##  - A suite of pathway tests + an omnibus layer
-##
-## Below is the end-to-end flow, with parameter explanations in comments.
-############################################################
 
 
 ############################################################
-## 1. Build MAGMA gene location file from GFF3
-############################################################
-
-gff_path     <- "/Users/.../Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.gff3"
-gene_loc_out <- "/Users/.../maize.genes.loc"
-
-gff3_to_geneloc(
-  gff        = gff_path,
-  out        = "inst/extdata/maize.genes.loc",
-  chr_prefix = "chr"  # strips "chr" prefix so MAGMA’s CHR matches PLINK CHR
-)
-
-## - You can call species = "maize" in CATFISH , it automatically
-##   uses inst/extdata/maize.genes.loc 
-
-## - You can also use any gff3 file for your organism of choice
-## - Parses the GFF3, extracts gene features,
-## and writes a MAGMA-ready-to-use gene location file (GENE, CHR, START, STOP, STRAND…).
-
-
-############################################################
-## 2. SNP → gene annotation with MAGMA (magma_annotate wrapper)
-############################################################
-
-stats_file <- "/Users/.../raw_GWAS_MLM_3PC_N.txt"
-
-magma_annotate(
-  stats_file     = stats_file1,
-  rename_columns = c(
-    CHR    = "chr",    # your column "chr" → MAGMA expects "CHR"
-    SNP    = "rs",     # your column "rs"  → "SNP"
-    POS    = "ps",     # your column "ps"  → "POS"
-    PVALUE = "p_wald"  # your p-value column → "PVALUE"
-  ),
-  species    = "maize",        # uses built-in maize.genes.loc from step 1
-  out_prefix = "N_maize_MLM",  # prefix for MAGMA output files
-  out_dir    = "annot",        # directory to write MAGMA .genes.annot
-  window     = c(25, 25)       # +/- 25 kb around each gene for SNP mapping
-)
-
-## - magma_annotate() builds the MAGMA command line and calls the MAGMA binary for you.
-## - You just supply stats_file and remember to rename your columns or do it here
-
-
-############################################################
-## 3. Gene-level MAGMA (multi = snp-wise) with R wrapper
-############################################################
-
-# Plink based bed/bim.fam files
-bfile      <- "/Users/.../all_maize2"   # PLINK basename: .bed/.bim/.fam
-
-## 3A. Chromosome-wise run using NMISS (per-SNP sample size)
-## NMISS is the number of missing genotypes
-magma_gene(
-  bfile      = bfile,
-  gene_annot = "annot/N_maize_MLM.genes.annot",
-  stats_file = stats_file,
-  n_total    = 3539,             # optional global N if NOBS/NMISS absent
-  rename_columns = c(
-    CHR    = "Chr",
-    SNP    = "SNP",
-    POS    = "Pos",
-    PVALUE = "P.value",
-    NMISS  = "n_miss"            # MAGMA interprets this as per-SNP sample size
-  ),
-  out_prefix = "N_maize_MLM",
-  out_dir    = "magma_genes_by_chr",
-  gene_model = c("multi=snp-wise"),  # multi-parameter SNP-wise model. This works best for CATFISH. Combines top and mean SNPs. 
-  chroms     = 1:10,                 # run MAGMA separately for chr 1–10
-  n_threads  = 10                    # run up to 10 MAGMA jobs in parallel
-)
-
-## 3B. Chromosome-wise run using NOBS (per-SNP N)
-## NOBS is the total number of genotypes used
-magma_gene(
-  bfile      = bfile,
-  gene_annot = "annot/N_maize_MLM.genes.annot",
-  stats_file = stats_file2,
-  rename_columns = c(
-    CHR    = "Chr",
-    SNP    = "SNP",
-    POS    = "Pos",
-    PVALUE = "P.value",
-    NOBS   = "nobs"             # per-SNP N; preferred over n_total
-  ),
-  out_prefix = "N_maize_MLM",
-  out_dir    = "magma_multi_snp_wise_genes_by_chr_N_maize",
-  gene_model = c("multi=snp-wise"),
-  chroms     = 1:10,
-  n_threads  = 10
-)
-
-## - magma_gene() is a R wrapper around the MAGMA binary.
-##   * Handles all flags, temp files, and error checking.
-##   * Additional can parallelize the analysis
-##   * chroms + n_threads to run multiple chromosomes in parallel.
-##   * Only requires a minimal rename_columns spec instead of reformatting
-
-
-############################################################
-## 4. Combine per-chromosome MAGMA gene outputs
-############################################################
-
-# Load the file
-files <- sprintf(
-  "/Users/.../magma_multi_snp_wise_genes_by_chr_N_maize/N_maize_MLM_chr%d.multi_snp_wise.genes.out",
-  1:10
-)
-
-gene_list <- lapply(files, function(f) {
-  if (!file.exists(f)) stop("File not found: ", f)
-  utils::read.table(f, header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
-})
-
-genes_all_raw <- do.call(rbind, gene_list)
-
-# Ensure the gene p column is named "P"
-colnames(genes_all_raw)[9] <- "P"
-
-# For genes appearing on multiple chromosomes or windows, keep smallest P
-o         <- order(genes_all_raw$GENE, genes_all_raw$P)
-genes_all <- genes_all_raw[o, ]
-genes_all <- genes_all[!duplicated(genes_all$GENE), ]
-
-# Optionally sort by CHR and START
-if (all(c("CHR", "START") %in% names(genes_all))) {
-  genes_all <- genes_all[order(genes_all$CHR, genes_all$START), ]
-}
-
-write.table(
-  genes_all,
-  file      = "/Users/.../magma_N_maize.txt",
-  sep       = "\t",
-  quote     = FALSE,
-  row.names = FALSE
-)
-
-## - This combines 10 per-chromosome MAGMA outputs into a single file for ease of use
-
-
-############################################################
-## 5. Gene length extraction + SNP density bias adjustment
-############################################################
-
-## 5A. Extract gene lengths from GFF3
-gff3_path <- system.file(
-  "extdata", "GFF3",
-  "Zea_mays.Zm-B73-REFERENCE-NAM-5.0.62.chr.gff3",
-  package = "CATFISH"
-)
-
-maize_gene_len <- get_gene_lengths(
-  gff3_file  = gff3_path,
-  output     = TRUE,
-  output_dir = "inst/extdata",
-  file_name  = "Zea_mays_gene_lengths.tsv"
-)
-
-## Output includes:
-##   gene_id, chr, start, end, length
-
-
-## 5B. Adjust gene-level Z/P for gene length & #SNPs
-
-genes_all <- read.table(
-  "/Users/.../magma_N_maize.txt", # from previous step
-  header = TRUE, stringsAsFactors = FALSE
-)
-
-# Adjsut the pvalue based on gene length and number of snps
-adj_out <- catfish_adjust_gene_p(
-  gene_results = genes_all,
-  gene_lengths = maize_gene_len,
-  gene_col     = "GENE",
-  p_col        = "P",
-  z_col        = "ZSTAT",    # raw MAGMA Z
-  len_gene_col = "gene_id",
-  len_col      = "length"
-  # nsnp_col   = "NSNPS"     # #SNPs per gene
-)
-
-genes_adj <- adj_out$genes    # includes Z_raw, Z_adj, P_adj, log_gene_length, log_nsnp
-lm_fit    <- adj_out$fit      # lm(Z_raw ~ log_gene_length + log_nsnp)
-
-write.csv(genes_adj, "genes_adj.csv", row.names = FALSE)
-
-## - MAGMA gene p-values are known to correlate weakly with gene size and SNP density.
-## - catfish_adjust_gene_p():
-##   * Fits a linear model: Z_raw ~ log(gene length) + log(#SNPs).
-##   * Uses residuals (Z_adj) as “size/SNP-adjusted” Z-scores.
-##   * Converts Z_adj back to P_adj = 2*pnorm(-|Z_adj|).
-## - You then use P_adj in gene→pathway tests, reducing bias toward big genes.
-
-
-############################################################
-## 6. Load pathway definitions from PMN/CornCyc or use saved files
-############################################################
-
-maize_pw <- catfish_load_pathways(
-  species  = "maize",
-  gene_col = "Gene-name"  # column in the PMN gene-set file that matches MAGMA gene IDs
-)
-
-############################################################
-## 7. Omnibus combining methods (ACAT or minP)
+## Omnibus combining methods (ACAT or minP)
 ############################################################
 
 ## All tests use gene_results + species/pathways to:
@@ -1352,79 +1132,6 @@ omni_minp <- omni_pathways(
 ##   - BH FDR for omni_p and each component
 ##   - omni_perm_BH  : permutation-calibrated BH pvalues using perm pvalues
 
-############################################################
-## 8. Pathway-level tests (gene → pathway)
-############################################################
-
-## You can run each pathway individually as well
-
-### 8A. ACAT per pathway
-
-pw_res_acat_adj <- catfish_acat_pathways(
-  gene_results = genes_adj,     # adjusted Pvalue
-  species      = "maize",
-  gene_col     = "GENE",
-  p_col        = "P_adj",
-  B            = 10000L,            # 10,000 is good enough
-  seed         = NULL,
-  output       = TRUE,
-  out_dir      = "acat_results"
-)
-
-### 8B. Fisher pathways
-
-wf_res_raw <- catfish_wfisher_pathways(
-  gene_results = genes_adj,   # raw P
-  species      = "maize",
-  gene_col     = "GENE",
-  p_col        = "P_adj",
-  effect_col   = "ZSTAT",
-  #weight_col   = NULL, # If you have any other weights. 
-  is_onetail   = FALSE
-)
-
-### 8C. Truncated Fisher (soft) / TFisher(soft)
-
-soft_tf_res_adj <- catfish_soft_tfisher_pathways(
-  gene_results     = genes_adj,
-  species          = "maize",
-  gene_col         = "GENE",
-  p_col            = "P_adj",
-  tau1             = 0.05,     # soft truncation threshold
-  B_perm           = 10000L,  # permutations for empirical pvalue
-  seed             = 123,
-  analytic_logical = TRUE,
-  output           = TRUE,
-  out_dir          = "catfish_tfisher_soft"
-)
-
-### 8D. Stouffer (sum of Z across genes)
-
-stouf_res <- catfish_stouffer_pathways(
-  gene_results = genes_adj,
-  species      = "maize",
-  gene_col     = "GENE",
-  p_col        = "P_adj",
-  weight_col   = NULL,    # equal weights for all genes
-  B_perm       = 10000L,    # permutations for empirical pvalue
-  seed         = 123,
-  output       = TRUE,
-  out_dir      = "catfish_stouffer"
-)
-
-### 8E. Gene-level minP per pathway
-
-minp_res <- catfish_minp_pathways(
-  gene_results = genes_adj,
-  species      = "maize",
-  gene_col     = "GENE",
-  p_col        = "P_adj",
-  B_perm       = 10000L,      # permutations for empirical pvalue
-  min_p        = 1e-15,
-  do_fix       = TRUE,
-  output       = TRUE,
-  out_dir      = "catfish_minp_maize"
-)
 
 ```
 
@@ -1515,6 +1222,42 @@ Panel B shows genomic control (λ) that summarizes calibration, showing elevated
 Panel C depics Type I error at α = 0.05 confirms near-nominal rejection rates overall, supporting interpretation of component differences as sensitivity to distinct signal architectures rather than systematic false positives.*
 
 
+
+
+
+
+
+### Table 1. Top multi-layer candidate genes (Arabidopsis)
+
+| GENE | magma_p | magma_fdr | gwas_min_p | gwas_n_snps | n_top_pathways | best_pathway_p | pathways | hit_gwas | hit_magma | hit_pathway | support_layers | score |
+|---|---:|---:|---:|---:|---:|---:|---|---|---|---|---:|---:|
+| AT1G74420 | 8.48E-07 | 0.001594258 | 8.13E-10 | 431 | 1 | 0.00169983 | PWY-5936 | TRUE | TRUE | TRUE | 3 | 5.400250361 |
+| AT5G55380 | 1.18E-06 | 0.001954438 | 2.51E-08 | 605 | 1 | 0.00039996 | PWY-5884 | TRUE | TRUE | TRUE | 3 | 5.285590282 |
+| AT5G55340 | 2.18E-06 | 0.002723199 | 2.51E-08 | 470 | 1 | 0.00039996 | PWY-5884 | TRUE | TRUE | TRUE | 3 | 5.232168885 |
+| AT5G55350 | 2.58E-06 | 0.002757275 | 2.51E-08 | 514 | 1 | 0.00039996 | PWY-5884 | TRUE | TRUE | TRUE | 3 | 5.217663656 |
+| AT5G55360 | 4.58E-06 | 0.003162742 | 2.51E-08 | 545 | 1 | 0.00039996 | PWY-5884 | TRUE | TRUE | TRUE | 3 | 5.167728631 |
+| AT5G55330 | 4.61E-06 | 0.003162742 | 2.51E-08 | 470 | 1 | 0.00039996 | PWY-5884 | TRUE | TRUE | TRUE | 3 | 5.167117898 |
+| AT1G74470 | 2.46E-05 | 0.008899952 | 8.13E-10 | 388 | 2 | 0.00049995 | PWY-5064; PWY-5863 | TRUE | TRUE | TRUE | 3 | 5.160831762 |
+| AT5G55370 | 8.62E-06 | 0.004858669 | 2.51E-08 | 581 | 1 | 0.00039996 | PWY-5884 | TRUE | TRUE | TRUE | 3 | 5.112786997 |
+| AT5G55320 | 9.21E-06 | 0.004992384 | 2.51E-08 | 466 | 1 | 0.00039996 | PWY-5884 | TRUE | TRUE | TRUE | 3 | 5.107022194 |
+| AT1G73980 | 7.90E-06 | 0.004546725 | 5.58E-08 | 411 | 1 | 0.00809919 | PWY-7193 | TRUE | TRUE | TRUE | 3 | 4.954955162 |
+
+---
+
+### Table 2. Top multi-layer candidate genes (Fly female)
+
+| GENE | magma_p | magma_fdr | gwas_min_p | gwas_n_snps | n_top_pathways | best_pathway_p | pathways | hit_gwas | hit_magma | hit_pathway | support_layers | score |
+|---|---:|---:|---:|---:|---:|---:|---|---|---|---|---:|---:|
+| FBgn0015781 | 0.0002558 | 0.403172775 | 3.78E-06 | 1118 | 1 | 0.081991801 | FLYCYC:ARG-PRO-PWY | TRUE | TRUE | TRUE | 3 | 4.369339771 |
+| FBgn0036622 | 0.0074475 | 0.701182988 | 1.10E-05 | 649 | 1 | 0.104689531 | FLYCYC:PWY-7250 | TRUE | TRUE | TRUE | 3 | 4.019647612 |
+| FBgn0030904 | 1.23E-05 | 0.077242734 | 2.22E-07 | 802 | NA | NA | NA | TRUE | TRUE | FALSE | 2 | 3.647713454 |
+| FBgn0034479 | 8.41E-06 | 0.077242734 | 1.68E-06 | 836 | NA | NA | NA | TRUE | TRUE | FALSE | 2 | 3.592379942 |
+| FBgn0038673 | 0.00016703 | 0.403172775 | 3.78E-06 | 1095 | NA | NA | NA | TRUE | TRUE | FALSE | 2 | 3.297738025 |
+| FBgn0038672 | 0.00020019 | 0.403172775 | 3.78E-06 | 1093 | NA | NA | NA | TRUE | TRUE | FALSE | 2 | 3.282008445 |
+| FBgn0027785 | 0.00021915 | 0.403172775 | 3.78E-06 | 1096 | NA | NA | NA | TRUE | TRUE | FALSE | 2 | 3.274148626 |
+| FBgn0038674 | 0.00023806 | 0.403172775 | 3.78E-06 | 1121 | NA | NA | NA | TRUE | TRUE | FALSE | 2 | 3.266959635 |
+| FBgn0053639 | 0.0010174 | 0.701182988 | 2.22E-07 | 792 | NA | NA | NA | TRUE | TRUE | FALSE | 2 | 3.263856505 |
+| FBgn0260779 | 0.00034224 | 0.47947824 | 3.78E-06 | 1154 | NA | NA | NA | TRUE | TRUE | FALSE | 2 | 3.235430768 |
 
 
 
