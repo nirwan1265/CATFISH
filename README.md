@@ -858,26 +858,28 @@ so that null gene Z-scores share the same correlation structure as implied by $R
 **Step 3 – Derive null $p$-values from the same simulated $Z^{(b)}$ (Gaussian copula).**  
 To ensure that Stouffer and the p-based tests are coherent, all components are derived from the *same* draw $Z^{(b)}$. For p-based components (ACAT, Fisher, TFisher, minP), CATFISH maps $Z^{(b)}$ to null gene $p$-values using a Gaussian copula:
 
-- **Uniform marginals (default; matches implementation).**
+- Uniform marginals (default):
 
 $$
 U_g^{(b)}=\Phi\!\left(Z_g^{(b)}\right), \qquad
-p_g^{(b)} = 2\min\{U_g^{(b)},\,1-U_g^{(b)}\}.
+p_g^{(b)} = 2\min\{U_g^{(b)}\,1-U_g^{(b)}\}.
 $$
 
-  This yields marginally Uniform$(0,1)$ $p$-values while preserving dependence via $R_S$.
+  This yields marginally Uniform $(0,1)$ $p$-values while preserving dependence via $R_S$.
 
-- **Empirical marginals (optional).**
-  Alternatively, the same copula uniforms $U_g^{(b)}$ can be mapped through an empirical null quantile function estimated from the genome-wide distribution of gene $p$-values. To avoid leakage, the empirical pool excludes genes in the tested pathway $S$ (unless an external pool is explicitly provided).
+- Empirical marginals (optional):
+  
+  Alternatively, the same copula uniforms $$U_g^{(b)}$$ can be mapped through an empirical null quantile function estimated from the genome-wide distribution of gene $p$-values. To avoid leakage, the empirical pool excludes genes in the tested pathway $S$ (unless an external pool is explicitly provided).
 
 (If one-sided gene $p$-values are desired for the p-based components, the mapping can be replaced with $p_g^{(b)}=1-\Phi(Z_g^{(b)})$ in the appropriate direction; however, the default above uses two-sided $p$-values.)
 
 **Step 4 – Recompute component tests under the MVN null (and optional component calibration).**  
+
 Using the simulated $p$-values $\{p_g^{(b)}\}$ and the same Z-scores $\{Z_g^{(b)}\}$, CATFISH recomputes:
 - ACAT, Fisher, TFisher (using the identical $\tau$ grid), and minP from $\{p_g^{(b)}\}$;
-- Stouffer from $\{Z_g^{(b)}\}$ using the specified alternative (e.g., one-sided “greater” or two-sided), optionally weighted.
+- Stouffer from $\{Z_g^{(b)}\}$ using the specified alternative (e.g., one-sided “greater” default), optionally weighted.
 
-Optionally, component $p$-values can themselves be MVN-calibrated using the same draws (i.e., each component’s observed $p$-value is evaluated against its MVN null replicate distribution).
+Optionally, component $p$-values can themselves be MVN-calibrated using the same draws (i.e., each component’s observed $p$-value is evaluated against its MVN null replicate distribution but is recommended to be used for omnibus.
 
 **Step 5 – Form the omnibus and empirically calibrate.**  
 Within each replicate $b$, we combine the replicate component results using the prespecified omnibus operator (ACAT across methods or Sidák-min across methods) to obtain $p_{\mathrm{omni}}^{(b)}(S)$, and compare to the observed
