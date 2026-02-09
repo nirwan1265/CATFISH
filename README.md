@@ -892,34 +892,6 @@ $$
 **Interpretation.**  
 This MVN procedure preserves (i) within-pathway gene dependence encoded by $R_S$ and (ii) cross-method coupling because every component is recomputed from the same correlated draw. As a result, it provides LD-aware calibration of the omnibus without assuming independence among genes or among component tests.
 
-
----
-
-### 5.6 Hierarchical inference and interpretation
-
-Primary inference: The omnibus $p$-value $\hat p_{\mathrm{omni}}(S)$ (calibrated via global/MVN resampling) serves as the primary evidence for pathway enrichment, controlling type I error under both cross-method coupling and gene-gene correlation.
-
-Component tests as descriptive: 
-Individual test $p$-values ($p_{\mathrm{ACAT}}$, $p_{\mathrm{Fisher}}$, etc.) provide complementary evidence about the \textit{pattern} of enrichment:
-
-- ACAT: sensitive to pathways with multiple moderately significant genes
-- Fisher: detects coordinated weak-to-moderate enrichment across many genes
-- minP: highlights pathways dominated by one or few extremely significant genes
-- Stouffer: similar to Fisher but using Z-score directionality
-- TFisher: adaptive between sparse and diffuse signal patterns
-
-MVN-calibrated components (optional): When computed, $\hat p_j(S)$ represent each method's $p$-value adjusted for gene-gene correlations. These remain dependent and should not be naïvely recombined or interpreted as independent evidence.
-
-\textbf{Figure X: CATFISH inference workflow}
-\begin{enumerate}
-  \item Input: Gene-level $p$-values and Z-scores (MAGMA)
-  \item Compute 5 component tests per pathway (analytic)
-  \item Combine via omnibus operator (ACAT-O or minP-O)
-  \item \textbf{Calibrate omnibus} via MVN/global resampling
-  \item Primary result: $\hat p_{\mathrm{omni}}$ with FDR control
-  \item (Optional) Diagnose with component calibration
-\end{enumerate}
-
 ---
 
 ### 5.6 Choice of final omnibus $p$-value
@@ -935,52 +907,51 @@ The **final omnibus $p$-value** is chosen as:
 $$
 p_{\mathrm{omni,final}}(S) =
 \begin{cases}
-\hat p_{\mathrm{omni,mvn}}(S), & \text{if MVN calibration was performed;}\\
+\hat p_{\mathrm{omni,mvn}}(S), & \text{if MVN calibration was performed (recommended);}\\
 \hat p_{\mathrm{omni,global}}(S), & \text{else if global calibration was performed;}\\
 p_{\mathrm{omni,analytic}}(S), & \text{otherwise.}
 \end{cases}
 $$
 
-This final omnibus is then adjusted across pathways using Benjamini–Hochberg FDR to obtain
+This final omnibus is then adjusted across pathways using Benjamini–Hochberg FDR (Section 6) to obtain
 $$q_{\mathrm{omni,final}}(S)$$, reported as `omni_p_final_BH` in CATFISH.
 
 ---
 
-\subsection*{5.7 Reporting guidelines}
+### 5.7 Reporting guidelines
 
 For each pathway, report:
-\begin{itemize}
-  \item \textbf{Primary}: $\hat p_{\mathrm{omni}}(S)$ and FDR-adjusted q-value
-  \item \textbf{Supplementary}: All 5 component $p$-values (analytic)
-  \item \textbf{Optional}: Calibration ratio $\hat p_{\mathrm{omni}}/p_{\mathrm{omni,analytic}}$
-  \item \textbf{For interpretation}: Gene list with individual $p$-values
-\end{itemize}
 
-\textbf{Interpretation examples:}
-\begin{itemize}
-  \item If $\hat p_{\mathrm{omni}}$ significant and all components agree $\to$ robust enrichment
-  \item If only minP significant $\to$ sparse, gene-specific signal
-  \item If only Fisher/ACAT significant $\to$ diffuse, polygenic signal
-  \item Large calibration ratio ($\gg 1$) $\to$ LD inflation severe
-\end{itemize}
+- **Primary:** the calibrated omnibus p-value (`p_omni_hat(S)`) and its BH-FDR q-value.
+- **Supplementary:** all five **analytic** component p-values (ACAT, Fisher, adaptive soft TFisher, Stouffer, minP).
+- **Optional:** a calibration ratio to summarize how much calibration changes the raw omnibus signal:  
+  `p_omni_hat(S) / p_omni_analytic(S)`
+- **For interpretation:** the pathway’s gene list with per-gene p-values (and Z-scores if available), so readers can see whether signal is sparse, diffuse, or hybrid.
 
----
+**Interpretation examples:**
 
-\subsection*{5.8 Power considerations under different enrichment patterns}
-
-The omnibus approach balances sensitivity across enrichment patterns:
-\begin{itemize}
-  \item \textbf{Sparse signals} (1-2 highly significant genes): minP and TFisher (small $\tau$) dominate
-  \item \textbf{Diffuse signals} (many moderately significant genes): Fisher, ACAT, Stouffer dominate
-  \item \textbf{Mixed patterns}: ACAT-O provides robust combination
-  \item \textbf{Adaptive selection}: The omnibus calibration accounts for post-hoc selection across methods
-\end{itemize}
-
-Simulation studies (not shown) demonstrate that the omnibus maintains power across scenarios while component tests specialize: Fisher loses power for sparse signals, minP loses power for diffuse signals.
+- If the **calibrated omnibus** is significant and multiple component tests agree → **robust enrichment**.
+- If **only minP** is extreme → **sparse / single-gene–dominated** signal (check for SGP/SDA; consider leave-one-gene-out).
+- If **Fisher/ACAT/TFisher** drive the signal while minP is not extreme → **diffuse or moderate multi-gene enrichment**.
+- If `p_omni_hat / p_omni_analytic >> 1` → strong evidence that **LD/dependence inflation** was present and calibration materially increased the p-value (interpret raw/analytic results cautiously).
 
 ---
 
-### 5.7 Treatment of MAGMA competitive in the omnibus (optional)
+### 5.8 Power considerations under different enrichment patterns
+
+The CATFISH omnibus is designed to maintain sensitivity across heterogeneous pathway signal architectures by combining component tests with complementary operating characteristics:
+
+- **Sparse signals** (1–2 highly significant genes): **minP** and **TFisher** with small τ tend to be most sensitive (tail-driven / driver-like patterns).
+- **Diffuse signals** (many moderately associated genes): **Fisher**, **ACAT**, and **Stouffer** tend to be most sensitive (evidence accumulation across many genes).
+- **Mixed patterns** (driver + support): **ACAT-O** provides a robust across-method integrator when multiple components contribute partially overlapping evidence.
+- **Adaptive selection:** because CATFISH effectively selects/aggregates across correlated component tests, the **omnibus calibration** (global or MVN) is critical to account for post hoc selection and dependence.
+
+In simulations (`RESULTS`), this specialization is evident: **Fisher** tends to lose power under extremely sparse architectures, while **minP** tends to lose power under diffuse polygenic architectures. The omnibus mitigates these trade-offs by aggregating across complementary component tests and calibrating the full procedure under a dependence-preserving null.
+
+
+---
+
+### 5.9 Treatment of MAGMA competitive in the omnibus (optional)
 
 We also calculate and present the MAGMA competitive gene-set $p$-value (`magma_pvalue`) as an independent summary.
 By default, it is **excluded** from the resampling-calibrated omnibus (`include_magma_in_perm=FALSE`) because the aforementioned resampling strategies provide null realizations just for **within-pathway** gene evidence ($$p_g$$ and $$Z_g$$ for genes $$g\in S$$). A principled null for the MAGMA competitive statistic necessitates rerunning a competitive regression (or MAGMA itself) for each duplicate on a suitable genome-wide null, which is not executed in this context. Thus, the resampling-calibrated omnibus is calculated exclusively for the five gene-derived component tests, and MAGMA competitive is analyzed in conjunction with the omnibus rather than being integrated into it.
