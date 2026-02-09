@@ -397,7 +397,7 @@ where $F_{\chi^2_{2G}}(\cdot)$ is the $\chi^2$ CDF with $2G$ degrees of freedom.
 Fisher is sensitive to CMEs. To avoid undefined values in $\log(p_g)$ when p-values are extremely small or numerically zero, we apply the same clipping rule as above:
 
 $$
-p_g \leftarrow \min\{1-p_{\min},\,\max(p_g,\,p_{\min})\},\qquad p_{\min}=10^{-15}.
+p_g \leftarrow \min\{1-p_{\min}\,\max(p_g\,p_{\min})\},\qquad p_{\min}=10^{-15}.
 $$
 
 If a gene appears multiple times in the input for a pathway (duplicate gene entries), we retain one value per gene by collapsing duplicates using the minimum p-value for that gene before computing $T_{\mathrm{Fisher}}(S)$. Thus Fisher’s statistic is computed on the set of unique pathway genes.
@@ -447,76 +447,76 @@ If a gene appears multiple times in the pathway input, duplicate entries are col
 
 ### 3.4 Stouffer's method
 
-Stouffer's technique consolidates gene-level $Z$ statistics instead of p-values and exhibits increased sensitivity to DPS. In CATFISH, the gene-level Z input is sourced directly from MAGMA’s gene output (`ZSTAT`). Significantly, MAGMA’s Z-scale is understood as a association-strength score, indicating that greater positive values signify stronger evidence of association, rather than indicating the direction of effect as trait-increasing or trait-decreasing. Consequently, the natural pathway-level Stouffer test in this context is one-sided (greater), assessing the enrichment of positive association strength inside the pathway.
+Stouffer’s technique combines gene-level $Z$ statistics (rather than p-values) and is often more sensitive to DPS architectures, where many genes exhibit modest evidence of association. In CATFISH, the gene-level $Z$ input is taken directly from MAGMA’s gene output (`ZSTAT`). Importantly, MAGMA’s $Z$ scale is an association-strength transform (monotone in the gene p-value), so larger positive values indicate stronger evidence of association, not the direction of effect (trait-increasing vs trait-decreasing) (ref). Consequently, the natural pathway-level Stouffer test in this context is one-sided (greater), assessing whether genes in the pathway show unusually large association-strength scores.
 
 **Default (unweighted) Stouffer:**
 
-For a pathway $$S$$ with $$G=|S|$$ genes,
+For a pathway $S$ with $G=|S|$ genes,
 
-$$Z_{\mathrm{stouffer}}(S) = \frac{1}{\sqrt{G}} \sum_{g \in S} Z_g$$
+$$
+Z_{\mathrm{stouffer}}(S)=\frac{1}{\sqrt{G}} \sum_{g \in S} Z_g, \qquad p_{\mathrm{stouffer}}(S)= 1-\Phi\!\left(Z_{\mathrm{stouffer}}(S)\right),
+$$
 
-$$p_{\mathrm{stouffer}}(S) = 1 - \Phi\!\left(Z_{\mathrm{stouffer}}(S)\right),$$
-
-where $$\Phi(\cdot)$$ is the standard normal CDF.
+where $\Phi(\cdot)$ is the standard normal CDF.
 
 **Optional (weighted) Stouffer:**
 
-CATFISH optionally supports nonnegative per-gene weights $$w_g$$ (e.g., based on SNP count or other gene-level quantities). In that case,
+CATFISH optionally supports nonnegative per-gene weights $w_g$ (e.g., based on SNP count or other gene-level quantities). In that case,
 
-$$Z_{\mathrm{stouffer}}^{(w)}(S)=\frac{\sum_{g\in S} w_g\, Z_g}{\sqrt{\sum_{g\in S} w_g^2}},\qquad p_{\mathrm{stouffer}}^{(w)}(S)=1-\Phi\!\left(Z_{\mathrm{stouffer}}^{(w)}(S)\right)$$
+$$
+Z_{\mathrm{stouffer}}^{(w)}(S) = \frac{\sum_{g\in S} w_g\, Z_g}{\sqrt{\sum_{g\in S} w_g^2}}, \qquad p_{\mathrm{stouffer}}^{(w)}(S) = 1-\Phi\!\left(Z_{\mathrm{stouffer}}^{(w)}(S)\right).
+$$
 
-A **two-sided** option can be reported for completeness when a genuinely *signed* gene-level Z is available:
+(Weights are assumed nonnegative so that “large positive” still corresponds to stronger aggregated evidence.)
 
-$$p_{\mathrm{stouffer}}^{(2\text{-sided})}(S)=2\,\Phi\!\left(-\left|Z_{\mathrm{stouffer}}(S)\right|\right),$$
+A two-sided option can be reported for completeness when a genuinely *signed* gene-level $Z$ is available:
 
-This is not the default for MAGMA-style association-strength Z scores.
+$$
+p_{\mathrm{stouffer}}^{(2\text{-sided})}(S) = 2\,\Phi\!\left(-\left|Z_{\mathrm{stouffer}}(S)\right|\right).
+$$
+
+This is not the default for MAGMA-style association-strength $Z$ scores.
 
 In the CATFISH implementation, Stouffer’s test defaults to a **one-sided** alternative, `alternative = "greater"`, i.e. we test whether the pathway’s aggregated MAGMA association-strength scores are unusually large:
 
 $$
-H_0:\; Z_{\mathrm{stouffer}}(S)\sim \mathcal{N}(0,1)
-\qquad \text{vs}\qquad
-H_1:\; Z_{\mathrm{stouffer}}(S) > 0.
+H_0:\; Z_{\mathrm{stouffer}}(S)\sim \mathcal{N}(0,1) \qquad \text{vs}\qquad H_1:\; Z_{\mathrm{stouffer}}(S) > 0.
 $$
 
-This default is appropriate for MAGMA’s gene-level $Z$ statistics (e.g. `ZSTAT`), which represent **strength of association** (higher = stronger evidence) rather than a signed direction of effect (trait-increasing vs trait-decreasing).  
+This default is appropriate for MAGMA’s gene-level $Z$ statistics (e.g. `ZSTAT`), which represent **strength of association** (higher = stronger evidence) rather than a signed direction of effect.
 
-If the user provides genuinely **signed** gene-level Z-scores (e.g., from an effect-direction-aware gene model), CATFISH can optionally report a **two-sided** Stouffer p-value:
+If the user provides genuinely **signed** gene-level $Z$-scores (e.g., from an effect-direction-aware gene model), CATFISH can optionally report a **two-sided** Stouffer p-value:
 
 $$
-p_{\mathrm{stouffer}}^{(2\text{-sided})}(S)=2\,\Phi\!\left(-\left|Z_{\mathrm{stouffer}}(S)\right|\right).
+p_{\mathrm{stouffer}}^{(2\text{-sided})}(S) = 2\,\Phi\!\left(-\left|Z_{\mathrm{stouffer}}(S)\right|\right).
 $$
 
-Finally, the analytic Stouffer p-values above rely on the standard Z-test reference calibration, which implicitly assumes **independent** gene-level statistics. In practice, genes within a pathway can be correlated (LD / local genomic structure), so CATFISH treats the analytic Stouffer p-value as a *component summary* and addresses dependence at the **final omnibus calibration stage**
-(Section 4; MVN/global resampling).
+Finally, the analytic Stouffer p-values above rely on the standard normal reference calibration, which implicitly assumes independent gene-level statistics (or, more generally, that $Z_{\mathrm{stouffer}}$ has been variance-standardized under the null). In practice, genes within a pathway can be correlated (LD / local genomic structure), so CATFISH treats the analytic Stouffer p-value as a component summary and addresses dependence at the final omnibus calibration stage (Section 4; MVN/global resampling).
 
 ---
 
-### 3.5 minP / Tippett test
+### 3.5 minP (Tippett / Šidák)
 
-For each pathway $S$ with $G$ genes, we define the minimum gene $p$-value as
-
-$$
-T_{\min}(S) = p_{\min}(S) = \min_{g \in S} p_g .
-$$
-
-An independence-based calibration is given by Tippett’s transform as: 
+For each pathway $S$ with $G=|S|$ genes and gene-level p-values $\{p_g\}_{g\in S}$, the minP statistic is the smallest gene p-value:
 
 $$
-p_{\mathrm{tippett}} = 1 - (1 - p_{\min})^{G}.
+T_{\min}(S)=p_{\min}(S)=\min_{g\in S} p_g.
 $$
 
-However, CATFISH does not rely on this analytic mapping for inference because gene-level test statistics within a pathway are typically dependent (see Section~4). The minP statistic is emphasized not because it is uniquely sensitive to dependence (all constituent statistics are), but because it represents a qualitatively distinct mode of evidence that is driven almost entirely by the single most significant gene. Consequently, $(T_{\min}) serves primarily as a detector of sparse, single-gene–driven signals (SDA/SGP-type patterns), thereby complementing aggregate combination procedures (Fisher, Stouffer, softTFisher, ACAT) that are designed to capture more diffuse enrichment. We identify potential single-gene proxy pathways via a leave-one-gene-out diagnostic, in which the top-ranking gene is removed, and the test statistic is recomputed.
-
-CATFISH reports the canonical independence-based calibration for the minimum gene p-value using the Šidák/Tippett transform:
+Under independence, the canonical calibration for the minimum p-value is the Tippett/Šidák transform:
 
 $$
-p_{\mathrm{tippett}}(S) \;=\; 1 - \big(1 - p_{\min}(S)\big)^{G}.
+p_{\mathrm{tippett}}(S) = \Pr\!\left(\min_{g\in S} P_g \le p_{\min}(S)\right) = 1-\big(1-p_{\min}(S)\big)^{G}.
 $$
 
-This analytic mapping is provided as the **component** minP p-value (i.e., treating the $G$ gene tests as independent). As with other component tests, this raw minP p-value does **not** account for LD-induced gene–gene correlation within pathways. Dependence is handled later through the unified null calibration used for the final omnibus (Section 4; MVN/global resampling), where minP is recomputed under the same null draws as the other component statistics.
+(Here $G$ is the number of *unique* genes in the pathway after collapsing duplicates; see below.)
 
-To prevent duplicated genes from inflating evidence, pathway inputs are collapsed to **unique genes** prior to computing $p_{\min}(S)$: if a gene appears multiple times, we retain a single value using the minimum p-value for that gene. Thus $G$ denotes the number of unique genes in $S$.
+CATFISH computes and reports the above Tippett/Šidák mapping as the analytic component minP p-value. This is used as a standardized “component p-value” for downstream combination across methods. However, CATFISH does not treat this analytic mapping as the final inferential calibration because gene-level statistics within pathways are typically correlated (LD / local genomic structure).
+
+Instead, when dependence-aware calibration is requested (Section 4; MVN and/or global resampling), CATFISH recomputes the minP statistic under each null draw using the same definition, take the minimum gene p-value in the null draw for the pathway and apply the same Tippett/Šidák transform with $G$ fixed for that pathway. The resulting empirical null distribution is then used in the unified calibration that produces the final omnibus p-values. minP is emphasized not because it is robust to dependence (it is not; like all component tests it is affected by gene–gene correlation), but because it targets a qualitatively distinct evidence mode: a pathway can rank highly due to one extremely significant gene even when the remaining genes show little signal. Thus minP is primarily a detector of sparse, single-gene–driven signals (SDA/SGP-type patterns), complementing aggregate procedures (Fisher, Stouffer, softTFisher, ACAT) that are designed to capture more diffuse enrichment.
+
+To prevent duplicated gene entries from inflating evidence, CATFISH collapses pathway inputs to **unique genes** prior to computing $p_{\min}(S)$ (and hence $p_{\mathrm{tippett}}(S)$). If a gene appears multiple times in a pathway definition, only one value is retained for that gene (using the minimum p-value for that gene), so $G$ denotes the number of unique genes in $S$.
+
 
 ---
 
@@ -532,6 +532,7 @@ dependence arise:
 
 To obtain valid inference without assuming independence at either level, CATFISH calibrates the omnibus under a single dependence-preserving null generator that recomputes **all** components (and the omnibus) from the **same** null draw.
 
+---
 
 ### 4.1 Deterministic coupling under the null (same $p_g$ reused)
 
@@ -545,6 +546,7 @@ Even under a pure null scenario where genes are independent, the component stati
 
 - **Post hoc selection across methods** (e.g., min across methods, or adaptive $\tau$ selection within TFisher) further increases dependence and can induce “winner’s curse” behavior unless the null distribution is calibrated for the full selection procedure.
 
+---
 
 ### 4.2 Extra dependence from LD and shared gene-level correlation
 
@@ -561,6 +563,7 @@ Gene-level $p_g$ and $Z_g$ are derived from MAGMA’s LD-aware SNP-to-gene model
    - **Global gene-set resampling:** sample genes from a genome-wide pool and recompute *all* component tests on the same resampled gene sets, preserving cross-method coupling induced by shared inputs (but LD-agnostic within a pathway).
    - **LD-aware MVN calibration (recommended):** simulate correlated gene Z-scores $Z \sim \mathcal{N}(0, R_S)$ using a pathway-specific correlation matrix $R_S$ (from MAGMA gene–gene correlations), and derive p-based components from the same draw via a Gaussian-copula mapping. This preserves both within-pathway gene dependence and cross-method coupling by construction.
 
+---
 
 ### 4.3 Unified null calibration via an LD-aware MVN generator
 
@@ -601,6 +604,7 @@ $$
 \hat p_{\mathrm{omni}}(S)=\frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(p_{\mathrm{omni}}^{(b)}(S)\le p_{\mathrm{omni}}^{\mathrm{obs}}(S)\right)}{B+1}.
 $$
 
+---
 
 ### 4.4 MVN calibration of component p-values (and why the omnibus is still calibrated)
 
