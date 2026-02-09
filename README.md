@@ -614,41 +614,41 @@ $$
 
 CATFISH can compute MVN-calibrated component p-values primarily for diagnostic purposes. These values quantify how each component statistic behaves after accounting for within-pathway gene–gene correlation (via MVN draws) and are useful for detecting component-specific sensitivity to LD structure. Importantly, even after MVN calibration, the component outputs remain dependent across methods because they are computed from the same latent MVN realizations and are different transforms of the same underlying evidence. Consequently, MVN-calibrated components should not be treated as independent inputs for downstream recombination unless the entire recombination procedure is itself calibrated. For primary inference, CATFISH therefore recommends relying on the omnibus MVN calibration (Section 4.3.1), and treating component-MVN p-values as descriptive diagnostics.
 
-For a component method \(j\), we define its MVN-calibrated p-value as the empirical tail probability of the observed component statistic relative to the MVN-generated null distribution:
+For a component method $$j$$, we define its MVN-calibrated p-value as the empirical tail probability of the observed component statistic relative to the MVN-generated null distribution:
 
 $$
 \hat p_{j}(S)=\frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(p_{j}^{(b)}(S)\le p_{j}^{\mathrm{obs}}(S)\right)}{B+1}.
 $$
 
-CATFISH supports two related strategies for using MVN draws when forming the omnibus, controlled by \texttt{mvn\_calibrate\_components}:
+CATFISH supports two related strategies for using MVN draws when forming the omnibus, controlled by `mvn_calibrate_components` in the CATFISH pacakge:
 
-**(i) \texttt{mvn\_calibrate\_components = FALSE} (direct omnibus calibration; default inference logic).**  
-CATFISH constructs the omnibus directly from the *raw* component p-values computed on each MVN draw. Specifically, for each replicate \(b\) we compute component null p-values \(p_j^{(b)}(S)\) and form an omnibus null statistic
+**(i) `mvn\_calibrate\_components = FALSE` (direct omnibus calibration; default inference logic).**  
+CATFISH constructs the omnibus directly from the raw component p-values computed on each MVN draw. Specifically, for each replicate $(b)$ we compute component null p-values $$p_j^{(b)}(S)$$ and form an omnibus null statistic
 
 $$
 p_{\mathrm{omni}}^{(b)}(S)=\mathcal{O}\!\left(\{p_j^{(b)}(S)\}\right).
 $$
 
-The observed omnibus \(p_{\mathrm{omni}}^{\mathrm{obs}}(S)\) is then calibrated against \(\{p_{\mathrm{omni}}^{(b)}(S)\}_{b=1}^B\) using the same tail-probability mapping, yielding \(\hat p_{\mathrm{omni}}(S)\). In this mode, component MVN p-values \(\hat p_j(S)\) may still be reported for diagnostics, but they are **not** used to construct the final omnibus.
+The observed omnibus $$p_{\mathrm{omni}}^{\mathrm{obs}}(S)$$ is then calibrated against $$\{p_{\mathrm{omni}}^{(b)}(S)\}_{b=1}^B$$ using the same tail-probability mapping, yielding $$\hat p_{\mathrm{omni}}(S)$$. In this mode, component MVN p-values $$\hat p_j(S)$$ may still be reported for diagnostics, but they are **not** used to construct the final omnibus.
 
-**(ii) \texttt{mvn\_calibrate\_components = TRUE} (component-calibrated omnibus with joint MVN calibration).**  
-CATFISH first converts each component to the MVN-calibrated scale \(\hat p_j(S)\) via the equation above, and forms a component-calibrated observed omnibus
+**(ii) `mvn\_calibrate\_components = TRUE` (component-calibrated omnibus with joint MVN calibration).**  
+CATFISH first converts each component to the MVN-calibrated scale $$\hat p_j(S)$$ via the equation above, and forms a component-calibrated observed omnibus
 
 $$
 p_{\mathrm{omni}}^{\mathrm{obs,\,compcal}}(S)=\mathcal{O}\!\left(\{\hat p_j(S)\}\right).
 $$
 
-However, because \((\hat p_{\mathrm{ACAT}},\hat p_{\mathrm{Fisher}},\hat p_{\mathrm{TF}},\hat p_{\mathrm{Stouffer}},\hat p_{\mathrm{minP}})\) remain dependent, CATFISH *still* calibrates this omnibus using the same MVN replicates. Concretely, within each replicate \(b\), we map each component’s null draws to the uniform scale via its empirical CDF (equivalently, a rank-based “uniformization”) to obtain \(\hat p_j^{(b)}(S)\), then form
+However, because $$(\hat p_{\mathrm{ACAT}},\hat p_{\mathrm{Fisher}},\hat p_{\mathrm{TF}},\hat p_{\mathrm{Stouffer}},\hat p_{\mathrm{minP}})$$ remain dependent, CATFISH still calibrates this omnibus using the same MVN replicates. Concretely, within each replicate $$b$$, we map each component’s null draws to the uniform scale via its empirical CDF (equivalently, a rank-based “uniformization”) to obtain \(\hat p_j^{(b)}(S)\), then form
+
 $$
 p_{\mathrm{omni}}^{(b)}(S)=\mathcal{O}\!\left(\{\hat p_j^{(b)}(S)\}\right),
 $$
 
-and finally compute \(\hat p_{\mathrm{omni}}(S)\) as the empirical tail probability of \(p_{\mathrm{omni}}^{\mathrm{obs,\,compcal}}(S)\) relative to \(\{p_{\mathrm{omni}}^{(b)}(S)\}_{b=1}^B\). This ensures the omnibus p-value is calibrated for the *full pipeline* (component calibration + omnibus combination) rather than treating calibrated components as independent.
+and finally compute $$\hat p_{\mathrm{omni}}(S)$$ as the empirical tail probability of $$p_{\mathrm{omni}}^{\mathrm{obs,\,compcal}}(S)$$ relative to $$\{p_{\mathrm{omni}}^{(b)}(S)\}_{b=1}^B$$. This ensures the omnibus p-value is calibrated for the full pipeline (component calibration + omnibus combination) rather than treating calibrated components as independent.
 
 In both modes, the key principle is the same: MVN draws are used to preserve within-pathway LD-induced dependence, and the final omnibus p-value is calibrated against an omnibus null generated by recomputing the full set of component statistics on the same MVN realizations, thereby respecting cross-method coupling by construction.
 
-
-
+---
 
 ### 4.4 Implication for inference
 
