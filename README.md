@@ -515,7 +515,7 @@ CATFISH computes and reports the above Tippett/Šidák mapping as the analytic c
 
 Instead, when dependence-aware calibration is requested (Section 4; MVN and/or global resampling), CATFISH recomputes the minP statistic under each null draw using the same definition, take the minimum gene p-value in the null draw for the pathway and apply the same Tippett/Šidák transform with $G$ fixed for that pathway. The resulting empirical null distribution is then used in the unified calibration that produces the final omnibus p-values. minP is emphasized not because it is robust to dependence (it is not; like all component tests it is affected by gene–gene correlation), but because it targets a qualitatively distinct evidence mode: a pathway can rank highly due to one extremely significant gene even when the remaining genes show little signal. Thus minP is primarily a detector of sparse, single-gene–driven signals (SDA/SGP-type patterns), complementing aggregate procedures (Fisher, Stouffer, softTFisher, ACAT) that are designed to capture more diffuse enrichment.
 
-To prevent duplicated gene entries from inflating evidence, CATFISH collapses pathway inputs to **unique genes** prior to computing $p_{\min}(S)$ (and hence $p_{\mathrm{tippett}}(S)$). If a gene appears multiple times in a pathway definition, only one value is retained for that gene (using the minimum p-value for that gene), so $G$ denotes the number of unique genes in $S$.
+To prevent duplicated gene entries from inflating evidence, CATFISH collapses pathway inputs to **unique genes** prior to computing $p_{min}(S)$ (and hence $p_{tippett}(S)$ ). If a gene appears multiple times in a pathway definition, only one value is retained for that gene (using the minimum p-value for that gene), so $G$ denotes the number of unique genes in $S$.
 
 
 ---
@@ -530,21 +530,21 @@ dependence arise:
 
 2. **Additional dependence across genes:** gene-level inputs within $S$ can be correlated due to LD/shared genomic structure and related effects, inducing correlation among $p_g$ and $Z_g$.
 
-To obtain valid inference without assuming independence at either level, CATFISH calibrates the omnibus under a single dependence-preserving null generator that recomputes **all** components (and the omnibus) from the **same** null draw.
+To obtain valid inference without assuming independence at either level, CATFISH calibrates the omnibus under a single dependence-preserving null generator that recomputes all components (and the omnibus) from the **same** null draw.
 
 ---
 
 ### 4.1 Deterministic coupling under the null (same $p_g$ reused)
 
-Even under a pure null scenario where genes are independent, the component statistics are **not jointly independent** because they are all functions of the same gene-level p-values (equivalently the same order statistics $P_{(k)}$. Concretely:
+Even under a pure null scenario where genes are independent, the component statistics are not jointly independent because they are all functions of the same gene-level p-values (equivalently the same order statistics $P_{(k)}$. Definitely, we have:
 
-- **Fisher and soft TFisher** are monotone in $log(p_g)$. Soft TFisher can be viewed as a truncated/reweighted Fisher that concentrates weight on $p_g \le \tau$. Thus, when many $p_g$ are moderately small (or the lower tail is long), both Fisher and TFisher tend to become extreme in the same direction.
+- Fisher and soft TFisher are monotone in $log(p_g)$. Soft TFisher can be viewed as a truncated/reweighted Fisher that concentrates weight on $p_g \le \tau$. Thus, when many $p_g$ are moderately small (or the lower tail is long), both Fisher and TFisher tend to become extreme in the same direction.
 
-- **Stouffer** aggregates gene Z-scores, which in typical gene-set settings are monotone transformations of gene p-values (or are supplied directly as gene-level association Z-scores). Therefore pathways exhibiting diffuse, coordinated enrichment of small $p_g$ often also yield extreme Stouffer values.
+- Stouffer aggregates gene Z-scores, which in typical gene-set settings are monotone transformations of gene p-values (or are supplied directly as gene-level association Z-scores). Therefore pathways exhibiting diffuse, coordinated enrichment of small $p_g$ often also yield extreme Stouffer values.
 
-- **ACAT and minP** are both tail-driven. ACAT uses the heavy-tailed Cauchy transform $\tan\{\pi(1/2 - p_g)\}$, and minP is exactly $P_{(1)}=\min_{g\in S} p_g$. Hence, if a pathway contains one (or a few) extremely small p-values, both ACAT and minP tend to be extreme. Soft TFisher with very small $\tau$ can behave similarly by up-weighting the most extreme p-values.
+- ACAT and minP are both tail-driven tests. ACAT uses the heavy-tailed Cauchy transform $\tan\{\pi(1/2 - p_g)\}$, and minP is exactly $P_{(1)}=\min_{g\in S} p_g$. Hence, if a pathway contains one (or a few) extremely small p-values, both ACAT and minP tend to be extreme. Soft TFisher with very small $\tau$ can behave similarly by up-weighting the most extreme p-values.
 
-- **Post hoc selection across methods** (e.g., min across methods, or adaptive $\tau$ selection within TFisher) further increases dependence and can induce “winner’s curse” behavior unless the null distribution is calibrated for the full selection procedure.
+- Post hoc selection across methods (e.g., min across methods, or adaptive $\tau$ selection within TFisher) increases dependence among the reported statistics and can yield overly optimistic significance unless the null distribution is calibrated for the entire selection step.
 
 ---
 
@@ -553,19 +553,23 @@ Even under a pure null scenario where genes are independent, the component stati
 In real data, gene-level inputs are not independent. The sets $\{p_g\}$ and $\{Z_g\}$ can be correlated across genes due to (i) adjacent genes sharing SNPs or LD structure, (ii) coupling of SNP-level evidence across genes via
 local LD, and (iii) genome-wide polygenic background effects that can induce weak correlation among gene-level association metrics. This dependence compounds the deterministic coupling in Section 4.1.
 
-CATFISH addresses this in two complementary ways:
+---
 
-1. **Upstream LD-aware SNP \(\rightarrow\) gene aggregation (MAGMA).**  
+### 4.3 Dependence-aware null calibration in CATFISH
+
+CATFISH addresses the problems in 4.1 and 4.2 in two complementary ways:
+
+1. Upstream LD-aware SNP \(\rightarrow\) gene aggregation (MAGMA):
 Gene-level $p_g$ and $Z_g$ are derived from MAGMA’s LD-aware SNP-to-gene model, which adjusts gene evidence for correlated SNP structure within and near genes.
 
-2. **Downstream dependence-preserving null calibration.**  
+2. Downstream dependence-preserving null calibration:
    Rather than assuming independence among the component p-values $\{p_j(S)\}$, CATFISH calibrates by resampling in a way that recomputes all component tests on the same null draw:
    - **Global gene-set resampling:** sample genes from a genome-wide pool and recompute *all* component tests on the same resampled gene sets, preserving cross-method coupling induced by shared inputs (but LD-agnostic within a pathway).
    - **LD-aware MVN calibration (recommended):** simulate correlated gene Z-scores $Z \sim \mathcal{N}(0, R_S)$ using a pathway-specific correlation matrix $R_S$ (from MAGMA gene–gene correlations), and derive p-based components from the same draw via a Gaussian-copula mapping. This preserves both within-pathway gene dependence and cross-method coupling by construction.
 
 ---
 
-### 4.3 Unified null calibration via an LD-aware MVN generator
+### 4.3.1 Unified null calibration via an LD-aware MVN generator
 
 Under the LD-aware MVN null, we generate null replicates for each pathway \(S\):
 
@@ -606,7 +610,7 @@ $$
 
 ---
 
-### 4.4 MVN calibration of component p-values (and why the omnibus is still calibrated)
+### 4.3.2 MVN calibration of component p-values (and why the omnibus is still calibrated)
 
 
 CATFISH optionally computes MVN-calibrated component p-values for diagnostic purposes. These represent each method's p-value adjusted for gene-gene correlations and can reveal differential sensitivity to LD structure. Crucially, these calibrated components remain dependent across methods and should not be naïvely recombined without additional calibration. For primary inference, we recommend relying solely on the omnibus calibration (Section 4.3). For component method $j$,
@@ -617,7 +621,7 @@ $$
 
 **Important:** even after component calibration, the calibrated component p-values $(\hat p_{\mathrm{ACAT}},\hat p_{\mathrm{Fisher}},\hat p_{\mathrm{TF}},\hat p_{\mathrm{Stouffer}},\hat p_{\mathrm{minP}})$ remain dependent (because they are derived from the same MVN draws and represent different transforms of the same latent evidence). Therefore, CATFISH forms an omnibus from the calibrated components and **still calibrates that omnibus** using the same MVN replicates. In practice this is implemented by computing, within each replicate $b$, replicate-calibrated component p-values $\hat p_{j}^{(b)}(S)$ (via the empirical CDF over $p_j^{(b')}(S)$ for $b'=1,\ldots,B$), forming the replicate omnibus $p_{\mathrm{omni}}^{(b)}(S)=\mathcal{O}\!\left(\{\hat p_j^{(b)}(S)\}\right)$, and then applying the same tail-probability calibration to obtain $\hat p_{\mathrm{omni}}(S)$.
 
-### 4.5 Implication for inference
+### 4.4 Implication for inference
 
 Because the component tests are strongly dependent (Sections 4.1–4.2), naïve across-method combination rules that assume independence (e.g., analytic Sidák-min across method p-values, or Bonferroni across correlated method p-values) can be miscalibrated and may be anti-conservative. CATFISH treats the analytic across-method omnibus (ACAT-O or minP-O) as a useful descriptive summary, but relies on the resampling/MVN-calibrated omnibus p-values as the primary inferential evidence. This unified calibration directly targets the null distribution of the full procedure (components + omnibus), thereby controlling type-I error under both intra-pathway gene dependence and cross-method coupling.
 
