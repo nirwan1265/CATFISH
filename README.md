@@ -920,13 +920,13 @@ $$q_{\mathrm{omni,final}}(S)$$, reported as `omni_p_final_BH` in CATFISH.
 
 ### 5.7 Reporting guidelines
 
-For each pathway, report:
+For each pathway, we report:
 
 - **Primary:** the calibrated omnibus p-value (`p_omni_hat(S)`) and its BH-FDR q-value.
-- **Supplementary:** all five **analytic** component p-values (ACAT, Fisher, adaptive soft TFisher, Stouffer, minP).
+- **Supplementary:** all five analytic component p-values (ACAT, Fisher, adaptive soft TFisher, Stouffer, minP).
 - **Optional:** a calibration ratio to summarize how much calibration changes the raw omnibus signal:  
   `p_omni_hat(S) / p_omni_analytic(S)`
-- **For interpretation:** the pathway’s gene list with per-gene p-values (and Z-scores if available), so readers can see whether signal is sparse, diffuse, or hybrid.
+- **For interpretation:** the pathway’s gene list with per-gene p-values (and Z-scores if available), to check whether signal is sparse, diffuse, or hybrid.
 
 **Interpretation examples:**
 
