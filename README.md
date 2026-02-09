@@ -36,7 +36,7 @@ We divide the pathway signals into a set of archetypes that describe different w
 
 ## Archetype I — Sparse Driver Architecture (SDA)
 
-![Archetype I — Sparse Driver Architecture](Figures/Fig_archetypesI.png)
+![Archetype I — Sparse Driver Architecture](Figures/Fig0.Archetypes/Fig_archetypesI.png)
 *Archetype I: Sparse Driver Architecture (SDA).*
 
 **Signature:** A small number of genes are extremely significant; most genes look null.
@@ -64,7 +64,7 @@ The aspartate-derived amino-acid biosynthesis pathway converts **aspartate** int
 
 ## Archetype II — Coordinated Moderate Enrichment (CME)
 
-![Archetype II — Coordinated Moderate Enrichment (CME)](Figures/Fig_archetypesII.png)
+![Archetype II — Coordinated Moderate Enrichment (CME)](Figures/Fig0.Archetypes/Fig_archetypesII.png)
 *Archetype II — Coordinated Moderate Enrichment (CME)*
 
 
@@ -99,7 +99,7 @@ In CATFISH terminology, this yields a CME pattern. Within a cytokine/immune circ
 
 ## Archetype III — Diffuse Polygenic Shift (DPS)
 
-![Archetype III — Diffuse Polygenic Shift (DPS)](Figures/Fig_archetypesIII.png)
+![Archetype III — Diffuse Polygenic Shift (DPS)](Figures/Fig0.Archetypes/Fig_archetypesIII.png)
 *Archetype III — Diffuse Polygenic Shift (DPS)*
 
 
@@ -141,7 +141,7 @@ When examined at the level of an individual pathway (e.g., TGF-β signaling, Hed
 
 ## Archetype IV — Hybrid Driver–Support (HDS)
 
-![Archetype IV — Hybrid Driver–Support (HDS)](Figures/Fig_archetypesIV.png)
+![Archetype IV — Hybrid Driver–Support (HDS)](Figures/Fig0.Archetypes/Fig_archetypesIV.png)
 *Archetype IV — Hybrid Driver–Support (HDS)*
 
 
@@ -176,7 +176,7 @@ Translating this biology into gene-level association statistics for an LDL-relat
 
 ## Archetype V — Single-Gene Proxy Pathway (SGP)
 
-![Archetype V — Single-Gene Proxy Pathway (SGP)](Figures/Fig_archetypesV.png)
+![Archetype V — Single-Gene Proxy Pathway (SGP)](Figures/Fig0.Archetypes/Fig_archetypesV.png)
 *Archetype V — Single-Gene Proxy Pathway (SGP)*
 
 
@@ -207,7 +207,7 @@ In humans, phenylalanine metabolism is primarily regulated by a singular bottlen
 
 ## Archetype VI — Competitive Enrichment Above Background (CEAB) (OPTIONAL - Not used for CATFISH, just a check)
 
-![Archetype VI — Competitive Enrichment Above Background (CEAB)](Figures/Fig_archetypesVI.png)
+![Archetype VI — Competitive Enrichment Above Background (CEAB)](Figures/Fig0.Archetypes/Fig_archetypesVI.png)
 *Archetype VI — Competitive Enrichment Above Background (CEAB)*
 
 
@@ -291,7 +291,7 @@ Let:
 
 - $Z_g$ be the MAGMA gene Z‑statistic,
 - $L_g$ be gene length (bp),
-- $S_g$ be number of SNPs mapped to the gene (e.g., $$NSNPS$$).
+- $S_g$ be number of SNPs mapped to the gene.
 
 We fit a regression line as:
 
@@ -309,7 +309,7 @@ $$
 The corresponding adjusted two-sided $p$-values are:
 
 $$
-p_{g,\mathrm{adj}} = 2\,\Phi\!\left(-\left|Z_{g,\mathrm{adj}}\right|\right),
+p_{g,\mathrm{adj}} = 2\.\Phi\!\left(-\left|Z_{g,\mathrm{adj}}\right|\right),
 $$
 
 where $\Phi(\cdot)$ is the standard normal CDF.
@@ -329,7 +329,7 @@ $$
 
 CATFISH computes multiple pathway statistics from either unadjusted gene-level $p_g$ and $Z_g$, or the adjusted counterparts $p_{g,\mathrm{adj}}$ and $Z_{g,\mathrm{adj}}$. For convenience, we present definitions using the unadjusted inputs.
 
-We define multiple pathway-level statistics as functionals of a common set of within-pathway, gene-level evidences $\{p_g\}_{g\in S}$ (and, when available, $\{Z_g\}_{g\in S}$).
+We define multiple pathway-level statistics as functionals of a common set of within-pathway, gene-level evidences $$\{p_g\}_{g\in S}$$ (and, when available, $$\{Z_g\}_{g\in S}$$).
 The gene-level evidences for genes within the same pathway are typically dependent (e.g., due to linkage disequilibrium–induced correlation and shared genomic architecture). Consequently, the resulting pathway statistics are also mutually dependent, as they are derived from the same underlying inputs.
 
 Therefore, closed-form reference calibrations that rely on independence of the gene-level tests (such as Fisher’s $\chi^2$ null or Tippett’s transformation for minP) are provided only as canonical or illustrative definitions. The final inferential $p$-values (both for each individual component statistic and for the omnibus statistic) are obtained via the unified null calibration procedure described in Section~4, which recomputes all statistics under a null-generating mechanism that preserves the dependence structure.
