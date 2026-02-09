@@ -329,8 +329,9 @@ $$
 
 CATFISH computes multiple pathway statistics from either unadjusted gene-level $p_g$ and $Z_g$, or the adjusted counterparts $p_{g,\mathrm{adj}}$ and $Z_{g,\mathrm{adj}}$. For convenience, we present definitions using the unadjusted inputs.
 
-We define multiple pathway-level statistics as functionals of a common set of within-pathway, gene-level evidences $$\{p_g\}_{g\in S}$$ (and, when available, $$\{Z_g\}_{g\in S}$$).
+We define multiple pathway-level statistics as functionals of a common set of within-pathway, gene-level evidences p<sub>g</sub> : g ∈ S (and, when available, Z<sub>g</sub> : g ∈ S).
 The gene-level evidences for genes within the same pathway are typically dependent (e.g., due to linkage disequilibrium–induced correlation and shared genomic architecture). Consequently, the resulting pathway statistics are also mutually dependent, as they are derived from the same underlying inputs.
+
 
 Therefore, closed-form reference calibrations that rely on independence of the gene-level tests (such as Fisher’s $\chi^2$ null or Tippett’s transformation for minP) are provided only as canonical or illustrative definitions. The final inferential $p$-values (both for each individual component statistic and for the omnibus statistic) are obtained via the unified null calibration procedure described in Section~4, which recomputes all statistics under a null-generating mechanism that preserves the dependence structure.
 
@@ -394,6 +395,7 @@ $$
 where $F_{\chi^2_{2G}}(\cdot)$ is the $\chi^2$ CDF with $2G$ degrees of freedom.
 
 Fisher is sensitive to CMEs. To avoid undefined values in $\log(p_g)$ when p-values are extremely small or numerically zero, we apply the same clipping rule as above:
+
 $$
 p_g \leftarrow \min\{1-p_{\min},\,\max(p_g,\,p_{\min})\},\qquad p_{\min}=10^{-15}.
 $$
@@ -422,7 +424,7 @@ This is a continuous (soft) down-weighting near the cutoff, in contrast to hard 
 Let $\mathcal{T}=\{\tau_1,\dots,\tau_m\}$ be a fixed grid of candidate thresholds. In the CATFISH implementation, the default grid is:
 
 $$
-\mathcal{T}=\{0.20,\;0.10,\;0.05,\;0.02,\;0.01,\;0.005,\;0.001\}.
+\mathcal{T}=\{0.20\;0.10\;0.05\;0.01}.
 $$
 
 For each $\tau\in\mathcal{T}$, we compute $W^{\mathrm{soft}}(S;\tau)$ and obtain a corresponding analytic null p-value $p_{\tau}(S)$ using the TFisher package’s calibration for the soft statistic.
@@ -432,10 +434,10 @@ $$
 p_{\mathrm{aTF}}(S)=\min_{\tau\in\mathcal{T}} p_{\tau}(S).
 $$
 
-Because the values $\{p_{\tau}(S)\}_{\tau\in\mathcal{T}}$ are dependent (they reuse the same gene p-values), the TFisher package provides an analytic omnibus calibration for the minimum across $\tau$. CATFISH uses this resulting $p_{\mathrm{aTF}}(S)$ as the **component** TFisher p-value, and then accounts for LD-induced gene–gene correlation and cross-method dependence at the final omnibus calibration stage (Section 4). To avoid $\log(0)$ and other numerical issues, gene p-values are clipped to:
+Because the values p<sub>τ</sub>(S)}<sub>τ∈𝒯</sub> are dependent (they reuse the same gene p-values), the TFisher package provides an analytic omnibus calibration for the minimum across τ. CATFISH uses this resulting p<sub>aTF</sub>(S) as the **component** TFisher p-value, and then accounts for LD-induced gene–gene correlation and cross-method dependence at the final omnibus calibration stage (Section 4). To avoid $\log(0)$ and other numerical issues, gene p-values are clipped to:
 
 $$
-p_g \leftarrow \min\{1-p_{\min},\,\max(p_g,\,p_{\min})\},\qquad p_{\min}=10^{-15}.
+p_g \leftarrow \min\{1-p_{\min}\,\max(p_g\,p_{\min})\},\qquad p_{\min}=10^{-15}.
 $$
 
 If a gene appears multiple times in the pathway input, duplicate entries are collapsed so that each gene contributes once, using the minimum p-value for that gene prior to computing $W^{\mathrm{soft}}(S;\tau)$.
@@ -445,7 +447,7 @@ If a gene appears multiple times in the pathway input, duplicate entries are col
 
 ### 3.4 Stouffer's method
 
-Stouffer's technique consolidates gene-level **Z** statistics instead of p-values and exhibits increased sensitivity to DPS. In CATFISH, the gene-level Z input is sourced directly from MAGMA’s gene output (`ZSTAT`). Significantly, MAGMA’s Z-scale is understood as a association-strength score, indicating that greater positive values signify stronger evidence of association, rather than indicating the direction of effect as trait-increasing or trait-decreasing. Consequently, the natural pathway-level Stouffer test in this context is one-sided (greater), assessing the enrichment of positive association strength inside the pathway.
+Stouffer's technique consolidates gene-level $Z$ statistics instead of p-values and exhibits increased sensitivity to DPS. In CATFISH, the gene-level Z input is sourced directly from MAGMA’s gene output (`ZSTAT`). Significantly, MAGMA’s Z-scale is understood as a association-strength score, indicating that greater positive values signify stronger evidence of association, rather than indicating the direction of effect as trait-increasing or trait-decreasing. Consequently, the natural pathway-level Stouffer test in this context is one-sided (greater), assessing the enrichment of positive association strength inside the pathway.
 
 **Default (unweighted) Stouffer:**
 
