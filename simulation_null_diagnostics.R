@@ -1103,6 +1103,15 @@ run_block_d <- function(n_train = 200L, n_test = 300L, b = 500L, seed = 42345L,
       p_naive_omni <- numeric(n_test)
       p_calibrated_omni <- numeric(n_test)
       p_adaptive_omni <- numeric(n_test)
+      p_adaptive_mvn <- numeric(n_test)
+
+      # Precompute MVN null for adaptive statistic (fixed mask)
+      null_adaptive <- numeric(b)
+      for (i in seq_len(b)) {
+        z_null <- simulate_gene_z(m, sigma_true, n_causal = 0, effect_size = 0)
+        gene_null <- create_gene_results(z_null)
+        null_adaptive[i] <- compute_adaptive_omnibus(gene_null, keep_mask)
+      }
 
       for (s in seq_len(n_test)) {
         z <- simulate_gene_z(m, sigma_true, n_causal = 0, effect_size = 0)
@@ -1116,8 +1125,12 @@ run_block_d <- function(n_train = 200L, n_test = 300L, b = 500L, seed = 42345L,
         res_cal <- calibrate_with_null(res_ana, null_dist_correct)
         p_calibrated_omni[s] <- res_cal$omnibus
 
-        # Adaptive omnibus (drop bad components)
+        # Adaptive omnibus (drop bad components; analytic p-value)
         p_adaptive_omni[s] <- compute_adaptive_omnibus(gene_res, keep_mask)
+
+        # Adaptive omnibus with MVN calibration
+        p_adaptive_mvn[s] <- (1 + sum(null_adaptive <= p_adaptive_omni[s], na.rm = TRUE)) /
+          (sum(!is.na(null_adaptive)) + 1)
       }
 
       results_list[[length(results_list) + 1]] <- data.frame(
@@ -1165,6 +1178,22 @@ run_block_d <- function(n_train = 200L, n_test = 300L, b = 500L, seed = 42345L,
         type1_05_se = compute_prop_se(p_adaptive_omni, 0.05),
         type1_01 = compute_type1(p_adaptive_omni, 0.01),
         type1_01_se = compute_prop_se(p_adaptive_omni, 0.01),
+        stringsAsFactors = FALSE
+      )
+
+      results_list[[length(results_list) + 1]] <- data.frame(
+        block = "D",
+        pathway_size = m,
+        rho = rho,
+        method = "omnibus_adaptive_mvn",
+        n_components = sum(keep_mask),
+        drop_label = drop_label,
+        lambda = compute_lambda(p_adaptive_mvn),
+        lambda_se = compute_lambda_se(p_adaptive_mvn),
+        type1_05 = compute_type1(p_adaptive_mvn, 0.05),
+        type1_05_se = compute_prop_se(p_adaptive_mvn, 0.05),
+        type1_01 = compute_type1(p_adaptive_mvn, 0.01),
+        type1_01_se = compute_prop_se(p_adaptive_mvn, 0.01),
         stringsAsFactors = FALSE
       )
     }
@@ -1665,12 +1694,15 @@ plot_block_d <- function(results) {
       ),
       rho_label = factor(rho_label, levels = c("LD_moderate", "LD_strong", "LD_independent")),
       method_label = dplyr::case_when(
-        method == "omnibus_analytical" ~ "Analytical",
-        method == "omnibus_mvn"        ~ "MVN",
-        method == "omnibus_adaptive"   ~ "Adaptive",
-        TRUE                           ~ method
+        method == "omnibus_analytical"    ~ "Analytical",
+        method == "omnibus_mvn"           ~ "MVN",
+        method == "omnibus_adaptive"      ~ "Adaptive+Analytical",
+        method == "omnibus_adaptive_mvn"  ~ "Adaptive+MVN",
+        TRUE                              ~ method
       ),
-      method_label = factor(method_label, levels = c("Analytical", "MVN", "Adaptive")),
+      method_label = factor(method_label,
+                            levels = c("Analytical", "MVN",
+                                       "Adaptive+Analytical", "Adaptive+MVN")),
       lambda_plot = pmin(lambda, lambda_cap),
       label_lambda = ifelse(lambda > lambda_cap,
                             paste0(">", lambda_cap),
@@ -1704,7 +1736,8 @@ plot_block_d <- function(results) {
     scale_fill_manual(
       values = c("Analytical" = "#E41A1C",
                  "MVN" = "#377EB8",
-                 "Adaptive" = "#4DAF4A")
+                 "Adaptive+Analytical" = "#4DAF4A",
+                 "Adaptive+MVN" = "#984EA3")
     ) +
     labs(title = "Block D: Adaptive Omnibus Comparison",
          x = "Method", y = expression(lambda)) +
@@ -1727,7 +1760,8 @@ plot_block_d <- function(results) {
     scale_fill_manual(
       values = c("Analytical" = "#E41A1C",
                  "MVN" = "#377EB8",
-                 "Adaptive" = "#4DAF4A")
+                 "Adaptive+Analytical" = "#4DAF4A",
+                 "Adaptive+MVN" = "#984EA3")
     ) +
     labs(title = "Block D: Type I Error Comparison",
          x = "Method", y = "Type I Error Rate") +
