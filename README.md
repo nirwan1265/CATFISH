@@ -11,13 +11,13 @@ This Markdown is structured into:
 
 ## INTRODUCTION
 
-**CATFISH** (Combining <ins>**C**</ins>auchy combination test (ACAT), <ins>**A**</ins>daptive TFisher (soft) test, <ins>**F**</ins>isher's test, m<ins>**I**</ins>n-P, and <ins>**S**</ins>touffer's method for <ins>**H**</ins>olistic pathway analysis) is a multi-test pathway framework built on LD-aware MAGMA gene-level GWAS statistics adjusted for gene length and SNP density that combines ACAT, soft TFisher, Fisher, Stouffer and minP. It then uses an omnibus test based on permutation-calibrated minP or ACAT to collapse these multiple pathway tests into a single, correlation-robust enrichment p-value that is sensitive to both sparse and polygenic pathway patterns. In short, CATFISH casts a wide net across complementary tests and reels in a single pathway p-value.
+**CATFISH** (Combining <ins>**C**</ins>auchy combination test (ACAT), <ins>**A**</ins>daptive <ins>**T**</ins>Fisher (soft) test, <ins>**F**</ins>isher's test, m<ins>**I**</ins>n-P, and <ins>**S**</ins>touffer's method for <ins>**H**</ins>olistic pathway analysis) is a multi-test pathway framework built on LD-aware MAGMA gene-level GWAS statistics adjusted for gene length and SNP density that combines ACAT, soft TFisher, Fisher, Stouffer and minP. It then uses an omnibus test based on permutation-calibrated minP or ACAT to collapse these multiple pathway tests into a single, correlation-robust enrichment $p$-value that is sensitive to both sparse and polygenic pathway patterns. In short, CATFISH casts a wide net across complementary tests and reels in a single pathway $p$-value.
 
 CATFISH uses:
 
-1. **MAGMA** for LD-aware **SNP → gene** inference (gene-level p-values).
+1. **MAGMA** for LD-aware **SNP → gene** inference (gene-level $p$-values).
 2. **Multiple gene → pathway combination tests** (ACAT, Fisher, soft TFisher, Stouffer, minP).
-3. A **correlation-robust LD-aware omnibus test** (permutation-calibrated second minP and ACAT test) that aggregates these tests into a single pathway-level p-value.
+3. A **correlation-robust LD-aware omnibus test** (permutation-calibrated second minP and ACAT test) that aggregates these tests into a single pathway-level $p$-value.
 
 ### Why multiple tests are needed
 
@@ -28,7 +28,7 @@ Pathways can be significant for statistically different reasons:
 - diffuse polygenic shift, and
 - hybrids of these patterns.
 
-No single gene-set statistic is uniformly most powerful across these various possibilities. Instead of relying on a single test, CATFISH runs several complementary pathway tests and combines them into one pathway-level omnibus p-value. We define these patterns using a set of **pathway signal archetypes** (sparse driver, coordinated moderate enrichment, diffuse polygenic shift, hybrid driver–support, single-gene proxy), which describe different ways a pathway can appear significant.
+No single gene-set statistic is uniformly most powerful across these various possibilities. Instead of relying on a single test, CATFISH runs several complementary pathway tests and combines them into one pathway-level omnibus $p$-value. We define these patterns using a set of **pathway signal archetypes** (sparse driver, coordinated moderate enrichment, diffuse polygenic shift, hybrid driver–support, single-gene proxy), which describe different ways a pathway can appear significant.
 
 # Pathway signal archetypes
 
@@ -36,19 +36,19 @@ We divide the pathway signals into a set of archetypes that describe different w
 
 ## Archetype I — Sparse Driver Architecture (SDA)
 
-![Archetype I — Sparse Driver Architecture](Figures/Fig_archetypesI.png)
+![Archetype I — Sparse Driver Architecture](Figures/Fig1.Archetypes/Fig_archetypesI.png)
 *Archetype I: Sparse Driver Architecture (SDA).*
 
 **Signature:** A small number of genes are extremely significant; most genes look null.
 
-**Gene-level p-value pattern:**
+**Gene-level $p$-value pattern:**
 
-- There exists a small $K \ll G$ such that the top $K$ gene p-values are extremely small, $p_{(1)}, \dots, p_{(K)} \ll \alpha$ (e.g. $p_{(1)} \sim 10^{-7}$ or smaller),
+- There exists a small $K \ll G$ such that the top $K$ gene $p$-values are extremely small, $p_{(1)}, \dots, p_{(K)} \ll \alpha$ (e.g. $p_{(1)} \sim 10^{-7}$ or smaller),
 - The remaining genes are approximately null, $p_{(K+1)}, \dots, p_{(G)} \sim \mathrm{Uniform}(0,1)$.
-- This produces a sharp “elbow” in the ranked p-values (a few tiny hits followed by a long flat tail).
+- This produces a sharp “elbow” in the ranked $p$-values (a few tiny hits followed by a long flat tail).
 
 **Interpretation:**  
-An SDA pathway is significant because **a small set of driver genes dominates the signal**, rather than broad involvement of most pathway members. This can occur when the trait-relevant biology passes through a **bottleneck** (committed step, rate-limiting enzyme, key regulator, or essential transporter) so that genetic variation concentrates its effect at a few control points. In contrast, pathway annotations typically include many additional enzymes, modifiers, and general “support” genes that may be necessary for pathway operation but do not carry strong association for the trait. Under SDA, association is therefore concentrated in the top $K$ genes, yielding very small ordered p-values $p_{(1)}, \ldots, p_{(K)}$ followed by a long tail $p_{(K+1)}, \ldots, p_{(G)}$ that is close to uniform.
+An SDA pathway is significant because **a small set of driver genes dominates the signal**, rather than broad involvement of most pathway members. This can occur when the trait-relevant biology passes through a **bottleneck** (committed step, rate-limiting enzyme, key regulator, or essential transporter) so that genetic variation concentrates its effect at a few control points. In contrast, pathway annotations typically include many additional enzymes, modifiers, and general “support” genes that may be necessary for pathway operation but do not carry strong association for the trait. Under SDA, association is therefore concentrated in the top $K$ genes, yielding very small ordered $p$-values $p_{(1)}, \ldots, p_{(K)}$ followed by a long tail $p_{(K+1)}, \ldots, p_{(G)}$ that is close to uniform.
 
 **Biological example:**  
 **Aspartokinase in the aspartate-derived amino acid pathway**
@@ -56,26 +56,26 @@ An SDA pathway is significant because **a small set of driver genes dominates th
 The aspartate-derived amino-acid biosynthesis pathway converts **aspartate** into essential amino acids, such as **lysine**, **threonine**, **methionine**, and **isoleucine**. In plants and bacteria, the first step is catalyzed by **aspartokinase (AK)**, which phosphorylates aspartate to **aspartyl-phosphate** that feeds multiple branched network to produces several end-products. Due to its position at the starting point of the pathway, AK acts as a **flux-controlling bottleneck**. Variations in AK activity alter carbon and nitrogen flow through the whole network. Downstream enzymes, including tailoring steps, dehydrogenases, and transaminases, typically exhibit dispersed or buffered roles. Thus, the gene-level pattern aligns with SDA. A single AK gene or a few genes downstream may exhibit very low $p$ values (e.g. $10^{-8}\text{-}10^{-10}$), while the majority are dispersed across the interval $(0,1)$.
 
 **Best detectors in CATFISH:**
-- **ACAT** — sensitive to a few extremely small p-values (RECOMMENDED).  
-- **minP / Tippett** — targets the minimum p-value; optimal when one gene dominates.
+- **ACAT** — sensitive to a few extremely small $p$-values (RECOMMENDED).  
+- **minP / Tippett** — targets the minimum $p$-value; optimal when one gene dominates.
 
 
 ---
 
 ## Archetype II — Coordinated Moderate Enrichment (CME)
 
-![Archetype II — Coordinated Moderate Enrichment (CME)](Figures/Fig_archetypesII.png)
+![Archetype II — Coordinated Moderate Enrichment (CME)](Figures/Fig1.Archetypes/Fig_archetypesII.png)
 *Archetype II — Coordinated Moderate Enrichment (CME)*
 
 
 **Signature:** many genes show moderate association; no single gene is extremely low.
 
-**Gene-level p-value pattern:**
-- A non-trivial fraction of genes have moderately small p-values, e.g.
+**Gene-level $p$-value pattern:**
+- A non-trivial fraction of genes have moderately small $p$-values, e.g.
   $$p_i \in [10^{-3}\,0.05]\quad\text{for many} i.$$
 - The top signal is not orders-of-magnitude beyond the rest (no single-gene spike), e.g.
   $$p_{(1)} \not\ll p_{(k)}\quad\text{for small }k\ (\text{e.g., }k=5,10,20).$$
-- The ranked p-values show a **broad shoulder** (many good genes) but not a sharp elbow.
+- The ranked $p$-values show a **broad shoulder** (many good genes) but not a sharp elbow.
 
 **Interpretation:**  
 CME signifies **collective functional engagement**. The pathway behaves like a coordinated module wherein numerous components exert small-to-moderate effects. This is expected when phenotypes emerge from distributed regulation, redundancy, and buffering/feedback as dramatic single-gene effects are rare. Statistically, enrichment arises from numerous mildly informative genes rather than single driver.
@@ -87,10 +87,10 @@ In numerous immunological pathways, the output is regulated not by a singular "m
 
 This “many-knobs” architecture is also apparent one layer upstream in TNFRSF signaling. TNFRSF receptors bind trimeric TNFSF ligands, however, increasing evidence suggests that a single trimeric ligand–receptor complex fails to elicit complete signaling output. Rather, for certain TNFRSF pathways (notably the classical NF-κB pathway), successful activation may necessitate secondary interactions or clustering of multiple trimeric receptor complexes (Medler et al., 2019). Mechanistically, this indicates that pathway output relies on the coordinated effects of receptor assembly/avidity, adaptor recruitment, kinase activation thresholds, and the strength of negative feedback, precisely the type of system where typical genetic variation is anticipated to produce numerous modest perturbations rather than a singularly significant driver.
 
-In CATFISH terminology, this yields a CME pattern. Within a cytokine/immune circuit, gene-level p-values may exhibit a surplus of moderate signals (e.g., numerous genes around 10⁻³–10⁻²) without a singular extreme outliers. The ordered gene-level p-values ($$p_{(1)}, p_{(2)}, \ldots$$) contains many values in the range of $$10^{-3} to 10^{-2},$$ without an extreme such as 10^{-12}. Consequently, CME pathways are optimally represented by evidence-accumulating tests (e.g., Fisher, Stouffer/mean-Z, and mild-truncation/soft-TFisher), whose efficacy is enhanced when numerous route members exhibit moderate associations, rather than depending on a singular peak.
+In CATFISH terminology, this yields a CME pattern. Within a cytokine/immune circuit, gene-level $p$-values may exhibit a surplus of moderate signals (e.g., numerous genes around 10⁻³–10⁻²) without a singular extreme outliers. The ordered gene-level $p$-values ($$p_{(1)}, p_{(2)}, \ldots$$) contains many values in the range of $$10^{-3} to 10^{-2},$$ without an extreme such as 10^{-12}. Consequently, CME pathways are optimally represented by evidence-accumulating tests (e.g., Fisher, Stouffer/mean-Z, and mild-truncation/soft-TFisher), whose efficacy is enhanced when numerous route members exhibit moderate associations, rather than depending on a singular peak.
 
 **Best detectors in CATFISH:**
-- **Fisher’s method** (aggregates evidence across many moderately small p-values) (RECOMMENDED).
+- **Fisher’s method** (aggregates evidence across many moderately small $p$-values) (RECOMMENDED).
 - **Stouffer / mean-Z** (gains power when many genes shift together).
 - Optionally **wFisher / weighted Z** if you later add biologically informed weights.
 
@@ -99,14 +99,14 @@ In CATFISH terminology, this yields a CME pattern. Within a cytokine/immune circ
 
 ## Archetype III — Diffuse Polygenic Shift (DPS)
 
-![Archetype III — Diffuse Polygenic Shift (DPS)](Figures/Fig_archetypesIII.png)
+![Archetype III — Diffuse Polygenic Shift (DPS)](Figures/Fig1.Archetypes/Fig_archetypesIII.png)
 *Archetype III — Diffuse Polygenic Shift (DPS)*
 
 
 **Signature:** the pathway’s genes are, on average, slightly more associated than the genome-wide background, but almost none cross a conventional significance threshold.
 
-**Gene-level p-value / Z pattern:**
-- Most gene p-values satisfy:
+**Gene-level $p$-value / Z pattern:**
+- Most gene $p$-values satisfy:
   $$p_i > 0.05\quad\text{for most } i.$$
 Yet the pathway shows a small but consistent shift in adjusted gene-level Z-scores:
 
@@ -117,10 +117,10 @@ $$
 often with a coherent sign (bias in one direction).
 - $$\{p_i: i\in S\}\ \text{is subtly enriched toward smaller values relative to Uniform}(0,1),$$
   but without extreme outliers.
-- No sharp elbow, instead, the ranked p-values show a gentle, global downward bend relative to null.
+- No sharp elbow, instead, the ranked $p$-values show a gentle, global downward bend relative to null.
 
 **Interpretation:**  
-DPS indicates a global pathway bias aligned with polygenicity. Numerous genes individually exert minimal impacts in a uniform direction, resulting in pathway enrichment due to the collective subtle shift of the entire module rather than the influence of a singular "star" gene. This is the regime characterized by numerous little issues and the absence of significant challenges. Spike-hunting tests, such as minP/Tippett or highly aggressive truncation, are generally underpowered in this context due to the absence of a singular extreme p-value to leverage. Conversely, mean-/distribution-sensitive tests (Stouffer/mean-Z, Fisher, and competitive regression) are specifically formulated to identify this subtle, pervasive divergence from the null hypothesis.
+DPS indicates a global pathway bias aligned with polygenicity. Numerous genes individually exert minimal impacts in a uniform direction, resulting in pathway enrichment due to the collective subtle shift of the entire module rather than the influence of a singular "star" gene. This is the regime characterized by numerous little issues and the absence of significant challenges. Spike-hunting tests, such as minP/Tippett or highly aggressive truncation, are generally underpowered in this context due to the absence of a singular extreme $p$-value to leverage. Conversely, mean-/distribution-sensitive tests (Stouffer/mean-Z, Fisher, and competitive regression) are specifically formulated to identify this subtle, pervasive divergence from the null hypothesis.
 
 **Biological example:**  
 
@@ -130,7 +130,7 @@ The height of adult humans exemplifies a highly polygenic characteristic. Initia
 
 These variants are classified into several growth-related processes, such as chondrocyte proliferation and hypertrophy in the growth plate, extracellular matrix and cartilage organization, growth hormone and IGF-1 signaling, and morphogen pathways including TGF-β and Hedgehog, as well as overarching developmental and endocrine regulators. Analyses of height GWAS loci through pathway and gene-set evaluations have demonstrated enrichment for signaling pathways such as TGF-β and Hedgehog, as well as for genes associated with skeletal growth, growth plate regulation, and pertinent Mendelian growth disorders. Lango Allen et al. (2010) discovered that genes adjacent to height-associated variants congregate in biologically coherent pathways, including TGF-β signaling, Hedgehog signaling, and histone and growth/development gene sets. Furthermore, several SNPs near these pathway genes "narrowly miss" genome-wide significance, suggesting numerous additional sub-threshold contributors within the same modules. Guo et al. (2018) demonstrate that genes adjacent to height GWAS loci are enriched in processes and tissues pertinent to growth, including growth plate cartilage.
 
-When examined at the level of an individual pathway (e.g., TGF-β signaling, Hedgehog signaling, or growth-plate extracellular matrix genes), this structure inherently produces a DPS pattern. Throughout the gene set, numerous genes possess one or more prevalent variations that have minor impacts on height. Certain genes attain definitive genome-wide relevance, while many others exhibit relatively mild or nominal associations. The outcome indicates that, in contrast to random gene sets, the distribution of gene-level test statistics within these pathways exhibits a shift towards more robust evidence overall characterized by an increased number of genes with small or moderate p-values and a decreased number of genes appearing entirely null, despite the fact that most individual genes would not, on their own, substantiate a strong association claim. This scenario exemplifies the optimal application of CATFISH’s DPS-oriented detectors (Stouffer/mean-Z on adjusted gene-level Z-scores, and optionally MAGMA-style competitive regression tests). They assess whether the **average** association signal across a biologically coherent pathway is subtly yet consistently heightened in comparison to the genome-wide background.
+When examined at the level of an individual pathway (e.g., TGF-β signaling, Hedgehog signaling, or growth-plate extracellular matrix genes), this structure inherently produces a DPS pattern. Throughout the gene set, numerous genes possess one or more prevalent variations that have minor impacts on height. Certain genes attain definitive genome-wide relevance, while many others exhibit relatively mild or nominal associations. The outcome indicates that, in contrast to random gene sets, the distribution of gene-level test statistics within these pathways exhibits a shift towards more robust evidence overall characterized by an increased number of genes with small or moderate $p$-values and a decreased number of genes appearing entirely null, despite the fact that most individual genes would not, on their own, substantiate a strong association claim. This scenario exemplifies the optimal application of CATFISH’s DPS-oriented detectors (Stouffer/mean-Z on adjusted gene-level Z-scores, and optionally MAGMA-style competitive regression tests). They assess whether the **average** association signal across a biologically coherent pathway is subtly yet consistently heightened in comparison to the genome-wide background.
 
 **Best detectors in CATFISH:**
 - **Stouffer / mean-Z on** `Z_adj` (unweighted; permutation-calibrated) (RECOMMENDED).
@@ -141,20 +141,20 @@ When examined at the level of an individual pathway (e.g., TGF-β signaling, Hed
 
 ## Archetype IV — Hybrid Driver–Support (HDS)
 
-![Archetype IV — Hybrid Driver–Support (HDS)](Figures/Fig_archetypesIV.png)
+![Archetype IV — Hybrid Driver–Support (HDS)](Figures/Fig1.Archetypes/Fig_archetypesIV.png)
 *Archetype IV — Hybrid Driver–Support (HDS)*
 
 
 **Signature:** a few very strong genes plus a some moderately associated genes.
 
-**Gene-level p-value pattern:**
+**Gene-level $p$-value pattern:**
 - One or a few top genes are extremely significant, e.g.
   $$p_{(1)},\,p_{(2)} \ll 10^{-4}\quad(\text{often much smaller}).$$
 - Beyond the top hits, several additional genes show moderate evidence:
   $$p_{(k)} \in [10^{-3},\,0.05]\quad\text{for multiple }k \text{ (support genes).}$$
 - The remaining genes are near-null:
   $$p_{(j)} \sim \mathrm{Uniform}(0,1)\quad\text{for most other }j.$$
-- A small “spike” at the top (drivers) plus a clear “shoulder” of moderately small p-values (support), then a flat tail.
+- A small “spike” at the top (drivers) plus a clear “shoulder” of moderately small $p$-values (support), then a flat tail.
 
 **Interpretation:**  
 Hybrid Driver–Support (HDS) exhibits a hierarchical pathway structure. A small number of “driver” genes exert the most significant effects, whilst a group of genes provides modest yet persistent associations. This is prevalent in pathways where flow or signal is regulated by a limited number of control points, whereas effective route output also relies on the synchronized activity of various downstream components. This architecture is statistically positioned between SDS and CME. A distinct driver signal exists, although the significance of the pathway is augmented by supplementary moderate signals.
@@ -165,7 +165,7 @@ The regulation of LDL-cholesterol (LDL-C) exemplifies a scenario in which a limi
 
 A supporting network of lipoprotein and cholesterol metabolism genes surrounds these drivers. GWAS of traditional lipids and nuclear magnetic resonance (NMR)-based lipoprotein characteristics have revealed numerous new loci affecting LDL particle size, concentration, and composition, including apolipoprotein clusters (*APOE/APOC*, *APOA1/A5*), hepatic lipase (*LIPC*), and transporters such as *ABCG5/ABCG8*. Individually, prevalent variants at these loci typically elucidate only a minor proportion of LDL-C variance, however, collectively, they constitute a significant segment of the genome-wide polygenic signal. Recent extensive multi-ancestry meta-analyses now identify hundreds of lipid-associated loci distributed throughout this extensive lipoprotein network.
 
-Translating this biology into gene-level association statistics for an LDL-related trait reveals that the route is neither exclusively "sparse driver" nor entirely "coordinated moderate". Typically, one observes several robust gene-level signals at *LDLR*, *APOB*, *PCSK9*, and a few linked loci, supported by a wider array of modestly correlated genes implicated in lipoprotein assembly, remodeling, and cholesterol transport. The HDS pattern is characterized by a pathway whose enhancement is indicative of both a limited number of predominant, high-impact genes and a strong, albeit subtler, influence from the broader metabolic framework. In CATFISH terminology, this refers to the regime when **soft TFisher** (which prioritizes the lower tail while still considering moderate p-values), along with **Fisher** and the **omnibus combination**, aligns effectively with the underlying biology.
+Translating this biology into gene-level association statistics for an LDL-related trait reveals that the route is neither exclusively "sparse driver" nor entirely "coordinated moderate". Typically, one observes several robust gene-level signals at *LDLR*, *APOB*, *PCSK9*, and a few linked loci, supported by a wider array of modestly correlated genes implicated in lipoprotein assembly, remodeling, and cholesterol transport. The HDS pattern is characterized by a pathway whose enhancement is indicative of both a limited number of predominant, high-impact genes and a strong, albeit subtler, influence from the broader metabolic framework. In CATFISH terminology, this refers to the regime when **soft TFisher** (which prioritizes the lower tail while still considering moderate $p$-values), along with **Fisher** and the **omnibus combination**, aligns effectively with the underlying biology.
 
 **Best detectors in CATFISH:**
 - **Soft TFisher** (tail-focused; gains power from a few strong hits *plus* additional modest hits)
@@ -176,15 +176,15 @@ Translating this biology into gene-level association statistics for an LDL-relat
 
 ## Archetype V — Single-Gene Proxy Pathway (SGP)
 
-![Archetype V — Single-Gene Proxy Pathway (SGP)](Figures/Fig_archetypesV.png)
+![Archetype V — Single-Gene Proxy Pathway (SGP)](Figures/Fig1.Archetypes/Fig_archetypesV.png)
 *Archetype V — Single-Gene Proxy Pathway (SGP)*
 
 
 **Signature:** the pathway looks significant only because it contains one very strong gene; the remaining members look essentially null.
 
 **Gene-level pattern:**
-- The top gene has an extremely small p-value (e.g. $10^{-7}\text{--}10^{-12}$).
-- The rest of the genes have p-values that look noisy / $\mathrm{Uniform}(0,1)$, with no clear excess of small p’s.
+- The top gene has an extremely small $p$-value (e.g. $10^{-7}\text{--}10^{-12}$).
+- The rest of the genes have $p$-values that look noisy / $\mathrm{Uniform}(0,1)$, with no clear excess of small p’s.
 - If you ignore the top gene, there is no obvious enrichment left in the pathway.
 
 **Interpretation:**  
@@ -207,7 +207,7 @@ In humans, phenylalanine metabolism is primarily regulated by a singular bottlen
 
 ## Archetype VI — Competitive Enrichment Above Background (CEAB) (OPTIONAL - Not used for CATFISH, just a check)
 
-![Archetype VI — Competitive Enrichment Above Background (CEAB)](Figures/Fig_archetypesVI.png)
+![Archetype VI — Competitive Enrichment Above Background (CEAB)](Figures/Fig1.Archetypes/Fig_archetypesVI.png)
 *Archetype VI — Competitive Enrichment Above Background (CEAB)*
 
 
@@ -215,7 +215,7 @@ In humans, phenylalanine metabolism is primarily regulated by a singular bottlen
 
 **Gene-level pattern:**
 
-Let $Z_g$ be the gene-level $Z$ used by MAGMA, derived from gene p-values via a probit transform (higher $Z$ = stronger association).  
+Let $Z_g$ be the gene-level $Z$ used by MAGMA, derived from gene $p$-values via a probit transform (higher $Z$ = stronger association).  
 In a CEAB pathway $s$:
 
 - The distribution of $\{Z_g : g \in s\}$ is elevated in comparison to $\{Z_g : g \notin s\}$. Equivalently, $\mathrm{mean}(Z_{\mathrm{in\_set}}) > \mathrm{mean}(Z_{\mathrm{outside\_set}})$, rather than merely $\mathrm{mean}(Z_{\mathrm{in\_set}}) > 0$.
@@ -236,14 +236,14 @@ This exemplifies a standard CEAB pattern. The pathway meets the above-background
 
 **Best detectors in CATFISH:**
 
-- MAGMA competitive p-value (from `*.gsa.out`) as an external “above-background” anchor:  
+- MAGMA competitive $p$-value (from `*.gsa.out`) as an external “above-background” anchor:  
   if $p_{\mathrm{comp}}$ is small and $\beta_s > 0$, interpret as CEAB-supported enrichment.
 
 ---
 
 ### Bias warning
 
-Pathway-based analysis for assessing over-representation or enrichment is influenced by various biases, including gene size, pathway size, SNP coverage density, and linkage disequilibrium (LD) patterns, all of which must be addressed explicitly (White et al., 2020; PMC6391732). In CATFISH, we tackle these issues in three phases: (i) The SNP to gene analysis is conducted using MAGMA’s LD-aware multi-SNP model, ensuring that gene-level Z/P values account for local LD structure and SNP density; (ii) we subsequently regress MAGMA gene Z-scores against log(gene length) and log(number of SNPs), utilizing the residual-based $P_adj$ for all subsequent gene to pathway analyses, thereby eliminating any remaining dependence on gene size and SNP density; and (iii) at the pathway level, we avoid simplistic over-representation tests, opting instead to calibrate our omnibus statistics through gene-label LD-aware permutations that maintain each gene’s adjusted p-value and the observed distribution of pathway sizes, yielding enrichment p-values that are resilient to these established biases.
+Pathway-based analysis for assessing over-representation or enrichment is influenced by various biases, including gene size, pathway size, SNP coverage density, and linkage disequilibrium (LD) patterns, all of which must be addressed explicitly (White et al., 2020; PMC6391732). In CATFISH, we tackle these issues in three phases: (i) The SNP to gene analysis is conducted using MAGMA’s LD-aware multi-SNP model, ensuring that gene-level Z/P values account for local LD structure and SNP density; (ii) we subsequently regress MAGMA gene Z-scores against log(gene length) and log(number of SNPs), utilizing the residual-based $P_adj$ for all subsequent gene to pathway analyses, thereby eliminating any remaining dependence on gene size and SNP density; and (iii) at the pathway level, we avoid simplistic over-representation tests, opting instead to calibrate our omnibus statistics through gene-label LD-aware permutations that maintain each gene’s adjusted $p$-value and the observed distribution of pathway sizes, yielding enrichment $p$-values that are resilient to these established biases.
 
 Link: https://pmc.ncbi.nlm.nih.gov/articles/PMC6391732/
 
@@ -271,7 +271,7 @@ $$
 
 ## 1) Gene-level association statistics (SNP → gene)
 
-For each gene $g$, MAGMA generates a gene‑level association p‑value $p_g$ by aggregating SNP‑level signals within or within a window of the gene while accounting for local LD using a reference panel. We employed MAGMA’s `multi=snp-wise` model, which integrates a SNP-wise mean test (effective for numerous small effects) and a SNP-wise top test (effective for a single strong SNP) into a unified LD-aware omnibus statistic per gene, hence ensuring the robustness of gene p-values against varying within-gene causal structures.
+For each gene $g$, MAGMA generates a gene‑level association p‑value $p_g$ by aggregating SNP‑level signals within or within a window of the gene while accounting for local LD using a reference panel. We employed MAGMA’s `multi=snp-wise` model, which integrates a SNP-wise mean test (effective for numerous small effects) and a SNP-wise top test (effective for a single strong SNP) into a unified LD-aware omnibus statistic per gene, hence ensuring the robustness of gene $p$-values against varying within-gene causal structures.
 
 The workflow emcompasses:
 
@@ -279,7 +279,7 @@ The workflow emcompasses:
 - A multi‑marker gene model accounts for LD among SNPs in the genic region.
 - MAGMA generates gene statistics (e.g., $Z_g$ and $p_g$).
 
-In CATFISH, the p-values (or Z statistics) of the MAGMA gene are utilized as inputs for all pathway analyses.
+In CATFISH, the $p$-values (or Z statistics) of the MAGMA gene are utilized as inputs for all pathway analyses.
 
 ---
 
@@ -291,7 +291,7 @@ Let:
 
 - $Z_g$ be the MAGMA gene Z‑statistic,
 - $L_g$ be gene length (bp),
-- $S_g$ be number of SNPs mapped to the gene (e.g., $$NSNPS$$).
+- $S_g$ be number of SNPs mapped to the gene.
 
 We fit a regression line as:
 
@@ -309,7 +309,7 @@ $$
 The corresponding adjusted two-sided $p$-values are:
 
 $$
-p_{g,\mathrm{adj}} = 2\,\Phi\!\left(-\left|Z_{g,\mathrm{adj}}\right|\right),
+p_{g,\mathrm{adj}} = 2\.\Phi\!\left(-\left|Z_{g,\mathrm{adj}}\right|\right),
 $$
 
 where $\Phi(\cdot)$ is the standard normal CDF.
@@ -329,8 +329,9 @@ $$
 
 CATFISH computes multiple pathway statistics from either unadjusted gene-level $p_g$ and $Z_g$, or the adjusted counterparts $p_{g,\mathrm{adj}}$ and $Z_{g,\mathrm{adj}}$. For convenience, we present definitions using the unadjusted inputs.
 
-We define multiple pathway-level statistics as functionals of a common set of within-pathway, gene-level evidences $\{p_g\}_{g\in S}$ (and, when available, $\{Z_g\}_{g\in S}$).
+We define multiple pathway-level statistics as functionals of a common set of within-pathway, gene-level evidences p<sub>g</sub> : g ∈ S (and, when available, Z<sub>g</sub> : g ∈ S).
 The gene-level evidences for genes within the same pathway are typically dependent (e.g., due to linkage disequilibrium–induced correlation and shared genomic architecture). Consequently, the resulting pathway statistics are also mutually dependent, as they are derived from the same underlying inputs.
+
 
 Therefore, closed-form reference calibrations that rely on independence of the gene-level tests (such as Fisher’s $\chi^2$ null or Tippett’s transformation for minP) are provided only as canonical or illustrative definitions. The final inferential $p$-values (both for each individual component statistic and for the omnibus statistic) are obtained via the unified null calibration procedure described in Section~4, which recomputes all statistics under a null-generating mechanism that preserves the dependence structure.
 
@@ -352,19 +353,19 @@ T_{\mathrm{ACAT}}(S) = \sum_{g \in S} w_g\, t_g
 = \sum_{g \in S} w_g \tan\left(\pi\left(\tfrac{1}{2} - p_g\right)\right).
 $$
 
-The combined p-value is:
+The combined $p$-value is:
 
 $$
 p_{\mathrm{ACAT}}(S) = \tfrac{1}{2} - \frac{1}{\pi}\arctan\left(T_{\mathrm{ACAT}}(S)\right).
 $$
 
-ACAT is asymptotically dominated by the smallest p-values, and is therefore sensitive to SDAs. In practice, ACAT’s Cauchy transform is undefined at exact boundary p-values (0 or 1) because $\tan\{\pi(1/2-p)\}$ diverges. Therefore, prior to computing $T_{\mathrm{ACAT}}(S)$ we clip gene p-values to a safe open interval:
+ACAT is asymptotically dominated by the smallest $p$-values, and is therefore sensitive to SDAs. In practice, ACAT’s Cauchy transform is undefined at exact boundary $p$-values (0 or 1) because $\tan\{\pi(1/2-p)\}$ diverges. Therefore, prior to computing $T_{\mathrm{ACAT}}(S)$ we clip gene $p$-values to a safe open interval:
 
 $$
 p_g \leftarrow \min\{1-p_{\min}\,\max(p_g\,p_{\min})\},\qquad p_{\min}=10^{-15}.
 $$
 
-In addition, if a gene appears multiple times in the pathway input (e.g., duplicate mapping entries), we collapse duplicates so that each gene contributes **once**, using the smallest p-value observed for that gene:
+In addition, if a gene appears multiple times in the pathway input (e.g., duplicate mapping entries), we collapse duplicates so that each gene contributes **once**, using the smallest $p$-value observed for that gene:
 
 $$
 p_g \leftarrow \min\{p_{g,1},p_{g,2},\ldots\}.
@@ -393,22 +394,23 @@ $$
 
 where $F_{\chi^2_{2G}}(\cdot)$ is the $\chi^2$ CDF with $2G$ degrees of freedom.
 
-Fisher is sensitive to CMEs. To avoid undefined values in $\log(p_g)$ when p-values are extremely small or numerically zero, we apply the same clipping rule as above:
+Fisher is sensitive to CMEs. To avoid undefined values in $\log(p_g)$ when $p$-values are extremely small or numerically zero, we apply the same clipping rule as above:
+
 $$
-p_g \leftarrow \min\{1-p_{\min},\,\max(p_g,\,p_{\min})\},\qquad p_{\min}=10^{-15}.
+p_g \leftarrow \min\{1-p_{\min}\,\max(p_g\,p_{\min})\},\qquad p_{\min}=10^{-15}.
 $$
 
-If a gene appears multiple times in the input for a pathway (duplicate gene entries), we retain one value per gene by collapsing duplicates using the minimum p-value for that gene before computing $T_{\mathrm{Fisher}}(S)$. Thus Fisher’s statistic is computed on the set of unique pathway genes.
+If a gene appears multiple times in the input for a pathway (duplicate gene entries), we retain one value per gene by collapsing duplicates using the minimum $p$-value for that gene before computing $T_{\mathrm{Fisher}}(S)$. Thus Fisher’s statistic is computed on the set of unique pathway genes.
 
 ---
 
 ### 3.3 Adaptive Soft TFisher
 
-A practical limitation of choosing a single soft-threshold parameter $\tau$ is that the optimal tail focus depends on the (unknown) pathway signal pattern (sparse vs. diffuse, weak vs. strong). CATFISH therefore uses an **adaptive soft TFisher** defined by evaluating the soft TFisher statistic over a small grid of $\tau$ values and taking the best (smallest) resulting p-value.
+A practical limitation of choosing a single soft-threshold parameter $\tau$ is that the optimal tail focus depends on the (unknown) pathway signal pattern (sparse vs. diffuse, weak vs. strong). CATFISH therefore uses an **adaptive soft TFisher** defined by evaluating the soft TFisher statistic over a small grid of $\tau$ values and taking the best (smallest) resulting $p$-value.
 
 #### Soft TFisher statistic (per $\tau$)
 
-For a pathway $S$ with gene-level p-values $\{p_g\}_{g\in S}$ and a soft-threshold $\tau\in(0,1]$, the soft TFisher statistic is
+For a pathway $S$ with gene-level $p$-values $\{p_g\}_{g\in S}$ and a soft-threshold $\tau\in(0,1]$, the soft TFisher statistic is
 
 $$
 W^{\mathrm{soft}}(S;\tau)=\sum_{g\in S}\left[-2\log(p_g)+2\log(\tau)\right]_{+},
@@ -422,145 +424,152 @@ This is a continuous (soft) down-weighting near the cutoff, in contrast to hard 
 Let $\mathcal{T}=\{\tau_1,\dots,\tau_m\}$ be a fixed grid of candidate thresholds. In the CATFISH implementation, the default grid is:
 
 $$
-\mathcal{T}=\{0.20,\;0.10,\;0.05,\;0.02,\;0.01,\;0.005,\;0.001\}.
+\mathcal{T}=\{0.20\;0.10\;0.05\;0.01}.
 $$
 
-For each $\tau\in\mathcal{T}$, we compute $W^{\mathrm{soft}}(S;\tau)$ and obtain a corresponding analytic null p-value $p_{\tau}(S)$ using the TFisher package’s calibration for the soft statistic.
+For each $\tau\in\mathcal{T}$, we compute $W^{\mathrm{soft}}(S;\tau)$ and obtain a corresponding analytic null $p$-value $p_{\tau}(S)$ using the TFisher package’s calibration for the soft statistic.
 We then define the adaptive soft TFisher component as:
 
 $$
 p_{\mathrm{aTF}}(S)=\min_{\tau\in\mathcal{T}} p_{\tau}(S).
 $$
 
-Because the values $\{p_{\tau}(S)\}_{\tau\in\mathcal{T}}$ are dependent (they reuse the same gene p-values), the TFisher package provides an analytic omnibus calibration for the minimum across $\tau$. CATFISH uses this resulting $p_{\mathrm{aTF}}(S)$ as the **component** TFisher p-value, and then accounts for LD-induced gene–gene correlation and cross-method dependence at the final omnibus calibration stage (Section 4). To avoid $\log(0)$ and other numerical issues, gene p-values are clipped to:
+Because the values p<sub>τ</sub>(S)}<sub>τ∈𝒯</sub> are dependent (they reuse the same gene $p$-values), the TFisher package provides an analytic omnibus calibration for the minimum across τ. CATFISH uses this resulting p<sub>aTF</sub>(S) as the **component** TFisher $p$-value, and then accounts for LD-induced gene–gene correlation and cross-method dependence at the final omnibus calibration stage (Section 4). To avoid $\log(0)$ and other numerical issues, gene $p$-values are clipped to:
 
 $$
-p_g \leftarrow \min\{1-p_{\min},\,\max(p_g,\,p_{\min})\},\qquad p_{\min}=10^{-15}.
+p_g \leftarrow \min\{1-p_{\min}\,\max(p_g\,p_{\min})\},\qquad p_{\min}=10^{-15}.
 $$
 
-If a gene appears multiple times in the pathway input, duplicate entries are collapsed so that each gene contributes once, using the minimum p-value for that gene prior to computing $W^{\mathrm{soft}}(S;\tau)$.
+If a gene appears multiple times in the pathway input, duplicate entries are collapsed so that each gene contributes once, using the minimum $p$-value for that gene prior to computing $W^{\mathrm{soft}}(S;\tau)$.
 
 
 ---
 
 ### 3.4 Stouffer's method
 
-Stouffer's technique consolidates gene-level **Z** statistics instead of p-values and exhibits increased sensitivity to DPS. In CATFISH, the gene-level Z input is sourced directly from MAGMA’s gene output (`ZSTAT`). Significantly, MAGMA’s Z-scale is understood as a association-strength score, indicating that greater positive values signify stronger evidence of association, rather than indicating the direction of effect as trait-increasing or trait-decreasing. Consequently, the natural pathway-level Stouffer test in this context is one-sided (greater), assessing the enrichment of positive association strength inside the pathway.
+Stouffer’s technique combines gene-level $Z$ statistics (rather than $p$-values) and is often more sensitive to DPS architectures, where many genes exhibit modest evidence of association. In CATFISH, the gene-level $Z$ input is taken directly from MAGMA’s gene output (`ZSTAT`). Importantly, MAGMA’s $Z$ scale is an association-strength transform (monotone in the gene $p$-value), so larger positive values indicate stronger evidence of association, not the direction of effect (trait-increasing vs trait-decreasing) (ref). Consequently, the natural pathway-level Stouffer test in this context is one-sided (greater), assessing whether genes in the pathway show unusually large association-strength scores.
 
 **Default (unweighted) Stouffer:**
 
-For a pathway $$S$$ with $$G=|S|$$ genes,
+For a pathway $S$ with $G=|S|$ genes,
 
-$$Z_{\mathrm{stouffer}}(S) = \frac{1}{\sqrt{G}} \sum_{g \in S} Z_g$$
+$$
+Z_{\mathrm{stouffer}}(S)=\frac{1}{\sqrt{G}} \sum_{g \in S} Z_g, \qquad p_{\mathrm{stouffer}}(S)= 1-\Phi\!\left(Z_{\mathrm{stouffer}}(S)\right),
+$$
 
-$$p_{\mathrm{stouffer}}(S) = 1 - \Phi\!\left(Z_{\mathrm{stouffer}}(S)\right),$$
-
-where $$\Phi(\cdot)$$ is the standard normal CDF.
+where $\Phi(\cdot)$ is the standard normal CDF.
 
 **Optional (weighted) Stouffer:**
 
-CATFISH optionally supports nonnegative per-gene weights $$w_g$$ (e.g., based on SNP count or other gene-level quantities). In that case,
+CATFISH optionally supports nonnegative per-gene weights $w_g$ (e.g., based on SNP count or other gene-level quantities). In that case,
 
-$$Z_{\mathrm{stouffer}}^{(w)}(S)=\frac{\sum_{g\in S} w_g\, Z_g}{\sqrt{\sum_{g\in S} w_g^2}},\qquad p_{\mathrm{stouffer}}^{(w)}(S)=1-\Phi\!\left(Z_{\mathrm{stouffer}}^{(w)}(S)\right)$$
+$$
+Z_{\mathrm{stouffer}}^{(w)}(S) = \frac{\sum_{g\in S} w_g\, Z_g}{\sqrt{\sum_{g\in S} w_g^2}}, \qquad p_{\mathrm{stouffer}}^{(w)}(S) = 1-\Phi\!\left(Z_{\mathrm{stouffer}}^{(w)}(S)\right).
+$$
 
-A **two-sided** option can be reported for completeness when a genuinely *signed* gene-level Z is available:
+(Weights are assumed nonnegative so that “large positive” still corresponds to stronger aggregated evidence.)
 
-$$p_{\mathrm{stouffer}}^{(2\text{-sided})}(S)=2\,\Phi\!\left(-\left|Z_{\mathrm{stouffer}}(S)\right|\right),$$
+A two-sided option can be reported for completeness when a genuinely *signed* gene-level $Z$ is available:
 
-This is not the default for MAGMA-style association-strength Z scores.
+$$
+p_{\mathrm{stouffer}}^{(2\text{-sided})}(S) = 2\,\Phi\!\left(-\left|Z_{\mathrm{stouffer}}(S)\right|\right).
+$$
+
+This is not the default for MAGMA-style association-strength $Z$ scores.
 
 In the CATFISH implementation, Stouffer’s test defaults to a **one-sided** alternative, `alternative = "greater"`, i.e. we test whether the pathway’s aggregated MAGMA association-strength scores are unusually large:
 
 $$
-H_0:\; Z_{\mathrm{stouffer}}(S)\sim \mathcal{N}(0,1)
-\qquad \text{vs}\qquad
-H_1:\; Z_{\mathrm{stouffer}}(S) > 0.
+H_0:\; Z_{\mathrm{stouffer}}(S)\sim \mathcal{N}(0,1) \qquad \text{vs}\qquad H_1:\; Z_{\mathrm{stouffer}}(S) > 0.
 $$
 
-This default is appropriate for MAGMA’s gene-level $Z$ statistics (e.g. `ZSTAT`), which represent **strength of association** (higher = stronger evidence) rather than a signed direction of effect (trait-increasing vs trait-decreasing).  
+This default is appropriate for MAGMA’s gene-level $Z$ statistics (e.g. `ZSTAT`), which represent **strength of association** (higher = stronger evidence) rather than a signed direction of effect.
 
-If the user provides genuinely **signed** gene-level Z-scores (e.g., from an effect-direction-aware gene model), CATFISH can optionally report a **two-sided** Stouffer p-value:
+If the user provides genuinely **signed** gene-level $Z$-scores (e.g., from an effect-direction-aware gene model), CATFISH can optionally report a **two-sided** Stouffer $p$-value:
 
 $$
-p_{\mathrm{stouffer}}^{(2\text{-sided})}(S)=2\,\Phi\!\left(-\left|Z_{\mathrm{stouffer}}(S)\right|\right).
+p_{\mathrm{stouffer}}^{(2\text{-sided})}(S) = 2\,\Phi\!\left(-\left|Z_{\mathrm{stouffer}}(S)\right|\right).
 $$
 
-Finally, the analytic Stouffer p-values above rely on the standard Z-test reference calibration, which implicitly assumes **independent** gene-level statistics. In practice, genes within a pathway can be correlated (LD / local genomic structure), so CATFISH treats the analytic Stouffer p-value as a *component summary* and addresses dependence at the **final omnibus calibration stage**
-(Section 4; MVN/global resampling).
+Finally, the analytic Stouffer $p$-values above rely on the standard normal reference calibration, which implicitly assumes independent gene-level statistics (or, more generally, that $Z_{\mathrm{stouffer}}$ has been variance-standardized under the null). In practice, genes within a pathway can be correlated (LD / local genomic structure), so CATFISH treats the analytic Stouffer $p$-value as a component summary and addresses dependence at the final omnibus calibration stage (Section 4; MVN/global resampling).
 
 ---
 
-### 3.5 minP / Tippett test
+### 3.5 minP (Tippett / Šidák)
 
-For each pathway $S$ with $G$ genes, we define the minimum gene $p$-value as
-
-$$
-T_{\min}(S) = p_{\min}(S) = \min_{g \in S} p_g .
-$$
-
-An independence-based calibration is given by Tippett’s transform as: 
+For each pathway $S$ with $G=|S|$ genes and gene-level $p$-values $\{p_g\}_{g\in S}$, the minP statistic is the smallest gene $p$-value:
 
 $$
-p_{\mathrm{tippett}} = 1 - (1 - p_{\min})^{G}.
+T_{\min}(S)=p_{\min}(S)=\min_{g\in S} p_g.
 $$
 
-However, CATFISH does not rely on this analytic mapping for inference because gene-level test statistics within a pathway are typically dependent (see Section~4). The minP statistic is emphasized not because it is uniquely sensitive to dependence (all constituent statistics are), but because it represents a qualitatively distinct mode of evidence that is driven almost entirely by the single most significant gene. Consequently, $(T_{\min}) serves primarily as a detector of sparse, single-gene–driven signals (SDA/SGP-type patterns), thereby complementing aggregate combination procedures (Fisher, Stouffer, softTFisher, ACAT) that are designed to capture more diffuse enrichment. We identify potential single-gene proxy pathways via a leave-one-gene-out diagnostic, in which the top-ranking gene is removed, and the test statistic is recomputed.
-
-CATFISH reports the canonical independence-based calibration for the minimum gene p-value using the Šidák/Tippett transform:
+Under independence, the canonical calibration for the minimum $p$-value is the Tippett/Šidák transform:
 
 $$
-p_{\mathrm{tippett}}(S) \;=\; 1 - \big(1 - p_{\min}(S)\big)^{G}.
+p_{\mathrm{tippett}}(S) = \Pr\!\left(\min_{g\in S} P_g \le p_{\min}(S)\right) = 1-\big(1-p_{\min}(S)\big)^{G}.
 $$
 
-This analytic mapping is provided as the **component** minP p-value (i.e., treating the $G$ gene tests as independent). As with other component tests, this raw minP p-value does **not** account for LD-induced gene–gene correlation within pathways. Dependence is handled later through the unified null calibration used for the final omnibus (Section 4; MVN/global resampling), where minP is recomputed under the same null draws as the other component statistics.
+(Here $G$ is the number of *unique* genes in the pathway after collapsing duplicates; see below.)
 
-To prevent duplicated genes from inflating evidence, pathway inputs are collapsed to **unique genes** prior to computing $p_{\min}(S)$: if a gene appears multiple times, we retain a single value using the minimum p-value for that gene. Thus $G$ denotes the number of unique genes in $S$.
+CATFISH computes and reports the above Tippett/Šidák mapping as the analytic component minP $p$-value. This is used as a standardized “component $p$-value” for downstream combination across methods. However, CATFISH does not treat this analytic mapping as the final inferential calibration because gene-level statistics within pathways are typically correlated (LD / local genomic structure).
+
+Instead, when dependence-aware calibration is requested (Section 4; MVN and/or global resampling), CATFISH recomputes the minP statistic under each null draw using the same definition, take the minimum gene $p$-value in the null draw for the pathway and apply the same Tippett/Šidák transform with $G$ fixed for that pathway. The resulting empirical null distribution is then used in the unified calibration that produces the final omnibus $p$-values. minP is emphasized not because it is robust to dependence (it is not; like all component tests it is affected by gene–gene correlation), but because it targets a qualitatively distinct evidence mode: a pathway can rank highly due to one extremely significant gene even when the remaining genes show little signal. Thus minP is primarily a detector of sparse, single-gene–driven signals (SDA/SGP-type patterns), complementing aggregate procedures (Fisher, Stouffer, softTFisher, ACAT) that are designed to capture more diffuse enrichment.
+
+To prevent duplicated gene entries from inflating evidence, CATFISH collapses pathway inputs to **unique genes** prior to computing $p_{min}(S)$ (and hence $p_{tippett}(S)$ ). If a gene appears multiple times in a pathway definition, only one value is retained for that gene (using the minimum $p$-value for that gene), so $G$ denotes the number of unique genes in $S$.
+
 
 ---
 
 ## 4) Dependence structure and unified null calibration
 
-For a pathway $S$ with genes $g \in S$, CATFISH computes multiple component pathway tests from the same gene-level evidence (gene p-values $p_g$ and, when used, gene Z-scores $Z_g$). Two sources of
+For a pathway $S$ with genes $g \in S$, CATFISH computes multiple component pathway tests from the same gene-level evidence (gene $p$-values $p_g$ and, when used, gene Z-scores $Z_g$). Two sources of
 dependence arise:
 
-1. **Deterministic coupling across component tests:** each component is a deterministic function of the same multiset ($p_g$) (and possibly $Z_g$), so component p-values are correlated even if genes were
+1. **Deterministic coupling across component tests:** each component is a deterministic function of the same multiset ($p_g$) (and possibly $Z_g$), so component $p$-values are correlated even if genes were
    independent.
 
 2. **Additional dependence across genes:** gene-level inputs within $S$ can be correlated due to LD/shared genomic structure and related effects, inducing correlation among $p_g$ and $Z_g$.
 
-To obtain valid inference without assuming independence at either level, CATFISH calibrates the omnibus under a single dependence-preserving null generator that recomputes **all** components (and the omnibus) from the **same** null draw.
+To obtain valid inference without assuming independence at either level, CATFISH calibrates the omnibus under a single dependence-preserving null generator that recomputes all components (and the omnibus) from the **same** null draw.
 
+---
 
 ### 4.1 Deterministic coupling under the null (same $p_g$ reused)
 
-Even under a pure null scenario where genes are independent, the component statistics are **not jointly independent** because they are all functions of the same gene-level p-values (equivalently the same order statistics $P_{(k)}$. Concretely:
+Even under a pure null scenario where genes are independent, the component statistics are not jointly independent because they are all functions of the same gene-level $p$-values (equivalently the same order statistics $P_{(k)}$. Definitely, we have:
 
-- **Fisher and soft TFisher** are monotone in $log(p_g)$. Soft TFisher can be viewed as a truncated/reweighted Fisher that concentrates weight on $p_g \le \tau$. Thus, when many $p_g$ are moderately small (or the lower tail is long), both Fisher and TFisher tend to become extreme in the same direction.
+- Fisher and soft TFisher are monotone in $log(p_g)$. Soft TFisher can be viewed as a truncated/reweighted Fisher that concentrates weight on $p_g \le \tau$. Thus, when many $p_g$ are moderately small (or the lower tail is long), both Fisher and TFisher tend to become extreme in the same direction.
 
-- **Stouffer** aggregates gene Z-scores, which in typical gene-set settings are monotone transformations of gene p-values (or are supplied directly as gene-level association Z-scores). Therefore pathways exhibiting diffuse, coordinated enrichment of small $p_g$ often also yield extreme Stouffer values.
+- Stouffer aggregates gene Z-scores, which in typical gene-set settings are monotone transformations of gene $p$-values (or are supplied directly as gene-level association Z-scores). Therefore pathways exhibiting diffuse, coordinated enrichment of small $p_g$ often also yield extreme Stouffer values.
 
-- **ACAT and minP** are both tail-driven. ACAT uses the heavy-tailed Cauchy transform $\tan\{\pi(1/2 - p_g)\}$, and minP is exactly $P_{(1)}=\min_{g\in S} p_g$. Hence, if a pathway contains one (or a few) extremely small p-values, both ACAT and minP tend to be extreme. Soft TFisher with very small $\tau$ can behave similarly by up-weighting the most extreme p-values.
+- ACAT and minP are both tail-driven tests. ACAT uses the heavy-tailed Cauchy transform $\tan\{\pi(1/2 - p_g)\}$, and minP is exactly $P_{(1)}=\min_{g\in S} p_g$. Hence, if a pathway contains one (or a few) extremely small $p$-values, both ACAT and minP tend to be extreme. Soft TFisher with very small $\tau$ can behave similarly by up-weighting the most extreme $p$-values.
 
-- **Post hoc selection across methods** (e.g., min across methods, or adaptive $\tau$ selection within TFisher) further increases dependence and can induce “winner’s curse” behavior unless the null distribution is calibrated for the full selection procedure.
+- Post hoc selection across methods (e.g., min across methods, or adaptive $\tau$ selection within TFisher) increases dependence among the reported statistics and can yield overly optimistic significance unless the null distribution is calibrated for the entire selection step.
 
+---
 
 ### 4.2 Extra dependence from LD and shared gene-level correlation
 
 In real data, gene-level inputs are not independent. The sets $\{p_g\}$ and $\{Z_g\}$ can be correlated across genes due to (i) adjacent genes sharing SNPs or LD structure, (ii) coupling of SNP-level evidence across genes via
 local LD, and (iii) genome-wide polygenic background effects that can induce weak correlation among gene-level association metrics. This dependence compounds the deterministic coupling in Section 4.1.
 
-CATFISH addresses this in two complementary ways:
+---
 
-1. **Upstream LD-aware SNP \(\rightarrow\) gene aggregation (MAGMA).**  
+### 4.3 Dependence-aware null calibration in CATFISH
+
+CATFISH addresses the problems in 4.1 and 4.2 in two complementary ways:
+
+1. Upstream LD-aware SNP \(\rightarrow\) gene aggregation (MAGMA):
 Gene-level $p_g$ and $Z_g$ are derived from MAGMA’s LD-aware SNP-to-gene model, which adjusts gene evidence for correlated SNP structure within and near genes.
 
-2. **Downstream dependence-preserving null calibration.**  
-   Rather than assuming independence among the component p-values $\{p_j(S)\}$, CATFISH calibrates by resampling in a way that recomputes all component tests on the same null draw:
-   - **Global gene-set resampling:** sample genes from a genome-wide pool and recompute *all* component tests on the same resampled gene sets, preserving cross-method coupling induced by shared inputs (but LD-agnostic within a pathway).
-   - **LD-aware MVN calibration (recommended):** simulate correlated gene Z-scores $Z \sim \mathcal{N}(0, R_S)$ using a pathway-specific correlation matrix $R_S$ (from MAGMA gene–gene correlations), and derive p-based components from the same draw via a Gaussian-copula mapping. This preserves both within-pathway gene dependence and cross-method coupling by construction.
+2. Downstream dependence-preserving null calibration:
+   Rather than assuming independence among the component $p$-values $\{p_j(S)\}$, CATFISH calibrates by resampling in a way that recomputes all component tests on the same null draw:
+   - Global gene-set resampling: sample genes from a genome-wide pool and recompute all component tests on the same resampled gene sets, preserving cross-method coupling induced by shared inputs (but LD-agnostic within a pathway).
+   - LD-aware MVN calibration (recommended): simulate correlated gene Z-scores $Z \sim \mathcal{N}(0, R_S)$ using a pathway-specific correlation matrix $R_S$ (from MAGMA gene–gene correlations), and derive p-based components from the same draw via a Gaussian-copula mapping. This preserves both within-pathway gene dependence and cross-method coupling by construction.
 
+---
 
-### 4.3 Unified null calibration via an LD-aware MVN generator
+### 4.3.1 Unified null calibration via an LD-aware MVN generator
 
 Under the LD-aware MVN null, we generate null replicates for each pathway \(S\):
 
@@ -568,20 +577,20 @@ $$
 Z^{(b)} \sim \mathcal{N}(0, R_S), \qquad b = 1,\dots,B,
 $$
 
-where $R_S$ is the pathway-specific gene–gene correlation matrix. For p-based components, we apply a Gaussian-copula mapping from the same $Z^{(b)}$. With **two-sided** gene p-values (default),
+where $R_S$ is the pathway-specific gene–gene correlation matrix. For p-based components, we apply a Gaussian-copula mapping from the same $Z^{(b)}$. With two-sided gene $p$-values (default),
 
 $$
 U_g^{(b)}=\Phi\!\left(Z_g^{(b)}\right), \qquad
 p_g^{(b)} = 2\min\{U_g^{(b)}, 1-U_g^{(b)}\}.
 $$
 
-(If a **one-sided** convention is adopted for gene p-values, the mapping can be replaced by $p_g^{(b)} = 1-\Phi(Z_g^{(b)})$ with the appropriate direction.)
+(If a one-sided convention is adopted for gene $p$-values, the mapping can be replaced by $p_g^{(b)} = 1-\Phi(Z_g^{(b)})$ with the appropriate direction.)
 
-For each replicate $b$, we recompute all component pathway p-values from the same null draw $\{p_g^{(b)}\}$ (and $\{Z_g^{(b)}\}$ for Stouffer), yielding the replicate component vector
+For each replicate $b$, we recompute all component pathway $p$-values from the same null draw $\{p_g^{(b)}\}$ (and $\{Z_g^{(b)}\}$ for Stouffer), yielding the replicate component vector
 
 $$
-\mathbf{p}^{(b)}(S)=\big(p_{\mathrm{ACAT}}^{(b)}(S),\;p_{\mathrm{Fisher}}^{(b)}(S),\;p_{\mathrm{TF}}^{(b)}(S),\;
-p_{\mathrm{Stouffer}}^{(b)}(S),\;p_{\mathrm{minP}}^{(b)}(S)\big),
+\mathbf{p}^{(b)}(S)=\big(p_{\mathrm{ACAT}}^{(b)}(S)\;p_{\mathrm{Fisher}}^{(b)}(S)\;p_{\mathrm{TF}}^{(b)}(S)\;
+p_{\mathrm{Stouffer}}^{(b)}(S)\;p_{\mathrm{minP}}^{(b)}(S)\big),
 $$
 
 with the observed vector $\mathbf{p}^{\mathrm{obs}}(S)$ computed analogously from the real data.
@@ -593,37 +602,70 @@ p_{\mathrm{omni}}^{(b)}(S)=\mathcal{O}\!\left(\mathbf{p}^{(b)}(S)\right),\qquad
 p_{\mathrm{omni}}^{\mathrm{obs}}(S)=\mathcal{O}\!\left(\mathbf{p}^{\mathrm{obs}}(S)\right).
 $$
 
-The MVN-calibrated omnibus p-value is estimated by the standard resampling tail probability (small = more extreme):
+The MVN-calibrated omnibus $p$-value is estimated by the standard resampling tail probability (small = more extreme):
 
 $$
 \hat p_{\mathrm{omni}}(S)=\frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(p_{\mathrm{omni}}^{(b)}(S)\le p_{\mathrm{omni}}^{\mathrm{obs}}(S)\right)}{B+1}.
 $$
 
+---
 
-### 4.4 MVN calibration of component p-values (and why the omnibus is still calibrated)
+### 4.3.2 MVN calibration of component $p$-values
 
+CATFISH can compute MVN-calibrated component $p$-values primarily for diagnostic purposes. These values quantify how each component statistic behaves after accounting for within-pathway gene–gene correlation (via MVN draws) and are useful for detecting component-specific sensitivity to LD structure. Importantly, even after MVN calibration, the component outputs remain dependent across methods because they are computed from the same latent MVN realizations and are different transforms of the same underlying evidence. Consequently, MVN-calibrated components should not be treated as independent inputs for downstream recombination unless the entire recombination procedure is itself calibrated. For primary inference, CATFISH therefore recommends relying on the omnibus MVN calibration (Section 5), and treating component-MVN $p$-values as descriptive diagnostics.
 
-CATFISH optionally computes MVN-calibrated component p-values for diagnostic purposes. These represent each method's p-value adjusted for gene-gene correlations and can reveal differential sensitivity to LD structure. Crucially, these calibrated components remain dependent across methods and should not be naïvely recombined without additional calibration. For primary inference, we recommend relying solely on the omnibus calibration (Section 4.3). For component method $j$,
+For a component method $$j$$, we define its MVN-calibrated $p$-value as the empirical tail probability of the observed component statistic relative to the MVN-generated null distribution:
 
 $$
 \hat p_{j}(S)=\frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(p_{j}^{(b)}(S)\le p_{j}^{\mathrm{obs}}(S)\right)}{B+1}.
 $$
 
-**Important:** even after component calibration, the calibrated component p-values $(\hat p_{\mathrm{ACAT}},\hat p_{\mathrm{Fisher}},\hat p_{\mathrm{TF}},\hat p_{\mathrm{Stouffer}},\hat p_{\mathrm{minP}})$ remain dependent (because they are derived from the same MVN draws and represent different transforms of the same latent evidence). Therefore, CATFISH forms an omnibus from the calibrated components and **still calibrates that omnibus** using the same MVN replicates. In practice this is implemented by computing, within each replicate $b$, replicate-calibrated component p-values $\hat p_{j}^{(b)}(S)$ (via the empirical CDF over $p_j^{(b')}(S)$ for $b'=1,\ldots,B$), forming the replicate omnibus $p_{\mathrm{omni}}^{(b)}(S)=\mathcal{O}\!\left(\{\hat p_j^{(b)}(S)\}\right)$, and then applying the same tail-probability calibration to obtain $\hat p_{\mathrm{omni}}(S)$.
+CATFISH supports two related strategies for using MVN draws when forming the omnibus, controlled by `mvn_calibrate_components` in the CATFISH pacakge:
 
-### 4.5 Implication for inference
+**(i) `mvn_calibrate_components = FALSE` (direct omnibus calibration; default).**  
+CATFISH constructs the omnibus directly from the raw component $p$-values computed on each MVN draw. Specifically, for each replicate $(b)$ we compute component null $p$-values $$p_j^{(b)}(S)$$ and form an omnibus null statistic
 
-Because the component tests are strongly dependent (Sections 4.1–4.2), naïve across-method combination rules that assume independence (e.g., analytic Sidák-min across method p-values, or Bonferroni across correlated method p-values) can be miscalibrated and may be anti-conservative. CATFISH treats the analytic across-method omnibus (ACAT-O or minP-O) as a useful descriptive summary, but relies on the resampling/MVN-calibrated omnibus p-values as the primary inferential evidence. This unified calibration directly targets the null distribution of the full procedure (components + omnibus), thereby controlling type-I error under both intra-pathway gene dependence and cross-method coupling.
+
+
+
+$$
+p_{\mathrm{omni}}^{(b)}(S)=\mathcal{O}\!\left(\{p_j^{(b)}(S)\}\right).
+$$
+
+The observed omnibus $$p_{\mathrm{omni}}^{\mathrm{obs}}(S)$$ is then calibrated against \[p<sub>omni</sub><sup>(b)</sup>(S)]<sub>b=1..B</sub> using the same tail-probability mapping, yielding p̂<sub>omni</sub>(S). In this mode, component MVN $p$-values p̂<sub>j</sub>(S) may still be reported for diagnostics, but they are **not** used to construct the final omnibus (explained in more detail in section 5).
+
+**(ii) `mvn_calibrate_components = TRUE` (component-calibrated omnibus with joint MVN calibration). 
+CATFISH first converts each component to the MVN-calibrated scale $$\hat p_j(S)$$ via the equation above, and forms a component-calibrated observed omnibus
+
+$$
+p_{\mathrm{omni}}^{\mathrm{obs,\,compcal}}(S)=\mathcal{O}\!\left(\{\hat p_j(S)\}\right).
+$$
+
+However, because $$(\hat p_{\mathrm{ACAT}},\hat p_{\mathrm{Fisher}},\hat p_{\mathrm{TF}},\hat p_{\mathrm{Stouffer}},\hat p_{\mathrm{minP}})$$ remain dependent, CATFISH still calibrates this omnibus using the same MVN replicates. Concretely, within each replicate $$b$$, we map each component’s null draws to the uniform scale via its empirical CDF (equivalently, a rank-based “uniformization”) to obtain $$\hat p_j^{(b)}(S)$$, then form
+
+$$
+p_{\mathrm{omni}}^{(b)}(S)=\mathcal{O}\!\left(\{\hat p_j^{(b)}(S)\}\right),
+$$
+
+and finally compute $$\hat p_{\mathrm{omni}}(S)$$ as the empirical tail probability of $$p_{\mathrm{omni}}^{\mathrm{obs,\,compcal}}(S)$$ relative to $$\{p_{\mathrm{omni}}^{(b)}(S)\}_{b=1}^B$$. This ensures the omnibus $p$-value is calibrated for the full pipeline (component calibration + omnibus combination) rather than treating calibrated components as independent.
+
+In both modes, the key principle is the same in that MVN draws are used to preserve within-pathway LD-induced dependence, and the final omnibus $p$-value is calibrated against an omnibus null generated by recomputing the full set of component statistics on the same MVN realizations.
+
+---
+
+
+### 4.4 Implications for inference
+
+Because the component tests are strongly dependent—both because they are computed from the same gene-level inputs and because gene-level statistics are correlated within pathways (Sections 4.1–4.2)—naïve across-method combination rules that assume independence (e.g., analytic Šidák corrections applied across method $p$-values) can be miscalibrated and may be anti-conservative. Accordingly, CATFISH treats the analytic across-method omnibus (e.g., ACAT-O or minP-O computed directly from component $p$-values) as a descriptive summary of cross-test agreement, but uses the resampling/MVN-calibrated omnibus $p$-value as the primary inferential quantity. This unified calibration targets the null distribution of the entire procedure—recomputing each component test and the omnibus operator under dependence-preserving null draws—thereby controlling type-I error under both intra-pathway gene dependence and cross-method coupling.
 
 
 ---
 
-## 5) Omnibus pathway p-value across methods (omnibus operator + unified null calibration)
+## 5) Omnibus pathway $p$-value across methods (omnibus operator + unified null calibration)
 
+The component tests in CATFISH are intentionally heterogeneous: each is optimal for a different pathway signal archetype, so no single statistic dominates across settings. Consequently, a pathway may be strongly supported by one component yet only weakly supported by others. To produce a single ranking while preserving this complementarity, CATFISH applies an omnibus operator that aggregates the component $p$-values into a pathway-level summary, and then calibrates this summary using the same dependence-preserving null resampling used for the component diagnostics (Section 4.4). Each pathway in CATFISH is evaluated using a panel of complementary gene-to-pathway tests (ACAT, Fisher, adaptive soft TFisher, Stouffer, and a minP statistic). All component tests are deterministic functions of the same gene-level inputs $\{p_g\}$ (and optionally $\{Z_g\}$), hence, the resulting component $p$-values are correlated. Accordingly, CATFISH makes two choices: (i) how to summarize the vector of method $p$-values into a single omnibus statistic (ACAT-O or minP-O), and (ii) how to calibrate that omnibus statistic under the null (analytic for ranking and resampling/MVN for valid inference).
 
-Each pathway in CATFISH is evaluated using a panel of complementary gene-to-pathway tests (ACAT, Fisher, adaptive soft TFisher, Stouffer, and a minP statistic). All component tests are deterministic functions of the same gene-level inputs $\{p_g\}$ (and optionally $\{Z_g\}$), hence, the resulting component $p$-values are correlated. Accordingly, CATFISH makes two choices: (i) how to summarize the vector of method p-values into a single omnibus statistic (ACAT-O or minP-O), and (ii) how to calibrate that omnibus statistic under the null (analytic for ranking and resampling/MVN for valid inference).
-
-Let the component method p-values for pathway $S$ be
+Let the component method $p$-values for pathway $S$ be
 
 $$
 \mathcal{P}(S)= \{p_{\mathrm{ACAT}}(S)\,p_{\mathrm{Fisher}}(S)\,p_{\mathrm{TFisher}}(S)\,p_{\mathrm{minP}}(S)\,p_{\mathrm{Stouffer}}(S)\}
@@ -633,19 +675,15 @@ $$
 
 where the Stouffer term is included only when gene $Z$-scores are available; thus $K=|\mathcal{P}(S)|\le 5$.
 
-\textbf{Omnibus operators (across methods).} CATFISH reports two omnibus summaries:
-(i) \emph{ACAT-O} (Cauchy combination across the $K$ method p-values), and
-(ii) \emph{minP-O} (Sidak-adjusted minimum across the $K$ method p-values),
+CATFISH reports two omnibus summaries:
+(i) \emph{ACAT-O} (Cauchy combination across the $K$ method $p$-values), and
+(ii) \emph{minP-O} (Sidak-adjusted minimum across the $K$ method $p$-values),
 
 $$
-p_{\mathrm{minP}\text{-}\mathrm{O}}(S) \;=\; 1-\big(1-\min_{j\in\{1,\dots,K\}} p_j(S)\big)^K.
+p_{\mathrm{minP}\text{-}\mathrm{O}}(S) = 1-\big(1-\min_{j\in\{1,\dots,K\}} p_j(S)\big)^K.
 $$
 
-Analytic omnibus values are useful for descriptive ranking, while primary inference uses dependence-aware
-calibration (global resampling and/or LD-aware MVN simulation) in which all component tests and the omnibus
-operator are recomputed within each null replicate.
-
-
+Analytic omnibus values are useful for descriptive ranking, while primary inference uses dependence-aware calibration (global resampling and/or LD-aware MVN simulation) in which all component tests and the omnibus operator are recomputed within each null replicate.
 
 ---
 
@@ -667,13 +705,13 @@ For each pathway $S$ with member genes $g\in S$, we compute:
 4. minP:  $p_{minGene}(S) = \min_{g\in S} p_g$; this serves as a sparse-signal detector; no analytic independence correction
 5. Stouffer Z (using gene $Z_g$ when available)
 
-All p-values are clipped to $[p_{\min}\,1-p_{\min}]$ (e.g., $p_{\min}=10^{-15}$) before applying $\log(\cdot)$ or $\tan(\cdot)$ transformations for numerical stability.
+All $p$-values are clipped to $[p_{\min}\,1-p_{\min}]$ (e.g., $p_{\min}=10^{-15}$) before applying $\log(\cdot)$ or $\tan(\cdot)$ transformations for numerical stability.
 
 ---
 
 ### 5.3 Omnibus ACAT across methods (ACAT-O)
 
-Let $p_1,\dots,p_K$ denote the available component p-values for pathway $S$ and let weights $v_j\ge 0$ satisfy $\sum_{j=1}^K v_j=1$ (default $v_j=1/K$). Define
+Let $p_1,\dots,p_K$ denote the available component $p$-values for pathway $S$ and let weights $v_j\ge 0$ satisfy $\sum_{j=1}^K v_j=1$ (default $v_j=1/K$). Define
 
 $$
 T_{\mathrm{omni,ACAT}}(S)=\sum_{j=1}^{K} v_j \tan\!\bigl(\pi(0.5 - p_j)\bigr),\qquad p_{\mathrm{omni,ACAT}}(S) = 0.5 - \frac{1}{\pi} \arctan\!\bigl(T_{\mathrm{omni,ACAT}}(S)\bigr)
@@ -683,7 +721,7 @@ The ACAT-O layer has heightened sensitivity when at least one component test dem
 
 ---
 
-### 5.4 “Best-of-tests” omnibus via minP across methods (minP-O)
+### 5.4 Omnibus via minP across methods (minP-O; "best-of-test")
 
 Define the across-method minimum
 
@@ -698,7 +736,6 @@ p_{\mathrm{omni,min}}(S) = 1 - \bigl(1 - T_{\mathrm{omni,min}}(S)\bigr)^K
 $$
 
 Since, the component tests are correlated, inference is based on unified resampling calibration (Section 5.5).
-
 
 ---
 
@@ -733,14 +770,14 @@ For a pathway $S$ of size $d$, each null replicate samples $d$ genes from a geno
 This approach preserves the empirical genome-wide marginal distribution of gene-level evidence and captures cross-method coupling (since all components are recomputed from the same resampled gene set), but it is LD-agnostic (it does not preserve within-pathway gene–gene correlation).
 
 **Concept.**  
-The global resampling approach generates the null distribution of the omnibus by re-sampling genes instead of SNPs. It maintains the empirical distribution of gene-level p-values and Z-scores from MAGMA, while randomizing their allocation to pathways. This simulates a situation in which the genome-wide association landscape remains intact yet is not associated with any specific biological route designation.
+The global resampling approach generates the null distribution of the omnibus by re-sampling genes instead of SNPs. It maintains the empirical distribution of gene-level $p$-values and Z-scores from MAGMA, while randomizing their allocation to pathways. This simulates a situation in which the genome-wide association landscape remains intact yet is not associated with any specific biological route designation.
 
 **Step 1 – Define the global gene pool.**  
 We define a gene pool $$\mathcal{G}$$ containing all genes with valid pathway inputs. Each gene contributes:
-- its p-value $$p_g$$ from the  MAGMA p-value column (or adjusted p-value), and
+- its $p$-value $$p_g$$ from the  MAGMA $p$-value column (or adjusted $p$-value), and
 - if Stouffer is used, its corresponding Z-score (or adjusted Z-score) in the same MAGMA results.
 
-Both vectors $$\{p_g\}$$ and $$\{Z_g\}$$ are aligned so that each gene $$g$$ has a paired $$(p_g, Z_g)$$. This ensures that the p-value and Z-score for a given gene are always resampled together in every replicate.
+Both vectors $$\{p_g\}$$ and $$\{Z_g\}$$ are aligned so that each gene $$g$$ has a paired $$(p_g, Z_g)$$. This ensures that the $p$-value and Z-score for a given gene are always resampled together in every replicate.
 
 **Step 2 – Sample null gene sets.**  
 For each pathway $$S$$ of size $$|S| = d$$, and each permutation $$b = 1, \dots, B$$:
@@ -751,7 +788,10 @@ For each pathway $$S$$ of size $$|S| = d$$, and each permutation $$b = 1, \dots,
 2. **Construct paired null evidence**  
    The resampled gene-level evidence is  
 
-   $$P^{(b)} = (P_{i_1}, \dots, P_{i_d}), \quad Z^{(b)} = (Z_{i_1}, \dots, Z_{i_d}) \text
+
+$$
+P^{(b)} = (P_{i_1}, \dots, P_{i_d}), \quad Z^{(b)} = (Z_{i_1}, \dots, Z_{i_d}).
+$$
 
    This paired resampling ensures that each gene contributes its observed correlation between $$p_g$$ and $$Z_g$$ to the identical replicate, and that all component tests in replicate $$b$$ utilize the same foundational gene selection.
    
@@ -760,24 +800,24 @@ For every null draw $$(P^{(b)}, Z^{(b)})$$, CATFISH recomputes:
 - $$p_{\mathrm{ACAT}}^{(b)}(S)$$ using the Cauchy combination on $$P^{(b)}$$;
 - $$p_{\mathrm{Fisher}}^{(b)}(S)$$ via the sum–log–p statistic;
 - $$p_{\mathrm{TFisher}}^{(b)}(S)$$ for each $$\tau$$ in the same grid as the observed test, recording the minimum;
-- $$p_{\mathrm{minP}}^{(b)}(S)$$ from the smallest gene p-value;
+- $$p_{\mathrm{minP}}^{(b)}(S)$$ from the smallest gene $p$-value;
 - and $$p_{\mathrm{Stouffer}}^{(b)}(S)$$ using $$Z^{(b)}$$ under the same (one-sided) alternative.
   
 The Stouffer null is typically regarded as unweighted for numerical stability. However, this does not influence dependence preservation, as the same genes are sampled collectively across all components.
 
 **Step 4 – Combine resampled components into omnibus.**  
-The set of replicate component p-values $$\{p_j^{(b)}(S)\}$$ are combined using the same omnibus rule (ACAT-O or minP-O) applied to the observed data:
+The set of replicate component $p$-values $$\{p_j^{(b)}(S)\}$$ are combined using the same omnibus rule (ACAT-O or minP-O) applied to the observed data:
 
 $$p_{\mathrm{omni}}^{(b)}(S) = f_{\mathrm{omni}}\!\left(\{p_j^{(b)}(S)\}\right),$$
 
 where $$f_{\mathrm{omni}}$$ denotes either the ACAT or minP operator.
 
 **Step 5 – Empirical calibration.**  
-The permutation-calibrated omnibus p-value is obtained as
+The permutation-calibrated omnibus $p$-value is obtained as
 
 $$\hat p_{\mathrm{omni,global}}(S) = \frac{1 + \left|\{b : p_{\mathrm{omni}}^{(b)}(S) \le p_{\mathrm{omni}}(S)\,\}\right|}{B + 1}$$
 
-The "+1 correction" eliminates zero p-values and produces unbiased estimates, even with modest $$B$$ values.  
+The "+1 correction" eliminates zero $p$-values and produces unbiased estimates, even with modest $$B$$ values.  
 The cross-method correlation is inherently preserved because all five component statistics are recalculated on the identical resampled gene sets.
 
 **Interpretation.**  
@@ -815,33 +855,35 @@ $$
 
 so that null gene Z-scores share the same correlation structure as implied by $R_S$.
 
-**Step 3 – Derive null p-values from the same simulated $Z^{(b)}$ (Gaussian copula).**  
-To ensure that Stouffer and the p-based tests are coherent, all components are derived from the *same* draw $Z^{(b)}$. For p-based components (ACAT, Fisher, TFisher, minP), CATFISH maps $Z^{(b)}$ to null gene p-values using a Gaussian copula:
+**Step 3 – Derive null $p$-values from the same simulated $Z^{(b)}$ (Gaussian copula).**  
+To ensure that Stouffer and the p-based tests are coherent, all components are derived from the *same* draw $Z^{(b)}$. For p-based components (ACAT, Fisher, TFisher, minP), CATFISH maps $Z^{(b)}$ to null gene $p$-values using a Gaussian copula:
 
-- **Uniform marginals (default; matches implementation).**
+- Uniform marginals (default):
 
 $$
 U_g^{(b)}=\Phi\!\left(Z_g^{(b)}\right), \qquad
-p_g^{(b)} = 2\min\{U_g^{(b)},\,1-U_g^{(b)}\}.
+p_g^{(b)} = 2\min\{U_g^{(b)}\,1-U_g^{(b)}\}.
 $$
 
-  This yields marginally Uniform$(0,1)$ p-values while preserving dependence via $R_S$.
+  This yields marginally Uniform $(0,1)$ $p$-values while preserving dependence via $R_S$.
 
-- **Empirical marginals (optional).**
-  Alternatively, the same copula uniforms $U_g^{(b)}$ can be mapped through an empirical null quantile function estimated from the genome-wide distribution of gene p-values. To avoid leakage, the empirical pool excludes genes in the tested pathway $S$ (unless an external pool is explicitly provided).
+- Empirical marginals (optional):
+  
+  Alternatively, the same copula uniforms $$U_g^{(b)}$$ can be mapped through an empirical null quantile function estimated from the genome-wide distribution of gene $p$-values. To avoid leakage, the empirical pool excludes genes in the tested pathway $S$ (unless an external pool is explicitly provided).
 
-(If one-sided gene p-values are desired for the p-based components, the mapping can be replaced with $p_g^{(b)}=1-\Phi(Z_g^{(b)})$ in the appropriate direction; however, the default above uses two-sided p-values.)
+(If one-sided gene $p$-values are desired for the p-based components, the mapping can be replaced with $p_g^{(b)}=1-\Phi(Z_g^{(b)})$ in the appropriate direction; however, the default above uses two-sided $p$-values.)
 
 **Step 4 – Recompute component tests under the MVN null (and optional component calibration).**  
-Using the simulated p-values $\{p_g^{(b)}\}$ and the same Z-scores $\{Z_g^{(b)}\}$, CATFISH recomputes:
-- ACAT, Fisher, TFisher (using the identical $\tau$ grid), and minP from $\{p_g^{(b)}\}$;
-- Stouffer from $\{Z_g^{(b)}\}$ using the specified alternative (e.g., one-sided “greater” or two-sided), optionally weighted.
 
-Optionally, component p-values can themselves be MVN-calibrated using the same draws (i.e., each component’s observed p-value is evaluated against its MVN null replicate distribution).
+Using the simulated $p$-values $\{p_g^{(b)}\}$ and the same Z-scores $\{Z_g^{(b)}\}$, CATFISH recomputes:
+- ACAT, Fisher, TFisher (using the identical $\tau$ grid), and minP from $\{p_g^{(b)}\}$;
+- Stouffer from $\{Z_g^{(b)}\}$ using the specified alternative (e.g., one-sided “greater” default), optionally weighted.
+
+Optionally, component $p$-values can themselves be MVN-calibrated using the same draws (i.e., each component’s observed $p$-value is evaluated against its MVN null replicate distribution but is recommended to be used for omnibus.
 
 **Step 5 – Form the omnibus and empirically calibrate.**  
 Within each replicate $b$, we combine the replicate component results using the prespecified omnibus operator (ACAT across methods or Sidák-min across methods) to obtain $p_{\mathrm{omni}}^{(b)}(S)$, and compare to the observed
-omnibus value $p_{\mathrm{omni}}^{\mathrm{obs}}(S)$. The MVN-calibrated omnibus p-value is:
+omnibus value $p_{\mathrm{omni}}^{\mathrm{obs}}(S)$. The MVN-calibrated omnibus $p$-value is:
 
 $$
 \hat p_{\mathrm{omni,mvn}}(S) = \frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(p_{\mathrm{omni}}^{(b)}(S)\le p_{\mathrm{omni}}^{\mathrm{obs}}(S)\right)}{B+1}.
@@ -850,37 +892,9 @@ $$
 **Interpretation.**  
 This MVN procedure preserves (i) within-pathway gene dependence encoded by $R_S$ and (ii) cross-method coupling because every component is recomputed from the same correlated draw. As a result, it provides LD-aware calibration of the omnibus without assuming independence among genes or among component tests.
 
-
 ---
 
-### 5.6 Hierarchical inference and interpretation
-
-Primary inference: The omnibus p-value $\hat p_{\mathrm{omni}}(S)$ (calibrated via global/MVN resampling) serves as the primary evidence for pathway enrichment, controlling type I error under both cross-method coupling and gene-gene correlation.
-
-Component tests as descriptive: 
-Individual test p-values ($p_{\mathrm{ACAT}}$, $p_{\mathrm{Fisher}}$, etc.) provide complementary evidence about the \textit{pattern} of enrichment:
-
-- ACAT: sensitive to pathways with multiple moderately significant genes
-- Fisher: detects coordinated weak-to-moderate enrichment across many genes
-- minP: highlights pathways dominated by one or few extremely significant genes
-- Stouffer: similar to Fisher but using Z-score directionality
-- TFisher: adaptive between sparse and diffuse signal patterns
-
-MVN-calibrated components (optional): When computed, $\hat p_j(S)$ represent each method's p-value adjusted for gene-gene correlations. These remain dependent and should not be naïvely recombined or interpreted as independent evidence.
-
-\textbf{Figure X: CATFISH inference workflow}
-\begin{enumerate}
-  \item Input: Gene-level p-values and Z-scores (MAGMA)
-  \item Compute 5 component tests per pathway (analytic)
-  \item Combine via omnibus operator (ACAT-O or minP-O)
-  \item \textbf{Calibrate omnibus} via MVN/global resampling
-  \item Primary result: $\hat p_{\mathrm{omni}}$ with FDR control
-  \item (Optional) Diagnose with component calibration
-\end{enumerate}
-
----
-
-### 5.6 Choice of final omnibus p-value
+### 5.6 Choice of final omnibus $p$-value
 
 Depending on the resampling mode used:
 
@@ -888,59 +902,58 @@ Depending on the resampling mode used:
 - $$\hat p_{\mathrm{omni,global}}(S)$$: Global gene-set resampling calibrated omnibus.  
 - $$\hat p_{\mathrm{omni,mvn}}(S)$$: LD-aware MVN calibrated omnibus.
 
-The **final omnibus p-value** is chosen as:
+The **final omnibus $p$-value** is chosen as:
 
 $$
 p_{\mathrm{omni,final}}(S) =
 \begin{cases}
-\hat p_{\mathrm{omni,mvn}}(S), & \text{if MVN calibration was performed;}\\
+\hat p_{\mathrm{omni,mvn}}(S), & \text{if MVN calibration was performed (recommended);}\\
 \hat p_{\mathrm{omni,global}}(S), & \text{else if global calibration was performed;}\\
 p_{\mathrm{omni,analytic}}(S), & \text{otherwise.}
 \end{cases}
 $$
 
-This final omnibus is then adjusted across pathways using Benjamini–Hochberg FDR to obtain
+This final omnibus is then adjusted across pathways using Benjamini–Hochberg FDR (Section 6) to obtain
 $$q_{\mathrm{omni,final}}(S)$$, reported as `omni_p_final_BH` in CATFISH.
 
 ---
 
-\subsection*{5.7 Reporting guidelines}
+### 5.7 Reporting guidelines
 
-For each pathway, report:
-\begin{itemize}
-  \item \textbf{Primary}: $\hat p_{\mathrm{omni}}(S)$ and FDR-adjusted q-value
-  \item \textbf{Supplementary}: All 5 component p-values (analytic)
-  \item \textbf{Optional}: Calibration ratio $\hat p_{\mathrm{omni}}/p_{\mathrm{omni,analytic}}$
-  \item \textbf{For interpretation}: Gene list with individual p-values
-\end{itemize}
+For each pathway, we report:
 
-\textbf{Interpretation examples:}
-\begin{itemize}
-  \item If $\hat p_{\mathrm{omni}}$ significant and all components agree $\to$ robust enrichment
-  \item If only minP significant $\to$ sparse, gene-specific signal
-  \item If only Fisher/ACAT significant $\to$ diffuse, polygenic signal
-  \item Large calibration ratio ($\gg 1$) $\to$ LD inflation severe
-\end{itemize}
+- **Primary:** the calibrated omnibus p-value (`p_omni_hat(S)`) and its BH-FDR q-value.
+- **Supplementary:** all five analytic component p-values (ACAT, Fisher, adaptive soft TFisher, Stouffer, minP).
+- **Optional:** a calibration ratio to summarize how much calibration changes the raw omnibus signal:  
+  `p_omni_hat(S) / p_omni_analytic(S)`
+- **For interpretation:** the pathway’s gene list with per-gene p-values (and Z-scores if available), to check whether signal is sparse, diffuse, or hybrid.
 
----
+**Interpretation examples:**
 
-\subsection*{5.8 Power considerations under different enrichment patterns}
-
-The omnibus approach balances sensitivity across enrichment patterns:
-\begin{itemize}
-  \item \textbf{Sparse signals} (1-2 highly significant genes): minP and TFisher (small $\tau$) dominate
-  \item \textbf{Diffuse signals} (many moderately significant genes): Fisher, ACAT, Stouffer dominate
-  \item \textbf{Mixed patterns}: ACAT-O provides robust combination
-  \item \textbf{Adaptive selection}: The omnibus calibration accounts for post-hoc selection across methods
-\end{itemize}
-
-Simulation studies (not shown) demonstrate that the omnibus maintains power across scenarios while component tests specialize: Fisher loses power for sparse signals, minP loses power for diffuse signals.
+- If the **calibrated omnibus** is significant and multiple component tests agree → **robust enrichment**.
+- If **only minP** is extreme → **sparse / single-gene–dominated** signal (check for SGP/SDA; consider leave-one-gene-out).
+- If **Fisher/ACAT/TFisher** drive the signal while minP is not extreme → **diffuse or moderate multi-gene enrichment**.
+- If `p_omni_hat / p_omni_analytic >> 1` → strong evidence that **LD/dependence inflation** was present and calibration materially increased the p-value (interpret raw/analytic results cautiously).
 
 ---
 
-### 5.7 Treatment of MAGMA competitive in the omnibus (optional)
+### 5.8 Power considerations under different enrichment patterns
 
-We also calculate and present the MAGMA competitive gene-set p-value (`magma_pvalue`) as an independent summary.
+The CATFISH omnibus is designed to maintain sensitivity across heterogeneous pathway signal architectures by combining component tests with complementary operating characteristics:
+
+- **Sparse signals** (1–2 highly significant genes): **minP** and **TFisher** with small τ tend to be most sensitive (tail-driven / driver-like patterns).
+- **Diffuse signals** (many moderately associated genes): **Fisher**, **ACAT**, and **Stouffer** tend to be most sensitive (evidence accumulation across many genes).
+- **Mixed patterns** (driver + support): **ACAT-O** provides a robust across-method integrator when multiple components contribute partially overlapping evidence.
+- **Adaptive selection:** because CATFISH effectively selects/aggregates across correlated component tests, the **omnibus calibration** (global or MVN) is critical to account for post hoc selection and dependence.
+
+In simulations (`RESULTS`), this specialization is evident: **Fisher** tends to lose power under extremely sparse architectures, while **minP** tends to lose power under diffuse polygenic architectures. The omnibus mitigates these trade-offs by aggregating across complementary component tests and calibrating the full procedure under a dependence-preserving null.
+
+
+---
+
+### 5.9 Treatment of MAGMA competitive in the omnibus (optional)
+
+We also calculate and present the MAGMA competitive gene-set $p$-value (`magma_pvalue`) as an independent summary.
 By default, it is **excluded** from the resampling-calibrated omnibus (`include_magma_in_perm=FALSE`) because the aforementioned resampling strategies provide null realizations just for **within-pathway** gene evidence ($$p_g$$ and $$Z_g$$ for genes $$g\in S$$). A principled null for the MAGMA competitive statistic necessitates rerunning a competitive regression (or MAGMA itself) for each duplicate on a suitable genome-wide null, which is not executed in this context. Thus, the resampling-calibrated omnibus is calculated exclusively for the five gene-derived component tests, and MAGMA competitive is analyzed in conjunction with the omnibus rather than being integrated into it.
 
 ---
@@ -948,19 +961,19 @@ By default, it is **excluded** from the resampling-calibrated omnibus (`include_
 
 ## 6) Multiple testing correction
 
-Across all pathways, the final omnibus p-values $$\{p_{\mathrm{omni,final}}(S)\}$$ are adjusted using the Benjamini–Hochberg FDR procedure:
+Across all pathways, the final omnibus $p$-values $$\{p_{\mathrm{omni,final}}(S)\}$$ are adjusted using the Benjamini–Hochberg FDR procedure:
 
 $$
 q_{\mathrm{BH}}(S)=\mathrm{BH}\big(p_{\mathrm{omni,final}}(S)\big)
 $$
 
-Since each pathway produces a single final omnibus p-value, no supplementary penalty is necessary for the quantity of component tests. The post hoc "best-of-tests" selection is inherently addressed by the resampling calibration when activated.
+Since each pathway produces a single final omnibus $p$-value, no supplementary penalty is necessary for the quantity of component tests. The post hoc "best-of-tests" selection is inherently addressed by the resampling calibration when activated.
 
 ---
 
 ## 7) Candidate-gene prioritization by multi-layer evidence (GWAS + MAGMA + Pathways)
 
-To prioritize candidate genes beyond “top SNPs only”, we integrate evidence across three complementary layers: (i) **GWAS locus evidence** (variant/locus-level signal mapped to genes), (ii) **MAGMA gene-level association** (LD-aware aggregation of SNP effects into a gene p-value), and (iii) **pathway-level enrichment** (set-level signal capturing coordinated/polygenic effects across biologically related genes). Each layer detects partially distinct signal patterns, so genes supported by multiple layers are treated as higher-confidence candidates than genes supported by only one layer.
+To prioritize candidate genes beyond “top SNPs only”, we integrate evidence across three complementary layers: (i) **GWAS locus evidence** (variant/locus-level signal mapped to genes), (ii) **MAGMA gene-level association** (LD-aware aggregation of SNP effects into a gene $p$-value), and (iii) **pathway-level enrichment** (set-level signal capturing coordinated/polygenic effects across biologically related genes). Each layer detects partially distinct signal patterns, so genes supported by multiple layers are treated as higher-confidence candidates than genes supported by only one layer.
 
 We summarize multi-layer support using an interpretable **support-count + strength score**. For each gene \(g\), we add one point for each analytical layer that passes a predefined significance threshold (GWAS locus support, MAGMA gene-level significance, and pathway membership), and then incorporate modest contributions from the continuous strength of evidence within each layer using $(-\log_{10}(p)$) terms:
 
@@ -981,9 +994,7 @@ We summarize multi-layer support using an interpretable **support-count + streng
 ```
 
 
-This formulation is intentionally conservative: the **discrete support terms dominate** so that agreement across independent layers matters more than any single extremely small p-value, while the weighted $(-\log_{10}(p)$) components preserve **within-layer ranking** (distinguishing marginal from strong signals). In practice, we prioritize genes with **≥2 layers** of support and rank them by the composite score to produce a focused, biologically grounded candidate list.
-
-**Figure interpretation (Panels A–D).** Panel **A** (UpSet) shows how candidate genes overlap across GWAS hits, MAGMA-significant genes, and genes in the top pathways; most genes are supported by a single layer, while a smaller subset shows multi-layer agreement. Panel **B** compares MAGMA signal for genes inside top pathways versus genes outside; pathway genes exhibit a statistically stronger distribution of MAGMA association, supporting the idea that pathway enrichment captures coordinated gene-level signal. Panel **C** summarizes counts of single-layer versus multi-layer candidates, highlighting that multi-layer support yields a much smaller, higher-confidence set. Panel **D** plots GWAS strength against MAGMA strength per gene and annotates genes by pathway membership/evidence class; genes supported by all layers cluster among the strongest signals, while pathway-supported genes can also appear in moderate-signal regions consistent with coordinated (polygenic) enrichment.
+This formulation is intentionally conservative: the **discrete support terms dominate** so that agreement across independent layers matters more than any single extremely small $p$-value, while the weighted $(-\log_{10}(p)$) components preserve **within-layer ranking** (distinguishing marginal from strong signals). In practice, we prioritize genes with **≥2 layers** of support and rank them by the composite score to produce a focused, biologically grounded candidate list.
 
 ---
 
@@ -993,7 +1004,7 @@ This formulation is intentionally conservative: the **discrete support terms dom
 A: Unknown a priori which pattern exists. Omnibus adapts without multiple testing penalty.
 
 
-**Q: Why not use component-calibrated p-values for inference?** <br>
+**Q: Why not use component-calibrated $p$-values for inference?** <br>
 A: They remain correlated. Omnibus calibration directly targets the composite decision rule.
 
 
@@ -1048,7 +1059,7 @@ CATFISH::magma_set_path("/full/path/to/magma")
    - Regress $Z_g$ on `log(gene_length)` and `log(NSNPS)`; derive $p^{adj}_g$.
 
 3. **Gene → pathway tests**
-   - Compute pathway p-values from adjusted gene p-values using:
+   - Compute pathway $p$-values from adjusted gene $p$-values using:
      - ACAT,
      - Fisher,
      - soft TFisher (tail-focused),
@@ -1056,7 +1067,7 @@ CATFISH::magma_set_path("/full/path/to/magma")
      - minP.
 
 4. **Omnibus**
-   - Combine pathway p-values using minP or ACAT to produce $p_{\mathrm{omni}}$.
+   - Combine pathway $p$-values using minP or ACAT to produce $p_{\mathrm{omni}}$.
 
 5. **Multiple testing**
    - BH FDR (and optional Storey q-values).
@@ -1092,233 +1103,15 @@ magma \
 > **Note:** This is the exact end-to-end pipeline used (MAGMA → gene adjustment → pathway tests → omnibus). Paths, filenames, and column mappings should be edited to match your local files.
 
 ```r
-############################################################
-## CATFISH PIPELINE: MAGMA → SIZE-ADJUSTED GENE P → PATHWAYS
-## (with brief explanation of the key parameters)
-############################################################
-
-## CATFISH gives you:
-##  - R wrappers around the MAGMA binary (magma_annotate, magma_gene)
-##  - Parallel chromosome-wise runs (chroms, n_threads)
-##  - Plant-ready GFF3 → gene loc helpers
-##  - Automatic gene-size/#SNP adjustment
-##  - A suite of pathway tests + an omnibus layer
-##
-## Below is the end-to-end flow, with parameter explanations in comments.
-############################################################
 
 
 ############################################################
-## 1. Build MAGMA gene location file from GFF3
-############################################################
-
-gff_path     <- "/Users/.../Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.gff3"
-gene_loc_out <- "/Users/.../maize.genes.loc"
-
-gff3_to_geneloc(
-  gff        = gff_path,
-  out        = "inst/extdata/maize.genes.loc",
-  chr_prefix = "chr"  # strips "chr" prefix so MAGMA’s CHR matches PLINK CHR
-)
-
-## - You can call species = "maize" in CATFISH , it automatically
-##   uses inst/extdata/maize.genes.loc 
-
-## - You can also use any gff3 file for your organism of choice
-## - Parses the GFF3, extracts gene features,
-## and writes a MAGMA-ready-to-use gene location file (GENE, CHR, START, STOP, STRAND…).
-
-
-############################################################
-## 2. SNP → gene annotation with MAGMA (magma_annotate wrapper)
-############################################################
-
-stats_file <- "/Users/.../raw_GWAS_MLM_3PC_N.txt"
-
-magma_annotate(
-  stats_file     = stats_file1,
-  rename_columns = c(
-    CHR    = "chr",    # your column "chr" → MAGMA expects "CHR"
-    SNP    = "rs",     # your column "rs"  → "SNP"
-    POS    = "ps",     # your column "ps"  → "POS"
-    PVALUE = "p_wald"  # your p-value column → "PVALUE"
-  ),
-  species    = "maize",        # uses built-in maize.genes.loc from step 1
-  out_prefix = "N_maize_MLM",  # prefix for MAGMA output files
-  out_dir    = "annot",        # directory to write MAGMA .genes.annot
-  window     = c(25, 25)       # +/- 25 kb around each gene for SNP mapping
-)
-
-## - magma_annotate() builds the MAGMA command line and calls the MAGMA binary for you.
-## - You just supply stats_file and remember to rename your columns or do it here
-
-
-############################################################
-## 3. Gene-level MAGMA (multi = snp-wise) with R wrapper
-############################################################
-
-# Plink based bed/bim.fam files
-bfile      <- "/Users/.../all_maize2"   # PLINK basename: .bed/.bim/.fam
-
-## 3A. Chromosome-wise run using NMISS (per-SNP sample size)
-## NMISS is the number of missing genotypes
-magma_gene(
-  bfile      = bfile,
-  gene_annot = "annot/N_maize_MLM.genes.annot",
-  stats_file = stats_file,
-  n_total    = 3539,             # optional global N if NOBS/NMISS absent
-  rename_columns = c(
-    CHR    = "Chr",
-    SNP    = "SNP",
-    POS    = "Pos",
-    PVALUE = "P.value",
-    NMISS  = "n_miss"            # MAGMA interprets this as per-SNP sample size
-  ),
-  out_prefix = "N_maize_MLM",
-  out_dir    = "magma_genes_by_chr",
-  gene_model = c("multi=snp-wise"),  # multi-parameter SNP-wise model. This works best for CATFISH. Combines top and mean SNPs. 
-  chroms     = 1:10,                 # run MAGMA separately for chr 1–10
-  n_threads  = 10                    # run up to 10 MAGMA jobs in parallel
-)
-
-## 3B. Chromosome-wise run using NOBS (per-SNP N)
-## NOBS is the total number of genotypes used
-magma_gene(
-  bfile      = bfile,
-  gene_annot = "annot/N_maize_MLM.genes.annot",
-  stats_file = stats_file2,
-  rename_columns = c(
-    CHR    = "Chr",
-    SNP    = "SNP",
-    POS    = "Pos",
-    PVALUE = "P.value",
-    NOBS   = "nobs"             # per-SNP N; preferred over n_total
-  ),
-  out_prefix = "N_maize_MLM",
-  out_dir    = "magma_multi_snp_wise_genes_by_chr_N_maize",
-  gene_model = c("multi=snp-wise"),
-  chroms     = 1:10,
-  n_threads  = 10
-)
-
-## - magma_gene() is a R wrapper around the MAGMA binary.
-##   * Handles all flags, temp files, and error checking.
-##   * Additional can parallelize the analysis
-##   * chroms + n_threads to run multiple chromosomes in parallel.
-##   * Only requires a minimal rename_columns spec instead of reformatting
-
-
-############################################################
-## 4. Combine per-chromosome MAGMA gene outputs
-############################################################
-
-# Load the file
-files <- sprintf(
-  "/Users/.../magma_multi_snp_wise_genes_by_chr_N_maize/N_maize_MLM_chr%d.multi_snp_wise.genes.out",
-  1:10
-)
-
-gene_list <- lapply(files, function(f) {
-  if (!file.exists(f)) stop("File not found: ", f)
-  utils::read.table(f, header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
-})
-
-genes_all_raw <- do.call(rbind, gene_list)
-
-# Ensure the gene p column is named "P"
-colnames(genes_all_raw)[9] <- "P"
-
-# For genes appearing on multiple chromosomes or windows, keep smallest P
-o         <- order(genes_all_raw$GENE, genes_all_raw$P)
-genes_all <- genes_all_raw[o, ]
-genes_all <- genes_all[!duplicated(genes_all$GENE), ]
-
-# Optionally sort by CHR and START
-if (all(c("CHR", "START") %in% names(genes_all))) {
-  genes_all <- genes_all[order(genes_all$CHR, genes_all$START), ]
-}
-
-write.table(
-  genes_all,
-  file      = "/Users/.../magma_N_maize.txt",
-  sep       = "\t",
-  quote     = FALSE,
-  row.names = FALSE
-)
-
-## - This combines 10 per-chromosome MAGMA outputs into a single file for ease of use
-
-
-############################################################
-## 5. Gene length extraction + SNP density bias adjustment
-############################################################
-
-## 5A. Extract gene lengths from GFF3
-gff3_path <- system.file(
-  "extdata", "GFF3",
-  "Zea_mays.Zm-B73-REFERENCE-NAM-5.0.62.chr.gff3",
-  package = "CATFISH"
-)
-
-maize_gene_len <- get_gene_lengths(
-  gff3_file  = gff3_path,
-  output     = TRUE,
-  output_dir = "inst/extdata",
-  file_name  = "Zea_mays_gene_lengths.tsv"
-)
-
-## Output includes:
-##   gene_id, chr, start, end, length
-
-
-## 5B. Adjust gene-level Z/P for gene length & #SNPs
-
-genes_all <- read.table(
-  "/Users/.../magma_N_maize.txt", # from previous step
-  header = TRUE, stringsAsFactors = FALSE
-)
-
-# Adjsut the pvalue based on gene length and number of snps
-adj_out <- catfish_adjust_gene_p(
-  gene_results = genes_all,
-  gene_lengths = maize_gene_len,
-  gene_col     = "GENE",
-  p_col        = "P",
-  z_col        = "ZSTAT",    # raw MAGMA Z
-  len_gene_col = "gene_id",
-  len_col      = "length"
-  # nsnp_col   = "NSNPS"     # #SNPs per gene
-)
-
-genes_adj <- adj_out$genes    # includes Z_raw, Z_adj, P_adj, log_gene_length, log_nsnp
-lm_fit    <- adj_out$fit      # lm(Z_raw ~ log_gene_length + log_nsnp)
-
-write.csv(genes_adj, "genes_adj.csv", row.names = FALSE)
-
-## - MAGMA gene p-values are known to correlate weakly with gene size and SNP density.
-## - catfish_adjust_gene_p():
-##   * Fits a linear model: Z_raw ~ log(gene length) + log(#SNPs).
-##   * Uses residuals (Z_adj) as “size/SNP-adjusted” Z-scores.
-##   * Converts Z_adj back to P_adj = 2*pnorm(-|Z_adj|).
-## - You then use P_adj in gene→pathway tests, reducing bias toward big genes.
-
-
-############################################################
-## 6. Load pathway definitions from PMN/CornCyc or use saved files
-############################################################
-
-maize_pw <- catfish_load_pathways(
-  species  = "maize",
-  gene_col = "Gene-name"  # column in the PMN gene-set file that matches MAGMA gene IDs
-)
-
-############################################################
-## 7. Omnibus combining methods (ACAT or minP)
+## Omnibus combining methods (ACAT or minP)
 ############################################################
 
 ## All tests use gene_results + species/pathways to:
 ##  - find genes per pathway,
-##  - take their p-values (raw P or adjusted P_adj),
+##  - take their $p$-values (raw P or adjusted P_adj),
 ##  - compute a pathway-level p per method.
 
 omni_minp <- omni_pathways(
@@ -1352,85 +1145,59 @@ omni_minp <- omni_pathways(
 ##   - BH FDR for omni_p and each component
 ##   - omni_perm_BH  : permutation-calibrated BH pvalues using perm pvalues
 
-############################################################
-## 8. Pathway-level tests (gene → pathway)
-############################################################
-
-## You can run each pathway individually as well
-
-### 8A. ACAT per pathway
-
-pw_res_acat_adj <- catfish_acat_pathways(
-  gene_results = genes_adj,     # adjusted Pvalue
-  species      = "maize",
-  gene_col     = "GENE",
-  p_col        = "P_adj",
-  B            = 10000L,            # 10,000 is good enough
-  seed         = NULL,
-  output       = TRUE,
-  out_dir      = "acat_results"
-)
-
-### 8B. Fisher pathways
-
-wf_res_raw <- catfish_wfisher_pathways(
-  gene_results = genes_adj,   # raw P
-  species      = "maize",
-  gene_col     = "GENE",
-  p_col        = "P_adj",
-  effect_col   = "ZSTAT",
-  #weight_col   = NULL, # If you have any other weights. 
-  is_onetail   = FALSE
-)
-
-### 8C. Truncated Fisher (soft) / TFisher(soft)
-
-soft_tf_res_adj <- catfish_soft_tfisher_pathways(
-  gene_results     = genes_adj,
-  species          = "maize",
-  gene_col         = "GENE",
-  p_col            = "P_adj",
-  tau1             = 0.05,     # soft truncation threshold
-  B_perm           = 10000L,  # permutations for empirical pvalue
-  seed             = 123,
-  analytic_logical = TRUE,
-  output           = TRUE,
-  out_dir          = "catfish_tfisher_soft"
-)
-
-### 8D. Stouffer (sum of Z across genes)
-
-stouf_res <- catfish_stouffer_pathways(
-  gene_results = genes_adj,
-  species      = "maize",
-  gene_col     = "GENE",
-  p_col        = "P_adj",
-  weight_col   = NULL,    # equal weights for all genes
-  B_perm       = 10000L,    # permutations for empirical pvalue
-  seed         = 123,
-  output       = TRUE,
-  out_dir      = "catfish_stouffer"
-)
-
-### 8E. Gene-level minP per pathway
-
-minp_res <- catfish_minp_pathways(
-  gene_results = genes_adj,
-  species      = "maize",
-  gene_col     = "GENE",
-  p_col        = "P_adj",
-  B_perm       = 10000L,      # permutations for empirical pvalue
-  min_p        = 1e-15,
-  do_fix       = TRUE,
-  output       = TRUE,
-  out_dir      = "catfish_minp_maize"
-)
 
 ```
 
 ---
 
 ## RESULTS
+
+## Simulation-Based Validation of CATFISH Pathway Tests
+
+To assess the calibration and statistical power of the CATFISH framework, we generated gene-level Z-scores from a multivariate normal distribution under three LD regimes (LD_independent rho = 0, LD_moderate rho = 0.7 , LD_strong rho = 0.3) and three pathway sizes (m = 5, 25, 50). For each simulated pathway, we computed five component test statistics (ACAT, Fisher’s method, adaptive soft TFisher, minP, and Stouffer’s method), as well as an omnibus p-value obtained by aggregating the constituent p-values using ACAT. Calibration under the null hypothesis was evaluated using genomic control inflation (λ; reference line at λ = 1) and empirical type I error at α = 0.05 (reference line at 0.05). We compared p-values derived from independence-based analytic approximations (red) with those obtained via multivariate-normal (MVN) calibration (blue).
+
+![Null Calibration and Genomic Control Across LD Regimes ](Figures/Fig1.Mahattan_arabidopsis_fly/Fig.Manhattan.png)
+*Figure 1 | Null Calibration and Genomic Control Across LD Regimes. Pathway-level p-values were generated under the global null using simulated gene Z-scores with three within-pathway LD regimes (LD_moderate, LD_strong, LD_independent) and pathway sizes (m = 5, 25, 50).  
+A. Genomic Control Under the Null: Bars show genomic control inflation factor (λ) for each component test (ACAT, Fisher, minP, Stouffer, TFisher) and the omnibus combination, computed either analytically under an independence approximation (red) or using MVN calibration that resamples null gene Z-scores from the pathway correlation matrix (blue). The dashed line indicates the nominal expectation (λ = 1). Across LD_moderate and LD_strong settings, analytic p-values exhibit substantial miscalibration for multiple components and consequently for the omnibus, whereas MVN calibration stabilizes λ near 1 across methods and pathway sizes; under LD_independent, analytic and MVN-calibrated results are broadly concordant, consistent with the independence assumption being approximately valid.  
+B. Type I Error Under the Null: Using the same simulations as Fig. 2A, bars report empirical type I error at α = 0.05 (dashed line). Analytic (independence-based) p-values show inflated false-positive rates in LD_moderate/LD_strong settings for several component tests and the omnibus, while MVN calibration restores near-nominal error control across pathway sizes and LD regimes. Error bars indicate sampling variability across null replicates.*
+
+
+Across pathway sizes, analytical p-values exhibited appropriate behavior under the LD_independent condition, in which the independence assumptions underlying the component tests are approximately satisfied and the analytic and MVN-calibrated results were largely in agreement. In contrast, under LD_moderate and particularly under LD_strong, several analytic component tests displayed clear miscalibration, characterized by inflated λ values and substantially elevated type I error rates relative to the nominal 5\% level. This pattern is consistent with the well-documented sensitivity of many p-value combination procedures to within-set dependence when their null distributions are derived under assumptions of independence. MVN calibration largely mitigated these discrepancies as MVN-calibrated component p-values, as well as the resulting MVN-calibrated omnibus test, remained close to the expected null behavior (λ≈1 and type I error near 0.05) across all LD regimes and pathway sizes. Although ACAT showed comparatively stable performance among the analytic approaches, in line with its known robustness to dependence, MVN calibration yielded uniformly well-controlled behavior across all component tests and for the omnibus statistic.
+
+
+![Stress test for null calibration and genomic control](Figures/Fig1.Mahattan_arabidopsis_fly/Fig.Manhattan.png)
+*Supplementary Figure 1 | Stress test for null calibration and genomic control. 
+A. To stress-test robustness to component miscalibration, we repeated null simulations across LD regimes and pathway sizes but intentionally computed a subset of component p-values using an analytic procedure that ignores LD (red; “broken”), while the MVN-calibrated pipeline uses the correct LD-aware null (blue). Broken-Component Stress Test—Genomic Control: The resulting λ values illustrate that LD-ignorant component calculations can induce substantial miscalibration that propagates into the omnibus, whereas MVN calibration keeps λ near 1 across conditions, demonstrating that the omnibus behaves appropriately when its component p-values are correctly calibrated under the null.  
+B. Broken-Component Stress Test—Type I Error: Empirical type I error rates at α = 0.05 are shown for the same stress-test conditions as Supplementary Fig. 1A. LD-ignorant (“broken”) analytic components lead to marked inflation in false positives in LD_moderate/LD_strong settings, while MVN calibration maintains approximately nominal type I error across pathway sizes and LD regimes. Error bars indicate sampling variability across null replicates.*
+
+
+To replicate realistic data settings in which one or more component tests exhibit anti-conservative behavior (e.g., due to unmodeled LD or method-specific misspecification of the null distribution), we conducted a stress test in which the analytic layer was supplied with deliberately miscalibrated component p-values and examined the resulting impact on the omnibus statistic. When multiple components are liberal, the analytic genomic inflation factor (λ) and the type I error rate both tend to increase. As such, the analytic omnibus directly reflects the properties of its component inputs. In contrast, the multivariate normal (MVN)-calibrated pipeline remains substantially more robust across a range of LD structures and pathway sizes, producing omnibus p-values that are close to nominal calibration even when individual analytic components are misspecified. In the few scenarios where deviations persist, they are typically conservative (λ slightly below 1 and type I error below 0.05), consistent with the protective effect of calibrating against an LD-aware null distribution.
+
+![Power Under Alternatives and MVN Calibration](Figures/Fig1.Mahattan_arabidopsis_fly/Fig.Manhattan.png)
+*Supplementary Figure 2 | Power was evaluated across five signal archetypes (Dense_Strong, Dense_Weak, Mixed_Direction, Sparse_Moderate, Sparse_Strong), increasing effect sizes, and pathway sizes (m = 5, 25, 50), using MVN-calibrated p-values to ensure valid null control under LD. Curves compare individual component tests to the omnibus. Across signal shapes, no single component test uniformly dominates; rather, the best-performing component varies with sparsity, effect strength, and directionality. In contrast, the omnibus consistently tracks the upper envelope of component performance, providing robust power across heterogeneous alternatives while retaining valid calibration under the null.*
+
+
+We subsequently assessed statistical power under a range of alternative signal architectures characterized by varying degrees of signal density (dense versus sparse) and directional coherence (concordant versus mixed), specifically: Dense-Strong, Dense-Weak, Mixed-Direction, Sparse-Moderate, and Sparse-Strong, examined across different pathway sizes and effect magnitudes (e.g., 1-3). No single constituent test exhibited uniformly superior performance across all conditions. Procedures optimized for dense, directionally concordant enrichment (exhibiting Stouffer/Fisher-like behavior) tended to lose power in the presence of sparse alternatives, whereas methods designed to be sensitive to sparse signals (exhibiting minP/TFisher-like behavior) were often suboptimal when the true architecture involved dense but weak enrichment or mixed directions of effect. In contrast, the omnibus procedure was consistently competitive across these heterogeneous regimes, generally approximating the upper range of the power curves of the component methods as effect sizes increased. Thus by aggregating complementary tests, CATFISH omnibus reduces dependence on the (unknown) underlying signal architecture and delivers stable power gains without relying on the optimality of any single component test.
+
+
+## Robustness to Incomplete LD Information and Adaptive Component Filtering
+
+To more accurately represent the practical setting in which gene–gene correlation information is incomplete, we next investigated the behavior of omnibus calibration when the pathway correlation matrix is only partially observed (Fig. X). Starting from a “true” within-pathway correlation structure, we progressively removed a random fraction of off-diagonal entries (fraction missing) and compared three strategies for generating omnibus null p-values: (i) an analytic fallback that completely ignores LD (red), (ii) multivariate normal (MVN) calibration based on the true correlation matrix (green), and (iii) MVN calibration based on an imputed correlation matrix in which missing gene–gene correlations are set to zero and the resulting matrix is projected onto the cone of positive definite matrices (blue). This imputed-zero approach reflects our practical implementation when constructing pathway correlation matrices from MAGMA pairwise outputs, where unobserved gene pairs are assumed independent while preserving the observed correlations. Across pathway sizes (m = 5, 25, 50) and missingness levels, the analytic fallback exhibited substantial miscalibration, with genomic control values deviating markedly from the nominal expectation (λ = 1), demonstrating that independence-based analytic approximations do not provide adequate null control in the presence of LD. By contrast, MVN calibration stabilized the omnibus test, and the imputed-zero MVN strategy consistently yielded genomic control values closest to λ ≈ 1 over a wide range of missingness fractions (Fig. X), thereby empirically supporting the use of missingness-as-zero correlation completion when complete pairwise correlation information is unavailable. Notably, the apparent advantage of the imputed-zero strategy over MVN calibration using the fully observed correlation matrix can arise in finite simulations because the positive-definite projection step effectively shrinks and regularizes the estimated correlation structure, improving numerical conditioning and reducing Monte Carlo variability in the resampled null; moreover, λ is a median-based summary and can therefore appear well-behaved even when calibration differences are driven by tail behavior, motivating complementary evaluation using empirical type I error rates (Supplementary Fig. X).
+
+![Omnibus Genomic Control vs Missing Correlations](Figures/Fig1.Mahattan_arabidopsis_fly/Fig.Manhattan.png)
+*Figure 2 | Omnibus Genomic Control vs Missing Correlations.
+A. We evaluated robustness of MVN-based omnibus calibration when the within-pathway gene–gene correlation matrix is only partially observed. Gene Z-scores were simulated under the null from a “true” correlation structure, and then a fraction of off-diagonal correlation entries was randomly removed to mimic incomplete MAGMA pairwise outputs. The omnibus genomic control factor (λ; dashed line indicates λ = 1) is shown as a function of the fraction missing for three strategies: (i) an analytic fallback that ignores correlation entirely (red), (ii) MVN calibration using the true correlation matrix (green), and (iii) MVN calibration using an imputed correlation matrix in which missing correlations are set to zero and the matrix is projected to the nearest positive-definite correlation matrix (blue). Across pathway sizes (m = 5, 25, 50), the analytic fallback is substantially miscalibrated under LD, whereas MVN calibration stabilizes λ near 1; the imputed-zero MVN strategy is consistently closest to nominal across a wide range of missingness fractions, supporting the practical “missing-as-independence” completion used when correlation information is incomplete.  
+B. Adaptive Omnibus Genomic Control: We compared three omnibus variants under the null across LD regimes (LD_moderate, LD_strong, LD_independent) and pathway sizes (m = 5, 25, 50): (i) an “Analytical” omnibus that combines component tests without LD-aware calibration, (ii) an LD-aware “MVN” omnibus calibrated using MVN resampling, and (iii) an “Adaptive” omnibus that first screens component tests on training null simulations and drops components exhibiting evidence of miscalibration (e.g., inflated λ or excess type I error), then combines only the retained components. Bars show genomic control (λ; dashed line at 1). MVN calibration provides the most stable control across LD conditions, whereas the adaptive strategy can become overly conservative or unstable under stronger LD due to variable component removal, indicating that component-dropping is not a reliable substitute for LD-aware MVN calibration.
+
+
+In agreement with the λ-based calibration diagnostics, the empirical type I error rate at α = 0.05 (Extended Data Fig. Y) was inadequately controlled under the analytic fallback procedure, whereas the MVN-calibrated approaches remained much closer to the nominal level. Importantly, despite the substantial loss of correlation information at higher levels of missingness, the imputed MVN-based procedure maintained approximately nominal type I error across a broad range of pathway sizes. These results suggest that LD-aware resampling, when combined with a conservative zero-imputation scheme, can achieve robust calibration even under substantially incomplete correlation structure.
+
+Finally, we evaluated whether a data-driven “adaptive” omnibus statistic—constructed by using training null simulations to identify and exclude apparently miscalibrated component tests—could serve as a surrogate for explicit LD-aware calibration (Extended Data Fig. Z). We compared three omnibus variants: (i) an Analytical omnibus computed directly from analytically derived component p-values; (ii) an MVN omnibus calibrated under an MVN null; and (iii) an Adaptive omnibus that filters component tests based on calibration metrics estimated from training data prior to combination. Although the adaptive procedure exhibited acceptable behavior under the LD_independent scenario, it failed to consistently achieve nominal calibration under LD_moderate and LD_strong, indicating that post hoc exclusion of poorly calibrated components is not a robust substitute for explicitly modeling dependence. Across all LD settings, the MVN-calibrated omnibus remained the most reliably well-calibrated—yielding λ values closest to 1 and maintaining nominal type I error rates—thereby supporting MVN resampling as the preferred strategy for rigorous null control in correlated gene sets.
+
+![Type 1 Error vs Missing Correlation](Figures/Fig1.Mahattan_arabidopsis_fly/Fig.Manhattan.png)
+*Supplementary Figure 2 | Type 1 Error vs Missing Correlation: Power was evaluated across five signal archetypes (Dense_Strong, Dense_Weak, Mixed_Direction, Sparse_Moderate, Sparse_Strong), increasing effect sizes, and pathway sizes (m = 5, 25, 50), using MVN-calibrated p-values to ensure valid null control under 
+A. Omnibus Type I Error vs Missing Correlations" Using the same missing-correlation framework as Fig. 3A, we report empirical type I error of the omnibus test at α = 0.05 (dashed line) across fractions missing and pathway sizes. The analytic fallback shows elevated false-positive rates in the presence of LD, while MVN-based approaches substantially improve error control. Consistent with Fig. 3A, the imputed-zero MVN strategy maintains type I error closer to nominal across missingness levels, supporting its use when complete pairwise correlation information is unavailable.  
+B. Adaptive Omnibus Type I Error: For the three omnibus variants in Fig. 3B, we report empirical type I error at α = 0.05 (dashed line). The LD-aware MVN omnibus maintains near-nominal error control across LD regimes and pathway sizes, whereas the analytical approach exhibits inflation under LD. The adaptive omnibus shows condition-dependent departures (often conservative and sometimes unstable under stronger LD), reflecting sensitivity to which components are dropped during training and reinforcing that explicit MVN calibration is the most reliable approach for controlling false positives under LD.*
 
 
 ## From SNP associations to pathway-level aggregation
@@ -1439,153 +1206,141 @@ We performed genome-wide association studies (GWAS) to characterize the genetic 
 
 ![GWAS, MAGMA, CATFISH](Figures/Fig1.Mahattan_arabidopsis_fly/Fig.Manhattan.png)
 *Figure 1 | From SNP-level association to gene- and pathway-level inference in Arabidopsis and Drosophila.  
-(A,B) GWAS Manhattan plots showing SNP-level association signals for (A) Arabidopsis thaliana BIO6 (minimum temperature of the coldest month) across five chromosomes and (B) Drosophila melanogaster starvation resistance across six chromosomes. Points show −log10(P) for each variant (alternating colors indicate chromosomes). Horizontal lines indicate conventional significance thresholds used for visualization.  
+(A,B) GWAS Manhattan plots showing SNP-level association signals:  (A) Arabidopsis thaliana BIO6 (minimum temperature of the coldest month) across five chromosomes and (B) Drosophila melanogaster starvation resistance across six chromosomes. Points show −log10(P) for each variant (alternating colors indicate chromosomes). Horizontal lines indicate conventional significance thresholds used for visualization.  
 (C,D) MAGMA gene-level association results for the corresponding GWAS: (C) Arabidopsis BIO6 and (D) Drosophila starvation resistance. Each point represents a gene-level test statistic (−log10(P)) positioned by genomic location, highlighting loci where aggregated SNP evidence yields stronger gene-level support.  
 (E,F) CATFISH pathway enrichment summaries for (E) Arabidopsis BIO6 and (F) Drosophila starvation resistance. Heatmaps show calibrated −log10(P) for the CATFISH omnibus and each component test (ACAT, Fisher, TFisher, minP, Stouffer) for the top pathways, with rows ordered by omnibus significance. The final column indicates the leading component test for each pathway (the component yielding the smallest calibrated P), illustrating that the strongest-supporting statistic varies across pathways and differs between datasets.*
 
 
-To translate SNP-level associations into gene-level evidence while accounting for LD, we applied MAGMA to the GWAS datasets. MAGMA aggregates SNP-level association statistics within predefined gene boundaries using a multiple regression framework that incorporates the LD structure among variants, thereby generating gene-level p-values that represent the cumulative genetic signal attributable to each gene (ref).  In Arabidopsis, MAGMA analysis maintained the overall signal while reducing noise from isolated SNPs, leading to significant gene-level associations across all chromosomes. This gene-based analysis enhanced the visibility of moderately associated genes that were less apparent at the SNP level, highlighting the advantages of LD-aware aggregation approaches. In Drosophila, MAGMA-based analysis produced a set of gene-level associations indicative of a broadly distributed genetic architecture. These outputs serve as a shared gene-level input for downstream CATFISH pathway enrichment analyses.
+To translate SNP-level associations into gene-level evidence while accounting for LD, we applied MAGMA to the GWAS datasets. MAGMA aggregates SNP-level association statistics within predefined gene boundaries using a multiple regression framework that incorporates the LD structure among variants, thereby generating gene-level $p$-values that represent the cumulative genetic signal attributable to each gene (ref).  In Arabidopsis, MAGMA analysis maintained the overall signal while reducing noise from isolated SNPs, leading to significant gene-level associations across all chromosomes. This gene-based analysis enhanced the visibility of moderately associated genes that were less apparent at the SNP level, highlighting the advantages of LD-aware aggregation approaches. In Drosophila, MAGMA-based analysis produced a set of gene-level associations indicative of a broadly distributed genetic architecture. These outputs serve as a shared gene-level input for downstream CATFISH pathway enrichment analyses.
 
-We next applied CATFISH to translate gene-level MAGMA association statistics into pathway-level inference using five complementary component tests: ACAT, Fisher’s method, TFisher, the minimum p-value (minP) test, and Stouffer’s Z-score method. These statistics are sensitive to distinct genetic signal archetypes (explained in detail above). In the Arabidopsis BIO6 analysis, CATFISH highlighted pathways enriched for cold-associated genetic signal, including processes linked to wax ester biosynthesis and starch metabolism (ref). In Drosophila, CATFISH applied to starvation resistance similarly revealed enrichment of pathways related to amino acid and lipid metabolism, with Stouffer and TFisher frequently providing the strongest support among the component tests (ref). Pathways are ranked by the omnibus p-value, and the final column reports the leading component test, i.e., the statistic yielding the smallest calibrated p-value for that pathway. We observe that the leading component varies across pathways within a dataset and differs between Arabidopsis and Drosophila, demonstrating that CATFISH leverages complementary sensitivity profiles rather than being driven by any single enrichment model. As a result, CATFISH provides a robust and interpretable pathway ranking even when the overall magnitude of association signals differs between GWAS.
+We next applied CATFISH to translate gene-level MAGMA association statistics into pathway-level inference using five complementary component tests: ACAT, Fisher’s method, TFisher, the minimum $p$-value (minP) test, and Stouffer’s Z-score method. These statistics are sensitive to distinct genetic signal archetypes (explained in detail above). In the Arabidopsis BIO6 analysis, CATFISH highlighted pathways enriched for cold-associated genetic signal, including processes linked to wax ester biosynthesis and starch metabolism (ref). In Drosophila, CATFISH applied to starvation resistance similarly revealed enrichment of pathways related to amino acid and lipid metabolism, with Stouffer and TFisher frequently providing the strongest support among the component tests (ref). Pathways are ranked by the omnibus $p$-value, and the final column reports the leading component test, i.e., the statistic yielding the smallest calibrated $p$-value for that pathway. We observe that the leading component varies across pathways within a dataset and differs between Arabidopsis and Drosophila, demonstrating that CATFISH leverages complementary sensitivity profiles rather than being driven by any single enrichment model. As a result, CATFISH provides a robust and interpretable pathway ranking even when the overall magnitude of association signals differs between GWAS.
 
 
-## Component pathway tests capture unique pathway classes in Arabidopsis 1001 Bio6 GWAS.
+### Component gene-set tests capture distinct pathway signals across traits and species.
 
-We used BIO6 (minimum temperature of the coldest month) as an environmental phenotype for *Arabidopsis thaliana* accessions from the 1001 genome project. BIO6 quantifies the long-term intensity of winter cold at the geographic origin of each accession and is widely employed as a proxy for the strength of cold-environment selection [ref]. Analyses were conducted using accessions from the Arabidopsis 1001 Genomes Project, which constitute a globally distributed natural population spanning broad latitudinal and climatic gradients. This panel comprises accessions originating from both relatively mild and strongly cold winter environments, thereby generating continuous variation in BIO6 across the population [ref]. SNP associations were mapped to genes, gene-level statistics were aggregated into pathway enrichment tests, and pathway-level significance was summarized/compared across methods using our CATFISH framework. To evaluate whether CATFISH’s component tests contribute distinct information rather than redundant evidence, we compared the five component tests (ACAT, Fisher, soft TFisher, minP, and Stouffer) on the *Arabidopsis* BIO6 GWAS (1001 Genomes). All component \(p\)-values were MVN-calibrated using the same dependence-preserving null generator. To evaluate the concordance of pathway prioritization across statistical approaches, we identified the top 15 pathways from each method and visualized their intersections (Fig. A–B). We selected 15 as the cutoff because it is the smallest number of top-ranked pathways that yielded at least one pathway in common across all component tests.
+To evaluate whether CATFISH’s component pathway tests provide non-redundant information, rather than repeatedly detecting the same pathways, we compared the five component statistics (ACAT, Fisher, TFisher, minP, and Stouffer) using Arabidopsis BIO6 and Drosophila starvation resistance as contrasting case studies. While multiple tests are expected to exhibit overlapping sensitivity to related signal patterns, each method implicitly specifies a distinct enrichment model and may consequently prioritize different classes of pathways.
 
 ![Component pathway tests](Figures/Fig2.component_test_arabidopsis_fly/Fig.Compare_component_test_arabidopsis.png)
 *Fig. 2 | Component pathway tests capture unique pathway classes despite shared gene-level inputs.  
-(A) Five-way Venn diagram of overlap among the top 20 significant pathways identified by each component test (ACAT, Fisher, soft TFisher, minP, Stouffer). Numbers indicate the count of pathways in each intersection region, highlighting both a shared core and method-specific discoveries.  
-(B) UpSet plot representation of the same top-20 pathway overlaps shown in (A), displaying intersection sizes (bars) and the corresponding set-membership patterns (dot matrix).  
-(C) Pairwise Jaccard similarity between component test; higher values indicate stronger overlap.  
-(D) Pairwise Spearman rank correlation of pathway significance rankings across all tested pathways.  
-(E) Density estimates of pathway-level significance summarized as $$−log10(p)$$ for each component test.  
-(F) Boxplots of $$−log10(p)$$ across all pathways for each component test, illustrating differences in central tendency and tail behavior among methods.  
-All component p-values are calibrated under the same dependence-preserving multivariate normal (MVN) null generator.*
+(A,B) Overlap among significant pathways detected by ACAT, Fisher, adaptive TFisher, minP, and Stouffer in Arabidopsis (A) and Drosophila (B). TFisher yields the largest number of hits, consistent with adaptive tail selection over a 
+τ-grid.  
+(C,D) Pairwise Jaccard similarity of discovered pathway sets. ACAT and minP cluster strongly in both datasets; in fly, Fisher shows increased similarity to ACAT/minP, and Fisher–Stouffer similarity indicates agreement under coordinated multi-gene enrichment.  
+(E,F) Distributions of pathway-level −log10 (p). Fisher shows the strongest mass near null-like values, whereas Stouffer and TFisher show heavier right tails (more significant pathways), motivating explicit null calibration checks to rule out inflation.
+All component $p$-values are calibrated under the same dependence-preserving multivariate normal (MVN) null generator.*
 
-Set-overlap visualizations indicate that no individual component test is merely a surrogate for another, rather, each test contributes a non-trivial proportion of uniquely identified top pathways, in addition to a core set of shared pathways. This is consistent with the designed functional roles of the component layers. Section 4.1 explains somme of the correlations between the component tests. Thus, the partial overlap in panels A–B is anticipated, reflecting shared underlying biology and common input data, whereas the non-overlapping regions underscore that the different components are capturing distinct archetypes of pathway-level association.
+Across both datasets, the overlap analyses revealed a substantial number of discoveries that were specific to individual methods. Fig. 2 (A–B) and Supp. Fig. 1 (A–B) indicates that a considerable proportion of statistically significant pathways are unique to particular component tests, rather than being shared across all approaches. In particular, TFisher contributed the largest set of method-specific pathways in both the Arabidopsis and Drosophila dataset. This observation is consistent with the adaptive “soft-thresholding” principle underlying TFisher that is by assessing pathway enrichment over a grid of truncation/threshold parameters (τ values) and selecting the most informative configuration, TFisher is able to detect pathway-level signals that are moderately dense or that are concentrated within specific gene subsets, without relying on a single, fixed cutoff. Overall, TFisher effectively interpolates between sparse and diffuse signal regimes, which broadens the range of pathways it can identify relative to single-parameter procedures. 
 
-We also computed pairwise Jaccard similarity (Fig. C) and Spearman rank correlation of pathway rankings across all pathways (Fig. D). The Jaccard matrix characterizes agreement at the “discovery set” level, whereas Spearman (D) quantifies concordance across the entire ranking spectrum. These suggests that ACAT and minP exhibit the strongest proximity, consistent with both being tail‑driven statistics that are highly sensitive to a single extreme gene‑level signal. Fisher and TFisher also display partial concordance, in line with both being monotone functions of aggregated $$log(p_g)$$, with TFisher operating as a truncated/weighted variant of Fisher’s method that amplifies the contribution of the most significant subset of genes. In contrast, Stouffer tends to be less aligned with the tail‑driven tests, reflecting distinct reliance on the aggregation of signed $$Z_g$$ statistics rather than exclusively on the smallest $$p_g$$ values. Moderate correlations do not contradict methodological complementarity but they reflect the deterministic coupling induced by reusing the same underlying gene‑level inputs, whereas deviations from perfect correlation reflect genuinely different weighting schemes and, consequently, distinct sensitivity profiles.
+Despite these method-specific distinctions, the component tests are not statistically independent, and their pairwise overlap exhibits a systematic and interpretable structure. Jaccard similarity matrices (Fig. 2 C–D) demonstrate that ACAT shows the highest similarity to minP, particularly in Drosophila, consistent with both procedures being highly responsive to sparse-driver architectures. By contrast, Fisher’s and Stouffer’s methods exhibit greater similarity to each other than to any other method, reflecting their shared propensity to aggregate weak-to-moderate evidence across many genes. These qualitative relationships are reproduced when using correlation-based measures (Supp. Fig. 1 C–D) as well. Overall, these results indicate that the observed similarity structure is robust to the choice of overlap metric, and the methods form partially overlapping sets, however, no method is redundant with or collapses onto another.
 
-Finally, we compared the empirical distributions of pathway-level significance across the component tests (Fig. E–F). Figures (E) and (F) demonstrate that the components differ not only in the specific pathways they prioritize, but also in the extent to which they distinguish signal from background. In particular, Fisher’s method displays substantial probability mass at relatively small $$-\log_{10}(p)$$ values, together with a marked enrichment of more significant values, consistent with heightened sensitivity to pathways comprising many moderately associated genes. TFisher exhibits a heavier extreme tail, consistent with its truncation/reweighting mechanism amplifying pathways that harbor a concentrated subset of strongly associated genes, often yielding more extreme pathway $$p$$-values. ACAT and minP display tail-driven behavior, as expected for procedures predominantly influenced by the most significant gene-level $$p$$-values. Stouffer’s method exhibits a distinct distributional profile, reflecting its reliance on the cumulative signed evidence across genes rather than a single extreme gene-level $$p_g$$.  These distributional differences reinforce that the components are not interchangeable, and their divergences are systematic and matches their statistical design.
+Differences in the behavior of the component tests are also evident in the global $p$-value distributions. Fig. 2 (E–F) (and Supp Fig 2 (E and F)) indicates that the distribution for Fisher’s method is strongly concentrated near zero. This suggests that under these data and calibration settings, Fisher yields fewer pathways with highly significant $p$-values compared to TFisher and Stouffer. In contrast, TFisher and Stouffer exhibit heavier right tails (larger −log10(p)), consistent with these procedures identifying a greater number of strongly enriched pathways in scenarios characterized by many modest gene-level effects. 
+
+![Supplementary Component pathway tests](Figures/SuppFig/SuppFig1.Compare_component_test_arabidopsis.png)
+*Supplementary Fig. S1 | Extended comparison of component pathway tests.
+(A,B) UpSet plots summarize the intersection structure among significant pathway sets, confirming that each test contributes unique discoveries in both Arabidopsis and fly.  
+(C,D) Pairwise association patterns recapitulate the main figure: ACAT and minP are most similar, Fisher aligns more strongly in fly, and Fisher–Stouffer agreement is consistent with diffuse/coordinate pathway signals.  
+(E,F) $p$-value distributions show heavier tails for Stouffer and TFisher; calibration under the dependence-preserving null is therefore required to ensure these are not false-positive artifacts.*
+
+These analyses show that although component tests exhibit structured correlation—most notably ACAT with minP and Fisher with Stouffer, they nonetheless recover partially distinct sets of pathways, with TFisher contributing substantial additional discoveries in both Arabidopsis and Drosophila. This pattern supports the design of CATFISH that is combining complementary statistics to improve coverage across heterogeneous pathway-level signal architectures, which can differ across traits, species, and overall GWAS signal scale.
 
 
-## The omnibus aggregates complementary components rather than recapitulating a single test
+
+## The omnibus aggregates component test rather than recapitulating a single test
 
 ![OMNI vs Componentns](Figures/Fig3.omni_vs_component_arabidopsis/Fig.omni_vs_component_arabidopsis.png)
-*Fig. 3 | OMNIBUS behaves as a broad union, not a narrow intersection.*
+*Fig. 3 | OMNIBUS behaves as a broad union, not a narrow intersection.  
+Panels A–B compare the omnibus significant set to the union of component significant sets for Arabidopsis (A) and fly (B), demonstrating union-consistency in Arabidopsis and a small number of omnibus-only calls in fly consistent with aggregation of sub-threshold component evidence.  
+Panels C–D summarize higher-order intersection structure (UpSet), showing omnibus discoveries concentrate in multi-method overlaps while still permitting a limited number of architecture-specific calls.  
+Panels E–F quantify multi-component corroboration by plotting the fraction of omnibus pathways supported by at least k component tests, indicating stronger multi-test support in Arabidopsis and greater heterogeneity in fly.*
 
-We next investigated whether the MVN-calibrated omnibus procedure functions as an integrator of the constituent pathway tests or if it collapses to the behavior of a single or a few component tests. Fig. 2A demonstrates that all omnibus discoveries are contained within the union of discoveries from the individual component analyses, indicating that the omnibus is not generating idiosyncratic signals that are uncoupled from the component layers. Furthermore, only a subset of the component-level discoveries is retained by the omnibus, showing that the omnibus does not simply report everything from every component test, but instead imposes a stricter selection criterion based on the combined evidence. However, the per-test decompositions show that no single component can fully account for the omnibus discovery set (Fig. 2B). This pattern is consistent with a selection mechanism that synthesizes information across distinct weighting schemes rather than a mere re-labeling or duplication of any one method.
+We next investigated whether the MVN-calibrated omnibus operates as a true integrator or collapses to an effective surrogate for a single component test. Fig. 3 A and B indicate that, in Arabidopsis, the discovery set identified by the omnibus procedure is fully contained within the union of discoveries from the individual component tests within the same threshold. This demonstrates that the omnibus is not producing any unique signals that are decoupled from its constituent evidence layers. However, in Drosophila, the omnibus procedure recovers the majority of pathways supported by at least one component test but additionally identifies a small subset of pathways that are not detected by any single component (Fig. 3B). This behavior demonstrates the strength of the OMNIBUS model, as it can also yield statistical significance when multiple component $p$-values are each suggestive but individually do not cross the specified threshold. Importantly, unique hits should not be treated as *prima facie* evidence of artifact; rather, they may reflect genuine synergy across component tests that must then be validated through rigorous null calibration (as explained below)
 
-Panels B–C resolve this selectivity at the level of individual components and multi-test patterns. Panel B demonstrates that the overlap between the omnibus and each constituent method is substantial but not complete, consistent with an integrative procedure that leverages information from all tests without degenerating to any single one. Furthermore, Panel C shows that pathways identified by the omnibus procedure are disproportionately concentrated in higher-order intersections among methods, rather than being dominated by calls unique to any one approach. In other words, pathways flagged by the omnibus tend to be those that are repeatedly detected across distinct enrichment paradigms (tail-focused, aggregation-based, truncated-weighted), which is precisely the behavior expected for an omnibus test that prioritizes robust signals under heterogeneous pathway architectures.
+Fig. 3 C and D demonstrate that omnibus significant pathways are not predominantly driven by calls unique to any single method; instead, they are disproportionately enriched in multi-test intersection patterns. This indicates that the omnibus framework preferentially retains pathways that are repeatedly identified across distinct enrichment tests (Fig. 3E–F). In Arabidopsis, a substantial proportion of omnibus-significant pathways remains significant even under increasingly stringent multi-test support criteria (e.g., the majority remain significant when requiring ≥2 or ≥3 supporting component methods). By contrast, in the Drosophila dataset, multi-test support is generally weaker, with a larger fraction of pathways supported by only one or a small number of component methods. This suggests that the Arabidopsis BIO6 signal is more consistently detectable across multiple signal archetypes, whereas the Drosophila dataset appears to contain a higher proportion of architecture-specific signals that are detectable only by certain classes of enrichment tests.
 
-Panels D–E reiterate this framework. Panel D demonstrates that the majority of omnibus-significant pathways are substantiated by multiple component-level tests rather than by a single test. Panel E then quantifies this enrichment by displaying the cumulative proportion of omnibus-significant pathways that have support from at least $$k$$ components. The fact that the cumulative curve exhibits a pronounced decline only at high $$k$$ values indicates that the selected set of pathways is narrowly enriched for multi-test support. The omnibus procedure does not behave as a broad union that would admit many pathways supported by only one component. Instead, it preferentially retains pathways with corroboration from several component tests, while still allowing a limited number of strongly component-specific pathways to pass when a particular method is uniquely sensitive to the underlying signal archetype. This is the key conceptual distinction in CATFISH: the omnibus procedure is broad in the range of signal types it can detect, yet narrow in the set of pathways it ultimately reports.
+Supplementary Figure 2 characterizes the relationship between individual components and the omnibus. In Arabidopsis (Supplementary Figure 2A), certain components (such as Fisher and TFisher) behave as strict subsets of the omnibus. All pathways identified by these components are also detected by the omnibus, whereas the omnibus additionally recovers pathways that are not captured by those components. In contrast, other methods (notably minP and Stouffer) exhibit substantial bidirectional non-overlap, indicating that they both contribute unique pathway calls and fail to recover a portion of the pathways identified by the omnibus. In the Drosophila dataset (Supplementary Figure 2B), the overlaps are more evenly distributed across components.
 
-Finally, Panel F complements the support-count view by quantifying set-level agreement between the omnibus and each component using both Jaccard similarity (intersection normalized by union) and the simpler overlap proportion. In this BIO6 application, the omnibus shows its strongest set similarity to ACAT (and secondarily to other tail-sensitive components), consistent with the trait’s pathway signal being largely tail-driven—i.e., dominated by one (or a few) highly significant genes within a pathway—where ACAT-like weighting is expected to be most sensitive. But we show another example in which this is not the case. Together, panels A–F support a single coherent conclusion: the omnibus is not a permissive union rule; it is a dependence-aware, MVN-calibrated integrator that yields a support-enriched, intersection-leaning discovery set while adapting to the component test that best matches the dominant signal archetype in a given study.
+The similarity metrics (Supp. Fig. 2E–F) clarify an important subtlety: the “overlap proportion” and the Jaccard index answer different questions. The overlap proportion is asymmetric (it reflects how much of a component’s discovery set is recovered by the omnibus), whereas the Jaccard index is symmetric (intersection normalized by union) and penalizes methods that call many extra pathways beyond the shared set. Consequently, in Arabidopsis, we observe cases where overlap is high but Jaccard is modest, indicating that the component’s calls are largely contained within the omnibus; yet the total union is large because one of the sets contains many additional pathways. In the fly dataset, overlap and Jaccard are more similar in magnitude, implying that component and omnibus discovery set sizes are closer and the union is less dominated by one method’s extra calls. Collectively, Fig. 3 and Supp. Fig. 2 support the conclusion that the omnibus is broad in the signal types it can detect, yet selective in what it ultimately reports—behaving as an evidence integrator rather than a permissive union rule or a disguised single-component test.
 
+![Supp OMNI vs Components](Figures/SuppFig/SuppFig2.omni_vs_component_arabidopsis.png)
+*Supp. Fig. 2 | Component-by-component decomposition of omnibus overlap.  
+Panels A–B show pairwise overlaps between the omnibus and each component test in Arabidopsis (A) and fly (B).  
+Panels C–D summarize how omnibus-significant pathways distribute across the number of supporting component tests, reinforcing that omnibus calls are enriched for multi-test support but are not identical to any single component.*
 
-### *Drosophila melanogaster* Starvation Response GWAS example  
-
-We examined a starvation-resistance phenotype in Drosophila, assaying males and females separately. The starvation resistance phenotype was measured as the number of hours adult flies survive without food. The original study analyzed the phenotype both with sexes pooled and stratified by sex. The GWAS recapitulated an association with *pnt*, a gene previously implicated in starvation resistance, and also identified a SNP in *CG3213*, a gene previously highlighted in a Drosophila obesity screen. We reanalyzed the sex-stratified data by applying a MAF threshold greater than 0.05 and annotating genes located within 25 kb upstream and downstream of the single nucleotide polymorphisms (SNPs) for our CATFISH analysis.
-
-
-![Pathway analysis](Figures/Fig2/Fig2.png)
-*Pathway analysis*
-
-We first evaluated the highest-ranking genes from the sex-stratified GWAS to quantify SNP-level cross-sex reproducibility (Fig. A). Among the top 50 genes identified in each sex, the overlap was minimal, with only 4 genes shared between strata. Following LD adjusted SNP-to-gene aggregation using MAGMA (Fig. B), gene-level concordance also remained limited, with 5 of the top 50 genes shared across sexes. These findings indicate that the most strongly associated genes are largely sex-specific, consistent with their study. 
-
-Next, we evaluated the results with our CATFISH pipeline for pathway significant. The BH adjustment produced sparse or near-empty sets of discoveries at pathway level. This outcome is consistent with limited statistical power under sex stratification and mixed-model correction, together with the stringent multiple-testing burden imposed by thousands of genes and hundreds of pathways. In addition to reporting BH-adjusted q-values, we characterized pathway prioritization using a rank-based Top-K framework (with a fixed K across sexes and methods) to enable direct comparisons when the number of FDR-significant findings is minimal. The smallest K at which a non-empty six-way intersection (across the five component tests and Omni_MVN) emerged was K = 20 (Fig F), which we adopt as the primary threshold for pathway-level summaries for this dataset.
-
-Substantial differences in cross-sex concordance were observed across the various component-level statistics (Fig. C). Stouffer’s method and Omni_MVN exhibited the greatest overlap in prioritized pathways, each sharing 7 of 20 pathways across sexes, whereas ACAT and Fisher’s method demonstrated limited overlap (1/20 and 2/20 shared pathways, respectively), and minP identified no shared pathways (0/20). This pattern is consistent with the distinct statistical properties of these methods. MinP is largely driven by the single most significant gene within a pathway, such that modest sex-specific variation in the leading gene can substantially alter pathway rankings even when the underlying pathway-level signal is comparable. By contrast, Stouffer’s method (and to some degree soft adaptive TFisher) is more responsive to diffuse, pathway-wide enrichment, which tends to produce more stable cross-sex pathway prioritization under polygenic settings.
-
-To evaluate whether cross-sex convergence observed for Omni_MVN primarily reflected effective replication of a single constituent statistic, as opposed to genuine multi-method integration and/or stabilization of pathway rankings, we decomposed the omnibus signal within each sex by intersecting the Omni_MVN Top-20 pathways with the Top-20 sets from each individual method (Fig. D). In females, the Omni_MVN Top-20 exhibited the greatest overlap with Fisher’s method (18/20 pathways), followed by TFisher and Stouffer (14/20 each), ACAT (12/20), and minP (10/20). In males, Omni_MVN overlapped most strongly with Stouffer (18/20) and soft adaptive TFisher (17/20), with more modest overlap with minP (11/20) and Fisher’s method (10/20), and the lowest overlap with ACAT (8/20). These patterns indicate that Omni_MVN preferentially tracks the constituent statistic whose signal is most concordant with the sex-specific enrichment architecture, while remaining non-identical to any individual method’s Top-20 list. This behavior is consistent with correlation-aware integration of multiple statistics rather than simple duplication of any single component method.
-
-Fig E and F further elucidate why integrative testing can yield greater stability than reliance on any single component method. In females, the Top-20 pathway set comprised a six-method consensus core of four pathways identified by all approaches, several intermediate-size partial overlaps (3–4 pathways), and numerous method-specific singletons (Fig. E). In males, the six-method consensus core was larger (six pathways), but the remaining overlap architecture was more fragmented (Fig. F). This pattern is consistent with the distinct statistical focus of the component tests. MinP preferentially detects pathways dominated by strong single-gene signals, Fisher’s method and ACAT emphasize pathways with a broad accumulation of small-to-moderate effects, and Stouffer’s method and TFisher are more sensitive to coordinated shifts in signal intensity (including truncated-tail enrichment). 
-
-These findings indicate that CATFISH/Omni_MVN is not simply “relabeling” the output of any single component enrichment procedure, but instead functions as a correlation-aware integrative framework that stabilizes pathway prioritization under weak, polygenic signal. The within-sex decomposition (Fig. D) demonstrates that Omni_MVN exhibits its strongest concordance with the test statistic whose inferential structure is most compatible with the underlying sex-specific genetic architecture (Fisher-type behavior in females; Stouffer/TFisher-type behavior in males), while nonetheless remaining non-identical to the Top-20 set produced by any individual method. This sex-dependent concordance pattern, together with the continued presence of method-specific pathways and only partial overlaps across procedures (Fig. E–F), supports the interpretation that the omnibus ranking reflects a genuine multi-method synthesis, effectively borrowing strength across complementary sensitivity profiles (e.g., single-gene–dominated signals, diffuse enrichment, or truncated-tail distributional shifts), rather than serving as a mere generalization or duplication of any particular constituent test. Thus, Omni_MVN achieves enhanced cross-sex concordance by elevating pathways that exhibit robust, multi-method evidence, even in regimes where the number of FDR-significant discoveries is limited.
-
-Furthermore, these results show that different datasets favor different pathway enrichment strategies. In Arabidopsis, the BIO6 climate phenotype produced pathway signals that were broadly consistent across methods, indicating widespread, coherent enrichment across many genes. In contrast, the sex-stratified Drosophila GWAS showed weaker and more variable signals, where pathway rankings depended strongly on whether a method emphasized a single strongly associated gene or modest effects across many genes. Not a single statistic was optimal in both settings. Thus, CATFISH integrates multiple complementary tests that allow pathway prioritization to adapt to the structure of the signal instead of relying on a single test.
-
---- 
-
-### Pathway-level patterns of starvation tolerance are conserved across sexes, with sex-biased metabolic strategies
-
-
-![Top 20 pathways enriched for female and male flies for starvation response](Figures/Fig_top20_bubbles_by_sex.png)
-*Top 20 pathways enriched for female and male flies for starvation response*
-
-
-We applied the CATFISH multi-statistic pathway framework to gene-level summary statistics from sex-stratified starvation resistance GWAS in *Drosophila melanogaster*, using pathway annotations derived from the BioCyc/MetaCyc databases. No pathway reached statistical significance after correction for multiple hypothesis testing at the prespecified false discovery rate (FDR) threshold. Accordingly, we treat these findings as exploratory pathway rankings rather than as definitive evidence of causal associations as explained above. Nonetheless, the highest-ranked pathways exhibit non-random biological clustering for processes that are consistent with starvation physiology. We must note that, the enriched pathways identified are most appropriately interpreted as an over-representation of genes annotated to the regulation and execution of gluconeogenic processes, rather than as direct evidence for altered metabolic flux through these pathways.
-
-### Recurring cross-sex biological processes among the top-ranked pathways
-
-A small set of pathway annotations appears in the top ranks for both sexes, suggesting a shared response to starvation:
-
-### A glutamate-centered gluconeogenic and redox axis underlies starvation resistance
-
-Several of the highest-ranked pathways converged on a shared amino acid–dependent gluconeogenic and redox axis centered on glutamate metabolism, thereby providing a coherent mechanistic framework for starvation resistance. Starvation is a principal physiological stimulus for gluconeogenesis, which becomes indispensable once hepatic glycogen stores are exhausted. Gluconeogenesis generates glucose from non-carbohydrate precursors, classically glycerol derived from adipose tissue lipolysis, lactate recycled via the Cori cycle, and gluconeogenic amino acids such as alanine and glutamine. Gluconeogenesis is particularly critical during the early phase of fasting, when the brain continues to require approximately 100–120 g/day of glucose, supplied predominantly by hepatic (and, to a lesser extent, renal) gluconeogenesis (Naisbitt & Davies, 2017). In agreement with this model, isotope-tracer studies demonstrate that the fractional contribution of gluconeogenesis to endogenous glucose production increases steeply with fasting duration (from ~67% at ~22 h to >90% by ~42 h), with glycerol alone accounting for ~15% of total glucose output during prolonged starvation (Landau et al., 1996; Soeters et al., 2012).
-
-Within this canonical starvation response, our sex-stratified pathway analyses indicate distinct yet convergent metabolic routes that feed into a shared glutamate pool. In females, the enrichment of the L-proline degradation I pathway, together with gluconeogenesis III, underscores proline catabolism as a direct source for gluconeogenic carbon. Proline is sequentially oxidized by proline dehydrogenase (PRODH) and pyrroline-5-carboxylate dehydrogenase (P5CDH) to pyrroline-5-carboxylate and subsequently to glutamate. The resulting glutamate can then be transaminated to α-ketoglutarate for anaplerotic entry into the TCA cycle or diverted into gluconeogenic intermediates (Phang et al., 2017; Tran et al., 2021). In males, the top-ranked 5-oxo-L-proline metabolism pathway implicates the γ-glutamyl cycle, which mediates glutathione turnover and regenerates glutamate from pyroglutamate via 5-oxoprolinase. Under conditions of starvation or nutrient limitation—particularly when cysteine or glutathione are scarce—this cycle becomes indispensable for sustaining intracellular glutamate levels while concurrently buffering oxidative stress (Meister, 1988; Geenen et al., 2021). Through its central position in both amino acid catabolism and glutathione turnover, glutamate provides a direct biochemical link between nitrogen recycling, oxidative stress buffering, and the supply of carbon skeletons for gluconeogenesis during starvation.
-
-In conjunction with canonical alanine- and glycerol-dependent gluconeogenesis, these sex-specific metabolite enrichments delineate a starvation-induced metabolic program that channels nitrogen and carbon skeletons through glutamate to maintain hepatic glucose production, while concurrently preserving redox homeostasis via glutathione cycling. Fasting-associated endocrine signals, namely hypoinsulinemia, elevated glucagon, and increased glucocorticoids, further consolidate this program and drive a coordinated transition toward predominant lipid utilization by approximately 2–3 days of nutrient deprivation, thereby sparing lean body mass and progressively diminishing glucose requirements through increased ketone body use by the brain (Steinhauser et al., 2018; Karimi et al., 2024; Naisbitt & Davies, 2017). This regulatory logic appears to be evolutionarily conserved. In nutrient-deprived tick embryonic cells, glycolytic genes are downregulated whereas phosphoenolpyruvate carboxykinase (PEPCK) is upregulated, consistent with a shift toward gluconeogenesis coupled to nutrient recycling via autophagy (Nogueira et al., 2025). Taken together, these findings support the existence of a conserved “glutamate–proline–gluconeogenesis axis” in which amino acid catabolism, redox defense, and glucose homeostasis are tightly coordinated to enhance survival under conditions of nutrient scarcity.
+The overlap proportion is an asymmetric metric that quantifies, for each component test, the fraction of its discovered pathways that are also recovered by the omnibus procedure (Supp. Fig. 2E–F). By contrast, the Jaccard index is symmetric (the size of the intersection normalized by the size of the union) and penalizes methods that identify many additional pathways beyond those shared. Accordingly, in Arabidopsis, we observe instances in which the overlap proportion is high while the Jaccard index remains moderate. This pattern indicates that the component’s discoveries are largely subsumed by the omnibus set; yet, the overall union is inflated because one of the sets includes numerous additional pathways. In the Drosophila dataset, the overlap proportion and Jaccard index are more similar in magnitude, suggesting that the sizes of the component and omnibus discovery sets are more comparable and that the union is less dominated by method-specific additional calls. Taken together, Fig. 3 and Supp. Fig. 2 support the conclusion that the omnibus procedure is broad in the classes of signals it can detect while remaining selective in what it ultimately reports. Functionally, it behaves as an evidence-integrating mechanism rather than a permissive union operator or a reparameterized single-component test.
 
 
 
-### Ceramide degradation links lipid stress to starvation-induced metabolic adaptation
+## MVN global-null diagnostics support overall calibration
 
-In addition to amino acid–dependent gluconeogenesis, both sexes exhibited enrichment of ceramide catabolism via α-oxidation, indicating that sphingolipid turnover constitutes a conserved element of the starvation response. Ceramides are bioactive sphingolipids that accumulate under conditions of metabolic stress and act as potent modulators of nutrient sensing, mitochondrial function, and autophagic activity. Increased ceramide concentrations are well documented to elicit a cellular phenotype analogous to starvation by downregulating nutrient transporter proteins, thereby limiting intracellular availability of glucose and amino acids even in nutrient-replete environments (Guenther et al., 2008; Peralta & Edinger, 2009). This ceramide-mediated “intracellular starvation” engages AMPK signaling and induces autophagy as a homeostatic response to acute bioenergetic stress, underscoring ceramide metabolism as an active, proximal regulator of starvation-adaptive pathways rather than a passive lipid byproduct.
+To verify that differences in discovery patterns reflect power differences rather than miscalibration, we assessed all component tests and the omnibus procedure under a dependence-preserving global null using multivariate normal (MVN) resampling (Supp. Fig. 3). The Q–Q plots compare the empirical $p$-value distributions to the theoretical uniform distribution implied by the null hypothesis, and the genomic control factor λ provides a scalar summary of global inflation or deflation (with λ≈1 indicating appropriate calibration). Operationally, λ captures whether the bulk of null test statistics is globally over- or under-dispersed relative to expectation (λ>1 inflation; λ<1 conservativeness), whereas empirical Type I error directly evaluates threshold-level calibration via the observed rejection rate Pr(p<α) at a chosen α. In both datasets, ACAT, Fisher’s method, minP, and Stouffer’s method yield λ values close to 1, consistent with well-controlled null behavior under the MVN-based calibration scheme. The omnibus test is likewise close to null in both datasets (slightly conservative in Arabidopsis with λ<1, and near 1 in Drosophila), a desirable property for a combined procedure designed to maintain stable Type I error control across heterogeneous pathway architectures.
 
-The preferential enrichment of pathways involved in ceramide degradation, rather than in de novo synthesis, suggests selective pressure for mechanisms that actively restrict ceramide accumulation under nutrient-limited conditions. α-Oxidation–dependent ceramide catabolism decreases cellular ceramide load and generates intermediate metabolites that can be further metabolized via mitochondrial lipid β-oxidation pathways. In line with this notion, elevated ceramide levels are known to impair mitochondrial fatty acid oxidation, whereas enhanced ceramide clearance has been shown to improve mitochondrial respiratory capacity and metabolic flexibility (Summers et al., 2019). During starvation, the regulated degradation of ceramides may therefore fulfill a dual cytoprotective role: mitigating ceramide-driven inhibition of nutrient transport and mitochondrial function, while simultaneously enabling sustained lipid oxidation as the principal energy source. This model is corroborated by developmental and cellular starvation paradigms in which nutrient deprivation modulates ceramide-induced autophagy and cell fate outcomes, thereby reinforcing the concept that ceramide turnover is more closely associated with starvation tolerance and adaptive stress responses than with the execution of cell death per se (Lei et al., 2012; Peralta & Edinger, 2009).
+The main calibration exception is TFisher in the female fly null diagnostics, which shows a markedly elevated λ (Supp. Fig. 3; TFisher λ≫1), indicating a strong departure from the expected null. The empirical Type I error at α=0.05 remains at or below nominal, indicating that TFisher’s deviation is not simply “more false positives at 0.05.” Instead, it is consistent with a null distribution shape or scale mismatch, implying miscalibration across the $p$-value spectrum that may not manifest as excess rejections at any single operating threshold. Importantly, the omnibus does not inherit this instability, as both its λ and Type I error remain close to nominal, consistent with the omnibus functioning as a stabilizing integrator that limits dependence on the idiosyncratic behavior of any single component test.  These diagnostics support the conclusion that the CATFISH MVN framework is approximately nominally calibrated for most individual component tests and for the omnibus statistic, even though a subset of components may still exhibit residual miscalibration.
 
-In conjunction with the observed enrichment of gluconeogenic and amino acid catabolic pathways, ceramide degradation defines a lipid-centered starvation adaptation program in which sphingolipid turnover mitigates bioenergetic stress, promotes autophagic processes, and sustains mitochondrial function during prolonged nutrient deprivation. The consistent identification of ceramide degradation pathways in both females and males indicates that the regulation of sphingolipid homeostasis constitutes a fundamental, sex-independent determinant of starvation resistance, operating in parallel with amino acid recycling and gluconeogenesis to maintain energy homeostasis under nutrient-limiting conditions.
+![MVN null diagnostics support calibrated inference](Figures/SuppFig/SuppFig3.null_calibration_combined.png)
+*Supp. Fig. 4 | MVN null diagnostics support calibrated inference.  
+Panel A shows QQ plots compare observed vs expected $p$-values under dependence-preserving MVN resampling for each component and the omnibus in Arabidopsis and fly.  
+Panel B shows genomic control (λ) that summarizes calibration, showing elevated λ for TFisher in fly while the omnibus remains near 1.  
+Panel C depics Type I error at α = 0.05 confirms near-nominal rejection rates overall, supporting interpretation of component differences as sensitivity to distinct signal architectures rather than systematic false positives.*
 
 
-### NAD⁺ metabolism and redox balance (OPTIONAL)
 
-NAD⁺ metabolism (superpathway of NAD biosynthesis in eukaryotes) encompasses the processes by which cells sustain and repartition the nicotinamide adenine dinucleotide pool across subcellular compartments during nutrient stress. In eukaryotic cells, NAD⁺ is generated de novo from tryptophan and via vitamin B₃ salvage pathways (utilizing nicotinamide, nicotinic acid, and nicotinamide riboside), and is then continuously recycled because it functions both as a redox cofactor (NAD⁺/NADH) and as a consumable substrate for signaling enzymes such as sirtuins and poly(ADP-ribose) polymerases (PARPs) (Xiao et al., 2018; Cantó et al., 2015). Starvation or fasting generally reprograms metabolism toward enhanced lipid oxidation and mitochondrial respiration, thereby increasing dependence on NAD⁺-dependent redox reactions while concurrently promoting NAD⁺-dependent stress-response programs. In mice, a 24-hour fasting period elevates hepatic SIRT1 and PPARα expression in parallel with increased NAD⁺ concentrations, which have been linked to augmented NAMPT activity in the NAD⁺ salvage pathway (Hayashida et al., 2010). 
 
-Moreover, fasting directly influences mitochondrial NAD⁺ handling. SLC25A51 (also known as MCART1), identified as a mammalian mitochondrial NAD⁺ transporter (Luongo et al., 2020; Girardi et al., 2020; Kory et al., 2020), is induced in liver by fasting, and its loss perturbs mitochondrial NAD⁺ homeostasis and attenuates fasting-induced SIRT3- and PPARα-associated transcriptional programs (Fu et al., 2022). Furthermore, endocrine and systemic metabolic flexibility are tightly integrated with these processes. Adipose tissue NAD biology has been proposed as a key regulator of whole-body “fuel switching” across fed–fasted transitions (Franczyk et al., 2021), while systemic NAD biosynthesis mediated by NAMPT/eNAMPT can modulate hypothalamic NAD⁺/SIRT1 signaling and thereby influence activity-related and behavioral phenotypes (Revollo et al., 2007; Yoon et al., 2015). Thus, the enrichment of NAD biosynthesis and NAD⁺ metabolic pathways among starvation-resistance genetic hits supports a causal framework in which allelic variation that enhances NAD⁺ availability, subcellular compartmentalization (particularly within mitochondria), or recycling capacity improves the ability to support fasting-associated metabolic states and stress-responsive sirtuin signaling. At the same time, starvation itself appears to upregulate these NAD⁺ pathways as an integral component of the adaptive response.
+## Candidate-gene prioritization integrates GWAS, MAGMA, and pathway
 
+In Fig 4 A and B, we quantify the number of genes supported at each layer under the specified thresholds. For the Drosophila analysis, the GWAS evidence layer is deliberately defined using a more permissive significance threshold, reflecting the observation that very few genes satisfy the Bonferroni cutoff. The median number of genes per pathway is lower in Drosophila than in Arabidopsis. Consequently, pathway membership alone constitutes a weaker filtering criterion in the fly analysis. 
+
+In Arabidopsis (Fig 4 C), a visible subset of genes shows concordant evidence across layers (including “all three”), consistent with a mixture of strong locus-driven genes. In fly females (Fig 4D), many top-ranked genes are supported by GWAS + MAGMA but lack pathway/top-pathway support at the chosen pathway threshold, which is consistent with (i) a smaller/shallower pathway mapping or (ii) pathway-level signals being distributed across many modest genes rather than concentrating on the same top loci that drive GWAS/MAGMA.
+
+Furthermore, in both datasets, genes in the top pathways are enriched for stronger MAGMA signals (Fig 4. E and F), indicating that the pathway layer is not selecting random genes; it preferentially captures genes with elevated gene-level associations, even when those genes are not necessarily the single strongest GWAS hits.
+
+
+![MVN null diagnostics support calibrated inference](Figures/SuppFig/SuppFig3.null_calibration_combined.png)
+*Fig. 5 | Multi-layer candidate-gene prioritization integrates GWAS locus evidence, MAGMA gene-level association, and pathway enrichment. Panels **A/C/E** show Arabidopsis (BIO6) and panels **B/D/F** show female Drosophila starvation resistance.  
+**(A–B)** UpSet plots summarize overlap among genes supported by each layer at the thresholds used in the main analysis (GWAS-mapped gene support, MAGMA gene-level support, and membership in top enriched pathways; top 10 pathways in Arabidopsis and top 20 in fly).  
+**(C–D)** Gene-level concordance between GWAS and MAGMA: each point is a gene, with x-axis showing GWAS locus evidence mapped to the gene (−log10 of the minimum GWAS $p$-value among mapped variants) and y-axis showing MAGMA evidence (−log10 MAGMA $p$-value). Points are colored by which evidence layers support the gene (GWAS only, MAGMA only, pathway only, pairwise overlaps, or all three), and inset bar charts report the corresponding counts. Dashed lines indicate the significance cutoffs used to define GWAS- and MAGMA-supported genes.  
+**(E–F)** Distribution of MAGMA evidence for genes inside versus outside top enriched pathways; green curves denote genes in top pathways and gray curves denote genes not in top pathways, with Wilcoxon $p$-values testing for a shift toward stronger MAGMA association among pathway genes.* 
+
+
+We also score the candidate genes using a count system with continuous evidence strength. Specifically, each gene receives a score increment of +1 for each evidence layer in which it is supported (GWAS, MAGMA, pathway analysis). In addition, small weighted contributions derived from continuous test statistics are added using −log10(p) terms, with the MAGMA-derived component assigned a slightly higher weight than the GWAS- and pathway-derived components. This scoring scheme is intentionally constructed such that the overall ranking is primarily driven by the number of independent evidence layers supporting a gene, while the continuous −log10(p)-based contributions serve only to distinguish genes that are weakly versus strongly supported within the same discrete support tier.
+
+In Arabidopsis, the top-ranked genes are almost entirely 3-layer candidates with strong MAGMA $p$-values and extremely small mapped GWAS $p$-values, and they frequently point to a specific, best-supporting pathway (e.g., PWY-5884 was biosynthesis). In female flies, the highest-scoring genes include a small set of 3-layer candidates with explicit pathway assignments.
+
+
+
+### Table 1. Top multi-layer candidate genes (Arabidopsis)
+
+| GENE | magma_p | magma_fdr | gwas_min_p | gwas_n_snps | n_top_pathways | best_pathway_p | pathways | hit_gwas | hit_magma | hit_pathway | support_layers | score |
+|---|---:|---:|---:|---:|---:|---:|---|---|---|---|---:|---:|
+| AT1G74420 | 8.48E-07 | 0.001594258 | 8.13E-10 | 431 | 1 | 0.00169983 | PWY-5936 | TRUE | TRUE | TRUE | 3 | 5.400250361 |
+| AT5G55380 | 1.18E-06 | 0.001954438 | 2.51E-08 | 605 | 1 | 0.00039996 | PWY-5884 | TRUE | TRUE | TRUE | 3 | 5.285590282 |
+| AT5G55340 | 2.18E-06 | 0.002723199 | 2.51E-08 | 470 | 1 | 0.00039996 | PWY-5884 | TRUE | TRUE | TRUE | 3 | 5.232168885 |
+| AT5G55350 | 2.58E-06 | 0.002757275 | 2.51E-08 | 514 | 1 | 0.00039996 | PWY-5884 | TRUE | TRUE | TRUE | 3 | 5.217663656 |
+| AT5G55360 | 4.58E-06 | 0.003162742 | 2.51E-08 | 545 | 1 | 0.00039996 | PWY-5884 | TRUE | TRUE | TRUE | 3 | 5.167728631 |
+| AT5G55330 | 4.61E-06 | 0.003162742 | 2.51E-08 | 470 | 1 | 0.00039996 | PWY-5884 | TRUE | TRUE | TRUE | 3 | 5.167117898 |
+| AT1G74470 | 2.46E-05 | 0.008899952 | 8.13E-10 | 388 | 2 | 0.00049995 | PWY-5064; PWY-5863 | TRUE | TRUE | TRUE | 3 | 5.160831762 |
+| AT5G55370 | 8.62E-06 | 0.004858669 | 2.51E-08 | 581 | 1 | 0.00039996 | PWY-5884 | TRUE | TRUE | TRUE | 3 | 5.112786997 |
+| AT5G55320 | 9.21E-06 | 0.004992384 | 2.51E-08 | 466 | 1 | 0.00039996 | PWY-5884 | TRUE | TRUE | TRUE | 3 | 5.107022194 |
+| AT1G73980 | 7.90E-06 | 0.004546725 | 5.58E-08 | 411 | 1 | 0.00809919 | PWY-7193 | TRUE | TRUE | TRUE | 3 | 4.954955162 |
 
 ---
 
-### *Arabidopsis thaliana* Lowest Temperature of the Coldest Month GWAS example 
+### Table 2. Top multi-layer candidate genes (Fly female)
 
-We used BIO6 (minimum temperature of the coldest month) as an environmental phenotype for *Arabidopsis thaliana* accessions. BIO6 quantifies the long-term intensity of winter cold at the geographic origin of each accession and is widely employed as a proxy for the strength of cold-environment selection. Analyses were conducted using accessions from the Arabidopsis 1001 Genomes Project, which constitute a globally distributed natural population spanning broad latitudinal and climatic gradients. This panel comprises accessions originating from both relatively mild and strongly cold winter environments, thereby generating continuous variation in BIO6 across the population. SNP associations were mapped to genes, gene-level statistics were aggregated into pathway enrichment tests, and pathway-level significance was summarized/compared across methods using our CATFISH framework.
-
-![Arabidopsis Lowest Temperature Environmental GWAS](Figures/Fig3/Fig3.png)
-*[Arabidopsis Lowest Temperature Environmental GWAS*
-
-
-### Multi-method agreement among top pathways for Arabidopsis cold-response GWAS and Omni_MVN overlaps broadly with each component test, while retaining a small distinct subset
-
-For Arabidopsis, we analyzed an environmental phenotype representing cold-stress intensity, quantified as the coldest-month temperature (BIO6), and assessed pathway enrichment using the CATFISH framework (ACAT, Fisher, Adaptive TFisher, minP, and Stouffer), in conjunction with the omnibus correlation-aware synthesis method (Omni_MVN). To characterize the consistency with which pathways are prioritized across statistical approaches, we extracted the top 15 pathways from each method and visualized their overlap (Fig. 3A). Six pathways are shared by all six approaches (the five individual tests plus Omni_MVN) indicating that a substantial portion of the strongest pathway-level signal is robust to the choice of enrichment statistic. Outside this consensus core, the remaining top-ranked pathways distribute into smaller intersections and method-specific sets (for example, methods that are more responsive to single extreme genes versus those that capture more diffuse shifts across many genes). Omni_MVN predominantly contributes to the major multi-method intersections, rather than yielding a large set of Omni-specific pathways, which is consistent with its role as an omnibus procedure that concentrates its highest-ranked pathways in regions of agreement among multiple methods.
-
-We next quantified the relationship between the omnibus ranking and each constituent test by directly comparing the top 15 Omni_MVN pathways with the lowest p-values to the top 15 pathways identified by each individual method (Fig. 3B). Omni_MVN shared the majority of its leading pathways with every component statistic, with overlap sizes of 12/15 with ACAT, 10/15 with Fisher, 11/15 with soft adaptive TFisher, 11/15 with minP, and 10/15 with Stouffer. In each pairwise comparison, Omni_MVN also preserved a modest method-specific subset (the non-overlapping portion), indicating that it is not merely replicating the ranking of any single test. Rather, the consistent and substantial overlap across all five approaches suggests that Omni_MVN operates as an integrative summary statistic: it preferentially prioritizes pathways that receive convergent support across heterogeneous enrichment formulations, while still permitting a limited degree of omnibus-specific refinement. Taken together with the multi-set structure in Fig. 3A, these findings indicate that the pathway-level signal is both (i) robust across multiple testing paradigms and (ii) efficiently consolidated by the omnibus framework into a stable, high-confidence top-ranked set.
-
-Furthermore, these results show that different datasets favor different pathway enrichment strategies. In Arabidopsis, the BIO6 climate phenotype produced pathway signals that were broadly consistent across methods, indicating widespread, coherent enrichment across many genes. In contrast, the sex-stratified Drosophila GWAS showed weaker and more variable signals, where pathway rankings depended strongly on whether a method emphasized a single strongly associated gene or modest effects across many genes. Not a single statistic was optimal in both settings. Thus, CATFISH integrates multiple complementary tests that allow pathway prioritization to adapt to the structure of the signal instead of relying on a single test.
-
-### Pathway-level patterns of cold tolerance/adaptation
-
-The top hits identifies a coherent cold-climate adaptation processes for Bio6 in *Arabidopsis*, such as carbon buffering and photoprotection, wall mechanics, and cuticle barrier. 
-
-### Surface wax-ester flux as a cold-environment signal along BIO6
-
-In our BIO6 environment-GWAS, PWY-5884 (wax esters biosynthesis I) is most parsimoniously interpreted as tagging standing variation in *cuticular wax lipid flux*—i.e., the epidermal “outer lipid barrier” built largely from very-long-chain fatty acids (VLCFAs) and derivatives including **alkanes, ketones, esters, alcohols, and aldehydes**. :contentReference[oaicite:0]{index=0} This matters for cold habitats because winter minimum temperature (BIO6) often covaries with **freeze-desiccation regimes** (dry air, wind, and restricted water uptake), where the cuticle can influence both non-stomatal water loss and the physical conditions that govern *when* freezing initiates. Direct Arabidopsis experiments support this mechanism: the wax-deficient **cer3-6** line shows the strongest dehydration sensitivity, whereas the wax overproducer **dewax** shows increased resistance to dehydration and a freezing-avoidance phenotype consistent with later ice nucleation (i.e., freezing exotherms at colder temperatures), implicating hydrophobic long-chain wax fractions (notably C29–C33 alkanes) as functionally important for water-loss control and freeze avoidance rather than “intrinsic survival after freezing.” :contentReference[oaicite:1]{index=1}:contentReference[oaicite:2]{index=2} At the same time, wax composition is itself plastic under cold: in that study, plants were cold-acclimated and leaf-wax changes were explicitly profiled (GC–MS/ATR-FTIR), reinforcing that wax is also a cold-responsive trait. :contentReference[oaicite:3]{index=3} This “wax ↔ cold” link generalizes beyond Arabidopsis: tea accessions show cultivar-structured wax composition and **cold-stress–inducible wax-gene expression** associated with cold tolerance,:contentReference[oaicite:4]{index=4} and rice reproductive-stage cold tolerance requires lipid metabolism that supports surface barriers, with **wax esters identified as cold-responsive lipids** and disruption of wax-ester biosynthesis genes (OsCER1, WSL2) reducing cold tolerance. :contentReference[oaicite:5]{index=5} Consistent with this, cold-stored pear fruits show substantial remodeling of surface wax composition (including alkanes and esters) alongside coordinated changes in wax-related gene expression across cultivars. :contentReference[oaicite:6]{index=6} Taken together, PWY-5884 in the BIO6 GWAS is best viewed as a signal for *barrier-lipid biosynthesis* that can be (i) **selected** along cold gradients because it modulates dehydration and freeze-avoidance phenotypes, and (ii) **induced** by cold acclimation as part of stress-responsive remodeling.
+| GENE | magma_p | magma_fdr | gwas_min_p | gwas_n_snps | n_top_pathways | best_pathway_p | pathways | hit_gwas | hit_magma | hit_pathway | support_layers | score |
+|---|---:|---:|---:|---:|---:|---:|---|---|---|---|---:|---:|
+| FBgn0015781 | 0.0002558 | 0.403172775 | 3.78E-06 | 1118 | 1 | 0.081991801 | FLYCYC:ARG-PRO-PWY | TRUE | TRUE | TRUE | 3 | 4.369339771 |
+| FBgn0036622 | 0.0074475 | 0.701182988 | 1.10E-05 | 649 | 1 | 0.104689531 | FLYCYC:PWY-7250 | TRUE | TRUE | TRUE | 3 | 4.019647612 |
+| FBgn0030904 | 1.23E-05 | 0.077242734 | 2.22E-07 | 802 | NA | NA | NA | TRUE | TRUE | FALSE | 2 | 3.647713454 |
+| FBgn0034479 | 8.41E-06 | 0.077242734 | 1.68E-06 | 836 | NA | NA | NA | TRUE | TRUE | FALSE | 2 | 3.592379942 |
+| FBgn0038673 | 0.00016703 | 0.403172775 | 3.78E-06 | 1095 | NA | NA | NA | TRUE | TRUE | FALSE | 2 | 3.297738025 |
+| FBgn0038672 | 0.00020019 | 0.403172775 | 3.78E-06 | 1093 | NA | NA | NA | TRUE | TRUE | FALSE | 2 | 3.282008445 |
+| FBgn0027785 | 0.00021915 | 0.403172775 | 3.78E-06 | 1096 | NA | NA | NA | TRUE | TRUE | FALSE | 2 | 3.274148626 |
+| FBgn0038674 | 0.00023806 | 0.403172775 | 3.78E-06 | 1121 | NA | NA | NA | TRUE | TRUE | FALSE | 2 | 3.266959635 |
+| FBgn0053639 | 0.0010174 | 0.701182988 | 2.22E-07 | 792 | NA | NA | NA | TRUE | TRUE | FALSE | 2 | 3.263856505 |
+| FBgn0260779 | 0.00034224 | 0.47947824 | 3.78E-06 | 1154 | NA | NA | NA | TRUE | TRUE | FALSE | 2 | 3.235430768 |
 
 
-### Carbohydrate partitioning and soluble-sugar buffering along BIO6 gradients
 
-In our BIO6 envGWAS, the strongest signals were concentrated in carbohydrate partitioning pathways—starch biosynthesis (PWY-622), sucrose/starch metabolism (PWYQT-4466), and UDP-α-D-glucose biosynthesis (PWY-7343). This is consistent with the hypothesis that accessions originating from environments with colder winters differ in the manner in which they allocate and buffer carbon during cold acclimation. Exposure to low temperature repeatedly triggers metabolic reprogramming that couples starch turnover and sucrose metabolism to the accumulation of soluble sugars, which function as cryoprotectants and osmolytes (Orzechowski et al., 2021).
-
-In potato, short-term chilling rapidly perturbs key control points in starch turnover (e.g., starch-related dikinases), as well as invertase and phosphorylase activities, ultimately resulting in an increase in soluble sugar concentrations. This illustrates how quickly cold stress can redirect carbon flux through the starch↔sucrose↔hexose metabolic system (Orzechowski et al., 2021). Moreover, experimental genetic studies support a functional role of sucrose-biosynthetic capacity in cold tolerance. A cold-induced WRKY transcription factor (CdWRKY2) enhances cold tolerance by upregulating sucrose biosynthesis genes (including SPS) and increasing sucrose levels. The authors relate this mechanism to previous Arabidopsis studies demonstrating that SPS overexpression improves freezing tolerance following cold acclimation (Huang et al., 2022; Strand et al., 2003).
-
-Work in Arabidopsis further indicates that sucrose biosynthesis can represent a kinetic or flux-limiting step that constrains carbon partitioning during cold exposure, and that starch status modulates the temporal dynamics of soluble sugar accumulation over the course of acclimation (Kitashova et al., 2023). Finally, gene-level analyses also provide an explanation for the selective relevance of sucrose/starch pathways. In tomato, a cold-induced cell-wall invertase (SICINV4) represses SUS3, whereas SUS3 overexpression enhances chilling tolerance—directly linking the balance between sucrose cleavage and sucrose synthesis to cold-stress outcomes (Li et al., 2024; Adler et al., 2025). 
-
-These lines of evidence support interpreting our pathway enrichments as signatures of natural variation in a starch–sucrose module that promotes osmotic homeostasis and freezing resistance in colder-winter (low BIO6) climates.
-
-
-**Caveat (important for interpretation):** pigment/cofactor pathways can also track **radiation/photoperiod/latitude** correlated with Bio6, not only temperature per se (Huner et al., 1998). So I’d call these “highly plausible” but potentially **climate-covariate confounded** unless your top genes are clearly cold-response regulators. ([ScienceDirect][2])
+## DISCUSSION
 
 ### Cell wall remodeling and UDP-sugar precursor flux (freeze–dehydration mechanics)
 
@@ -1596,6 +1351,16 @@ XTH19—an xyloglucan endotransglucosylase/hydrolase that modifies xyloglucan cr
 Convergent evidence implicates pectins as a second mechanistic axis. In winter oilseed rape, cold acclimation and subsequent deacclimation are associated with changes in pectin content and methyl-esterification status that co-vary with cell wall mechanical properties and freezing resistance (Solecka et al., 2008). Complementary studies in Arabidopsis demonstrate that cold acclimation elevates levels of pectic β-1,4-galactan, and that genetic or biochemical reduction of galactan content diminishes freezing tolerance, consistent with a role for pectic side-chain fine structure in modulating wall mechanics under low-temperature conditions (Takahashi et al., 2024). These polymer-scale alterations naturally implicate the supply of activated nucleotide sugars. Enrichment of the UDP-galacturonate pathway is aligned with increased flux into uronic-acid/pectin precursors and is supported by the observation that overexpression of UDP-glucose dehydrogenase—responsible for generating UDP-glucuronate, a major upstream donor for wall uronic acids—enhances cold tolerance in Arabidopsis (Li et al., 2017). Similarly, enrichment of UDP-β-L-arabinose biosynthesis is congruent with cold-induced remodeling of rhamnogalacturonan I (RG-I) side chains, including α-1,5-arabinan and arabinogalactan-type motifs, as inferred from temporal cell wall compositional profiling during acclimation and deacclimation (Kutsuno et al., 2023).  
 
 Natural variation along BIO6 climatic gradients likely targets an integrated cell wall mechanics with donor-sugar flux, in which xyloglucan remodeling (mediated by XTHs) and pectin/side-chain composition (uronic acids, arabinan/galactan moieties) act to fine-tune tolerance to freeze-induced dehydration.
+
+### Surface wax-ester flux as a cold-environment signal along BIO6
+
+In our BIO6 environment-GWAS, PWY-5884 (wax esters biosynthesis I) is most parsimoniously interpreted as tagging standing variation in *cuticular wax lipid flux*—i.e., the epidermal “outer lipid barrier” built largely from very-long-chain fatty acids (VLCFAs) and derivatives including **alkanes, ketones, esters, alcohols, and aldehydes**. :conten![Uploading image.png…]()
+tReference[oaicite:0]{index=0} This matters for cold habitats because winter minimum temperature (BIO6) often covaries with **freeze-desiccation regimes** (dry air, wind, and restricted water uptake), where the cuticle can influence both non-stomatal water loss and the physical conditions that govern *when* freezing initiates. Direct Arabidopsis experiments support this mechanism: the wax-deficient **cer3-6** line shows the strongest dehydration sensitivity, whereas the wax overproducer **dewax** shows increased resistance to dehydration and a freezing-avoidance phenotype consistent with later ice nucleation (i.e., freezing exotherms at colder temperatures), implicating hydrophobic long-chain wax fractions (notably C29–C33 alkanes) as functionally important for water-loss control and freeze avoidance rather than “intrinsic survival after freezing.” :contentReference[oaicite:1]{index=1}:contentReference[oaicite:2]{index=2} At the same time, wax composition is itself plastic under cold: in that study, plants were cold-acclimated and leaf-wax changes were explicitly profiled (GC–MS/ATR-FTIR), reinforcing that wax is also a cold-responsive trait. :contentReference[oaicite:3]{index=3} This “wax ↔ cold” link generalizes beyond Arabidopsis: tea accessions show cultivar-structured wax composition and **cold-stress–inducible wax-gene expression** associated with cold tolerance,:contentReference[oaicite:4]{index=4} and rice reproductive-stage cold tolerance requires lipid metabolism that supports surface barriers, with **wax esters identified as cold-responsive lipids** and disruption of wax-ester biosynthesis genes (OsCER1, WSL2) reducing cold tolerance. :contentReference[oaicite:5]{index=5} Consistent with this, cold-stored pear fruits show substantial remodeling of surface wax composition (including alkanes and esters) alongside coordinated changes in wax-related gene expression across cultivars. :contentReference[oaicite:6]{index=6} Taken together, PWY-5884 in the BIO6 GWAS is best viewed as a signal for *barrier-lipid biosynthesis* that can be (i) **selected** along cold gradients because it modulates dehydration and freeze-avoidance phenotypes, and (ii) **induced** by cold acclimation as part of stress-responsive remodeling.
+
+
+
+
+
 
 
 ---
@@ -1653,12 +1418,12 @@ If you paste the **top genes driving** each pathway (or the leading-edge genes f
   https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1004219
 - Liu Y et al. *ACAT: A Fast and Powerful p Value Combination Method for Rare-Variant Analysis in Sequencing Studies*.  The American Journal of Human Genetics (2019).
   https://pubmed.ncbi.nlm.nih.gov/30849328/
-- Zhang H et al. *TFisher: A powerful truncation and weighting procedure for combining p-values*. Annals of Applied Statistics (2020)
+- Zhang H et al. *TFisher: A powerful truncation and weighting procedure for combining $p$-values*. Annals of Applied Statistics (2020)
 https://projecteuclid.org/journals/annals-of-applied-statistics/volume-14/issue-1/TFisher--A-powerful-truncation-and-weighting-procedure-for-combining/10.1214/19-AOAS1302.full
-- Yoon S et al. *Powerful p-value combination methods to detect incomplete association*. Nature (2021)
+- Yoon S et al. *Powerful $p$-value combination methods to detect incomplete association*. Nature (2021)
   https://www.nature.com/articles/s41598-021-86465-y
 - Tippett, L. H. C. *The Methods of Statistics*. London:Williams & Norgate (1931)
-- Westfall, P. H., & Young, S. S. *Resampling-Based Multiple Testing: Examples and Methods for p-Value Adjustment*. New York: Wiley(1993)
+- Westfall, P. H., & Young, S. S. *Resampling-Based Multiple Testing: Examples and Methods for $p$-value Adjustment*. New York: Wiley(1993)
 
 
 ## References (Glyconeogenesis)
