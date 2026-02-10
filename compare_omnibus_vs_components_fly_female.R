@@ -705,33 +705,26 @@ comp_colors <- c(
 comp_names <- c("ACAT", "Fisher", "TFisher", "minP", "Stouffer")
 comp_col_vals <- unname(comp_cols)
 
-# Build rank strip: which component is in each position
-rank_strip_list <- lapply(seq_len(nrow(winner_df)), function(i) {
+# Build rank dataframe: for each pathway, what rank is each component?
+rank_list <- lapply(seq_len(nrow(winner_df)), function(i) {
   pvals <- as.numeric(winner_df[i, comp_col_vals])
-  ord <- order(pvals)
+  ranks <- rank(pvals, ties.method = "first")  # rank 1 = smallest p-value
   data.frame(
     pathway_id = winner_df$pathway_id[i],
-    pos_1 = comp_names[ord[1]],
-    pos_2 = comp_names[ord[2]],
-    pos_3 = comp_names[ord[3]],
-    pos_4 = comp_names[ord[4]],
-    pos_5 = comp_names[ord[5]],
+    component = comp_names,
+    rank = ranks,
     stringsAsFactors = FALSE
   )
 })
-rank_strip_df <- do.call(rbind, rank_strip_list)
-rank_strip_df$pathway_label <- id_to_label[rank_strip_df$pathway_id]
+rank_df <- do.call(rbind, rank_list)
+rank_df$pathway_label <- id_to_label[rank_df$pathway_id]
 
-rank_long <- rank_strip_df %>%
-  pivot_longer(
-    cols = starts_with("pos_"),
-    names_to = "position",
-    values_to = "component"
-  ) %>%
+rank_df <- rank_df %>%
   mutate(
-    pathway_label = factor(pathway_label, levels = rev(pathway_order)),
-    position = factor(position, levels = c("pos_1", "pos_2", "pos_3", "pos_4", "pos_5")),
-    component = factor(component, levels = comp_names)
+    method = factor(component,
+      levels = c("ACAT", "Fisher", "TFisher", "minP", "Stouffer")
+    ),
+    pathway_label = factor(pathway_label, levels = rev(pathway_order))
   )
 
 p_heat2 <- ggplot() +
@@ -745,22 +738,17 @@ p_heat2 <- ggplot() +
     midpoint = sig_line,
     name = expression(-log[10](p))
   ) +
-  new_scale_fill() +
-  geom_tile(
-    data = rank_long,
-    aes(x = position, y = pathway_label, fill = component),
-    width = 0.4, color = "white", linewidth = 0.2
+  geom_text(
+    data = rank_df,
+    aes(x = method, y = pathway_label, label = rank),
+    color = "black", size = 3, fontface = "bold"
   ) +
-  scale_fill_manual(values = comp_colors, name = "Component") +
   scale_x_discrete(
-    limits = c("OMNIBUS", "ACAT", "Fisher", "TFisher", "minP", "Stouffer",
-               "pos_1", "pos_2", "pos_3", "pos_4", "pos_5"),
-    labels = c("OMNIBUS", "ACAT", "Fisher", "TFisher", "minP", "Stouffer",
-               "1", "2", "3", "4", "5")
+    limits = c("OMNIBUS", "ACAT", "Fisher", "TFisher", "minP", "Stouffer")
   ) +
   labs(
-    title = "P-value Heatmap with Ranking Strip (Fly Female)",
-    subtitle = paste0("Right strip: component rank order (1=best, 5=worst) | ", threshold_label),
+    title = "P-value Heatmap with Component Ranks (Fly Female)",
+    subtitle = paste0("Numbers = component rank (1=best, 5=worst) | ", threshold_label),
     x = "Method",
     y = "Pathway"
   ) +
