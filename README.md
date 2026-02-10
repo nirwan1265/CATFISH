@@ -36,7 +36,7 @@ We divide the pathway signals into a set of archetypes that describe different w
 
 ## Archetype I — Sparse Driver Architecture (SDA)
 
-![Archetype I — Sparse Driver Architecture](Figures/Fig0.Archetypes/Fig_archetypesI.png)
+![Archetype I — Sparse Driver Architecture](Figures/Fig1.Archetypes/Fig_archetypesI.png)
 *Archetype I: Sparse Driver Architecture (SDA).*
 
 **Signature:** A small number of genes are extremely significant; most genes look null.
@@ -64,7 +64,7 @@ The aspartate-derived amino-acid biosynthesis pathway converts **aspartate** int
 
 ## Archetype II — Coordinated Moderate Enrichment (CME)
 
-![Archetype II — Coordinated Moderate Enrichment (CME)](Figures/Fig0.Archetypes/Fig_archetypesII.png)
+![Archetype II — Coordinated Moderate Enrichment (CME)](Figures/Fig1.Archetypes/Fig_archetypesII.png)
 *Archetype II — Coordinated Moderate Enrichment (CME)*
 
 
@@ -99,7 +99,7 @@ In CATFISH terminology, this yields a CME pattern. Within a cytokine/immune circ
 
 ## Archetype III — Diffuse Polygenic Shift (DPS)
 
-![Archetype III — Diffuse Polygenic Shift (DPS)](Figures/Fig0.Archetypes/Fig_archetypesIII.png)
+![Archetype III — Diffuse Polygenic Shift (DPS)](Figures/Fig1.Archetypes/Fig_archetypesIII.png)
 *Archetype III — Diffuse Polygenic Shift (DPS)*
 
 
@@ -141,7 +141,7 @@ When examined at the level of an individual pathway (e.g., TGF-β signaling, Hed
 
 ## Archetype IV — Hybrid Driver–Support (HDS)
 
-![Archetype IV — Hybrid Driver–Support (HDS)](Figures/Fig0.Archetypes/Fig_archetypesIV.png)
+![Archetype IV — Hybrid Driver–Support (HDS)](Figures/Fig1.Archetypes/Fig_archetypesIV.png)
 *Archetype IV — Hybrid Driver–Support (HDS)*
 
 
@@ -176,7 +176,7 @@ Translating this biology into gene-level association statistics for an LDL-relat
 
 ## Archetype V — Single-Gene Proxy Pathway (SGP)
 
-![Archetype V — Single-Gene Proxy Pathway (SGP)](Figures/Fig0.Archetypes/Fig_archetypesV.png)
+![Archetype V — Single-Gene Proxy Pathway (SGP)](Figures/Fig1.Archetypes/Fig_archetypesV.png)
 *Archetype V — Single-Gene Proxy Pathway (SGP)*
 
 
@@ -207,7 +207,7 @@ In humans, phenylalanine metabolism is primarily regulated by a singular bottlen
 
 ## Archetype VI — Competitive Enrichment Above Background (CEAB) (OPTIONAL - Not used for CATFISH, just a check)
 
-![Archetype VI — Competitive Enrichment Above Background (CEAB)](Figures/Fig0.Archetypes/Fig_archetypesVI.png)
+![Archetype VI — Competitive Enrichment Above Background (CEAB)](Figures/Fig1.Archetypes/Fig_archetypesVI.png)
 *Archetype VI — Competitive Enrichment Above Background (CEAB)*
 
 
