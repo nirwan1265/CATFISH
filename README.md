@@ -1233,7 +1233,7 @@ We next applied CATFISH to translate gene-level MAGMA association statistics int
 
 To evaluate whether CATFISH’s component pathway tests provide non-redundant information, rather than repeatedly detecting the same pathways, we compared the five component statistics (ACAT, Fisher, TFisher, minP, and Stouffer) using Arabidopsis BIO6 and Drosophila starvation resistance as contrasting case studies. While multiple tests are expected to exhibit overlapping sensitivity to related signal patterns, each method implicitly specifies a distinct enrichment model and may consequently prioritize different classes of pathways.
 
-![Component pathway tests](Figures/Fig5.component_test_arabidopsis_fly/Fig.Compare_component_test_arabidopsis.png)
+![Component pathway tests](Figures/Fig5.component_test_arabidopsis_fly/Fig5.Compare_component_test_arabidopsis.png)
 *Fig. 5 | Component pathway tests capture unique pathway classes despite shared gene-level inputs.  
 (A,B) Overlap among significant pathways detected by ACAT, Fisher, adaptive TFisher, minP, and Stouffer in Arabidopsis (A) and Drosophila (B). TFisher yields the largest number of hits, consistent with adaptive tail selection over a 
 τ-grid.  
