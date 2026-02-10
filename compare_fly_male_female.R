@@ -23,6 +23,35 @@ if (!requireNamespace("patchwork", quietly = TRUE)) {
 library(patchwork)
 
 # ==============================================================================
+# USER PARAMETERS
+# ==============================================================================
+
+# ---------- Significance threshold mode ----------
+# Options: "top_k", "top_pct", "bonferroni", "fdr", "nominal"
+SIG_MODE <- "top_k"
+
+# Parameters for each mode
+TOP_K_PATHWAYS   <- 20      # for SIG_MODE = "top_k"
+TOP_PCT_PATHWAYS <- 5       # for SIG_MODE = "top_pct"
+FDR_THRESHOLD    <- 0.1     # for SIG_MODE = "fdr"
+NOMINAL_ALPHA    <- 0.05    # for SIG_MODE = "nominal"
+# Note: "bonferroni" uses 0.05 / n_pathways automatically
+
+# ==============================================================================
+# Plot Theme
+# ==============================================================================
+
+plot_theme <- theme(
+  plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+  plot.subtitle = element_text(size = 11, hjust = 0.5),
+  axis.title = element_text(size = 12),
+  axis.text = element_text(size = 10),
+  legend.title = element_text(size = 11),
+  legend.text = element_text(size = 10),
+  strip.text = element_text(size = 11, face = "bold")
+)
+
+# ==============================================================================
 # 1. Load Results
 # ==============================================================================
 
@@ -106,39 +135,36 @@ omni_male_common <- omni_male_common[
 
 n_pathways <- length(common_pathways)
 bonferroni_alpha <- 0.05 / n_pathways
-nominal_alpha <- 0.1
 
 cat("\nBonferroni threshold:", format(bonferroni_alpha, digits = 3), "\n")
 
-# Check significance counts for OMNIBUS
-omni_f_bonf <- sum(omni_female_common[[omni_col]] < bonferroni_alpha,
-                   na.rm = TRUE)
-omni_m_bonf <- sum(omni_male_common[[omni_col]] < bonferroni_alpha,
-                   na.rm = TRUE)
-omni_f_nom <- sum(omni_female_common[[omni_col]] < nominal_alpha, na.rm = TRUE)
-omni_m_nom <- sum(omni_male_common[[omni_col]] < nominal_alpha, na.rm = TRUE)
-
-cat("\nOMNIBUS significant (Bonferroni):\n")
-cat("  Female:", omni_f_bonf, "\n")
-cat("  Male:", omni_m_bonf, "\n")
-
-cat("\nOMNIBUS significant (nominal 0.1):\n")
-cat("  Female:", omni_f_nom, "\n")
-cat("  Male:", omni_m_nom, "\n")
-
-# Decide threshold
-if (omni_f_bonf > 0 || omni_m_bonf > 0) {
+# Set threshold based on user parameter SIG_MODE
+if (SIG_MODE == "bonferroni") {
   sig_threshold <- bonferroni_alpha
-  threshold_label <- "Bonferroni"
-} else if (omni_f_nom >= 5 || omni_m_nom >= 5) {
-  sig_threshold <- nominal_alpha
-  threshold_label <- "Nominal (0.1)"
-} else {
+  threshold_label <- paste0("Bonferroni (", format(bonferroni_alpha, digits = 3), ")")
+  top_n_fallback <- NULL
+} else if (SIG_MODE == "fdr") {
+  sig_threshold <- FDR_THRESHOLD
+  threshold_label <- paste0("FDR < ", FDR_THRESHOLD)
+  top_n_fallback <- NULL
+} else if (SIG_MODE == "nominal") {
+  sig_threshold <- NOMINAL_ALPHA
+  threshold_label <- paste0("Nominal (p < ", NOMINAL_ALPHA, ")")
+  top_n_fallback <- NULL
+} else if (SIG_MODE == "top_pct") {
+  # Calculate top X% as number of pathways
+  top_n_fallback <- ceiling(n_pathways * TOP_PCT_PATHWAYS / 100)
   sig_threshold <- NULL
-  threshold_label <- "Top 20"
+  threshold_label <- paste0("Top ", TOP_PCT_PATHWAYS, "% (n=", top_n_fallback, ")")
+} else {
+ # Default: top_k
+  top_n_fallback <- TOP_K_PATHWAYS
+  sig_threshold <- NULL
+  threshold_label <- paste0("Top ", TOP_K_PATHWAYS)
 }
 
-cat("Using threshold:", threshold_label, "\n")
+cat("Using threshold mode:", SIG_MODE, "\n")
+cat("Threshold label:", threshold_label, "\n")
 
 # ==============================================================================
 # 5. Helper Function to Get Significant Pathways
@@ -165,23 +191,26 @@ get_sig_pathways <- function(df, col, threshold = NULL, top_n = 20) {
 # 6. Get Significant Pathways for Each Test x Sex
 # ==============================================================================
 
+# Use top_n_fallback if sig_threshold is NULL (top_k or top_pct mode)
+top_n_to_use <- if (is.null(sig_threshold)) top_n_fallback else 20
+
 # Component tests
 comp_sig_female <- lapply(names(comp_cols), function(m) {
-  get_sig_pathways(omni_female_common, comp_cols[m], sig_threshold, 20)
+  get_sig_pathways(omni_female_common, comp_cols[m], sig_threshold, top_n_to_use)
 })
 names(comp_sig_female) <- names(comp_cols)
 
 comp_sig_male <- lapply(names(comp_cols), function(m) {
-  get_sig_pathways(omni_male_common, comp_cols[m], sig_threshold, 20)
+  get_sig_pathways(omni_male_common, comp_cols[m], sig_threshold, top_n_to_use)
 })
 names(comp_sig_male) <- names(comp_cols)
 
 # OMNIBUS
 omni_sig_female <- get_sig_pathways(
-  omni_female_common, omni_col, sig_threshold, 20
+  omni_female_common, omni_col, sig_threshold, top_n_to_use
 )
 omni_sig_male <- get_sig_pathways(
-  omni_male_common, omni_col, sig_threshold, 20
+  omni_male_common, omni_col, sig_threshold, top_n_to_use
 )
 
 cat("\nSignificant pathways per method:\n")
@@ -249,39 +278,41 @@ jaccard_results$Method <- factor(
 
 jaccard_plot <- ggplot(
   jaccard_results,
-  aes(x = Method, y = Jaccard_Male_vs_Female,
-      fill = Method == "OMNIBUS")
+  aes(x = Method, y = Jaccard_Male_vs_Female, fill = Method)
 ) +
   geom_col(alpha = 0.8) +
   geom_text(
     aes(label = round(Jaccard_Male_vs_Female, 3)),
     vjust = -0.5, size = 4
   ) +
-  scale_fill_manual(
-    values = c("TRUE" = "darkred", "FALSE" = "steelblue"),
-    guide = "none"
-  ) +
+  scale_fill_manual(values = c(
+    "ACAT" = "steelblue",
+    "Fisher" = "steelblue",
+    "TFisher" = "steelblue",
+    "minP" = "steelblue",
+    "Stouffer" = "steelblue",
+    "OMNIBUS" = "darkred"
+  )) +
   labs(
     title = "Male vs Female Agreement: Component Tests vs OMNIBUS",
     subtitle = paste0(
       "Jaccard similarity of significant pathways (", threshold_label, ")"
     ),
-    x = "Method",
-    y = "Jaccard Similarity (Male vs Female)"
+    x = "",
+    y = "Jaccard Similarity"
   ) +
   ylim(0, max(jaccard_results$Jaccard_Male_vs_Female, na.rm = TRUE) * 1.15) +
   theme_minimal() +
+  plot_theme +
   theme(
-    plot.title = element_text(hjust = 0.5),
-    plot.subtitle = element_text(hjust = 0.5),
-    axis.text.x = element_text(angle = 45, hjust = 1)
+    axis.text.x = element_text(angle = 35, hjust = 1, vjust = 1),
+    legend.position = "none"
   )
 
 quartz()
 print(jaccard_plot)
-ggsave("fly_male_female_jaccard.pdf", jaccard_plot, width = 10, height = 6)
-ggsave("fly_male_female_jaccard.png", jaccard_plot, width = 10, height = 6,
-       dpi = 300)
+ggsave("fly_male_female_jaccard.png", jaccard_plot,
+       width = 8, height = 8, dpi = 300, bg = "white")
 
 # ==============================================================================
 # 8. Venn Diagrams: Male vs Female for Each Method
@@ -325,20 +356,17 @@ combined_venn <- (
 ) +
   plot_annotation(
     title = "Male vs Female: Component Tests and OMNIBUS",
-    subtitle = paste0(
-      "Overlap of significant pathways (", threshold_label, ")"
-    ),
+    subtitle = paste0("Overlap of significant pathways (", threshold_label, ")"),
     theme = theme(
-      plot.title = element_text(hjust = 0.5, size = 14),
-      plot.subtitle = element_text(hjust = 0.5)
+      plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+      plot.subtitle = element_text(hjust = 0.5, size = 11)
     )
   )
 
 quartz()
 print(combined_venn)
-ggsave("fly_male_female_venn_all.pdf", combined_venn, width = 14, height = 10)
-ggsave("fly_male_female_venn_all.png", combined_venn, width = 14, height = 10,
-       dpi = 300)
+ggsave("fly_male_female_venn_all.png", combined_venn,
+       width = 14, height = 10, dpi = 300, bg = "white")
 
 # ==============================================================================
 # 9. Spearman Rank Correlation: Male vs Female
@@ -386,33 +414,36 @@ spearman_results$Method <- factor(
 
 spearman_plot <- ggplot(
   spearman_results,
-  aes(x = Method, y = Spearman_Cor, fill = Method == "OMNIBUS")
+  aes(x = Method, y = Spearman_Cor, fill = Method)
 ) +
   geom_col(alpha = 0.8) +
   geom_text(aes(label = round(Spearman_Cor, 3)), vjust = -0.5, size = 4) +
-  scale_fill_manual(
-    values = c("TRUE" = "darkred", "FALSE" = "steelblue"),
-    guide = "none"
-  ) +
+  scale_fill_manual(values = c(
+    "ACAT" = "steelblue",
+    "Fisher" = "steelblue",
+    "TFisher" = "steelblue",
+    "minP" = "steelblue",
+    "Stouffer" = "steelblue",
+    "OMNIBUS" = "darkred"
+  )) +
   labs(
     title = "Male vs Female Rank Correlation: Component Tests vs OMNIBUS",
     subtitle = "Spearman correlation of pathway rankings (all pathways)",
-    x = "Method",
+    x = "",
     y = "Spearman Correlation"
   ) +
   ylim(0, 1) +
   theme_minimal() +
+  plot_theme +
   theme(
-    plot.title = element_text(hjust = 0.5),
-    plot.subtitle = element_text(hjust = 0.5),
-    axis.text.x = element_text(angle = 45, hjust = 1)
+    axis.text.x = element_text(angle = 35, hjust = 1, vjust = 1),
+    legend.position = "none"
   )
 
 quartz()
 print(spearman_plot)
-ggsave("fly_male_female_spearman.pdf", spearman_plot, width = 10, height = 6)
-ggsave("fly_male_female_spearman.png", spearman_plot, width = 10, height = 6,
-       dpi = 300)
+ggsave("fly_male_female_spearman.png", spearman_plot,
+       width = 8, height = 8, dpi = 300, bg = "white")
 
 # ==============================================================================
 # 10. Combined Metrics Plot
@@ -437,7 +468,7 @@ metrics_df$Method <- factor(
 
 metrics_plot <- ggplot(
   metrics_df,
-  aes(x = Method, y = Value, fill = Method == "OMNIBUS")
+  aes(x = Method, y = Value, fill = Method)
 ) +
   geom_col(alpha = 0.8, position = "dodge") +
   geom_text(
@@ -445,30 +476,31 @@ metrics_plot <- ggplot(
     vjust = -0.5, size = 3, position = position_dodge(width = 0.9)
   ) +
   facet_wrap(~Metric, scales = "free_y") +
-  scale_fill_manual(
-    values = c("TRUE" = "darkred", "FALSE" = "steelblue"),
-    name = "",
-    labels = c("Component Test", "OMNIBUS")
-  ) +
+  scale_fill_manual(values = c(
+    "ACAT" = "steelblue",
+    "Fisher" = "steelblue",
+    "TFisher" = "steelblue",
+    "minP" = "steelblue",
+    "Stouffer" = "steelblue",
+    "OMNIBUS" = "darkred"
+  )) +
   labs(
     title = "Male vs Female Agreement: Component Tests vs OMNIBUS",
     subtitle = "Higher values = more agreement between sexes",
-    x = "Method",
+    x = "",
     y = "Value"
   ) +
   theme_minimal() +
+  plot_theme +
   theme(
-    plot.title = element_text(hjust = 0.5),
-    plot.subtitle = element_text(hjust = 0.5),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    legend.position = "bottom"
+    axis.text.x = element_text(angle = 35, hjust = 1, vjust = 1),
+    legend.position = "none"
   )
 
 quartz()
 print(metrics_plot)
-ggsave("fly_male_female_metrics.pdf", metrics_plot, width = 12, height = 6)
-ggsave("fly_male_female_metrics.png", metrics_plot, width = 12, height = 6,
-       dpi = 300)
+ggsave("fly_male_female_metrics.png", metrics_plot,
+       width = 12, height = 6, dpi = 300, bg = "white")
 
 # ==============================================================================
 # 11. Consensus Pathways: Found by OMNIBUS in BOTH Male and Female
@@ -483,34 +515,211 @@ cat("Pathways significant in BOTH male and female by OMNIBUS:\n")
 cat("n =", length(omni_consensus), "\n\n")
 
 if (length(omni_consensus) > 0) {
-  consensus_df <- omni_female_common[
-    omni_female_common$pathway_id %in% omni_consensus,
-    c("pathway_id", "pathway_name")
-  ]
+  # Get row indices for consensus pathways
+ female_idx <- match(omni_consensus, omni_female_common$pathway_id)
+  male_idx <- match(omni_consensus, omni_male_common$pathway_id)
 
-  # Add p-values from both
-  consensus_df$omni_p_female <- omni_female_common[[omni_col]][
-    match(consensus_df$pathway_id, omni_female_common$pathway_id)
-  ]
-  consensus_df$omni_p_male <- omni_male_common[[omni_col]][
-    match(consensus_df$pathway_id, omni_male_common$pathway_id)
-  ]
+  # Build comprehensive consensus dataframe
+  consensus_df <- data.frame(
+    pathway_id = omni_consensus,
+    pathway_name = omni_female_common$pathway_name[female_idx],
+    stringsAsFactors = FALSE
+  )
 
-  consensus_df <- consensus_df[order(consensus_df$omni_p_female), ]
+  # Add gene counts if available
+  if ("n_genes" %in% names(omni_female_common)) {
+    consensus_df$n_genes_female <- omni_female_common$n_genes[female_idx]
+    consensus_df$n_genes_male <- omni_male_common$n_genes[male_idx]
+  }
 
+  # Add gene names if available
+  if ("gene_names" %in% names(omni_female_common)) {
+    consensus_df$genes_female <- omni_female_common$gene_names[female_idx]
+    consensus_df$genes_male <- omni_male_common$gene_names[male_idx]
+  }
+
+  # Add OMNIBUS p-values
+  consensus_df$omni_p_female <- omni_female_common[[omni_col]][female_idx]
+  consensus_df$omni_p_male <- omni_male_common[[omni_col]][male_idx]
+
+  # Add component test p-values for both sexes
+  for (m in names(comp_cols)) {
+    col <- comp_cols[m]
+    if (col %in% names(omni_female_common)) {
+      consensus_df[[paste0(m, "_p_female")]] <-
+        omni_female_common[[col]][female_idx]
+      consensus_df[[paste0(m, "_p_male")]] <-
+        omni_male_common[[col]][male_idx]
+    }
+  }
+
+  # Sort by average OMNIBUS p-value
+  consensus_df$avg_omni_p <- (consensus_df$omni_p_female +
+                               consensus_df$omni_p_male) / 2
+  consensus_df <- consensus_df[order(consensus_df$avg_omni_p), ]
+  consensus_df$avg_omni_p <- NULL  # Remove helper column
+
+  # Print summary
   for (i in seq_len(nrow(consensus_df))) {
     cat(
       i, ". ", consensus_df$pathway_id[i], "\n",
       "   ", consensus_df$pathway_name[i], "\n",
       "   Female p: ", format(consensus_df$omni_p_female[i], digits = 3),
-      " | Male p: ", format(consensus_df$omni_p_male[i], digits = 3), "\n\n",
+      " | Male p: ", format(consensus_df$omni_p_male[i], digits = 3), "\n",
       sep = ""
     )
+    if ("n_genes_female" %in% names(consensus_df)) {
+      cat("   Genes (F/M): ", consensus_df$n_genes_female[i], "/",
+          consensus_df$n_genes_male[i], "\n", sep = "")
+    }
+    cat("\n")
   }
 
   write.csv(consensus_df, "fly_omnibus_consensus_pathways.csv",
             row.names = FALSE)
   cat("Saved to fly_omnibus_consensus_pathways.csv\n")
+
+  # ---------- Create figure for consensus pathways ----------
+
+  # Prepare data for plotting - OMNIBUS comparison
+  consensus_plot_df <- consensus_df %>%
+    mutate(
+      pathway_label = ifelse(
+        nchar(pathway_name) > 40,
+        paste0(substr(pathway_name, 1, 37), "..."),
+        pathway_name
+      )
+    ) %>%
+    select(pathway_id, pathway_label, omni_p_female, omni_p_male) %>%
+    pivot_longer(
+      cols = c(omni_p_female, omni_p_male),
+      names_to = "Sex",
+      values_to = "pvalue"
+    ) %>%
+    mutate(
+      Sex = ifelse(Sex == "omni_p_female", "Female", "Male"),
+      neg_log10_p = -log10(pvalue)
+    )
+
+  # Order pathways by average -log10(p)
+  pathway_order <- consensus_plot_df %>%
+    group_by(pathway_label) %>%
+    summarize(avg_p = mean(neg_log10_p), .groups = "drop") %>%
+    arrange(desc(avg_p)) %>%
+    pull(pathway_label)
+
+  consensus_plot_df$pathway_label <- factor(
+    consensus_plot_df$pathway_label,
+    levels = rev(pathway_order)
+  )
+
+  # Dot plot comparing male vs female OMNIBUS p-values
+  consensus_dot_plot <- ggplot(
+    consensus_plot_df,
+    aes(x = neg_log10_p, y = pathway_label, color = Sex, shape = Sex)
+  ) +
+    geom_point(size = 4, alpha = 0.8) +
+    geom_line(
+      aes(group = pathway_label),
+      color = "gray60", linewidth = 0.5, alpha = 0.5
+    ) +
+    geom_vline(
+      xintercept = -log10(0.05),
+      linetype = "dashed", color = "gray50"
+    ) +
+    scale_color_manual(values = c("Female" = "hotpink", "Male" = "steelblue")) +
+    scale_shape_manual(values = c("Female" = 16, "Male" = 17)) +
+    labs(
+      title = "Consensus Pathways: Male vs Female OMNIBUS P-values",
+      subtitle = paste0(
+        "Pathways significant in both sexes (", threshold_label, ")"
+      ),
+      x = expression(-log[10](OMNIBUS~p)),
+      y = ""
+    ) +
+    theme_minimal() +
+    plot_theme +
+    theme(
+      legend.position = "bottom",
+      axis.text.y = element_text(size = 9)
+    )
+
+  quartz()
+  print(consensus_dot_plot)
+  ggsave("fly_consensus_pathways_comparison.png", consensus_dot_plot,
+         width = 10, height = max(6, nrow(consensus_df) * 0.4),
+         dpi = 300, bg = "white")
+
+  # ---------- Heatmap of all methods for consensus pathways ----------
+
+  # Reshape for heatmap - include all component tests
+  consensus_heatmap_df <- consensus_df %>%
+    mutate(
+      pathway_label = ifelse(
+        nchar(pathway_name) > 35,
+        paste0(substr(pathway_name, 1, 32), "..."),
+        pathway_name
+      )
+    ) %>%
+    select(pathway_id, pathway_label,
+           omni_p_female, omni_p_male,
+           starts_with("ACAT_"), starts_with("Fisher_"),
+           starts_with("TFisher_"), starts_with("minP_"),
+           starts_with("Stouffer_")) %>%
+    pivot_longer(
+      cols = -c(pathway_id, pathway_label),
+      names_to = "Method_Sex",
+      values_to = "pvalue"
+    ) %>%
+    mutate(
+      Sex = ifelse(grepl("female", Method_Sex), "Female", "Male"),
+      Method = gsub("_p_(female|male)", "", Method_Sex),
+      Method = gsub("omni", "OMNIBUS", Method),
+      neg_log10_p = -log10(pvalue)
+    )
+
+  # Order pathways
+  consensus_heatmap_df$pathway_label <- factor(
+    consensus_heatmap_df$pathway_label,
+    levels = rev(pathway_order)
+  )
+
+  consensus_heatmap_df$Method <- factor(
+    consensus_heatmap_df$Method,
+    levels = c("OMNIBUS", "ACAT", "Fisher", "TFisher", "minP", "Stouffer")
+  )
+
+  consensus_heatmap <- ggplot(
+    consensus_heatmap_df,
+    aes(x = interaction(Method, Sex, sep = "\n"),
+        y = pathway_label, fill = neg_log10_p)
+  ) +
+    geom_tile(color = "white", linewidth = 0.3) +
+    scale_fill_gradient2(
+      low = "white", mid = "steelblue", high = "darkred",
+      midpoint = -log10(0.05),
+      name = expression(-log[10](p))
+    ) +
+    labs(
+      title = "Consensus Pathways: All Methods by Sex",
+      subtitle = paste0(
+        "Pathways significant in both sexes (", threshold_label, ")"
+      ),
+      x = "",
+      y = ""
+    ) +
+    theme_minimal() +
+    plot_theme +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+      axis.text.y = element_text(size = 9)
+    )
+
+  quartz()
+  print(consensus_heatmap)
+  ggsave("fly_consensus_pathways_heatmap.png", consensus_heatmap,
+         width = 12, height = max(6, nrow(consensus_df) * 0.5),
+         dpi = 300, bg = "white")
 }
 
 # ==============================================================================
@@ -640,23 +849,21 @@ heatmap_plot <- ggplot(
   ) +
   labs(
     title = "P-value Comparison: Male vs Female Across All Methods",
-    subtitle = "Top pathways from either sex",
+    subtitle = paste0("Top pathways from either sex (", threshold_label, ")"),
     x = "Method (Sex)",
     y = "Pathway"
   ) +
   theme_minimal() +
+  plot_theme +
   theme(
-    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 7),
-    axis.text.y = element_text(size = 7),
-    plot.title = element_text(hjust = 0.5),
-    plot.subtitle = element_text(hjust = 0.5)
+    axis.text.x = element_text(angle = 0, hjust = 0.5, size = 8),
+    axis.text.y = element_text(size = 8)
   )
 
 quartz()
 print(heatmap_plot)
-ggsave("fly_male_female_heatmap.pdf", heatmap_plot, width = 16, height = 10)
-ggsave("fly_male_female_heatmap.png", heatmap_plot, width = 16, height = 10,
-       dpi = 300)
+ggsave("fly_male_female_heatmap.png", heatmap_plot,
+       width = 16, height = 10, dpi = 300, bg = "white")
 
 # ==============================================================================
 # 14. Summary Statistics
@@ -710,9 +917,11 @@ if (omni_vs_comp_jaccard > 0) {
 
 cat("\n========== DONE ==========\n")
 cat("Output files:\n")
-cat("  - fly_male_female_jaccard.pdf/png\n")
-cat("  - fly_male_female_venn_all.pdf/png\n")
-cat("  - fly_male_female_spearman.pdf/png\n")
-cat("  - fly_male_female_metrics.pdf/png\n")
-cat("  - fly_male_female_heatmap.pdf/png\n")
+cat("  - fly_male_female_jaccard.png\n")
+cat("  - fly_male_female_venn_all.png\n")
+cat("  - fly_male_female_spearman.png\n")
+cat("  - fly_male_female_metrics.png\n")
+cat("  - fly_male_female_heatmap.png\n")
 cat("  - fly_omnibus_consensus_pathways.csv\n")
+cat("  - fly_consensus_pathways_comparison.png\n")
+cat("  - fly_consensus_pathways_heatmap.png\n")

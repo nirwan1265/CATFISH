@@ -383,19 +383,19 @@ gene_evidence <- magma_gene %>%
 # 6. Summary Statistics
 # ==============================================================================
 
-cat("\n\nHit counts per layer:\n")
-cat(" ", gwas_label, ":",
-    sum(gene_evidence$hit_gwas, na.rm = TRUE), "\n")
-cat(" ", magma_label, ":",
-    sum(gene_evidence$hit_magma, na.rm = TRUE), "\n")
-cat(" ", pathway_label, ":",
-    sum(gene_evidence$hit_pathway, na.rm = TRUE), "\n")
+# cat("\n\nHit counts per layer:\n")
+# cat(" ", gwas_label, ":",
+#     sum(gene_evidence$hit_gwas, na.rm = TRUE), "\n")
+# cat(" ", magma_label, ":",
+#     sum(gene_evidence$hit_magma, na.rm = TRUE), "\n")
+# cat(" ", pathway_label, ":",
+#     sum(gene_evidence$hit_pathway, na.rm = TRUE), "\n")
 
-cat("\nMulti-layer support:\n")
-for (n in 0:3) {
-  count <- sum(gene_evidence$support_layers == n, na.rm = TRUE)
-  cat("  ", n, " layers:", count, "\n")
-}
+# cat("\nMulti-layer support:\n")
+# for (n in 0:3) {
+#   count <- sum(gene_evidence$support_layers == n, na.rm = TRUE)
+#   cat("  ", n, " layers:", count, "\n")
+# }
 
 # ==============================================================================
 # 7. UpSet Plot
@@ -552,35 +552,61 @@ ggsave("pathway_gene_enrichment_density_fly_female.png", density_plot,
 # 10. Scatter Plot: GWAS vs MAGMA
 # ==============================================================================
 
+# Calculate MAGMA p-value threshold for plotting (handle FDR mode)
+if (MAGMA_MODE == "top_pct") {
+  magma_p_threshold <- magma_eff_threshold
+} else {
+  # For FDR mode, find p-value corresponding to FDR threshold
+  magma_p_threshold <- max(
+    gene_evidence$magma_p[gene_evidence$magma_fdr < MAGMA_FDR_THRESHOLD],
+    na.rm = TRUE
+  )
+}
+
 scatter_df <- gene_evidence %>%
   filter(!is.na(gwas_min_p) & !is.na(magma_p)) %>%
   mutate(
     highlight = case_when(
-      hit_gwas & hit_magma & hit_pathway ~ "All 3 layers",
-      (hit_gwas | hit_magma) & hit_pathway ~ "2 layers + Pathway",
-      hit_gwas & hit_magma ~ "GWAS + MAGMA only",
-      hit_pathway ~ "Pathway only",
-      TRUE ~ "None significant"
+      hit_gwas & hit_magma & hit_pathway ~ "All 3",
+      hit_gwas & hit_pathway & !hit_magma ~ "GWAS + Pathway",
+      hit_magma & hit_pathway & !hit_gwas ~ "MAGMA + Pathway",
+      hit_gwas & hit_magma & !hit_pathway ~ "GWAS + MAGMA",
+      hit_gwas & !hit_magma & !hit_pathway ~ "GWAS only",
+      hit_magma & !hit_gwas & !hit_pathway ~ "MAGMA only",
+      hit_pathway & !hit_gwas & !hit_magma ~ "Pathway only",
+      TRUE ~ "None"
     ),
     highlight = factor(highlight, levels = c(
-      "All 3 layers", "2 layers + Pathway", "GWAS + MAGMA only",
-      "Pathway only", "None significant"
-    ))
+      "All 3", "GWAS + Pathway", "MAGMA + Pathway", "GWAS + MAGMA",
+      "GWAS only", "MAGMA only", "Pathway only", "None"
+    )),
+    point_size = ifelse(highlight == "None", 2, 4)
   )
 
 scatter_plot <- ggplot(
   scatter_df,
-  aes(x = -log10(gwas_min_p), y = -log10(magma_p), color = highlight)
+  aes(x = -log10(gwas_min_p), y = -log10(magma_p),
+      color = highlight, size = point_size)
 ) +
-  geom_point(alpha = 0.6, size = 2) +
-  geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "gray50") +
-  geom_vline(xintercept = 4, linetype = "dashed", color = "gray50") +
+  geom_point(alpha = 0.6) +
+  scale_size_identity() +
+  geom_hline(
+    yintercept = -log10(magma_p_threshold),
+    linetype = "dashed", color = "gray50"
+  ) +
+  geom_vline(
+    xintercept = -log10(gwas_eff_threshold),
+    linetype = "dashed", color = "gray50"
+  ) +
   scale_color_manual(values = c(
-    "All 3 layers" = "red",
-    "2 layers + Pathway" = "orange",
-    "GWAS + MAGMA only" = "purple",
+    "All 3" = "red",
+    "GWAS + Pathway" = "hotpink",
+    "MAGMA + Pathway" = "darkcyan",
+    "GWAS + MAGMA" = "purple",
+    "GWAS only" = "orange",
+    "MAGMA only" = "navy",
     "Pathway only" = "forestgreen",
-    "None significant" = "gray70"
+    "None" = "gray80"
   )) +
   labs(
     title = "GWAS vs MAGMA Evidence (Fly Female)",
@@ -592,7 +618,7 @@ scatter_plot <- ggplot(
   theme(legend.position = "right") + plot_theme +
   guides(
     color = guide_legend(
-      nrow = 3, ncol = 2, byrow = TRUE,
+      nrow = 4, ncol = 2, byrow = TRUE,
       override.aes = list(size = 4, alpha = 1)
     )
   )
@@ -672,21 +698,32 @@ if (nrow(core_genes) > 0) {
 # 13. Summary Visualization
 # ==============================================================================
 
+# Create summary bar chart with same categories as scatter plot
 summary_counts <- data.frame(
   Category = c(
-    gwas_label, magma_label, pathway_label,
-    "2+ layers", "All 3 layers"
+    "All 3",
+    "GWAS + Pathway",
+    "MAGMA + Pathway",
+    "GWAS + MAGMA",
+    "GWAS only",
+    "MAGMA only",
+    "Pathway only"
   ),
   Count = c(
-    sum(gene_evidence$hit_gwas, na.rm = TRUE),
-    sum(gene_evidence$hit_magma, na.rm = TRUE),
-    sum(gene_evidence$hit_pathway, na.rm = TRUE),
-    sum(gene_evidence$support_layers >= 2, na.rm = TRUE),
-    sum(gene_evidence$support_layers >= 3, na.rm = TRUE)
-  ),
-  Type = c(
-    "Single Layer", "Single Layer", "Single Layer",
-    "Multi-Layer", "Multi-Layer"
+    sum(gene_evidence$hit_gwas & gene_evidence$hit_magma &
+          gene_evidence$hit_pathway, na.rm = TRUE),
+    sum(gene_evidence$hit_gwas & gene_evidence$hit_pathway &
+          !gene_evidence$hit_magma, na.rm = TRUE),
+    sum(gene_evidence$hit_magma & gene_evidence$hit_pathway &
+          !gene_evidence$hit_gwas, na.rm = TRUE),
+    sum(gene_evidence$hit_gwas & gene_evidence$hit_magma &
+          !gene_evidence$hit_pathway, na.rm = TRUE),
+    sum(gene_evidence$hit_gwas & !gene_evidence$hit_magma &
+          !gene_evidence$hit_pathway, na.rm = TRUE),
+    sum(gene_evidence$hit_magma & !gene_evidence$hit_gwas &
+          !gene_evidence$hit_pathway, na.rm = TRUE),
+    sum(gene_evidence$hit_pathway & !gene_evidence$hit_gwas &
+          !gene_evidence$hit_magma, na.rm = TRUE)
   )
 )
 
@@ -695,32 +732,24 @@ summary_counts$Category <- factor(
   levels = summary_counts$Category
 )
 
-# summary_bar <- ggplot(summary_counts, aes(x = Category, y = Count, fill = Type)) +
-#   geom_col(alpha = 0.8) +
-#   geom_text(aes(label = Count), vjust = -0.5, size = 4) +
-#   scale_fill_manual(values = c("Single Layer" = "steelblue",
-#                                "Multi-Layer" = "darkred")) +
-#   labs(x = "", y = "Number of Genes") +
-#   theme_minimal() +
-#   theme(
-#     axis.text.x = element_text(angle = 45, hjust = 1),
-#     legend.position = "bottom",
-#     legend.title = element_blank()
-#   ) +
-#   ylim(0, max(summary_counts$Count) * 1.15) + plot_theme
-
-summary_bar <- ggplot(summary_counts, aes(x = Category, y = Count, fill = Type)) +
+summary_bar <- ggplot(summary_counts, aes(x = Category, y = Count, fill = Category)) +
   geom_col(alpha = 0.8) +
   geom_text(aes(label = Count), vjust = -0.5, size = 4) +
-  scale_fill_manual(values = c("Single Layer" = "steelblue",
-                               "Multi-Layer" = "darkred")) +
+  scale_fill_manual(values = c(
+    "All 3" = "red",
+    "GWAS + Pathway" = "hotpink",
+    "MAGMA + Pathway" = "darkcyan",
+    "GWAS + MAGMA" = "purple",
+    "GWAS only" = "orange",
+    "MAGMA only" = "navy",
+    "Pathway only" = "forestgreen"
+  )) +
   labs(x = "", y = "Number of Genes") +
   theme_minimal() +
   plot_theme +
   theme(
-    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
-    legend.position = "bottom",
-    legend.title = element_blank()
+    axis.text.x = element_text(angle = 35, hjust = 1, vjust = 1),
+    legend.position = "none"
   ) +
   ylim(0, max(summary_counts$Count) * 1.15)
 
@@ -734,59 +763,59 @@ ggsave("candidate_genes_summary_fly_female.png", summary_bar,
 # 14. Final Summary
 # ==============================================================================
 
-cat("\n\n")
-cat(strrep("=", 70), "\n")
-cat("FINAL SUMMARY: Candidate Gene Analysis (Fly Female)\n")
-cat(strrep("=", 70), "\n\n")
+# cat("\n\n")
+# cat(strrep("=", 70), "\n")
+# cat("FINAL SUMMARY: Candidate Gene Analysis (Fly Female)\n")
+# cat(strrep("=", 70), "\n\n")
 
-cat("Analysis Parameters:\n")
-cat("  - SNP-to-gene window:", WINDOW_SIZE / 1000, "kb\n")
-if (GWAS_MODE == "top_pct") {
-  cat("  - GWAS: top", GWAS_TOP_PCT, "% of genes\n")
-} else {
-  cat("  - GWAS: p <", GWAS_P_THRESHOLD, "\n")
-}
-if (MAGMA_MODE == "top_pct") {
-  cat("  - MAGMA: top", MAGMA_TOP_PCT, "% of genes\n")
-} else {
-  cat("  - MAGMA: FDR <", MAGMA_FDR_THRESHOLD, "\n")
-}
-if (PATHWAY_MODE == "fdr") {
-  cat("  - Pathways: FDR <", PATHWAY_FDR_THRESHOLD,
-      "(n =", n_pathways_used, ")\n")
-} else {
-  cat("  - Pathways: top", TOP_K_PATHWAYS, "\n")
-}
-cat("  - Gene universe (MAGMA-tested):", nrow(magma_gene), "\n\n")
+# cat("Analysis Parameters:\n")
+# cat("  - SNP-to-gene window:", WINDOW_SIZE / 1000, "kb\n")
+# if (GWAS_MODE == "top_pct") {
+#   cat("  - GWAS: top", GWAS_TOP_PCT, "% of genes\n")
+# } else {
+#   cat("  - GWAS: p <", GWAS_P_THRESHOLD, "\n")
+# }
+# if (MAGMA_MODE == "top_pct") {
+#   cat("  - MAGMA: top", MAGMA_TOP_PCT, "% of genes\n")
+# } else {
+#   cat("  - MAGMA: FDR <", MAGMA_FDR_THRESHOLD, "\n")
+# }
+# if (PATHWAY_MODE == "fdr") {
+#   cat("  - Pathways: FDR <", PATHWAY_FDR_THRESHOLD,
+#       "(n =", n_pathways_used, ")\n")
+# } else {
+#   cat("  - Pathways: top", TOP_K_PATHWAYS, "\n")
+# }
+# cat("  - Gene universe (MAGMA-tested):", nrow(magma_gene), "\n\n")
 
-cat("Evidence Layer Summary:\n")
-cat(" ", gwas_label, ":",
-    sum(gene_evidence$hit_gwas, na.rm = TRUE), "genes\n")
-cat(" ", magma_label, ":",
-    sum(gene_evidence$hit_magma, na.rm = TRUE), "genes\n")
-cat(" ", pathway_label, ":",
-    sum(gene_evidence$hit_pathway, na.rm = TRUE), "genes\n\n")
+# cat("Evidence Layer Summary:\n")
+# cat(" ", gwas_label, ":",
+#     sum(gene_evidence$hit_gwas, na.rm = TRUE), "genes\n")
+# cat(" ", magma_label, ":",
+#     sum(gene_evidence$hit_magma, na.rm = TRUE), "genes\n")
+# cat(" ", pathway_label, ":",
+#     sum(gene_evidence$hit_pathway, na.rm = TRUE), "genes\n\n")
 
-cat("Multi-Layer Support:\n")
-cat("  Supported by 2+ layers:",
-    sum(gene_evidence$support_layers >= 2, na.rm = TRUE), "genes\n")
-cat("  Supported by all 3 layers:",
-    sum(gene_evidence$support_layers >= 3, na.rm = TRUE), "genes\n\n")
+# cat("Multi-Layer Support:\n")
+# cat("  Supported by 2+ layers:",
+#     sum(gene_evidence$support_layers >= 2, na.rm = TRUE), "genes\n")
+# cat("  Supported by all 3 layers:",
+#     sum(gene_evidence$support_layers >= 3, na.rm = TRUE), "genes\n\n")
 
-hidden_count <- sum(gene_evidence$hit_pathway & !gene_evidence$hit_magma,
-                    na.rm = TRUE)
-cat("Key Finding:\n")
-cat("  ", hidden_count, " genes are in significant pathways but NOT individually\n")
-cat("  significant by", magma_label, ".\n\n")
+# hidden_count <- sum(gene_evidence$hit_pathway & !gene_evidence$hit_magma,
+#                     na.rm = TRUE)
+# cat("Key Finding:\n")
+# cat("  ", hidden_count, " genes are in significant pathways but NOT individually\n")
+# cat("  significant by", magma_label, ".\n\n")
 
-cat("Pathway Gene Enrichment:\n")
-cat("  Wilcoxon test p-value:", format(wilcox_result$p.value, digits = 4), "\n")
+# cat("Pathway Gene Enrichment:\n")
+# cat("  Wilcoxon test p-value:", format(wilcox_result$p.value, digits = 4), "\n")
 
-cat("\n========== DONE (Fly Female) ==========\n")
-cat("Output files:\n")
-cat("  - candidate_genes_top200_fly_female.csv\n")
-cat("  - candidate_genes_upset_fly_female.png\n")
-cat("  - pathway_gene_enrichment_density_fly_female.png\n")
-cat("  - gwas_vs_magma_scatter_fly_female.png\n")
-cat("  - candidate_genes_summary_fly_female.png\n")
+# cat("\n========== DONE (Fly Female) ==========\n")
+# cat("Output files:\n")
+# cat("  - candidate_genes_top200_fly_female.csv\n")
+# cat("  - candidate_genes_upset_fly_female.png\n")
+# cat("  - pathway_gene_enrichment_density_fly_female.png\n")
+# cat("  - gwas_vs_magma_scatter_fly_female.png\n")
+# cat("  - candidate_genes_summary_fly_female.png\n")
 
