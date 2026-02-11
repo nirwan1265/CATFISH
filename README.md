@@ -785,7 +785,7 @@ $$
 T_{\mathrm{omni,ACAT}}(S)=\sum_{j=1}^{K} v_j \tan\!\bigl(\pi(0.5 - p_j)\bigr),\qquad p_{\mathrm{omni,ACAT}}(S) = 0.5 - \frac{1}{\pi} \arctan\!\bigl(T_{\mathrm{omni,ACAT}}(S)\bigr)
 $$
 
-The ACAT-O layer has heightened sensitivity when at least one component test demonstrates great significance, regardless of the modest performance of other components (e.g., sparse drivers, coordinated enrichment, hybrid subsets).
+We recommend using ACAT-O to combine component tests because it provides a stable evidence-integration rule under correlated inputs, allowing multiple modest signals to jointly support significance, whereas a minP-based combination (explained below) is effectively determined by the single smallest component p-value and is therefore more sensitive to noise or miscalibration in any one component.
 
 ---
 
