@@ -699,7 +699,7 @@ $$
 
 The observed omnibus $$p_{\mathrm{omni}}^{\mathrm{obs}}(S)$$ is then calibrated against \[p<sub>omni</sub><sup>(b)</sup>(S)]<sub>b=1..B</sub> using the same tail-probability mapping, yielding p̂<sub>omni</sub>(S). In this mode, component MVN $p$-values p̂<sub>j</sub>(S) may still be reported for diagnostics, but they are **not** used to construct the final omnibus (explained in more detail in section 5).
 
-**(ii) `mvn_calibrate_components = TRUE` (component-calibrated omnibus with joint MVN calibration). 
+**(ii) `mvn_calibrate_components = TRUE` (component-calibrated omnibus with joint MVN calibration).**
 CATFISH first converts each component to the MVN-calibrated scale $$\hat p_j(S)$$ via the equation above, and forms a component-calibrated observed omnibus
 
 $$
