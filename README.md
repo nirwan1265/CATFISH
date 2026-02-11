@@ -2,6 +2,7 @@
 
 ## Table of Contents
 
+- [**ABSTRACT**](#abstract)
 - [**INTRODUCTION**](#introduction)
   - [Why multiple tests are needed](#why-multiple-tests-are-needed)
 - [**Pathway signal archetypes**](#pathway-signal-archetypes)
@@ -65,6 +66,11 @@
 - [**References**](#references)
 
 ---
+
+## ABSTRACT
+
+CATFISH is a multi-test pathway analysis framework that extends linkage disequilibrium (LD)-aware MAGMA gene-level association statistics to enable robust and interpretable gene-set inference across diverse genetic architectures. Using MAGMA-derived gene-level p-values and/or Z statistics as input, CATFISH evaluates a suite of complementary pathway-level tests including, ACAT, Fisher’s method, adaptive soft TFisher, minP, and Stouffer’s method, each of which is designed to be sensitive to distinct enrichment patterns. The resulting component-wise test statistics are subsequently integrated via an omnibus ACAT-based or minP-based combination. To ensure valid statistical inference in the presence of substantial correlation both among the component tests and among genes within pathways, CATFISH employs multivariate normal (MVN)-based null calibration that leverages the MAGMA-estimated gene–gene correlation structure. This approach mitigates the anti-conservative behavior frequently observed with naïve analytic or independence-assuming combination procedures. Extensive simulation studies across heterogeneous LD structures and under controlled “missing-correlation” stress-test scenarios demonstrate that MVN-based calibration maintains genomic control and type-I error rates at nominal levels for both the individual component tests and the omnibus procedure, whereas analytic fallback approximations can exhibit pronounced miscalibration. Power analyses under dense, weak, mixed-direction, and sparse alternative hypotheses indicate that no single constituent test is uniformly optimal across all scenarios. In contrast, the omnibus procedure achieves consistently high sensitivity over this spectrum of alternatives, while preserving interpretability. When applied to Arabidopsis and Drosophila genome-wide association studies (GWAS), CATFISH highlights biologically coherent pathways and facilitates downstream candidate-gene prioritization by integrating evidence across GWAS loci, MAGMA gene-level significance, and pathway annotations, thereby providing a practical end-to-end workflow for genetic discovery and mechanistic interpretation.
+
 
 ## INTRODUCTION
 
