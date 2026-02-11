@@ -82,6 +82,9 @@ CATFISH uses:
 2. **Multiple gene → pathway combination tests** (ACAT, Fisher, soft TFisher, Stouffer, minP).
 3. A **correlation-robust LD-aware omnibus test** (permutation-calibrated second minP and ACAT test) that aggregates these tests into a single pathway-level $p$-value.
 
+The CATFISH pipeline is explained by the figure below:
+![CATFISH pipeline](Figures/Fig0.Pipeline/Fig0.CATFISH_pipeline.jpeg)
+
 ### Why multiple tests are needed
 
 Pathways can be significant for statistically different reasons:
