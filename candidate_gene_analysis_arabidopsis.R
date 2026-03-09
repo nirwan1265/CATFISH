@@ -45,7 +45,7 @@ GWAS_TOP_PCT        <- 1           # top X% of genes (GWAS_MODE="top_pct")
 # ---------- MAGMA layer ----------
 MAGMA_MODE          <- "top_pct"   # "threshold" or "top_pct"
 MAGMA_FDR_THRESHOLD <- 0.005       # FDR cutoff (MAGMA_MODE="threshold")
-MAGMA_TOP_PCT       <- 5           # top X% of genes (MAGMA_MODE="top_pct")
+MAGMA_TOP_PCT       <- 1           # top X% of genes (MAGMA_MODE="top_pct")
 
 # ---------- Pathway layer ----------
 PATHWAY_MODE          <- "top_k"   # "top_k" or "fdr"
@@ -457,7 +457,12 @@ mutate(
   score = (hit_gwas * 1) + (hit_magma * 1) + (hit_pathway * 1) +
     0.2 * ifelse(!is.na(magma_p), -log10(magma_p), 0) +
     0.1 * ifelse(!is.na(gwas_min_p), -log10(gwas_min_p), 0) +
-    0.1 * ifelse(!is.na(best_pathway_p), -log10(best_pathway_p), 0)
+    0.1 * ifelse(!is.na(best_pathway_p), -log10(best_pathway_p), 0),
+  # Rank within each evidence layer (lower p = better rank)
+  gwas_rank = ifelse(is.na(gwas_min_p), NA_integer_, min_rank(gwas_min_p)),
+  magma_rank = ifelse(is.na(magma_p), NA_integer_, min_rank(magma_p)),
+  pathway_rank = ifelse(is.na(best_pathway_p), NA_integer_,
+                        min_rank(best_pathway_p))
 ) %>%
 arrange(desc(score))
 
@@ -574,14 +579,15 @@ cat(
 
 # Save full table
 write.csv(
-gene_evidence %>%
-  select(GENE, magma_p, magma_fdr, gwas_min_p, gwas_n_snps,
-         n_top_pathways, best_pathway_p, pathways,
-         hit_gwas, hit_magma, hit_pathway,
-         support_layers, score) %>%
-  head(200),
-"candidate_genes_top200_arabidopsis.csv",
-row.names = FALSE
+  gene_evidence %>%
+    select(GENE, magma_p, magma_fdr, magma_rank,
+           gwas_min_p, gwas_n_snps, gwas_rank,
+           n_top_pathways, best_pathway_p, pathway_rank, pathways,
+           hit_gwas, hit_magma, hit_pathway,
+           support_layers, score) %>%
+    head(200),
+  "candidate_genes_top200_arabidopsis.csv",
+  row.names = FALSE
 )
 
 cat("\nFull table saved to candidate_genes_top200_arabidopsis.csv\n")
@@ -924,4 +930,3 @@ ggsave("candidate_genes_summary_arabidopsis.png", summary_bar,
 # cat("  - pathway_gene_enrichment_density.pdf/png\n")
 # cat("  - gwas_vs_magma_scatter.pdf/png\n")
 # cat("  - candidate_genes_summary.pdf/png\n")
-
