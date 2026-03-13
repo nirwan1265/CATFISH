@@ -928,21 +928,37 @@ plot_block_e_ab_panel <- function(adaptive_results, leave1out_results) {
   df <- dplyr::bind_rows(adaptive_df, leave1_df) %>%
     dplyr::mutate(source = factor(source, levels = c("Adaptive", "Leave-one-out")))
 
-  p_lambda <- ggplot(df, aes(x = method_label, y = lambda, group = source, color = source)) +
-    geom_line(linewidth = 1) +
-    geom_point(size = 2) +
+  p_lambda <- ggplot(df, aes(x = method_label, y = lambda, fill = source)) +
+    geom_col(alpha = 0.82, width = 0.72) +
     facet_wrap(~ source, scales = "free_x", ncol = 1) +
-    labs(title = "Block E: Lambda summary", x = "Variant", y = expression(lambda), color = "Family") +
+    geom_hline(yintercept = 1, linetype = "dashed", color = "#1F77B4", linewidth = 0.7) +
+    scale_y_continuous(breaks = scales::pretty_breaks(n = 4)) +
+    labs(title = "Block E: Lambda summary", x = "Variant", y = expression(lambda), fill = "Family") +
     block_a_theme +
-    theme(axis.text.x = element_text(angle = 35, hjust = 1))
+    theme(
+      plot.title = element_text(size = 18, face = "bold"),
+      axis.title = element_text(size = 16, face = "bold"),
+      axis.text.x = element_text(angle = 35, hjust = 1, size = 13),
+      axis.text.y = element_text(size = 13),
+      strip.text = element_text(size = 14, face = "bold"),
+      legend.text = element_text(size = 14)
+    )
 
   p_type1 <- ggplot(df, aes(x = method_label, y = type1_05, fill = source)) +
-    geom_col(alpha = 0.8) +
+    geom_col(alpha = 0.82, width = 0.72) +
     facet_wrap(~ source, scales = "free_x", ncol = 1) +
     geom_hline(yintercept = 0.05, linetype = "dashed", color = "red", linewidth = 0.6) +
+    scale_y_continuous(breaks = scales::pretty_breaks(n = 4)) +
     labs(title = "Block E: Type I error summary", x = "Variant", y = "Type I error", fill = "Family") +
     block_a_theme +
-    theme(axis.text.x = element_text(angle = 35, hjust = 1))
+    theme(
+      plot.title = element_text(size = 18, face = "bold"),
+      axis.title = element_text(size = 16, face = "bold"),
+      axis.text.x = element_text(angle = 35, hjust = 1, size = 13),
+      axis.text.y = element_text(size = 13),
+      strip.text = element_text(size = 14, face = "bold"),
+      legend.text = element_text(size = 14)
+    )
 
   make_panel_ab(p_lambda, p_type1, title = "Block E: Adaptive + Leave-one-out")
 }
