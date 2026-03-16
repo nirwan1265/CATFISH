@@ -344,6 +344,96 @@ Across all pathways, final omnibus $p$-values were adjusted using the Benjamini-
 
 To prioritize genes beyond top-SNP, MAGMA, or top-pathway evidence alone, we integrated support across these three complementary layers. For each gene, we summarized multi-layer support using a support-count plus strength score that gives primary weight to agreement across layers and secondary weight to continuous evidence strength within each layer. Genes supported by at least two layers were prioritized for downstream interpretation. The exact scoring rule is given in Appendix~B.
 
+
+\section*{Pathway signal archetypes and archetype-recovery validation}
+
+CATFISH was developed for analytical contexts in which the \emph{true} pattern of pathway-level signal is unknown. In practice, some pathways are driven predominantly by a single “bottleneck” gene, others exhibit weak but broadly distributed enrichment across many genes, and still others combine a small number of strong driver genes with more diffuse supporting effects. To systematize these distinct behaviors, we define five archetypal patterns of pathway signal and then use simulation studies to demonstrate that the component tests within CATFISH exhibit distinct and interpretable response profiles to each archetype.
+
+\subsection*{Pathway signal archetypes: statistical signatures and biological intuition}
+
+We divide pathway signals into a set of archetypes that describe different ways a pathway can be enriched in a biological sense, as explained in detail below. We then use a combination of statistical tests chosen to be representative of each of these behaviors and provide a biological example for each archetype.
+
+\subsubsection{Archetype I --- Sparse Driver Architecture (SDA)}
+
+Sparse Driver Architecture (SDA) describes pathway/network patterns in which the overall signal is dominated by a small subset of strongly associated genes, while the majority of genes within the pathway exhibit behavior consistent with the null hypothesis. Formally, under SDA there exists a subset of genes with extremely small ordered $p$-values, $p_{(1)}, \dots, p_{(K)} \ll \alpha$, followed by a large collection of genes whose $p$-values, $p_{(K+1)}, \dots, p_{(G)}$, are approximately distributed as $\mathrm{Uniform}(0,1)$. The ranked gene-level $p$-value curve therefore shows a pronounced elbow (Fig 1A) that suggests the association is driven by a small number of genes rather than by widespread enrichment across the entire pathway.
+
+From a biological perspective, SDA is expected when the behavior of a pathway is governed predominantly by one or a small number of bottleneck genes, such as a committed-step enzyme, a rate-limiting regulatory factor, or an essential transporter, such that genetic effects are concentrated at a limited set of key control points (ref). A canonical example is aspartokinase in the aspartate-derived amino acid biosynthetic pathway. This pathway converts aspartate into the essential amino acids lysine, threonine, methionine, and isoleucine. Its initial reaction is catalyzed by aspartokinase, which phosphorylates aspartate to generate aspartyl-phosphate. As this enzyme functions at the entry point of a branched pathway, variation in its activity can influence flux across the entire network, whereas the effects of many downstream enzymes are more distributed or buffered. This network architecture is therefore expected to produce a sparse association pattern in which one or a few genes exhibit very strong signals, while the majority of genes remain close to null. Within CATFISH, pathways of the SDA type are most efficiently detected by ACAT and minP.
+
+\subsubsection{Archetype II --- Coordinated Moderate Enrichment (CME)}
+
+Coordinated Moderate Enrichment (CME) refers to architectures in which a large number of genes exhibit modest yet non-negligible statistical associations, without any single gene exerting a disproportionately strong influence on the overall signal. Here, a substantial proportion of genes attain moderately small $p$-values, typically on the order of $10^{-3}$ to $0.05$, and the most highly ranked genes are not several orders of magnitude more significant than the bulk of the distribution. Consequently, the ordered gene-level $p$-value profile is characterized by a broad shoulder rather than a pronounced elbow, indicating a diffuse enrichment pattern distributed across multiple members of the pathway.
+
+From a biological standpoint, CME is anticipated where pathway behavior arises from the coordinated activity of numerous molecular components, particularly in systems characterized by redundancy, feedback loops, and multilayered regulatory architecture (ref). A canonical example is cytokine-driven immune signaling, notably TNF$\alpha$/IL-1$\beta$–to–NF-$\kappa$B pathways, in which the functional output depends on a cascade involving receptor complex assembly, adaptor protein recruitment, kinase activation, and negative feedback regulation, rather than being governed by a single dominant regulatory node. In such pathways, naturally occurring genetic variation is more likely to manifest as multiple modest perturbations distributed across the network than as a single variant exerting a large, isolated effect. Accordingly, CME-type pathways are characterized using Fisher’s method and Stouffer’s method, with the soft TFisher procedure also demonstrating strong performance under conditions of moderate tail enrichment.
+
+\subsubsection{Archetype III --- Diffuse Polygenic Shift (DPS)}
+
+Diffuse Polygenic Shift (DPS) denotes architectures in which constituent genes exhibit, on average, slightly stronger association signals than the genome-wide background, even though few or none individually surpass conventional thresholds for statistical significance. In such pathways, the majority of gene-level \(p\)-values remain greater than 0.05, and the aggregate evidence displays a subtle but systematic deviation from the null distribution. This deviation is typically manifested as a modest shift in the mean adjusted gene-level \(Z\)-score or as a gentle downward deflection in the ranked \(p\)-value curve when compared with its null expectation. DPS reflects a broadly distributed, weak, but coordinated enrichment signal across many genes within the pathway.
+
+From a biological perspective, DPS corresponds to the canonical polygenic architecture, in which pathway-level signals emerge from the aggregate contribution of numerous variants of small effect. Human height is a classic example, as it is influenced by thousands of variants across many loci, while most individual variant or gene effects are small. Instead, biologically coherent pathways, such as TGF-$\beta$ signaling, Hedgehog signaling, and genes involved in the growth-plate extracellular matrix, exhibit enrichment at the level of cumulative, pathway-wide signal. Under this regime, methods that are sensitive to shifts in the mean or overall distribution of association statistics, such as Stouffer’s method, are more congruent with the underlying biological architecture.
+
+\subsubsection{Archetype IV --- Hybrid Driver--Support (HDS)}
+
+Hybrid Driver–Support (HDS) denotes architectures in which a limited number of genes exhibit strong or very strong association signals, while a broader set of additional genes provides more moderate evidence of association. The ranked gene-level profile combines features of both sparse and coordinated patterns. One or a few top genes show very strong significance, several others show moderate signals, and the rest are essentially null. This results in a pronounced peak at the top of the ranking, accompanied by a discernible “shoulder” of supporting signal, positioning HDS, on statistical grounds, between the SDA and the CME models.
+
+From a biological perspective, HDS is expected where pathway activity is governed by a relatively small number of key regulatory factors but is further modulated by a broader, auxiliary network. Low-density lipoprotein (LDL) cholesterol metabolism provides an illustrative example. Genes such as \textit{LDLR}, \textit{APOB}, and \textit{PCSK9} function as principal determinants with well-characterized, large-effect contributions, whereas an extended set of genes involved in lipoprotein assembly, remodeling, and cholesterol transport exhibits smaller yet biologically meaningful effects. Consequently, pathway-level enrichment captures the combined influence of a few high-impact loci along with more modest, distributed contributions. Within CATFISH, this architecture aligns particularly well with the adaptive soft TFisher method and the classical Fisher combination test.
+
+\subsubsection{Archetype V --- Single-Gene Proxy Pathway (SGP)}
+
+The Single-Gene Proxy (SGP) pattern describes pathways that achieve statistical significance predominantly due to the presence of a single, highly associated gene, while the remaining genes are essentially null. In such cases, the leading gene exhibits an extremely small \(p\)-value, whereas the rest of the pathway shows negligible enrichment. Accordingly, the apparent pathway-level association largely disappears once this single gene is excluded from the analysis. From a statistical perspective, this configuration can be viewed as a boundary case of SDA. However, its substantive interpretation differs, as the pathway-level finding provides little additional information beyond what is already captured by the underlying gene-level association.
+
+From a biological perspective, SGP emerges when a pathway annotation is very small or when multiple pathway definitions redundantly include the same major driver gene. A representative example is \textit{PAH} in phenylalanine metabolism. Phenylalanine hydroxylase represents the principal rate-limiting enzyme governing the conversion of phenylalanine to tyrosine, and pathogenic variation in \textit{PAH} constitutes the predominant genetic cause of phenylketonuria and related forms of hyperphenylalaninemia. Although the broader pathway encompasses additional genes involved in transport, cofactor metabolism, and recycling, these typically exert much weaker effects at the population level. Within CATFISH, this pattern is most readily identified by minP and ACAT. However, such results should be interpreted conservatively as gene-centric associations, rather than as robust evidence that the pathway as a whole is jointly implicated.
+
+
+\subsection{Archetype-recovery}
+
+We conducted a targeted simulation study with correlated gene-level associations to assess whether the proposed pathway signal archetypes are statistically identifiable by the CATFISH component tests. Our goals were to determine if each archetype preferentially improves the performance of its corresponding component test and to evaluate whether these method-specific performance profiles remain interpretable across different pathway sizes.
+
+\subsubsection*{Simulation design}
+
+To test whether these pathway signal archetypes are recoverable from CATFISH component tests, we performed a correlated MVN power/ranking simulation under
+\[
+Z \sim N(\mu,\Sigma),
+\]
+Here, \(\Sigma\) is an exchangeable correlation matrix with pairwise correlation \(\rho = 0.20\), and \(\mu\) specifies the archetype-specific mean shift. In the primary simulation, pathway size was fixed at \(m = 20\) genes, and 500 independent replicates were generated per archetype. For each replicate, we applied the five CATFISH component tests (ACAT, Fisher, TFisher, minP, Stouffer) and the omnibus test. Performance was assessed using: (i) statistical power at \(\alpha = 0.05\); (ii) the mean within-replicate rank of each method’s pathway-level \(p\)-value (lower is better); and (iii) the “top-method probability,” the probability that a method yields the smallest pathway-level \(p\)-value among all methods in a replicate.
+
+To assess how pathway size affects archetype-recovery patterns identified at \(m = 20\), we repeated the simulations for pathway sizes \(m = 5, 20,\) and \(50\) genes (Supp.~Fig.~\ref{fig:supp_blockA_archetype_recovery_by_m}). To preserve each archetype’s qualitative structure across sizes, we scaled signal layers proportionally with \(m\) rather than fixing the absolute number of affected genes. Under this scaling, SDA consistently produced a sparse, strong-driver architecture with a small, highly perturbed layer; CME preserved a coordinated, moderate-effect architecture with most genes modestly perturbed; DPS maintained a diffuse, weak-shift architecture affecting most genes; HDS retained both a strong driver layer and a broader, moderately perturbed support layer; and SGP remained a single-gene proxy boundary case.
+
+\subsubsection*{Pathway-size sensitivity of archetype recovery}
+
+Supplementary Fig.~\ref{fig:supp_blockA_archetype_recovery_by_m} shows that the broad archetype-to-method mapping remains stable across pathway sizes, although the degree of separation among methods varies meaningfully with \(m\).
+
+\paragraph{Sparse architectures remain the most stable across pathway sizes.}
+The clearest, most consistent patterns occur under SDA and SGP. Under SDA, minP and ACAT dominate across all pathway sizes. For \(m = 5\), minP has the highest power (0.762), with ACAT close behind (0.720), and minP most often ranking first (top-method probability 0.504). For \(m = 20\), minP and ACAT again have the highest power (0.920 and 0.900), but ACAT most often yields the smallest \(p\)-value (0.710). For \(m = 50\), ACAT and minP have nearly identical power (0.958 and 0.964), yet ACAT overwhelmingly dominates winner frequency (0.882 vs. 0.048). Thus, under the sparse-driver architecture, extreme-tail–sensitive procedures consistently dominate: minP maximizes rejection probability, while ACAT increasingly dominates winner frequency as pathway size grows.
+
+This pattern is even stronger under SGP. For \(m = 5\), SGP is detected almost exclusively by ACAT, minP, and TFisher, with minP having the highest power (0.958) and ACAT the highest top-method probability (0.772). For \(m = 20\), minP again has the highest power (0.908), while ACAT most often produces the smallest \(p\)-value (0.688). For \(m = 50\), minP remains the most powerful (0.938), and ACAT continues to dominate winner frequency (0.786). Across all pathway sizes, the omnibus procedure has relatively high power under SGP (0.926, 0.704, 0.632 for \(m = 5, 20, 50\)), yet it rarely attains the highest winner frequency. This aligns with SGP being a highly concentrated gene–proxy architecture, where procedures targeting extreme-tail signal are inherently favored.
+
+\paragraph{DPS remains a diffuse-shift regime best captured by Stouffer-like behavior.}
+Within the DPS archetype, absolute power differences across pathway sizes are modest, but rank-based and winner-based summaries are highly stable. At \(m = 5\), Stouffer’s method has the highest power (0.208), lowest mean rank (2.863), and largest top-method probability (0.442). At \(m = 20\), Fisher’s method, Stouffer’s method, and the omnibus procedure have nearly identical power (0.264, 0.266, 0.264), yet Stouffer again has the best mean rank (2.922) and highest top-method probability (0.384), indicating closer agreement with the diffuse weak-shift alternative. At \(m = 50\), Stouffer still gives the greatest power (0.270), best mean rank (3.110), and highest top-method probability (0.296), while the omnibus method retains similar power (0.268) but is rarely ranked first (0.062). Overall, these results support DPS as a genuine pathway-wide weak-shift regime: Stouffer’s method aligns most closely with the archetype, Fisher’s method remains competitive, and the omnibus procedure shows intermediate—not degenerate—performance.
+
+\paragraph{CME remains intermediate, but separation improves modestly with pathway size.}
+CME remains the least clearly resolved archetype, though method performance becomes more structured as \(m\) increases. At \(m = 5\), Fisher’s and Stouffer’s methods have the highest power (0.330 and 0.326), Stouffer’s has the highest top-method probability (0.352), and the omnibus shows only moderate power (0.308). At \(m = 20\), TFisher is most powerful (0.486), Fisher’s has the best mean rank (2.808), and the omnibus is competitive but not dominant (power 0.448; mean rank 3.281). At \(m = 50\), TFisher strengthens further (power 0.552; top-method probability 0.340), Fisher’s still has the best mean rank (2.795), and the omnibus remains mid-range (power 0.478; mean rank 3.203; top-method probability 0.140). Overall, CME is the archetype most sensitive to pathway size, tending to stay in an intermediate regime rather than clearly approaching either a sparse-tail or diffuse-shift pattern.
+
+\paragraph{HDS becomes increasingly favorable to balanced procedures as pathway size increases.}
+Among the non-sparse archetypes, HDS depends most strongly on pathway size. At \(m = 5\), Fisher’s method has the highest power (0.566), Stouffer’s the highest top-method probability (0.374), and the omnibus is competitive in power (0.536) but is never top-ranked, suggesting that very small pathways compress the driver-plus-support structure into a few moderate signals. At \(m = 20\), the expected HDS pattern emerges: TFisher has the highest power (0.606), Fisher’s the best mean rank (2.765), and the omnibus remains close in power (0.568) but with low top-method probability (0.040). At \(m = 50\), the HDS structure is clearer: TFisher has the highest power (0.718), the omnibus attains the best mean rank (2.899), and Fisher’s and TFisher both retain substantial top-method probabilities (0.196 and 0.282). Thus, as pathway size grows, HDS becomes more statistically identifiable and the omnibus procedure more competitive once both driver and support layers are well represented.
+
+\paragraph{The omnibus is rarely the winner, but usually remains in the competitive middle.}
+Across pathway sizes, the omnibus procedure is rarely the most archetype-aligned method under winner-based summaries, but it also seldom falls into the lowest performance tier except in extremely sparse settings. In SDA and SGP, it retains appreciable power but is consistently outperformed by ACAT and minP under both rank- and winner-based summaries. In DPS, it has power similar to the leading procedures but worse rank stability than Stouffer. In CME and HDS, it is generally intermediate but becomes more competitive as pathway size increases. 
+
+These results show that the CATFISH component tests are not redundant. Sparse architectures favor ACAT/minP; diffuse architectures favor Stouffer or Fisher-type aggregation; and hybrid architectures increasingly favor Fisher/TFisher as pathway size grows. In this context, the omnibus procedure is best seen as a hedge rather than an architecture-specific optimum: it is rarely the single most powerful test for any archetype, but maintains nontrivial power across all five and is particularly appealing when the pathway architecture is unknown.
+
+
+\begin{figure*}[!t]
+    \centering
+    \includegraphics[width=\textwidth]{fig/supp/SuppFig1_block_a_archetype_recovery_by_m.png}
+    \caption{\textbf{Pathway-size sensitivity of archetype recovery for CATFISH component tests.}
+    Correlated MVN simulations were repeated at pathway sizes \(m=5\), \(20\), and \(50\) under an exchangeable correlation structure (\(\rho=0.20\); 500 replicates per archetype). Archetype-specific mean-shift patterns were scaled proportionally with pathway size to preserve the qualitative signal family across settings.
+    \textbf{A.} Power at \(\alpha=0.05\).
+    \textbf{B.} Mean rank of method-specific pathway-level \(p\)-values (lower is better).
+    \textbf{C.} Top-method probability, defined as the frequency with which a method yields the smallest pathway-level \(p\)-value within replicate.
+    Sparse archetypes remain dominated by tail-sensitive methods (ACAT/minP) across all pathway sizes, DPS remains most consistent with Stouffer-like aggregation, and CME/HDS show greater sensitivity to pathway size, with clearer separation emerging at larger \(m\). The omnibus is rarely the top-performing method but generally remains competitive across all archetypes and pathway sizes.}
+    \label{fig:supp_blockA_archetype_recovery_by_m}
+\end{figure*}
+
 \section{Results and discussion}
 
 \subsection{Simulation-based validation of CATFISH pathway tests}
@@ -445,7 +535,7 @@ The LOO analysis provides a complementary sensitivity check by recomputing the M
 
 We performed a genome-wide association study (GWAS) for stem volume in the sorghum association panel (SAP) (ref). The SNP scan identified multiple genome-wide significant signals, including a prominent peak on chromosome 9 (Fig.~\ref{fig:figure4}A). Using a genome-wide threshold of $-\log_{10}(p) > 7$, we mapped significant SNPs to 423 genes. Most strong associations occurred in a single interval on chromosome 9: 34 of the 36 top candidate genes fell within a $\sim$2.8~Mb region (56.1--58.9~Mb), indicating a major QTL for stem volume in this region.
 
-We then aggregated SNP-level associations to genes using MAGMA, testing 33,967 annotated sorghum genes and assigning SNPs within gene boundaries plus $\pm$25~kb flanks. After Benjamini--Hochberg FDR correction, 861 genes were significant at FDR $< 0.05$ (Fig.~\ref{fig:figure4}B). The top gene-level association was \textit{SORBI\_3009G206700} ($-\log_{10}(p) = 14.64$). Gene-level signals were similarly enriched on chromosome 9, mirroring the SNP-level peak and supporting a concentrated locus with multiple associated genes.
+We then aggregated SNP-level associations to genes using MAGMA, testing 33,967 annotated sorghum genes and assigning SNPs within gene boundaries plus $\pm$25~kb flanks. After Benjamini--Hochberg FDR correction, 861 genes were significant at FDR $< 0.05$ (Fig.~\ref{fig:figure4}B). The top gene-level association was SORBI\_3009G206700 ($-\log_{10}(p) = 14.64$). Gene-level signals were similarly enriched on chromosome 9, mirroring the SNP-level peak and supporting a concentrated locus with multiple associated genes.
 
 To assess pathway-level organization, we applied CATFISH pathway analysis to 410 sorghum PlantCyc metabolic pathways (ref). CATFISH evaluated pathway enrichment using five component tests (ACAT, Fisher's method, adaptive soft TFisher, minP, and Stouffer's method) and an omnibus test combining them. Statistical inference used MVN resampling, with gene--gene correlation matrices from MAGMA to account for LD. We identified 102 pathways at FDR $< 0.05$, of which 73 remained significant after Bonferroni correction ($p < 0.05/410$). Fig.~\ref{fig:figure4}C shows the top 20 pathways and their $p$-value profiles across component and omnibus tests. The strongest pathway-level signals were detected for gluconeogenesis I (GLUCONEO-PWY), L-glutamate biosynthesis IV (GLUGLNSYN-PWY), L-glutamine degradation I (GLUTAMINDEG-PWY), phospholipases (LIPASYN-PWY), and aerobic respiration I (PWY-3781). Together, these pathways provide a coherent framework for interpreting variation in stem volume. Overall, these results show a clear progression from SNP-level associations to gene-level aggregation and then to pathway-level interpretation under LD-aware calibration (Fig.~\ref{fig:figure4}A--C).
 
@@ -478,7 +568,7 @@ SORBI\_3009G239500 & 9 & $1.97 \times 10^{-11}$ & 120 & $3.13 \times 10^{-9}$ & 
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{fig/main/Figure4_GWAS_MAGMA_Pathway.png}
+\includegraphics[width=\textwidth,height=0.6\textheight,keepaspectratio]{fig/main/Fig5.GWAS_MAGMA_Pathway.png}
 \caption{\textbf{Genome-wide association and pathway analysis of stem volume in sorghum.}
 (A) GWAS Manhattan plot showing SNP associations across 10 chromosomes. Red dashed line indicates genome-wide significance ($p < 5 \times 10^{-8}$); blue dashed line indicates suggestive significance ($p < 10^{-5}$).
 (B) MAGMA gene-based Manhattan plot. Red dashed line indicates Bonferroni-corrected significance; blue dashed line indicates FDR $< 0.05$ threshold.
@@ -486,10 +576,22 @@ SORBI\_3009G239500 & 9 & $1.97 \times 10^{-11}$ & 120 & $3.13 \times 10^{-9}$ & 
 \label{fig:figure4}
 \end{figure*}
 
+\subsection{Integrated candidate gene analysis identifies high-confidence targets for stem volume and sucrose metabolism}
+
+To prioritize genes supported by multiple modalities, we combined evidence from SNP-level GWAS, MAGMA gene-based tests, and CATFISH pathway enrichment (Fig.~\ref{fig:figure5}). Significance thresholds were defined as follows: GWAS $-\log_{10}(p) > 7$; MAGMA FDR $< 0.05$; and pathway support as membership in a Bonferroni-significant pathway with $p < 0.05$ (Fig.~\ref{fig:figure5}A). In total, 2,016 genes met at least one criterion, and 36 were supported by all three layers, forming the highest-confidence set. We then tested whether pathway membership was associated with stronger gene-level signals. Genes in significant pathways showed more extreme GWAS and MAGMA statistics than non-pathway genes (Wilcoxon $p = 6.34 \times 10^{-4}$ for GWAS; $p = 7.35 \times 10^{-3}$ for MAGMA; Fig.~\ref{fig:figure5}C), indicating that pathway-level signals preferentially highlight genes with stronger trait-relevant associations rather than random pathway members. The correspondence between SNP- and gene-level association signals is shown in the GWAS versus MAGMA scatter plot (Fig.~\ref{fig:figure5}D). The 36 genes supported by all three analytic layers cluster in the upper-right quadrant (red), indicating a strong single-variant and aggregated gene-level association. This cross-layer concordance suggests a robust biological signal rather than method-specific artifacts.
+
+These 36 triply supported genes constitute our primary set for downstream functional interpretation and experimental validation (Table~\ref{tab:top9_genes}). Although the stem-volume GWAS identified 423 significant genes and MAGMA identified 861, prioritizing biologically meaningful candidates from either layer alone is difficult because many loci are supported by only one framework. By integrating SNP-level associations, gene-level aggregation, and pathway-level enrichment, our multi-layer scoring strategy narrows this broad candidate space to a tractable subset of genes that pass all three filters. This prioritization is biologically informative rather than a collection of isolated statistical hits, and it helps us narrow down the list of candidate genes. The top-ranked genes converge on functions directly implicated in stem growth, biomass accumulation, and carbon-nitrogen homeostasis
+
+Among these, SORBI\_3009G225700 is annotated for glutamate biosynthesis, glutamine turnover, and organic nitrogen assimilation. This is notable because the GS/GOGAT cycle is the central ammonium assimilation route in plants, converting glutamine to glutamate and supporting nitrogen remobilization to developing sink tissues (\cite{Tamura2011} Tabuchi et al., 2007; Tamura et al., 2011). In rice, disruption of NADH-GOGAT2 reduces biomass and grain yield, directly linking glutamate-mediated nitrogen reutilization to biomass production (Tamura et al., 2011). SORBI\_3009G231100, associated with CMP-KDO biosynthesis, implicates rhamnogalacturonan II (RG-II) assembly and primary cell wall integrity. In Arabidopsis, CMP-KDO synthetase activates KDO for RG-II incorporation, and loss of this activity impairs pollen tube elongation, showing that a fully assembled RG-II complex is required to maintain cell wall integrity in rapidly expanding tissues (Kobayashi et al., 2011). Together, these findings support a direct connection between the genes and stem expansion through cell wall architecture and growth biomechanics.
+
+Additional top-ranked candidates further support a stem-focused signal. SORBI\_3009G233200, implicated in sucrose biosynthesis, is consistent with an SPS-related role in stem carbohydrate metabolism. In rice, SPS8 is the major stem-expressed sucrose phosphate synthase during grain filling. Its disruption reduces stem SPS activity, impairs the remobilization of non-structural carbohydrates, increases stem starch, and decreases grain yield (Ma et al., 2024). SORBI\_3009G225100, annotated in phosphatidylserine/phosphatidylethanolamine biosynthesis, is consistent with a SUI-family phosphatidylserine synthase. In rice, SUI-family genes regulate internode elongation and panicle rachis expansion, linking phospholipid metabolism to stem development and cell expansion (Yin et al., 2013). SORBI\_3009G229300 is associated with xylan biosynthesis, a key determinant of grass secondary cell wall architecture. In rice, GT43 genes are required for xylan backbone elongation, and complementation studies showed that appropriate GT43 members restore stem strength, vessel morphology, and xylan-related cell wall properties, underscoring the role of xylan biosynthesis in structural stem integrity (Lee et al., 2014).
+
+Overall, these results indicate that our integrative framework effectively refines broad GWAS-, MAGMA-, and pathway-derived candidate sets into a smaller, high-confidence subset of genes enriched for stem-relevant biological functions, including nitrogen assimilation, carbohydrate remobilization, membrane lipid homeostasis, and cell wall biogenesis. Concordant support across these three levels strengthens confidence in these candidates and underscores the value of multi-layer integration for prioritizing genes. This framework also has broader translational relevance, as stem sugars and structural biomass are principal feedstocks for lignocellulosic bioethanol production (ref). Accordingly, the prioritized candidates may inform future efforts to improve both biomass accumulation and fermentable carbon availability.
+
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{fig/main/Figure5_Candidate_Genes.png}
+\includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{fig/main/Fig6.Candidate_Genes.png}
 \caption{\textbf{Integrated candidate gene analysis combining GWAS, MAGMA, and pathway evidence.}
 (A) UpSet plot showing intersection patterns among genes significant in GWAS ($-\log_{10}(p) > 7$; coral), MAGMA (FDR $< 0.05$; blue), and pathway analysis (Bonferroni $p < 0.05$; green).
 (B) Bar chart summarizing gene counts per evidence category.
@@ -497,82 +599,6 @@ SORBI\_3009G239500 & 9 & $1.97 \times 10^{-11}$ & 120 & $3.13 \times 10^{-9}$ & 
 (D) Scatter plot of GWAS versus MAGMA $-\log_{10}(p)$ values. Points are colored by evidence category; dashed lines indicate significance thresholds. Genes in all three layers are highlighted in red with larger point size.}
 \label{fig:figure5}
 \end{figure*}
-
-
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio]{fig/supp/Supplementary_Figure_Component_Tests.png}
-\caption{\textbf{Comparison of CATFISH component tests for pathway enrichment analysis.}
-(A) UpSet plot showing intersection patterns among pathways significant (Bonferroni $p < 0.05$) in each component test (ACAT, Fisher, TFisher, minP, Stouffer) and the Omnibus test. Bar heights indicate intersection sizes; horizontal bars indicate total significant pathways per method.
-(B) Quantile-quantile (QQ) plot of Omnibus p-values. Points are colored by significance: Bonferroni $< 0.05$ (red), BH FDR $< 0.05$ (blue), not significant (gray). Dashed diagonal represents the null expectation. Non-significant pathways follow the diagonal, indicating proper calibration; significant pathways deviate upward, reflecting true biological enrichment.
-(C) Pairwise method comparison matrix. Upper triangle: Spearman correlation of $-\log_{10}(p)$ values. Lower triangle: Jaccard similarity of Bonferroni-significant pathway sets. Color intensity reflects magnitude (0--1 scale).
-(D) Boxplots of $-\log_{10}(p)$ distributions for each method. Red dashed line indicates Bonferroni significance threshold ($-\log_{10}(0.05/410) = 3.91$).}
-\label{fig:suppfig}
-\end{figure*}
-
-
-
-\subsection{Integrated candidate gene analysis identifies high-confidence targets for stem volume and sucrose metabolism}
-
-
-%%need to explain why we are getting so many pathways as significnat for bonferroni yeah. 
-
-To prioritize genes supported by multiple modalities, we combined evidence from SNP-level GWAS, MAGMA gene-based tests, and CATFISH pathway enrichment (Fig.~\ref{fig:figure5}). Significance thresholds were defined as follows: GWAS $-\log_{10}(p) > 7$; MAGMA FDR $< 0.05$; and pathway support as membership in a Bonferroni-significant pathway with $p < 0.05$ (Fig.~\ref{fig:figure5}A). In total, 2,016 genes met at least one criterion, and 36 were supported by all three layers, forming the highest-confidence set.
-
-We then tested whether pathway membership was associated with stronger gene-level signals. Genes in significant pathways showed more extreme GWAS and MAGMA statistics than non-pathway genes (Wilcoxon $p = 6.34 \times 10^{-4}$ for GWAS; $p = 7.35 \times 10^{-3}$ for MAGMA; Fig.~\ref{fig:figure5}C), indicating that pathway-level signals preferentially highlight genes with stronger trait-relevant associations rather than random pathway members. The correspondence between SNP- and gene-level association signals is shown in the GWAS versus MAGMA scatter plot (Fig.~\ref{fig:figure5}D). The 36 genes supported by all three analytic layers cluster in the upper-right quadrant (red), indicating strong single-variant and aggregated gene-level association. This cross-layer concordance suggests a robust biological signal rather than method-specific artifacts.
-
-These 36 triple-supported genes form the primary set for downstream functional interpretation and validation (Table~\ref{tab:top_genes}). Many participate in pathways directly involved in biomass accumulation, including carbon allocation, nitrogen metabolism, membrane biogenesis, and cellular energy production. The top candidate, \textit{SORBI\_3009G231100} (GWAS rank 2; MAGMA rank 15), is annotated to the CMP-3-deoxy-D-\textit{manno}-octulosonate biosynthesis pathway (PWY-1269), which contributes to cell wall and other polysaccharide processes. Variation affecting cell wall synthesis and remodeling is a plausible determinant of stem volume through effects on radial growth, secondary thickening, and mechanical reinforcement.
-
-
-
-
-\begin{table*}[!t]
-\centering
-\caption{Top multi-layer candidate genes in \textit{Arabidopsis}.}
-\begin{tabular}{lllllllllll}
-\hline
-Gene & MAGMA $p$ & GWAS min $p$ & Top paths & Best path $p$ & Pathway(s) & GWAS & MAGMA & Pathway & Layers & Score \\
-\hline
-AT1G74420 & 8.48E-07 & 8.13E-10 & 1 & 0.0017   & PWY-5936              & Y & Y & Y & 3 & 5.4003 \\
-AT5G55380 & 1.18E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.2856 \\
-AT5G55340 & 2.18E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.2322 \\
-AT5G55350 & 2.58E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.2177 \\
-AT5G55360 & 4.58E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.1677 \\
-AT5G55330 & 4.61E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.1671 \\
-AT1G74470 & 2.46E-05 & 8.13E-10 & 2 & 5.00E-04 & PWY-5064; PWY-5863    & Y & Y & Y & 3 & 5.1608 \\
-AT5G55370 & 8.62E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.1128 \\
-AT5G55320 & 9.21E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.1070 \\
-AT1G73980 & 7.90E-06 & 5.58E-08 & 1 & 0.0081   & PWY-7193              & Y & Y & Y & 3 & 4.9550 \\
-\hline
-\end{tabular}
-\end{table*}
-
-\begin{table*}[!t]
-\centering
-\caption{Top multi-layer candidate genes in female fly.}
-\begin{tabular}{lllllllllll}
-\hline
-Gene & MAGMA $p$ & GWAS min $p$ & Top paths & Best path $p$ & Pathway(s) & GWAS & MAGMA & Pathway & Layers & Score \\
-\hline
-FBgn0015781 & 2.56E-04 & 3.78E-06 & 1  & 0.0820 & FLYCYC:ARG-PRO-PWY & Y & Y & Y & 3 & 4.3693 \\
-FBgn0036622 & 0.0074   & 1.10E-05 & 1  & 0.1047 & FLYCYC:PWY-7250    & Y & Y & Y & 3 & 4.0196 \\
-FBgn0030904 & 1.23E-05 & 2.22E-07 & NA & NA     & NA                  & Y & Y & N & 2 & 3.6477 \\
-FBgn0034479 & 8.41E-06 & 1.68E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.5924 \\
-FBgn0038673 & 1.67E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2977 \\
-FBgn0038672 & 2.00E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2820 \\
-FBgn0027785 & 2.19E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2741 \\
-FBgn0038674 & 2.38E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2670 \\
-FBgn0053639 & 0.0010   & 2.22E-07 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2639 \\
-FBgn0260779 & 3.42E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2354 \\
-\hline
-\end{tabular}
-\end{table*}
-
-
-
-
-
-
 
 
 
@@ -675,7 +701,38 @@ Ludwig Geistlinger, Gergely Csaba, Matteo Santarelli, and others.
 \newblock Toward a gold standard for benchmarking gene set enrichment analysis.
 \newblock {\em Briefings in Bioinformatics}, 22(1):545--556, 2021.
 
+\bibitem[Tabuchi et al.(2007)]{Tabuchi2007}
+Mayumi Tabuchi, Tomomi Abiko, and Tomoyuki Yamaya.
+\newblock Assimilation of ammonium ions and reutilization of nitrogen in rice (\textit{Oryza sativa} L.).
+\newblock {\em Journal of Experimental Botany}, 58(9):2319--2327, 2007.
+
+\bibitem[Tamura et al.(2011)]{Tamura2011}
+Wataru Tamura, Soichi Kojima, Ayako Toyokawa, Hideo Watanabe, Mayumi Tabuchi-Kobayashi, Toshihiko Hayakawa, and Tomoyuki Yamaya.
+\newblock Disruption of a novel NADH-glutamate synthase2 gene caused marked reduction in spikelet number of rice.
+\newblock {\em Frontiers in Plant Science}, 2:57, 2011.
+
+\bibitem[Kobayashi et al.(2011)]{Kobayashi2011}
+Masaru Kobayashi, Nagisa Kouzu, Akina Inami, Kiminori Toyooka, Yuki Konishi, Ken Matsuoka, and Toru Matoh.
+\newblock Characterization of Arabidopsis CTP:3-deoxy-D-\textit{manno}-2-octulosonate cytidylyltransferase (CMP-KDO synthetase), the enzyme that activates KDO during rhamnogalacturonan II biosynthesis.
+\newblock {\em Plant and Cell Physiology}, 2011.
+
+\bibitem[Yin et al.(2013)]{Yin2013}
+Hengfu Yin, Peng Gao, Chengwu Liu, Jun Yang, Zhongchi Liu, and Da Luo.
+\newblock SUI-family genes encode phosphatidylserine synthases and regulate stem development in rice.
+\newblock {\em Planta}, 237(1):15--27, 2013.
+
+\bibitem[Lee et al.(2014)]{Lee2014}
+Chanhui Lee, Quincy Teng, Ruiqin Zhong, Youxi Yuan, and Zheng-Hua Ye.
+\newblock Functional roles of rice glycosyltransferase family GT43 in xylan biosynthesis.
+\newblock {\em Plant Signaling \& Behavior}, 9:e27809, 2014.
+
+\bibitem[Ma et al.(2024)]{Ma2024}
+Mingyang Ma, Tong Zhu, Xiuyue Cheng, Mengyu Li, Guoliang Yuan, Changbao Li, Aihong Zhang, Congming Lu, Ying Fang, and Yi Zhang.
+\newblock Sucrose phosphate synthase 8 is required for the remobilization of carbon reserves in rice stems during grain filling.
+\newblock {\em Journal of Experimental Botany}, 75(1):137--151, 2024.
+
 \end{thebibliography}
+
 %%%%%%%%%%%%%%
 
 \begin{appendices}
@@ -685,96 +742,6 @@ Ludwig Geistlinger, Gergely Csaba, Matteo Santarelli, and others.
 % Supplementary Note S1: Pathway signal archetypes + recovery
 % (Place in Appendix / Supplementary Materials)
 % ============================================================
-
-\section*{Pathway signal archetypes and archetype-recovery validation}
-
-CATFISH was developed for analytical contexts in which the \emph{true} pattern of pathway-level signal is unknown. In practice, some pathways are driven predominantly by a single “bottleneck” gene, others exhibit weak but broadly distributed enrichment across many genes, and still others combine a small number of strong driver genes with more diffuse supporting effects. To systematize these distinct behaviors, we define five archetypal patterns of pathway signal and then use simulation studies to demonstrate that the component tests within CATFISH exhibit distinct and interpretable response profiles to each archetype.
-
-\subsection*{Pathway signal archetypes: statistical signatures and biological intuition}
-
-We divide pathway signals into a set of archetypes that describe different ways a pathway can be enriched in a biological sense, as explained in detail below. We then use a combination of statistical tests chosen to be representative of each of these behaviors and provide a biological example for each archetype.
-
-\subsubsection{Archetype I --- Sparse Driver Architecture (SDA)}
-
-Sparse Driver Architecture (SDA) describes pathway/network patterns in which the overall signal is dominated by a small subset of strongly associated genes, while the majority of genes within the pathway exhibit behavior consistent with the null hypothesis. Formally, under SDA there exists a subset of genes with extremely small ordered $p$-values, $p_{(1)}, \dots, p_{(K)} \ll \alpha$, followed by a large collection of genes whose $p$-values, $p_{(K+1)}, \dots, p_{(G)}$, are approximately distributed as $\mathrm{Uniform}(0,1)$. The ranked gene-level $p$-value curve therefore shows a pronounced elbow (Fig 1A) that suggests the association is driven by a small number of genes rather than by widespread enrichment across the entire pathway.
-
-From a biological perspective, SDA is expected when the behavior of a pathway is governed predominantly by one or a small number of bottleneck genes, such as a committed-step enzyme, a rate-limiting regulatory factor, or an essential transporter, such that genetic effects are concentrated at a limited set of key control points (ref). A canonical example is aspartokinase in the aspartate-derived amino acid biosynthetic pathway. This pathway converts aspartate into the essential amino acids lysine, threonine, methionine, and isoleucine. Its initial reaction is catalyzed by aspartokinase, which phosphorylates aspartate to generate aspartyl-phosphate. As this enzyme functions at the entry point of a branched pathway, variation in its activity can influence flux across the entire network, whereas the effects of many downstream enzymes are more distributed or buffered. This network architecture is therefore expected to produce a sparse association pattern in which one or a few genes exhibit very strong signals, while the majority of genes remain close to null. Within CATFISH, pathways of the SDA type are most efficiently detected by ACAT and minP.
-
-\subsubsection{Archetype II --- Coordinated Moderate Enrichment (CME)}
-
-Coordinated Moderate Enrichment (CME) refers to architectures in which a large number of genes exhibit modest yet non-negligible statistical associations, without any single gene exerting a disproportionately strong influence on the overall signal. Here, a substantial proportion of genes attain moderately small $p$-values, typically on the order of $10^{-3}$ to $0.05$, and the most highly ranked genes are not several orders of magnitude more significant than the bulk of the distribution. Consequently, the ordered gene-level $p$-value profile is characterized by a broad shoulder rather than a pronounced elbow, indicating a diffuse enrichment pattern distributed across multiple members of the pathway.
-
-From a biological standpoint, CME is anticipated where pathway behavior arises from the coordinated activity of numerous molecular components, particularly in systems characterized by redundancy, feedback loops, and multilayered regulatory architecture (ref). A canonical example is cytokine-driven immune signaling, notably TNF$\alpha$/IL-1$\beta$–to–NF-$\kappa$B pathways, in which the functional output depends on a cascade involving receptor complex assembly, adaptor protein recruitment, kinase activation, and negative feedback regulation, rather than being governed by a single dominant regulatory node. In such pathways, naturally occurring genetic variation is more likely to manifest as multiple modest perturbations distributed across the network than as a single variant exerting a large, isolated effect. Accordingly, CME-type pathways are characterized using Fisher’s method and Stouffer’s method, with the soft TFisher procedure also demonstrating strong performance under conditions of moderate tail enrichment.
-
-\subsubsection{Archetype III --- Diffuse Polygenic Shift (DPS)}
-
-Diffuse Polygenic Shift (DPS) denotes architectures in which constituent genes exhibit, on average, slightly stronger association signals than the genome-wide background, even though few or none individually surpass conventional thresholds for statistical significance. In such pathways, the majority of gene-level \(p\)-values remain greater than 0.05, and the aggregate evidence displays a subtle but systematic deviation from the null distribution. This deviation is typically manifested as a modest shift in the mean adjusted gene-level \(Z\)-score or as a gentle downward deflection in the ranked \(p\)-value curve when compared with its null expectation. DPS reflects a broadly distributed, weak, but coordinated enrichment signal across many genes within the pathway.
-
-From a biological perspective, DPS corresponds to the canonical polygenic architecture, in which pathway-level signals emerge from the aggregate contribution of numerous variants of small effect. Human height is a classic example, as it is influenced by thousands of variants across many loci, while most individual variant or gene effects are small. Instead, biologically coherent pathways, such as TGF-$\beta$ signaling, Hedgehog signaling, and genes involved in the growth-plate extracellular matrix, exhibit enrichment at the level of cumulative, pathway-wide signal. Under this regime, methods that are sensitive to shifts in the mean or overall distribution of association statistics, such as Stouffer’s method, are more congruent with the underlying biological architecture.
-
-\subsubsection{Archetype IV --- Hybrid Driver--Support (HDS)}
-
-Hybrid Driver–Support (HDS) denotes architectures in which a limited number of genes exhibit strong or very strong association signals, while a broader set of additional genes provides more moderate evidence of association. The ranked gene-level profile combines features of both sparse and coordinated patterns. One or a few top genes show very strong significance, several others show moderate signals, and the rest are essentially null. This results in a pronounced peak at the top of the ranking, accompanied by a discernible “shoulder” of supporting signal, positioning HDS, on statistical grounds, between the SDA and the CME models.
-
-From a biological perspective, HDS is expected where pathway activity is governed by a relatively small number of key regulatory factors but is further modulated by a broader, auxiliary network. Low-density lipoprotein (LDL) cholesterol metabolism provides an illustrative example. Genes such as \textit{LDLR}, \textit{APOB}, and \textit{PCSK9} function as principal determinants with well-characterized, large-effect contributions, whereas an extended set of genes involved in lipoprotein assembly, remodeling, and cholesterol transport exhibits smaller yet biologically meaningful effects. Consequently, pathway-level enrichment captures the combined influence of a few high-impact loci along with more modest, distributed contributions. Within CATFISH, this architecture aligns particularly well with the adaptive soft TFisher method and the classical Fisher combination test.
-
-\subsubsection{Archetype V --- Single-Gene Proxy Pathway (SGP)}
-
-The Single-Gene Proxy (SGP) pattern describes pathways that achieve statistical significance predominantly due to the presence of a single, highly associated gene, while the remaining genes are essentially null. In such cases, the leading gene exhibits an extremely small \(p\)-value, whereas the rest of the pathway shows negligible enrichment. Accordingly, the apparent pathway-level association largely disappears once this single gene is excluded from the analysis. From a statistical perspective, this configuration can be viewed as a boundary case of SDA. However, its substantive interpretation differs, as the pathway-level finding provides little additional information beyond what is already captured by the underlying gene-level association.
-
-From a biological perspective, SGP emerges when a pathway annotation is very small or when multiple pathway definitions redundantly include the same major driver gene. A representative example is \textit{PAH} in phenylalanine metabolism. Phenylalanine hydroxylase represents the principal rate-limiting enzyme governing the conversion of phenylalanine to tyrosine, and pathogenic variation in \textit{PAH} constitutes the predominant genetic cause of phenylketonuria and related forms of hyperphenylalaninemia. Although the broader pathway encompasses additional genes involved in transport, cofactor metabolism, and recycling, these typically exert much weaker effects at the population level. Within CATFISH, this pattern is most readily identified by minP and ACAT. However, such results should be interpreted conservatively as gene-centric associations, rather than as robust evidence that the pathway as a whole is jointly implicated.
-
-
-\subsection{Archetype-recovery}
-
-We conducted a targeted simulation study with correlated gene-level associations to assess whether the proposed pathway signal archetypes are statistically identifiable by the CATFISH component tests. Our goals were to determine if each archetype preferentially improves the performance of its corresponding component test and to evaluate whether these method-specific performance profiles remain interpretable across different pathway sizes.
-
-\subsubsection*{Simulation design}
-
-To test whether these pathway signal archetypes are recoverable from CATFISH component tests, we performed a correlated MVN power/ranking simulation under
-\[
-Z \sim N(\mu,\Sigma),
-\]
-Here, \(\Sigma\) is an exchangeable correlation matrix with pairwise correlation \(\rho = 0.20\), and \(\mu\) specifies the archetype-specific mean shift. In the primary simulation, pathway size was fixed at \(m = 20\) genes, and 500 independent replicates were generated per archetype. For each replicate, we applied the five CATFISH component tests (ACAT, Fisher, TFisher, minP, Stouffer) and the omnibus test. Performance was assessed using: (i) statistical power at \(\alpha = 0.05\); (ii) the mean within-replicate rank of each method’s pathway-level \(p\)-value (lower is better); and (iii) the “top-method probability,” the probability that a method yields the smallest pathway-level \(p\)-value among all methods in a replicate.
-
-To assess how pathway size affects archetype-recovery patterns identified at \(m = 20\), we repeated the simulations for pathway sizes \(m = 5, 20,\) and \(50\) genes (Supp.~Fig.~\ref{fig:supp_blockA_archetype_recovery_by_m}). To preserve each archetype’s qualitative structure across sizes, we scaled signal layers proportionally with \(m\) rather than fixing the absolute number of affected genes. Under this scaling, SDA consistently produced a sparse, strong-driver architecture with a small, highly perturbed layer; CME preserved a coordinated, moderate-effect architecture with most genes modestly perturbed; DPS maintained a diffuse, weak-shift architecture affecting most genes; HDS retained both a strong driver layer and a broader, moderately perturbed support layer; and SGP remained a single-gene proxy boundary case.
-
-\subsubsection*{Pathway-size sensitivity of archetype recovery}
-
-Supplementary Fig.~\ref{fig:supp_blockA_archetype_recovery_by_m} shows that the broad archetype-to-method mapping remains stable across pathway sizes, although the degree of separation among methods varies meaningfully with \(m\).
-
-\paragraph{Sparse architectures remain the most stable across pathway sizes.}
-The clearest, most consistent patterns occur under SDA and SGP. Under SDA, minP and ACAT dominate across all pathway sizes. For \(m = 5\), minP has the highest power (0.762), with ACAT close behind (0.720), and minP most often ranking first (top-method probability 0.504). For \(m = 20\), minP and ACAT again have the highest power (0.920 and 0.900), but ACAT most often yields the smallest \(p\)-value (0.710). For \(m = 50\), ACAT and minP have nearly identical power (0.958 and 0.964), yet ACAT overwhelmingly dominates winner frequency (0.882 vs. 0.048). Thus, under the sparse-driver architecture, extreme-tail–sensitive procedures consistently dominate: minP maximizes rejection probability, while ACAT increasingly dominates winner frequency as pathway size grows.
-
-This pattern is even stronger under SGP. For \(m = 5\), SGP is detected almost exclusively by ACAT, minP, and TFisher, with minP having the highest power (0.958) and ACAT the highest top-method probability (0.772). For \(m = 20\), minP again has the highest power (0.908), while ACAT most often produces the smallest \(p\)-value (0.688). For \(m = 50\), minP remains the most powerful (0.938), and ACAT continues to dominate winner frequency (0.786). Across all pathway sizes, the omnibus procedure has relatively high power under SGP (0.926, 0.704, 0.632 for \(m = 5, 20, 50\)), yet it rarely attains the highest winner frequency. This aligns with SGP being a highly concentrated gene–proxy architecture, where procedures targeting extreme-tail signal are inherently favored.
-
-\paragraph{DPS remains a diffuse-shift regime best captured by Stouffer-like behavior.}
-Within the DPS archetype, absolute power differences across pathway sizes are modest, but rank-based and winner-based summaries are highly stable. At \(m = 5\), Stouffer’s method has the highest power (0.208), lowest mean rank (2.863), and largest top-method probability (0.442). At \(m = 20\), Fisher’s method, Stouffer’s method, and the omnibus procedure have nearly identical power (0.264, 0.266, 0.264), yet Stouffer again has the best mean rank (2.922) and highest top-method probability (0.384), indicating closer agreement with the diffuse weak-shift alternative. At \(m = 50\), Stouffer still gives the greatest power (0.270), best mean rank (3.110), and highest top-method probability (0.296), while the omnibus method retains similar power (0.268) but is rarely ranked first (0.062). Overall, these results support DPS as a genuine pathway-wide weak-shift regime: Stouffer’s method aligns most closely with the archetype, Fisher’s method remains competitive, and the omnibus procedure shows intermediate—not degenerate—performance.
-
-\paragraph{CME remains intermediate, but separation improves modestly with pathway size.}
-CME remains the least clearly resolved archetype, though method performance becomes more structured as \(m\) increases. At \(m = 5\), Fisher’s and Stouffer’s methods have the highest power (0.330 and 0.326), Stouffer’s has the highest top-method probability (0.352), and the omnibus shows only moderate power (0.308). At \(m = 20\), TFisher is most powerful (0.486), Fisher’s has the best mean rank (2.808), and the omnibus is competitive but not dominant (power 0.448; mean rank 3.281). At \(m = 50\), TFisher strengthens further (power 0.552; top-method probability 0.340), Fisher’s still has the best mean rank (2.795), and the omnibus remains mid-range (power 0.478; mean rank 3.203; top-method probability 0.140). Overall, CME is the archetype most sensitive to pathway size, tending to stay in an intermediate regime rather than clearly approaching either a sparse-tail or diffuse-shift pattern.
-
-\paragraph{HDS becomes increasingly favorable to balanced procedures as pathway size increases.}
-Among the non-sparse archetypes, HDS depends most strongly on pathway size. At \(m = 5\), Fisher’s method has the highest power (0.566), Stouffer’s the highest top-method probability (0.374), and the omnibus is competitive in power (0.536) but is never top-ranked, suggesting that very small pathways compress the driver-plus-support structure into a few moderate signals. At \(m = 20\), the expected HDS pattern emerges: TFisher has the highest power (0.606), Fisher’s the best mean rank (2.765), and the omnibus remains close in power (0.568) but with low top-method probability (0.040). At \(m = 50\), the HDS structure is clearer: TFisher has the highest power (0.718), the omnibus attains the best mean rank (2.899), and Fisher’s and TFisher both retain substantial top-method probabilities (0.196 and 0.282). Thus, as pathway size grows, HDS becomes more statistically identifiable and the omnibus procedure more competitive once both driver and support layers are well represented.
-
-\paragraph{The omnibus is rarely the winner, but usually remains in the competitive middle.}
-Across pathway sizes, the omnibus procedure is rarely the most archetype-aligned method under winner-based summaries, but it also seldom falls into the lowest performance tier except in extremely sparse settings. In SDA and SGP, it retains appreciable power but is consistently outperformed by ACAT and minP under both rank- and winner-based summaries. In DPS, it has power similar to the leading procedures but worse rank stability than Stouffer. In CME and HDS, it is generally intermediate but becomes more competitive as pathway size increases. 
-
-These results show that the CATFISH component tests are not redundant. Sparse architectures favor ACAT/minP; diffuse architectures favor Stouffer or Fisher-type aggregation; and hybrid architectures increasingly favor Fisher/TFisher as pathway size grows. In this context, the omnibus procedure is best seen as a hedge rather than an architecture-specific optimum: it is rarely the single most powerful test for any archetype, but maintains nontrivial power across all five and is particularly appealing when the pathway architecture is unknown.
-
-
-\begin{figure*}[!t]
-    \centering
-    \includegraphics[width=\textwidth]{Figures/SuppFig/FigS1.block_a_archetype_recovery_by_m.png}
-    \caption{\textbf{Pathway-size sensitivity of archetype recovery for CATFISH component tests.}
-    Correlated MVN simulations were repeated at pathway sizes \(m=5\), \(20\), and \(50\) under an exchangeable correlation structure (\(\rho=0.20\); 500 replicates per archetype). Archetype-specific mean-shift patterns were scaled proportionally with pathway size to preserve the qualitative signal family across settings.
-    \textbf{A.} Power at \(\alpha=0.05\).
-    \textbf{B.} Mean rank of method-specific pathway-level \(p\)-values (lower is better).
-    \textbf{C.} Top-method probability, defined as the frequency with which a method yields the smallest pathway-level \(p\)-value within replicate.
-    Sparse archetypes remain dominated by tail-sensitive methods (ACAT/minP) across all pathway sizes, DPS remains most consistent with Stouffer-like aggregation, and CME/HDS show greater sensitivity to pathway size, with clearer separation emerging at larger \(m\). The omnibus is rarely the top-performing method but generally remains competitive across all archetypes and pathway sizes.}
-    \label{fig:supp_blockA_archetype_recovery_by_m}
-\end{figure*}
-
 
 \section{Bias warning}
 
@@ -1245,6 +1212,17 @@ The high correlation but variable Jaccard overlap among methods suggests that wh
 
 The QQ plot analysis confirms that the MVN resampling procedure appropriately calibrates p-values under the null hypothesis. The observed deviation among significant pathways reflects genuine biological enrichment for stem volume-related processes rather than technical inflation. The gene-level genomic inflation factor ($\lambda = 1.31$) at the MAGMA level is within acceptable bounds for complex polygenic traits and does not compromise the validity of pathway-level conclusions.
 
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{fig/supp/SuppFig4_Component_Tests.png}
+\caption{\textbf{Comparison of CATFISH component tests for pathway enrichment analysis.}
+(A) UpSet plot showing intersection patterns among pathways significant (Bonferroni $p < 0.05$) in each component test (ACAT, Fisher, TFisher, minP, Stouffer) and the Omnibus test. Bar heights indicate intersection sizes; horizontal bars indicate total significant pathways per method.
+(B) Quantile-quantile (QQ) plot of Omnibus p-values. Points are colored by significance: Bonferroni $< 0.05$ (red), BH FDR $< 0.05$ (blue), not significant (gray). Dashed diagonal represents the null expectation. Non-significant pathways follow the diagonal, indicating proper calibration; significant pathways deviate upward, reflecting true biological enrichment.
+(C) Pairwise method comparison matrix. Upper triangle: Spearman correlation of $-\log_{10}(p)$ values. Lower triangle: Jaccard similarity of Bonferroni-significant pathway sets. Color intensity reflects magnitude (0--1 scale).
+(D) Boxplots of $-\log_{10}(p)$ distributions for each method. Red dashed line indicates Bonferroni significance threshold ($-\log_{10}(0.05/410) = 3.91$).}
+\label{fig:suppfig}
+\end{figure*}
+
 % ==============================================================================
 % Figure Captions (for reference)
 % ==============================================================================
@@ -1280,6 +1258,51 @@ The QQ plot analysis confirms that the MVN resampling procedure appropriately ca
 (D) Boxplots of $-\log_{10}(p)$ distributions for each method. Red dashed line indicates Bonferroni significance threshold ($-\log_{10}(0.05/410) = 3.91$).}
 \label{fig:suppfig}
 \end{figure}
+
+
+
+\begin{table*}[!t]
+\centering
+\caption{Top multi-layer candidate genes in \textit{Arabidopsis}.}
+\begin{tabular}{lllllllllll}
+\hline
+Gene & MAGMA $p$ & GWAS min $p$ & Top paths & Best path $p$ & Pathway(s) & GWAS & MAGMA & Pathway & Layers & Score \\
+\hline
+AT1G74420 & 8.48E-07 & 8.13E-10 & 1 & 0.0017   & PWY-5936              & Y & Y & Y & 3 & 5.4003 \\
+AT5G55380 & 1.18E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.2856 \\
+AT5G55340 & 2.18E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.2322 \\
+AT5G55350 & 2.58E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.2177 \\
+AT5G55360 & 4.58E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.1677 \\
+AT5G55330 & 4.61E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.1671 \\
+AT1G74470 & 2.46E-05 & 8.13E-10 & 2 & 5.00E-04 & PWY-5064; PWY-5863    & Y & Y & Y & 3 & 5.1608 \\
+AT5G55370 & 8.62E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.1128 \\
+AT5G55320 & 9.21E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.1070 \\
+AT1G73980 & 7.90E-06 & 5.58E-08 & 1 & 0.0081   & PWY-7193              & Y & Y & Y & 3 & 4.9550 \\
+\hline
+\end{tabular}
+\end{table*}
+
+\begin{table*}[!t]
+\centering
+\caption{Top multi-layer candidate genes in female fly.}
+\begin{tabular}{lllllllllll}
+\hline
+Gene & MAGMA $p$ & GWAS min $p$ & Top paths & Best path $p$ & Pathway(s) & GWAS & MAGMA & Pathway & Layers & Score \\
+\hline
+FBgn0015781 & 2.56E-04 & 3.78E-06 & 1  & 0.0820 & FLYCYC:ARG-PRO-PWY & Y & Y & Y & 3 & 4.3693 \\
+FBgn0036622 & 0.0074   & 1.10E-05 & 1  & 0.1047 & FLYCYC:PWY-7250    & Y & Y & Y & 3 & 4.0196 \\
+FBgn0030904 & 1.23E-05 & 2.22E-07 & NA & NA     & NA                  & Y & Y & N & 2 & 3.6477 \\
+FBgn0034479 & 8.41E-06 & 1.68E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.5924 \\
+FBgn0038673 & 1.67E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2977 \\
+FBgn0038672 & 2.00E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2820 \\
+FBgn0027785 & 2.19E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2741 \\
+FBgn0038674 & 2.38E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2670 \\
+FBgn0053639 & 0.0010   & 2.22E-07 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2639 \\
+FBgn0260779 & 3.42E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2354 \\
+\hline
+\end{tabular}
+\end{table*}
+
 
 
 \end{appendices}
