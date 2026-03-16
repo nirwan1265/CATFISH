@@ -63,6 +63,7 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{tikz}
+\usepackage{textgreek}
 \usetikzlibrary{arrows.meta, positioning, shapes.geometric}
 
 %\usepackage{draftwatermark}
@@ -295,10 +296,6 @@ This calibration targets the null distribution of the complete pathway-analysis 
 In addition to this LD-aware MVN approach, CATFISH also supports global gene-set resampling as a secondary calibration mode. However, MVN calibration is the recommended inferential procedure because it directly preserves pathway-specific dependence structure induced by LD while calibrating the final omnibus statistic under the full analysis pipeline.
 
 
-
-
-
-
 \begin{algorithm}[htbp]
 \caption{LD-aware MVN calibration for pathway $S$}
 \label{alg:mvn_calibration}
@@ -387,6 +384,7 @@ To prioritize genes beyond top-SNP, MAGMA, or top-pathway evidence alone, we int
 
 \subsection{Simulation-based validation of CATFISH pathway tests}
 
+<<<<<<< HEAD
 To validate CATFISH under realistic pathway dependence, we used MVN-based simulations that vary (i) signal architecture, (ii) within-pathway LD (gene--gene correlation), and (iii) the amount and quality of correlation information available for calibration. Full simulation details can be placed in Supplementary Methods; here we summarize the main results aligned to the figure blocks.
 
 \subsubsection{Archetype recovery reveals architecture-specific performance and power trade-offs}
@@ -455,6 +453,24 @@ Sparse\_Strong   & $\sim 0.05$ & Concordant (all $+$) & Swept over $\delta$ grid
 \begin{figure*}[!t]
     \centering
     \includegraphics[width=\textwidth]{Figures/MainFig/Fig2.block_b_linebar.png}
+=======
+To evaluate CATFISH under realistic pathway dependence, we performed MVN-based simulations that varied (i) signal architecture, (ii) pathway size and effect strength, (iii) within-pathway LD (gene–gene correlation), and (iv) calibration information quality, including missing/zero-imputed correlations and component-misspecification stress scenarios. Full simulation details and parameters are in Appendix 1. Here, we summarize the main findings.
+
+\subsubsection{Null calibration under LD and robustness to missing correlations}
+
+We simulated MVN gene-level \(Z\)-scores under three LD scenarios: (i) LD\_independent (\(\rho=0\)), (ii) LD\_moderate (\(\rho=0.3\)), and (iii) LD\_strong (\(\rho=0.7\)), across pathway sizes \(m\in\{5,25,50\}\) (used throughout the null-calibration analyses unless otherwise noted). For each LD\(\times m\) condition, we generated 500 null replicates, computed ACAT, Fisher, TFisher, minP, Stouffer, and omnibus \(p\)-values, and summarized calibration using genomic-control inflation \(\lambda\) and empirical type I error at \(\alpha=0.05\). For a well-calibrated test under the null, \textit{λ} should be close to 1 and the empirical type I error should be close to 0.05. MVN calibration was based on condition-specific empirical null distributions precomputed from 1000 MVN null draws per condition. We report both analytic calibration (independence-based reference distributions) and MVN calibration (empirical null calibration from LD-matched MVN resampling). Thus, all methods are evaluated on the same MVN-generated data, but with different p-value calibration schemes (Fig.~\ref{fig:blockB_null_calibration}).
+
+\paragraph{Null calibration under LD.}
+
+Figure~\ref{fig:blockB_null_calibration} shows that calibration is acceptable under LD\_independent for most methods, but deteriorates under LD\_moderate and LD\_strong when analytic assumptions ignore correlation. In the LD\_independent setting, empirical type I error remains near nominal for ACAT (mean 0.045), Fisher (0.051), Stouffer (0.055), minP (0.043), and OMNIBUS\_MVN (0.038), with only mild drift for \texttt{OMNIBUS\_Analytical} (0.056). The main outlier is TFisher, which shows low $\lambda$ (mean 0.234) despite only moderate type I deviation (mean 0.065), highlighting that $\lambda$ and tail error are not always aligned (Table).
+
+Under LD\_moderate and LD\_strong, several analytically calibrated methods become clearly anti-conservative. The mean type I error increases to 0.174 and 0.222 for Fisher, 0.214 and 0.297 for Stouffer, 0.103 and 0.102 for TFisher, and 0.180 and 0.243 for OMNIBUS\_Analytical (Table). ACAT is comparatively stable but still mildly inflated (0.067 and 0.061). ACAT was the least anti-conservative component test overall under correlated nulls. In contrast, OMNIBUS\_MVN remains close to the nominal level across LD settings, with a type I error of 0.060 under LD\_moderate and 0.053 under LD\_strong (ranges across pathway sizes: 0.052--0.066 and 0.044--0.066, respectively). For example, at LD\_moderate with $m=50$, type I error is 0.052 for OMNIBUS\_MVN versus 0.072 for ACAT and 0.224 for OMNIBUS\_Analytical, and at LD\_strong with $m=50$, OMNIBUS\_MVN is slightly conservative (0.044) while OMNIBUS\_Analytical is strongly inflated (0.326). Overall, these results support OMNIBUS\_MVN as the most reliable default for controlling false positives under LD, while remaining well-calibrated under LD\_independent.
+
+\begin{figure*}[!t]
+    \centering
+    %\includegraphics[width=\textwidth]{fig/main/Fig2.block_b_linebar.png}
+    \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio]{fig/main/Fig2.block_b_linebar.png}
+>>>>>>> af36157bc43e263d3ed5cdab21eaf60827bc7573
     \caption{\textbf{Null calibration of CATFISH pathway tests under LD.}
     Null calibration diagnostics for five component tests and the omnibus across three LD regimes (LD\_moderate, $\rho=0.3$; LD\_strong, $\rho=0.7$; LD\_independent, $\rho=0$) and three pathway sizes ($m=5,25,50$).
     Bars show empirical type I error at $\alpha=0.05$ (red dashed reference), and lines show genomic control inflation $\lambda$ (blue dashed reference at $\lambda=1$).
@@ -463,9 +479,47 @@ Sparse\_Strong   & $\sim 0.05$ & Concordant (all $+$) & Swept over $\delta$ grid
     \label{fig:blockB_null_calibration}
 \end{figure*}
 
+<<<<<<< HEAD
 \begin{figure*}[!t]
     \centering
     \includegraphics[width=\textwidth]{Figures/MainFig/Fig3.block_d_linebar.png}
+=======
+
+\paragraph{Robustness to missing correlations.} 
+We next evaluated whether missing gene--gene correlations affect the omnibus statistic. Empirical analyses in real biological data often yield only partial estimates of gene--gene correlations, so we evaluated omnibus calibration under incomplete correlation matrices (Supp.~Fig.~\ref{fig:blockC_missing_corr}). Null data were generated from a true block-correlation matrix (\(\rho=0.5\)) for pathway sizes \(m\in\{5,25,50\}\). We then removed a fraction of off-diagonal entries (\(0, 0.1, 0.3, 0.5, 0.7\)) by setting them to zero, symmetrized the matrix, and projected to the nearest positive-definite correlation matrix before MVN null resampling. We compared three omnibus strategies: (i) analytic fallback (ignores correlation), (ii) MVN calibration with the full true correlation matrix (true correlation), and (iii) MVN calibration with the damaged/zero-imputed correlation matrix.
+
+Two patterns were consistent. First, the analytic fallback was strongly miscalibrated across all settings, with a mean type I error \(0.201\) (max \(0.284\)) and mean \(\lambda=0.293\). Second, MVN calibration substantially improved calibration. The true correlation MVN gave a mean type I error \(0.054\) (max \(0.078\)) and mean \(\lambda=0.944\), while zero-imputed MVN gave a mean type I error \(0.076\) (max \(0.146\)) and mean \(\lambda=0.900\). Thus, zero-imputed MVN was clearly better than the analytic fallback, but generally less accurate than the true correlation MVN, especially at larger pathway sizes and higher missingness. For example, at a missing fraction \(0.7\) and \(m=50\), the type I error was \(0.284\) (analytic fallback), \(0.146\) (zero-imputed MVN), and \(0.052\) (MVN true correlation).
+
+Overall, these results support the idea of using MVN calibration with the best available correlation estimate as the default. When correlations are incomplete, zero-imputed MVN is a defensible fallback and is substantially safer than independence-based analytical assumptions.
+
+\begin{figure*}[!t]
+    \centering
+    %\includegraphics[width=\textwidth]{fig/supp/SuppFig2_block_c_panel.png}
+    \includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{fig/supp/SuppFig2_block_c_panel.png}
+    \caption{\textbf{Robustness of omnibus calibration to missing correlations.}
+    Omnibus calibration under incomplete LD information, evaluated by randomly removing a fraction of off-diagonal entries from the pathway correlation matrix and comparing three strategies: analytic fallback (ignores correlations), MVN calibration using the true correlation matrix, and MVN calibration after imputing missing correlations to zero.
+    \textbf{A.} Genomic control inflation $\lambda$ as a function of fraction missing for pathway sizes $m=5,25,50$ (dashed reference at $\lambda=1$).
+    \textbf{B.} Empirical type I error at $\alpha=0.05$ as a function of fraction missing (dashed reference at 0.05).
+    The analytic fallback is strongly miscalibrated under LD, with inflated type I error that worsens with pathway size. MVN calibration substantially improves stability, and the zero-imputed MVN strategy maintains the closest-to-nominal behavior across missingness levels, supporting conservative handling of missing pairwise correlations in practice.}
+    \label{fig:blockC_missing_corr}
+\end{figure*}
+
+\subsubsection{Stress test: omnibus robustness under component misspecification}
+
+To evaluate robustness under component misspecification, defined here as anti-conservative component behavior (empirical type I error above the nominal level), we conducted a structured component-breakage stress test under the global null. For each LD setting (LD\(_\text{independent}\), LD\(_\text{moderate}\), LD\(_\text{strong}\)) and pathway size (\(m=5,25,50\)), we selected \(k=1,2,3,4\) of the five component tests (ACAT, Fisher, TFisher, minP, Stouffer) and applied anti-conservative breakage to those selected components (broken \(p\)-values transformed as \(p^\gamma\), \(\gamma=0.7\)). For each \((m,\mathrm{LD},k)\), we evaluated all \(\binom{5}{k}\) breakage combinations, generated 500 null replicates per combination, and summarized metrics after averaging across combinations. In each replicate and breakage pattern, the omnibus statistic was recomputed from the broken component set and calibrated using a breakage-matched MVN null. Null component replicates were subjected to the same breakage pattern before constructing the omnibus reference distribution (\(B=1000\) null draws per condition; Fig.~\ref{fig:blockD_breakage}).
+
+
+As the breakage extent increased (larger \(k\)), individual components became increasingly unstable, especially under LD\(_\text{moderate}\)/LD\(_\text{strong}\). For example, at \(k=4\), LD\(_\text{strong}\), \(m=25\), type I error reached 0.370 for Stouffer and 0.273 for Fisher, whereas the MVN-recalibrated omnibus remained 0.058. A similar pattern appeared at LD\(_\text{moderate}\), \(m=50\), \(k=4\): Stouffer 0.326, Fisher 0.294, omnibus 0.072. Even when inflation was milder, component trajectories generally worsened with \(k\), while the omnibus stayed near the nominal target. This pattern was observed across the LD and pathway sizes.
+
+Across all stress-test settings, omnibus (MVN) had a mean type I error of 0.0595, a mean absolute deviation from 0.05 of 0.0113, and a maximum type I error of 0.0736, making it the closest method to nominal control overall. In contrast, the mean type I error was 0.220 for Stouffer, 0.178 for Fisher, 0.108 for ACAT, 0.104 for TFisher, and 0.0768 for minP. The corresponding \(\lambda\) trends showed the same instability pattern for several components (e.g., Stouffer up to \(\lambda\approx 2.21\)), whereas the omnibus \(\lambda\) remained comparatively flatter and closer to 1.
+
+These results show that robustness requires calibration matched to both the LD structure and the component-failure pattern. In this stress setting, breakage-matched MVN recalibration preserves near-nominal error control for the omnibus test as misspecification increases.
+
+
+\begin{figure*}[!t]
+    \centering
+    \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio]{fig/main/Fig3.block_d_linebar.png}
+>>>>>>> af36157bc43e263d3ed5cdab21eaf60827bc7573
     \caption{\textbf{Component breakage stress test for omnibus robustness.}
     Stress test under the global null in which $k=1,\ldots,4$ component tests are deliberately misspecified (“broken”), averaged across all combinations of broken components, under three LD regimes and pathway sizes ($m=5,25,50$).
     Bars show empirical type I error at $\alpha=0.05$ (red dashed reference), and lines show genomic control inflation $\lambda$ (blue dashed reference at $\lambda=1$).
@@ -474,9 +528,28 @@ Sparse\_Strong   & $\sim 0.05$ & Concordant (all $+$) & Swept over $\delta$ grid
     \label{fig:blockD_breakage}
 \end{figure*}
 
+<<<<<<< HEAD
 \begin{figure*}[!t]
     \centering
     \includegraphics[width=\textwidth]{Figures/MainFig/Fig4.block_e_panel_ab.png}
+=======
+\subsubsection{Adaptive calibration and leave-one-out diagnostics}
+
+Finally, we evaluated two robustness-oriented diagnostics for the omnibus framework, namely (i) adaptive component filtering and (ii) leave-one-out (LOO) sensitivity analysis (Fig.~\ref{fig:blockE_adaptive_loo}). In the adaptive procedure, component tests are first screened using training null simulations, and components showing poor calibration are excluded before recomputing the omnibus. We compared four omnibus variants
+(i) \textbf{Analytical}, the omnibus computed from all five components using analytic calibration
+(ii) \textbf{MVN}, the omnibus computed from all five components with MVN calibration
+(iii) \textbf{Adaptive+Analytical}, the omnibus recomputed after filtering miscalibrated components and then analytically calibrated
+(iv) \textbf{Adaptive+MVN}, the omnibus recomputed after filtering miscalibrated components and then MVN-calibrated.
+For each $(m,\rho)$ setting ($m\in\{5,25,50\}$, $\rho\in\{0,0.3,0.7\}$), adaptive filtering used $n_{\text{train}}=200$ null replicates to screen components and $n_{\text{test}}=300$ null replicates for evaluation. The LOO analysis used $n=500$ null replicates per setting. MVN calibration used $B=1000$ null draws per condition.
+
+In the averaged summary across pathway sizes and LD settings, the uncalibrated Analytical omnibus remained strongly anti-conservative (type I error $=0.156$) despite a conservative $\lambda$ estimate ($\lambda=0.439$), further illustrating that $\lambda$ alone can be misleading for calibration assessment. By contrast, both MVN-based variants were near nominal type I control (MVN $=0.041$, Adaptive+MVN $=0.053$) with $\lambda$ close to 1 (0.990 and 0.971, respectively). Adaptive+Analytical was also near nominal in this averaged view (0.047), but it remained highly conservative in $\lambda$ (0.454), indicating that analytic $p$-value construction is less stable than LD-aware MVN calibration. Both are well calibrated and similar in performance, so MVN is the simpler default and Adaptive+MVN is best treated as an optional robustness check rather than a clear improvement.
+
+The LOO analysis provides a complementary sensitivity check by recomputing the MVN-calibrated omnibus after excluding each component in turn ($-$ACAT, $-$Fisher, $-$TFisher, $-$minP, $-$Stouffer) and comparing it with the full set (All). Across all exclusions, calibration remained stable. Type I error ranged from 0.051 to 0.058 and $\lambda$ ranged from 1.03 to 1.08, with no single exclusion producing a qualitative breakdown. This supports the interpretation that no individual component is solely driving omnibus calibration behavior and that MVN-based calibration provides a robust inferential layer for CATFISH under component perturbation.
+
+\begin{figure*}[!t]
+    \centering
+    \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio]{fig/main/Fig4.block_e_panel.png}
+>>>>>>> af36157bc43e263d3ed5cdab21eaf60827bc7573
     \caption{\textbf{Adaptive filtering and leave-one-out diagnostics for omnibus calibration.}
     Summary diagnostics for omnibus variants based on adaptive component filtering and leave-one-out (LOO) sensitivity analyses.
     \textbf{A.} Genomic inflation factor $\lambda$ for four omnibus variants (analytic, MVN, adaptive+analytic, adaptive+MVN) and for LOO exclusions of each component test (e.g., $-{\rm ACAT}$, $-{\rm Fisher}$, $-{\rm Stouffer}$, $-{\rm TFisher}$, $-{\rm minP}$), compared with using all components (“All”).
@@ -512,10 +585,137 @@ Sparse\_Strong   & $\sim 0.05$ & Concordant (all $+$) & Swept over $\delta$ grid
 \end{figure*}
 
 
-
 \subsection{From SNP associations to pathway-level aggregation}
 
+<<<<<<< HEAD
 We performed a genome-wide association study (GWAS) for stem volume in the sorghum association panel (SAP) (ref). The SNP scan identified multiple genome-wide significant signals, including a prominent peak on chromosome 9 (Fig.~\ref{fig:figure4}A). Using a genome-wide threshold of $-\log_{10}(p) > 7$, we mapped significant SNPs to 423 genes. Most strong associations occurred in a single interval on chromosome 9: 34 of the 36 top candidate genes fell within a $\sim$2.8~Mb region (56.1–58.9~Mb), indicating a major QTL for stem volume in this region.
+=======
+We performed a genome-wide association study (GWAS) for stem volume in the sorghum association panel (SAP) (ref). The SNP scan identified multiple genome-wide significant signals, including a prominent peak on chromosome 9 (Fig.~\ref{fig:figure4}A). Using a genome-wide threshold of $-\log_{10}(p) > 7$, we mapped significant SNPs to 423 genes. Most strong associations occurred in a single interval on chromosome 9: 34 of the 36 top candidate genes fell within a $\sim$2.8~Mb region (56.1--58.9~Mb), indicating a major QTL for stem volume in this region.
+
+We then aggregated SNP-level associations to genes using MAGMA, testing 33,967 annotated sorghum genes and assigning SNPs within gene boundaries plus $\pm$25~kb flanks. After Benjamini--Hochberg FDR correction, 861 genes were significant at FDR $< 0.05$ (Fig.~\ref{fig:figure4}B). The top gene-level association was \textit{SORBI\_3009G206700} ($-\log_{10}(p) = 14.64$). Gene-level signals were similarly enriched on chromosome 9, mirroring the SNP-level peak and supporting a concentrated locus with multiple associated genes.
+
+To assess pathway-level organization, we applied CATFISH pathway analysis to 410 sorghum PlantCyc metabolic pathways (ref). CATFISH evaluated pathway enrichment using five component tests (ACAT, Fisher's method, adaptive soft TFisher, minP, and Stouffer's method) and an omnibus test combining them. Statistical inference used MVN resampling, with gene--gene correlation matrices from MAGMA to account for LD. We identified 102 pathways at FDR $< 0.05$, of which 73 remained significant after Bonferroni correction ($p < 0.05/410$). Fig.~\ref{fig:figure4}C shows the top 20 pathways and their $p$-value profiles across component and omnibus tests. The strongest pathway-level signals were detected for gluconeogenesis I (GLUCONEO-PWY), L-glutamate biosynthesis IV (GLUGLNSYN-PWY), L-glutamine degradation I (GLUTAMINDEG-PWY), phospholipases (LIPASYN-PWY), and aerobic respiration I (PWY-3781). Together, these pathways provide a coherent framework for interpreting variation in stem volume. Overall, these results show a clear progression from SNP-level associations to gene-level aggregation and then to pathway-level interpretation under LD-aware calibration (Fig.~\ref{fig:figure4}A--C).
+
+
+\begin{table}[htbp]
+\centering
+\caption{Top 9 candidate genes for sorghum stem volume identified by MAGCAT multi-layer integration. All genes show concordant support across GWAS, MAGMA, and pathway enrichment layers. Higher score indicates stronger combined evidence.}
+\label{tab:top9_genes}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccccp{5cm}}
+\toprule
+\textbf{Gene ID} & \textbf{Chr} & \textbf{GWAS} & \textbf{GWAS} & \textbf{MAGMA} & \textbf{MAGMA} & \textbf{Score} & \textbf{Pathway(s)} \\
+ & & \textbf{$p$-value} & \textbf{Rank} & \textbf{$p$-value} & \textbf{Rank} & & \\
+\midrule
+SORBI\_3009G231100 & 9 & $4.82 \times 10^{-15}$ & 8 & $8.99 \times 10^{-14}$ & 15 & 7.44 & CMP-3-deoxy-D-manno-octulosonate biosynthesis \\
+SORBI\_3009G229300 & 9 & $1.98 \times 10^{-14}$ & 29 & $4.86 \times 10^{-13}$ & 23 & 7.23 & Xylan biosynthesis \\
+SORBI\_3009G226600 & 9 & $5.87 \times 10^{-15}$ & 16 & $1.02 \times 10^{-12}$ & 30 & 7.22 & Triacylglycerol biosynthesis \\
+SORBI\_3009G225700 & 9 & $1.85 \times 10^{-14}$ & 26 & $1.04 \times 10^{-12}$ & 31 & 7.17 & L-glutamate biosynthesis IV; L-glutamine degradation I; glutaminyl-tRNA biosynthesis; ammonia assimilation cycle I; Organic Nitrogen Assimilation \\
+SORBI\_3009G230400 & 9 & $3.12 \times 10^{-14}$ & 35 & $3.17 \times 10^{-12}$ & 49 & 7.05 & DIBOA-glucoside biosynthesis \\
+SORBI\_3009G238700 & 9 & $1.32 \times 10^{-12}$ & 90 & $1.53 \times 10^{-12}$ & 39 & 6.95 & Aerobic respiration I (cytochrome c) \\
+SORBI\_3009G225100 & 9 & $1.64 \times 10^{-12}$ & 99 & $3.28 \times 10^{-12}$ & 50 & 6.88 & Superpathway of phospholipid biosynthesis II (plants); phosphatidylserine and phosphatidylethanolamine biosynthesis I \\
+SORBI\_3009G233200 & 9 & $1.00 \times 10^{-10}$ & 167 & $2.01 \times 10^{-10}$ & 89 & 6.34 & Sucrose biosynthesis I (from photosynthesis) \\
+SORBI\_3009G239500 & 9 & $1.97 \times 10^{-11}$ & 120 & $3.13 \times 10^{-9}$ & 126 & 6.17 & L-glutamine degradation I; pyrimidine ribonucleotides interconversion; glutaminyl-tRNA biosynthesis; UTP and CTP de novo biosynthesis; UTP and CTP dephosphorylation I \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{fig/main/Figure4_GWAS_MAGMA_Pathway.png}
+\caption{\textbf{Genome-wide association and pathway analysis of stem volume in sorghum.}
+(A) GWAS Manhattan plot showing SNP associations across 10 chromosomes. Red dashed line indicates genome-wide significance ($p < 5 \times 10^{-8}$); blue dashed line indicates suggestive significance ($p < 10^{-5}$).
+(B) MAGMA gene-based Manhattan plot. Red dashed line indicates Bonferroni-corrected significance; blue dashed line indicates FDR $< 0.05$ threshold.
+(C) CATFISH pathway analysis heatmap showing $-\log_{10}(p)$ values for top 20 pathways across component tests (ACAT, Fisher, Stouffer, minP, TFisher) and the omnibus test. Numbers in parentheses indicate gene counts per pathway.}
+\label{fig:figure4}
+\end{figure*}
+
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{fig/main/Figure5_Candidate_Genes.png}
+\caption{\textbf{Integrated candidate gene analysis combining GWAS, MAGMA, and pathway evidence.}
+(A) UpSet plot showing intersection patterns among genes significant in GWAS ($-\log_{10}(p) > 7$; coral), MAGMA (FDR $< 0.05$; blue), and pathway analysis (Bonferroni $p < 0.05$; green).
+(B) Bar chart summarizing gene counts per evidence category.
+(C) Density plots comparing $-\log_{10}(p)$ distributions for genes in significant pathways (green) versus other genes (gray), shown separately for GWAS and MAGMA results. Wilcoxon test p-values are indicated.
+(D) Scatter plot of GWAS versus MAGMA $-\log_{10}(p)$ values. Points are colored by evidence category; dashed lines indicate significance thresholds. Genes in all three layers are highlighted in red with larger point size.}
+\label{fig:figure5}
+\end{figure*}
+
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio]{fig/supp/Supplementary_Figure_Component_Tests.png}
+\caption{\textbf{Comparison of CATFISH component tests for pathway enrichment analysis.}
+(A) UpSet plot showing intersection patterns among pathways significant (Bonferroni $p < 0.05$) in each component test (ACAT, Fisher, TFisher, minP, Stouffer) and the Omnibus test. Bar heights indicate intersection sizes; horizontal bars indicate total significant pathways per method.
+(B) Quantile-quantile (QQ) plot of Omnibus p-values. Points are colored by significance: Bonferroni $< 0.05$ (red), BH FDR $< 0.05$ (blue), not significant (gray). Dashed diagonal represents the null expectation. Non-significant pathways follow the diagonal, indicating proper calibration; significant pathways deviate upward, reflecting true biological enrichment.
+(C) Pairwise method comparison matrix. Upper triangle: Spearman correlation of $-\log_{10}(p)$ values. Lower triangle: Jaccard similarity of Bonferroni-significant pathway sets. Color intensity reflects magnitude (0--1 scale).
+(D) Boxplots of $-\log_{10}(p)$ distributions for each method. Red dashed line indicates Bonferroni significance threshold ($-\log_{10}(0.05/410) = 3.91$).}
+\label{fig:suppfig}
+\end{figure*}
+
+
+
+\subsection{Integrated candidate gene analysis identifies high-confidence targets for stem volume and sucrose metabolism}
+
+
+%%need to explain why we are getting so many pathways as significnat for bonferroni yeah. 
+
+To prioritize genes supported by multiple modalities, we combined evidence from SNP-level GWAS, MAGMA gene-based tests, and CATFISH pathway enrichment (Fig.~\ref{fig:figure5}). Significance thresholds were defined as follows: GWAS $-\log_{10}(p) > 7$; MAGMA FDR $< 0.05$; and pathway support as membership in a Bonferroni-significant pathway with $p < 0.05$ (Fig.~\ref{fig:figure5}A). In total, 2,016 genes met at least one criterion, and 36 were supported by all three layers, forming the highest-confidence set.
+
+We then tested whether pathway membership was associated with stronger gene-level signals. Genes in significant pathways showed more extreme GWAS and MAGMA statistics than non-pathway genes (Wilcoxon $p = 6.34 \times 10^{-4}$ for GWAS; $p = 7.35 \times 10^{-3}$ for MAGMA; Fig.~\ref{fig:figure5}C), indicating that pathway-level signals preferentially highlight genes with stronger trait-relevant associations rather than random pathway members. The correspondence between SNP- and gene-level association signals is shown in the GWAS versus MAGMA scatter plot (Fig.~\ref{fig:figure5}D). The 36 genes supported by all three analytic layers cluster in the upper-right quadrant (red), indicating strong single-variant and aggregated gene-level association. This cross-layer concordance suggests a robust biological signal rather than method-specific artifacts.
+
+These 36 triple-supported genes form the primary set for downstream functional interpretation and validation (Table~\ref{tab:top_genes}). Many participate in pathways directly involved in biomass accumulation, including carbon allocation, nitrogen metabolism, membrane biogenesis, and cellular energy production. The top candidate, \textit{SORBI\_3009G231100} (GWAS rank 2; MAGMA rank 15), is annotated to the CMP-3-deoxy-D-\textit{manno}-octulosonate biosynthesis pathway (PWY-1269), which contributes to cell wall and other polysaccharide processes. Variation affecting cell wall synthesis and remodeling is a plausible determinant of stem volume through effects on radial growth, secondary thickening, and mechanical reinforcement.
+
+
+
+
+\begin{table*}[!t]
+\centering
+\caption{Top multi-layer candidate genes in \textit{Arabidopsis}.}
+\begin{tabular}{lllllllllll}
+\hline
+Gene & MAGMA $p$ & GWAS min $p$ & Top paths & Best path $p$ & Pathway(s) & GWAS & MAGMA & Pathway & Layers & Score \\
+\hline
+AT1G74420 & 8.48E-07 & 8.13E-10 & 1 & 0.0017   & PWY-5936              & Y & Y & Y & 3 & 5.4003 \\
+AT5G55380 & 1.18E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.2856 \\
+AT5G55340 & 2.18E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.2322 \\
+AT5G55350 & 2.58E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.2177 \\
+AT5G55360 & 4.58E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.1677 \\
+AT5G55330 & 4.61E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.1671 \\
+AT1G74470 & 2.46E-05 & 8.13E-10 & 2 & 5.00E-04 & PWY-5064; PWY-5863    & Y & Y & Y & 3 & 5.1608 \\
+AT5G55370 & 8.62E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.1128 \\
+AT5G55320 & 9.21E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.1070 \\
+AT1G73980 & 7.90E-06 & 5.58E-08 & 1 & 0.0081   & PWY-7193              & Y & Y & Y & 3 & 4.9550 \\
+\hline
+\end{tabular}
+\end{table*}
+
+\begin{table*}[!t]
+\centering
+\caption{Top multi-layer candidate genes in female fly.}
+\begin{tabular}{lllllllllll}
+\hline
+Gene & MAGMA $p$ & GWAS min $p$ & Top paths & Best path $p$ & Pathway(s) & GWAS & MAGMA & Pathway & Layers & Score \\
+\hline
+FBgn0015781 & 2.56E-04 & 3.78E-06 & 1  & 0.0820 & FLYCYC:ARG-PRO-PWY & Y & Y & Y & 3 & 4.3693 \\
+FBgn0036622 & 0.0074   & 1.10E-05 & 1  & 0.1047 & FLYCYC:PWY-7250    & Y & Y & Y & 3 & 4.0196 \\
+FBgn0030904 & 1.23E-05 & 2.22E-07 & NA & NA     & NA                  & Y & Y & N & 2 & 3.6477 \\
+FBgn0034479 & 8.41E-06 & 1.68E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.5924 \\
+FBgn0038673 & 1.67E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2977 \\
+FBgn0038672 & 2.00E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2820 \\
+FBgn0027785 & 2.19E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2741 \\
+FBgn0038674 & 2.38E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2670 \\
+FBgn0053639 & 0.0010   & 2.22E-07 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2639 \\
+FBgn0260779 & 3.42E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2354 \\
+\hline
+\end{tabular}
+\end{table*}
+
+>>>>>>> af36157bc43e263d3ed5cdab21eaf60827bc7573
 
 We then aggregated SNP-level associations to genes using MAGMA, testing 33,967 annotated sorghum genes and assigning SNPs within gene boundaries plus $\pm$25~kb flanks. After Benjamini–Hochberg FDR correction, 861 genes were significant at FDR $< 0.05$ (Fig.~\ref{fig:figure4}B). The top gene-level association was \textit{SORBI\_3009G206700} ($-\log_{10}(p) = 14.64$). Gene-level signals were similarly enriched on chromosome 9, mirroring the SNP-level peak and supporting a concentrated locus with multiple associated genes.
 

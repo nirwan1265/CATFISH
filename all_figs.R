@@ -430,20 +430,7 @@ run_block_a <- function(config = BLOCK_A_CONFIG) {
   )
 
   combined_plot <- (power_plot / rank_plot / top_plot) +
-    plot_annotation(
-      title = "Block A: Archetype recovery for CATFISH component tests",
-      subtitle = sprintf(
-        "m = %d genes, exchangeable Sigma with rho = %.2f, %d replicates per archetype",
-        config$m, config$rho, config$n_reps
-      ),
-      caption = "Color scales: blue = power, green = mean rank, orange = top-method probability.",
-      theme = theme(
-        plot.title = element_text(face = "bold", hjust = 0.5, size = 18),
-        plot.subtitle = element_text(hjust = 0.5, size = 12),
-        plot.caption = element_text(hjust = 0, size = 11)
-      ),
-      tag_levels = "A"
-    )
+    plot_annotation(tag_levels = "A")
 
   summary_path <- file.path(config$results_dir, "block_a_archetype_summary.csv")
   raw_path <- file.path(config$results_dir, "block_a_archetype_results.rds")
@@ -570,6 +557,27 @@ retitle_block_plot <- function(plot_obj, old_block_label, new_block_label) {
   plot_obj
 }
 
+strip_geom_text_layers <- function(plot_obj) {
+  if (!inherits(plot_obj, "ggplot")) {
+    return(plot_obj)
+  }
+  keep_layer <- vapply(plot_obj$layers, function(layer) {
+    !inherits(layer$geom, "GeomText")
+  }, logical(1))
+  plot_obj$layers <- plot_obj$layers[keep_layer]
+  plot_obj
+}
+
+strip_plot_headers <- function(plot_obj) {
+  if (!inherits(plot_obj, "ggplot")) {
+    return(plot_obj)
+  }
+  plot_obj$labels$title <- NULL
+  plot_obj$labels$subtitle <- NULL
+  plot_obj$labels$caption <- NULL
+  plot_obj
+}
+
 make_panel_ab <- function(plot_a, plot_b, title = NULL) {
   out <- plot_a / plot_b +
     patchwork::plot_annotation(tag_levels = "A")
@@ -663,8 +671,8 @@ plot_linebar_block_c <- function(results) {
     theme(axis.text.x = element_text(angle = 35, hjust = 1))
 }
 
-plot_linebar_block_d <- function(results) {
-  df <- results %>%
+prepare_block_d_plot_df <- function(results) {
+  results %>%
     dplyr::filter(method %in% c("acat", "fisher", "tfisher", "minp", "stouffer", "omnibus_mvn")) %>%
     dplyr::mutate(
       cor_structure = dplyr::case_when(
@@ -684,36 +692,52 @@ plot_linebar_block_d <- function(results) {
         TRUE ~ method
       ), levels = c("ACAT", "Fisher", "TFisher", "minP", "Stouffer", "Omnibus (MVN)"))
     )
+}
 
-  scale_fac <- max(df$lambda, na.rm = TRUE) / max(df$type1_05, na.rm = TRUE)
+plot_block_d_bar_metric <- function(results, metric = c("lambda", "type1_05")) {
+  metric <- match.arg(metric)
+  df <- prepare_block_d_plot_df(results) %>%
+    dplyr::mutate(
+      y = .data[[metric]],
+      y_se = dplyr::case_when(
+        metric == "lambda" ~ lambda_se,
+        metric == "type1_05" ~ type1_05_se,
+        TRUE ~ NA_real_
+      ),
+      ymin = pmax(y - y_se, 0),
+      ymax = y + y_se
+    )
 
-  ggplot(df, aes(x = factor(n_broken), group = method_label)) +
-    geom_col(aes(y = type1_05, fill = method_label),
-             position = position_dodge(width = 0.82), alpha = 0.55, width = 0.75) +
-    geom_line(aes(y = lambda / scale_fac, color = method_label), linewidth = 0.85) +
-    geom_point(aes(y = lambda / scale_fac, color = method_label), size = 1.5) +
-    geom_hline(yintercept = 0.05, linetype = "dashed", color = "red", linewidth = 0.6) +
-    geom_hline(yintercept = 1 / scale_fac, linetype = "dashed", color = "#1F77B4", linewidth = 0.6) +
+  dodge <- position_dodge(width = 0.85)
+  y_lab <- if (metric == "lambda") expression(lambda) else "Type I error"
+
+  p <- ggplot(df, aes(x = factor(n_broken), y = y, fill = method_label)) +
+    geom_col(position = dodge, width = 0.78, alpha = 0.82) +
+    geom_errorbar(aes(ymin = ymin, ymax = ymax), position = dodge, width = 0.14, linewidth = 0.42) +
     facet_grid(pathway_size ~ cor_structure,
+               scales = "free_y",
                labeller = labeller(pathway_size = function(x) paste0("m=", x))) +
-    scale_y_continuous(
-      name = "Type I error",
-      sec.axis = sec_axis(~ . * scale_fac, name = expression(lambda))
-    ) +
     scale_fill_manual(values = c(
       "ACAT" = "#E41A1C", "Fisher" = "#377EB8", "TFisher" = "#4DAF4A",
       "minP" = "#984EA3", "Stouffer" = "#FF7F00", "Omnibus (MVN)" = "#000000"
     )) +
-    scale_color_manual(values = c(
-      "ACAT" = "#B22222", "Fisher" = "#1F5AA6", "TFisher" = "#2E8B57",
-      "minP" = "#7D3C98", "Stouffer" = "#CC7000", "Omnibus (MVN)" = "#000000"
-    )) +
-    labs(
-      title = "Block D: Component breakage stress test (line+bar)",
-      subtitle = "Bars = Type I error, Line = genomic control lambda.\nRed dashed: Type I=0.05; Blue dashed: lambda=1",
-      x = "Number of broken components", fill = "Method", color = "Method"
-    ) +
-    block_a_theme
+    labs(x = "Number of broken components", y = y_lab, fill = "Method") +
+    block_a_theme +
+    theme(legend.position = "top")
+
+  if (metric == "lambda") {
+    p <- p + geom_hline(yintercept = 1, linetype = "dashed", color = "#1F77B4", linewidth = 0.6)
+  } else {
+    p <- p + geom_hline(yintercept = 0.05, linetype = "dashed", color = "red", linewidth = 0.6)
+  }
+
+  p
+}
+
+plot_linebar_block_d <- function(results) {
+  p_lambda <- plot_block_d_bar_metric(results, metric = "lambda")
+  p_type1 <- plot_block_d_bar_metric(results, metric = "type1_05")
+  make_panel_ab(p_lambda, p_type1, title = "Block D: Component breakage stress test")
 }
 
 run_block_b <- function(output_dir = "simulation_results", reduced = FALSE) {
@@ -732,16 +756,33 @@ run_block_b <- function(output_dir = "simulation_results", reduced = FALSE) {
   plots <- env$plot_block_a_null(results)
   plots$lambda <- retitle_block_plot(plots$lambda, "Block A", "Block B")
   plots$type1 <- retitle_block_plot(plots$type1, "Block A", "Block B")
+  # Remove embedded numeric labels for cleaner readability.
+  plots$lambda <- strip_geom_text_layers(plots$lambda)
+  plots$type1 <- strip_geom_text_layers(plots$type1)
+  # Remove panel headers and keep the legend only in the upper panel.
+  plots$lambda <- strip_plot_headers(plots$lambda)
+  plots$type1 <- strip_plot_headers(plots$type1) + theme(legend.position = "none")
+  # Improve readability: allow each facet to use its own y-axis range.
+  plots$lambda <- plots$lambda +
+    facet_grid(pathway_size ~ cor_structure,
+               scales = "free_y",
+               labeller = labeller(pathway_size = function(x) paste0("m=", x)))
+  plots$type1 <- plots$type1 +
+    facet_grid(pathway_size ~ cor_structure,
+               scales = "free_y",
+               labeller = labeller(pathway_size = function(x) paste0("m=", x)))
   ggsave(file.path(output_dir, "block_b_lambda.png"),
          plots$lambda, width = 14, height = 10, dpi = 300, bg = "white")
   ggsave(file.path(output_dir, "block_b_type1.png"),
          plots$type1, width = 14, height = 10, dpi = 300, bg = "white")
 
-  panel_ab <- make_panel_ab(plots$lambda, plots$type1, title = "Block B: Null calibration")
+  panel_ab <- make_panel_ab(plots$lambda, plots$type1)
   ggsave(file.path(output_dir, "block_b_panel.png"),
          panel_ab, width = 14, height = 16, dpi = 300, bg = "white")
 
-  linebar <- plot_linebar_block_b(results)
+  # Keep the "linebar" filename for backward compatibility, but save the
+  # same A/B panel style used in the main output for readability.
+  linebar <- panel_ab
   ggsave(file.path(output_dir, "block_b_linebar.png"),
          linebar, width = 16, height = 12, dpi = 300, bg = "white")
 
@@ -765,12 +806,14 @@ run_block_c <- function(output_dir = "simulation_results", reduced = FALSE) {
   plots <- env$plot_block_c(results)
   plots$lambda <- retitle_block_plot(plots$lambda, "Block C", "Block C")
   plots$type1 <- retitle_block_plot(plots$type1, "Block C", "Block C")
+  plots$lambda <- strip_plot_headers(plots$lambda)
+  plots$type1 <- strip_plot_headers(plots$type1) + theme(legend.position = "none")
   ggsave(file.path(output_dir, "block_c_lambda.png"),
          plots$lambda, width = 10, height = 8, dpi = 300, bg = "white")
   ggsave(file.path(output_dir, "block_c_type1.png"),
          plots$type1, width = 10, height = 8, dpi = 300, bg = "white")
 
-  panel_ab <- make_panel_ab(plots$lambda, plots$type1, title = "Block C: Missing-correlation robustness")
+  panel_ab <- make_panel_ab(plots$lambda, plots$type1)
   ggsave(file.path(output_dir, "block_c_panel.png"),
          panel_ab, width = 12, height = 14, dpi = 300, bg = "white")
 
@@ -797,19 +840,20 @@ run_block_d <- function(output_dir = "simulation_results", reduced = FALSE) {
   )
 
   saveRDS(results, file.path(output_dir, "block_d.rds"))
-  plots <- env$plot_block_b_profile(results, include_analytic_omnibus = FALSE)
-  plots$lambda <- retitle_block_plot(plots$lambda, "Block B", "Block D")
-  plots$type1 <- retitle_block_plot(plots$type1, "Block B", "Block D")
+  p_lambda <- strip_plot_headers(plot_block_d_bar_metric(results, metric = "lambda"))
+  p_type1 <- strip_plot_headers(plot_block_d_bar_metric(results, metric = "type1_05")) +
+    theme(legend.position = "none")
   ggsave(file.path(output_dir, "block_d_lambda.png"),
-         plots$lambda, width = 16, height = 10, dpi = 300, bg = "white")
+         p_lambda, width = 16, height = 10, dpi = 300, bg = "white")
   ggsave(file.path(output_dir, "block_d_type1.png"),
-         plots$type1, width = 16, height = 10, dpi = 300, bg = "white")
+         p_type1, width = 16, height = 10, dpi = 300, bg = "white")
 
-  panel_ab <- make_panel_ab(plots$lambda, plots$type1, title = "Block D: Component breakage stress test")
+  panel_ab <- make_panel_ab(p_lambda, p_type1)
   ggsave(file.path(output_dir, "block_d_panel.png"),
          panel_ab, width = 16, height = 16, dpi = 300, bg = "white")
 
-  linebar <- plot_linebar_block_d(results)
+  # Keep legacy filename but use the same two-panel style.
+  linebar <- panel_ab
   ggsave(file.path(output_dir, "block_d_linebar.png"),
          linebar, width = 16, height = 12, dpi = 300, bg = "white")
 
@@ -907,7 +951,15 @@ plot_block_e_ab_panel <- function(adaptive_results, leave1out_results) {
       )
     ) %>%
     dplyr::group_by(source, method_label) %>%
-    dplyr::summarise(lambda = mean(lambda, na.rm = TRUE), type1_05 = mean(type1_05, na.rm = TRUE), .groups = "drop")
+    dplyr::summarise(
+      n_obs = dplyr::n(),
+      lambda = mean(lambda, na.rm = TRUE),
+      lambda_se = stats::sd(lambda, na.rm = TRUE) / sqrt(n_obs),
+      type1_05 = mean(type1_05, na.rm = TRUE),
+      type1_05_se = stats::sd(type1_05, na.rm = TRUE) / sqrt(n_obs),
+      .groups = "drop"
+    ) %>%
+    dplyr::select(-n_obs)
 
   leave1_df <- leave1out_results %>%
     dplyr::mutate(
@@ -923,17 +975,32 @@ plot_block_e_ab_panel <- function(adaptive_results, leave1out_results) {
       )
     ) %>%
     dplyr::group_by(source, method_label) %>%
-    dplyr::summarise(lambda = mean(lambda, na.rm = TRUE), type1_05 = mean(type1_05, na.rm = TRUE), .groups = "drop")
+    dplyr::summarise(
+      n_obs = dplyr::n(),
+      lambda = mean(lambda, na.rm = TRUE),
+      lambda_se = stats::sd(lambda, na.rm = TRUE) / sqrt(n_obs),
+      type1_05 = mean(type1_05, na.rm = TRUE),
+      type1_05_se = stats::sd(type1_05, na.rm = TRUE) / sqrt(n_obs),
+      .groups = "drop"
+    ) %>%
+    dplyr::select(-n_obs)
 
   df <- dplyr::bind_rows(adaptive_df, leave1_df) %>%
-    dplyr::mutate(source = factor(source, levels = c("Adaptive", "Leave-one-out")))
+    dplyr::mutate(
+      source = factor(source, levels = c("Adaptive", "Leave-one-out")),
+      lambda_se = dplyr::coalesce(lambda_se, 0),
+      type1_05_se = dplyr::coalesce(type1_05_se, 0)
+    )
 
   p_lambda <- ggplot(df, aes(x = method_label, y = lambda, fill = source)) +
     geom_col(alpha = 0.82, width = 0.72) +
+    geom_errorbar(aes(ymin = pmax(lambda - lambda_se, 0), ymax = lambda + lambda_se),
+                  width = 0.14, linewidth = 0.7, color = "black") +
     facet_wrap(~ source, scales = "free_x", ncol = 1) +
     geom_hline(yintercept = 1, linetype = "dashed", color = "#1F77B4", linewidth = 0.7) +
-    scale_y_continuous(breaks = scales::pretty_breaks(n = 4)) +
-    labs(title = "Block E: Lambda summary", x = "Variant", y = expression(lambda), fill = "Family") +
+    scale_y_continuous(breaks = scales::pretty_breaks(n = 4),
+                       expand = expansion(mult = c(0, 0.08))) +
+    labs(x = "Variant", y = expression(lambda), fill = "Family") +
     block_a_theme +
     theme(
       plot.title = element_text(size = 18, face = "bold"),
@@ -946,10 +1013,13 @@ plot_block_e_ab_panel <- function(adaptive_results, leave1out_results) {
 
   p_type1 <- ggplot(df, aes(x = method_label, y = type1_05, fill = source)) +
     geom_col(alpha = 0.82, width = 0.72) +
+    geom_errorbar(aes(ymin = pmax(type1_05 - type1_05_se, 0), ymax = type1_05 + type1_05_se),
+                  width = 0.14, linewidth = 0.7, color = "black") +
     facet_wrap(~ source, scales = "free_x", ncol = 1) +
     geom_hline(yintercept = 0.05, linetype = "dashed", color = "red", linewidth = 0.6) +
-    scale_y_continuous(breaks = scales::pretty_breaks(n = 4)) +
-    labs(title = "Block E: Type I error summary", x = "Variant", y = "Type I error", fill = "Family") +
+    scale_y_continuous(breaks = scales::pretty_breaks(n = 4),
+                       expand = expansion(mult = c(0, 0.08))) +
+    labs(x = "Variant", y = "Type I error", fill = "Family") +
     block_a_theme +
     theme(
       plot.title = element_text(size = 18, face = "bold"),
@@ -957,10 +1027,13 @@ plot_block_e_ab_panel <- function(adaptive_results, leave1out_results) {
       axis.text.x = element_text(angle = 35, hjust = 1, size = 13),
       axis.text.y = element_text(size = 13),
       strip.text = element_text(size = 14, face = "bold"),
-      legend.text = element_text(size = 14)
+      legend.text = element_text(size = 14),
+      legend.position = "none"
     )
 
-  make_panel_ab(p_lambda, p_type1, title = "Block E: Adaptive + Leave-one-out")
+  p_lambda <- strip_plot_headers(p_lambda)
+  p_type1 <- strip_plot_headers(p_type1)
+  make_panel_ab(p_lambda, p_type1)
 }
 
 run_block_e <- function(output_dir = "simulation_results", reduced = FALSE) {
@@ -993,11 +1066,12 @@ run_block_e <- function(output_dir = "simulation_results", reduced = FALSE) {
   saveRDS(results_adaptive, file.path(output_dir, "block_e_adaptive.rds"))
   saveRDS(results_leave1out, file.path(output_dir, "block_e_leave1out.rds"))
 
-  panel_plot <- plot_block_e_linebar_panel(results_adaptive, results_leave1out)
+  # Use the same two-panel style as other calibration blocks.
+  panel_plot <- plot_block_e_ab_panel(results_adaptive, results_leave1out)
   ggsave(file.path(output_dir, "block_e_panel.png"),
          panel_plot, width = 14, height = 12, dpi = 300, bg = "white")
 
-  panel_ab <- plot_block_e_ab_panel(results_adaptive, results_leave1out)
+  panel_ab <- panel_plot
   ggsave(file.path(output_dir, "block_e_panel_ab.png"),
          panel_ab, width = 14, height = 14, dpi = 300, bg = "white")
 
@@ -1033,21 +1107,42 @@ run_block_g <- function(output_dir = "simulation_results", reduced = FALSE) {
   prm <- legacy_run_params(env, reduced = reduced)
   dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 
-  results <- env$run_block_f(
+  results_full <- env$run_block_a_null(
     n_sims = prm$n_null,
     b = prm$b_sim,
     seed = env$seed_base + 6000L,
     pathway_sizes_arg = if (isTRUE(reduced)) c(20L, 50L) else prm$pathway_sizes_run
   )
 
+  results <- results_full %>%
+    dplyr::filter(method %in% c("acat", "fisher", "tfisher", "minp", "stouffer"))
+
   saveRDS(results, file.path(output_dir, "block_g.rds"))
-  plots <- env$plot_block_f(results)
-  plots$lambda <- retitle_block_plot(plots$lambda, "Block F", "Block G")
-  plots$type1 <- retitle_block_plot(plots$type1, "Block F", "Block G")
+  saveRDS(results_full, file.path(output_dir, "block_g_raw.rds"))
+  plots <- env$plot_block_a_null(results)
+  plots$lambda <- retitle_block_plot(plots$lambda, "Block A", "Block G")
+  plots$type1 <- retitle_block_plot(plots$type1, "Block A", "Block G")
+  plots$lambda <- strip_plot_headers(strip_geom_text_layers(plots$lambda)) +
+    facet_grid(pathway_size ~ cor_structure,
+               scales = "free_y",
+               labeller = labeller(pathway_size = function(x) paste0("m=", x))) +
+    theme(legend.position = "top") +
+    guides(fill = guide_legend(title = NULL))
+  plots$type1 <- strip_plot_headers(strip_geom_text_layers(plots$type1)) +
+    facet_grid(pathway_size ~ cor_structure,
+               scales = "free_y",
+               labeller = labeller(pathway_size = function(x) paste0("m=", x))) +
+    theme(legend.position = "none")
   ggsave(file.path(output_dir, "block_g_lambda.png"),
          plots$lambda, width = 14, height = 10, dpi = 300, bg = "white")
   ggsave(file.path(output_dir, "block_g_type1.png"),
          plots$type1, width = 14, height = 10, dpi = 300, bg = "white")
+
+  panel_ab <- make_panel_ab(plots$lambda, plots$type1)
+  ggsave(file.path(output_dir, "block_g_panel.png"),
+         panel_ab, width = 14, height = 16, dpi = 300, bg = "white")
+  ggsave(file.path(output_dir, "block_g_linebar.png"),
+         panel_ab, width = 14, height = 12, dpi = 300, bg = "white")
 
   invisible(results)
 }
