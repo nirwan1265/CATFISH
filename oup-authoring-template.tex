@@ -403,7 +403,7 @@ We next evaluated type I error control under the global null in the presence of 
 
 Fig.~\ref{fig:blockB_null_calibration} shows that independence-based analytic $p$-values behave as expected only when LD is negligible. Under LD\_independent, analytic and MVN-calibrated results agree closely across methods and pathway sizes. Under LD\_moderate and especially LD\_strong, several analytic component tests become miscalibrated, producing both inflation and conservatism depending on the method. This is visible as deviations of $\lambda$ from 1 and, more importantly, as type I error rates departing from the nominal 0.05. The key point is that ignoring LD does not simply make everything liberal; rather, it distorts the null in a method-specific way. MVN calibration corrects these distortions: MVN-calibrated component tests and the MVN-calibrated omnibus remain close to nominal behavior across LD regimes and pathway sizes (Fig.~\ref{fig:blockB_null_calibration}).
 
-Because real analyses may only provide incomplete gene--gene correlation output (e.g., only a subset of pairwise correlations), we tested robustness to missing correlation information (Supp.~Fig.~\ref{fig:blockC_missing_corr}). Starting from a “true” correlation structure, we randomly removed a fraction of off-diagonal entries and compared (i) an analytic fallback that ignores correlations, (ii) MVN calibration using the true correlation matrix, and (iii) MVN calibration after setting missing entries to zero (zero-imputed MVN). Two results are consistent across $m=5,25,50$. First, the analytic fallback is not a safe default under LD: it shows strong departures in $\lambda$ and inflated type I error. Second, MVN calibration remains substantially more stable under missingness, and the zero-imputed MVN strategy stays closest to nominal over a wide range of missingness fractions. Practically, this supports a conservative implementation in which missing correlations are set to zero and the resulting matrix is projected to the nearest positive-definite correlation matrix before MVN resampling.
+Real analyses often provide only partial gene--gene correlation information (for example, a subset of pairwise correlations), so we evaluated the robustness of the omnibus statistic to missing correlation data (Supp.~Fig.~\ref{fig:blockC_missing_corr}). Starting from a “true” correlation structure, we randomly removed a fraction of off-diagonal entries and compared (i) an analytic fallback that ignores correlations, (ii) MVN calibration using the true correlation matrix, and (iii) MVN calibration after setting missing entries to zero (zero-imputed MVN). Two results are consistent across $m=5,25,50$. First, the analytic fallback is not a safe default under LD: it shows strong departures in $\lambda$ and inflated type I error. Second, MVN calibration remains substantially more stable under missingness, and the zero-imputed MVN strategy stays closest to nominal over a wide range of missingness fractions. Practically, this supports a conservative implementation in which missing correlations are set to zero and the resulting matrix is projected to the nearest positive-definite correlation matrix before MVN resampling.
 
 \subsubsection{Stress test: omnibus robustness under component misspecification}
 
@@ -515,214 +515,19 @@ Sparse\_Strong   & $\sim 0.05$ & Concordant (all $+$) & Swept over $\delta$ grid
 
 \subsection{From SNP associations to pathway-level aggregation}
 
-We performed genome-wide association studies (GWAS) to characterize the genetic architecture of two traits in plants and animals. In \textit{Arabidopsis thaliana}, we examined BIO6, defined as the minimum temperature of the coldest month, using accessions from the 1001 Genomes Project to capture variation in long-term winter severity across the species' range. In \textit{Drosophila melanogaster}, we investigated starvation resistance as survival under food deprivation and conducted sex-stratified GWAS that replicated previously reported associations. In both datasets, the Manhattan plots revealed polygenic architectures, with multiple loci of modest effect contributing to distributed genome-wide association signals. Such patterns are consistent with complex traits in which many variants contribute small effects. Under this architecture, biological interpretation is often better achieved by shifting from individual loci to higher-order functional units such as pathway enrichments. We therefore performed LD-aware gene-level aggregation using MAGMA and summarized pathway-level evidence using CATFISH.
+We performed a genome-wide association study (GWAS) for stem volume in the sorghum association panel (SAP) (ref). The SNP scan identified multiple genome-wide significant signals, including a prominent peak on chromosome 9 (Fig.~\ref{fig:figure4}A). Using a genome-wide threshold of $-\log_{10}(p) > 7$, we mapped significant SNPs to 423 genes. Most strong associations occurred in a single interval on chromosome 9: 34 of the 36 top candidate genes fell within a $\sim$2.8~Mb region (56.1–58.9~Mb), indicating a major QTL for stem volume in this region.
 
-To translate SNP-level associations into gene-level evidence while accounting for LD, we applied MAGMA to the GWAS datasets. MAGMA aggregates SNP-level association statistics within predefined gene boundaries using a multiple regression framework that incorporates LD structure among variants, thereby generating gene-level $p$-values that represent the cumulative genetic signal attributable to each gene. In \textit{Arabidopsis}, MAGMA analysis maintained the overall signal while reducing noise from isolated SNPs, leading to significant gene-level associations across all chromosomes. In \textit{Drosophila}, MAGMA similarly produced a set of gene-level associations indicative of a broadly distributed genetic architecture. These outputs served as the shared gene-level input for downstream CATFISH pathway enrichment analyses.
+We then aggregated SNP-level associations to genes using MAGMA, testing 33,967 annotated sorghum genes and assigning SNPs within gene boundaries plus $\pm$25~kb flanks. After Benjamini–Hochberg FDR correction, 861 genes were significant at FDR $< 0.05$ (Fig.~\ref{fig:figure4}B). The top gene-level association was \textit{SORBI\_3009G206700} ($-\log_{10}(p) = 14.64$). Gene-level signals were similarly enriched on chromosome 9, mirroring the SNP-level peak and supporting a concentrated locus with multiple associated genes.
 
-We next applied CATFISH to translate MAGMA gene-level association statistics into pathway-level inference using five complementary component tests: ACAT, Fisher's method, TFisher, the minimum-$p$ test (minP), and Stouffer's $Z$-score method. In the \textit{Arabidopsis} BIO6 analysis, CATFISH highlighted pathways enriched for cold-associated genetic signal, including processes linked to wax ester biosynthesis and starch metabolism. In \textit{Drosophila}, CATFISH similarly revealed enrichment of pathways related to amino acid and lipid metabolism, with Stouffer often providing the strongest support among the component tests and TFisher sometimes leading. Pathways were ranked by the omnibus $p$-value, and the final column reports the leading component test, that is, the statistic yielding the smallest calibrated component $p$-value for that pathway. In both datasets, the smallest calibrated component $p$-value varied across pathways, reflecting the dominant signal architecture rather than any systematic bias. For example, TFisher often yielded the lowest $p$ in \textit{Arabidopsis}, whereas Stouffer often did in the fly (Fig.~4E,F). Importantly, multiple pathways showed different best tests, including ACAT, minP, and Fisher, illustrating that CATFISH adapts to pathway-specific signal structure rather than recapitulating a single statistic.
+To assess pathway-level organization, we applied out CATFISH pathway analysis to 410 sorghum PlantCyc metabolic pathways (ref). CATFISH evaluated pathway enrichment using five component tests (ACAT, Fisher’s method, adaptive soft TFisher, minP, and Stouffer’s method) and an omnibus test combining them. Statistical inference used MVN resampling, with gene–gene correlation matrices from MAGMA to account for LD. We identified 102 pathways at FDR $< 0.05$, of which 73 remained significant after Bonferroni correction ($p < 0.05/410$). Fig.~\ref{fig:figure4}C shows the top 20 pathways and their $p$-value profiles across component and omnibus tests. The strongest pathway-level signals were detected for gluconeogenesis I (GLUCONEO-PWY), L-glutamate biosynthesis IV (GLUGLNSYN-PWY), L-glutamine degradation I (GLUTAMINDEG-PWY), phospholipases (LIPASYN-PWY), and aerobic respiration I (PWY-3781). Together, these pathways provide a coherent framework for interpreting variation in stem volume. Overall, these results show a clear progression from SNP-level associations to gene-level aggregation and then to pathway-level interpretation under LD-aware calibration (Fig.~\ref{fig:figure4}A--C).
 
-\subsection{Component gene-set tests capture distinct pathway signals across traits and species}
+\subsection{Integrated candidate gene analysis identifies high-confidence targets for stem volume and sucrose metabolism}
 
-To evaluate whether CATFISH's component pathway tests provide non-redundant information, rather than repeatedly detecting the same pathways, we compared the five component statistics (ACAT, Fisher, TFisher, minP, and Stouffer) using \textit{Arabidopsis} BIO6 and \textit{Drosophila} starvation resistance as contrasting case studies. While multiple tests are expected to exhibit overlapping sensitivity to related signal patterns, each method implicitly specifies a distinct enrichment model and may consequently prioritize different classes of pathways.
+To prioritize genes supported by multiple modalities, we combined evidence from SNP-level GWAS, MAGMA gene-based tests, and CATFISH pathway enrichment (Fig.~\ref{fig:figure5}). Significance thresholds were: GWAS $-\log_{10}(p) > 7$; MAGMA FDR $< 0.05$; and pathway support is defined as membership in a Bonferroni-significant pathway with $p < 0.05$ (Fig.~\ref{fig:figure5}A). In total, 2016 genes met at least one criterion, and 36 were supported by all three layers, forming the highest-confidence set.
 
-\begin{figure*}[!t]
-    \centering
-    \includegraphics[width=\textwidth]{Figures/Fig5.component_test_arabidopsis_fly/Fig5.Compare_component_test_arabidopsis.png}
-    \caption{\textbf{Component pathway tests capture unique pathway classes despite shared gene-level inputs.}
-    \textbf{A,B} Overlap among significant pathways detected by ACAT, Fisher, adaptive TFisher, minP, and Stouffer in \textit{Arabidopsis} and \textit{Drosophila}. TFisher yields the largest number of hits, consistent with adaptive tail selection over a $\tau$-grid.
-    \textbf{C,D} Pairwise Jaccard similarity of discovered pathway sets. ACAT and minP cluster strongly in both datasets; in fly, Fisher shows increased similarity to ACAT/minP, and Fisher--Stouffer similarity indicates agreement under coordinated multi-gene enrichment.
-    \textbf{E,F} Distributions of pathway-level $-\log_{10}(p)$. Fisher shows the strongest mass near null-like values, whereas Stouffer and TFisher show heavier right tails. All component $p$-values are calibrated under the same dependence-preserving MVN null generator.}
-\end{figure*}
+We then tested whether pathway membership is associated with stronger gene-level signals. Genes in significant pathways showed more extreme GWAS and MAGMA statistics than non-pathway genes (Wilcoxon $p = 6.34 \times 10^{-4}$ for GWAS; $p = 7.35 \times 10^{-3}$ for MAGMA; Fig.~\ref{fig:figure5}C), indicating that pathway-level signals preferentially highlight genes with stronger trait-relevant associations rather than random pathway members. The correspondence between SNP- and gene-level association signals is shown in the GWAS versus MAGMA scatter plot (Fig.~\ref{fig:figure5}D). The 36 genes supported by all three analytic layers cluster in the upper-right quadrant (red), indicating strong single-variant and aggregated gene-level association. This cross-layer concordance suggests a robust biological signal rather than method-specific artifacts.
 
-Across both datasets, the overlap analyses revealed a substantial number of discoveries that were specific to individual methods. A considerable proportion of statistically significant pathways were unique to particular component tests, rather than being shared across all approaches. In particular, TFisher contributed the largest set of method-specific pathways in both the \textit{Arabidopsis} and \textit{Drosophila} datasets. This observation is consistent with the adaptive soft-thresholding principle underlying TFisher: by assessing pathway enrichment over a grid of truncation thresholds ($\tau$ values) and selecting the most informative configuration, TFisher is able to detect pathway-level signals that are moderately dense or concentrated within specific gene subsets without relying on a single fixed cutoff. Overall, TFisher effectively interpolates between sparse and diffuse signal regimes, broadening the range of pathways it can identify relative to single-parameter procedures.
-
-Despite these method-specific distinctions, the component tests were not statistically independent, and their pairwise overlap exhibited a systematic and interpretable structure. Jaccard similarity matrices (Fig.~5C,D) demonstrated that ACAT showed the highest similarity to minP, particularly in \textit{Drosophila}, consistent with both procedures being highly responsive to sparse-driver architectures. By contrast, Fisher's and Stouffer's methods exhibited greater similarity to each other than to any other method, reflecting their shared propensity to aggregate weak-to-moderate evidence across many genes. These qualitative relationships were also reproduced by correlation-based measures (Supp.~Fig.~4C,D). Overall, these results indicate that the observed similarity structure is robust to the choice of overlap metric: the methods form partially overlapping sets, but no method is redundant with or collapses onto another.
-
-Differences in behavior were also evident in the global $p$-value distributions. Fisher's method was concentrated closer to null-like values, whereas TFisher and Stouffer exhibited heavier right tails in $-\log_{10}(p)$, consistent with these procedures identifying a greater number of strongly enriched pathways in scenarios characterized by many modest gene-level effects.
-
-\begin{figure*}[!t]
-    \centering
-    \includegraphics[width=\textwidth]{Figures/SuppFig/SuppFig4.Compare_component_test_arabidopsis.png}
-    \caption{\textbf{Extended comparison of component pathway tests.}
-    \textbf{A,B} UpSet plots summarize the intersection structure among significant pathway sets, confirming that each test contributes unique discoveries in both \textit{Arabidopsis} and fly.
-    \textbf{C,D} Pairwise association patterns recapitulate the main figure.
-    \textbf{E,F} $p$-value distributions show heavier tails for Stouffer and TFisher; calibration under the dependence-preserving null is therefore required to ensure these are not false-positive artifacts.}
-\end{figure*}
-
-These analyses show that although component tests exhibit structured correlation, most notably ACAT with minP and Fisher with Stouffer, they nonetheless recover partially distinct sets of pathways, with TFisher contributing substantial additional discoveries in both \textit{Arabidopsis} and \textit{Drosophila}. This pattern supports the design of CATFISH, namely combining complementary statistics to improve coverage across heterogeneous pathway-level signal architectures that differ across traits, species, and overall GWAS signal scale.
-
-\subsection{The omnibus aggregates component tests rather than recapitulating a single test}
-
-\begin{figure*}[!t]
-    \centering
-    \includegraphics[width=\textwidth]{Figures/Fig6.omni_vs_component_arabidopsis/Fig6.omni_vs_component_arabidopsis.png}
-    \caption{\textbf{Omnibus behaves as a broad union, not a narrow intersection.}
-    \textbf{A,B} Panels compare the omnibus significant set to the union of component significant sets for \textit{Arabidopsis} and fly, demonstrating union-consistency in \textit{Arabidopsis} and a small number of omnibus-only calls in fly consistent with aggregation of sub-threshold component evidence.
-    \textbf{C,D} UpSet-style summaries show that omnibus discoveries concentrate in multi-method overlaps while still permitting a limited number of architecture-specific calls.
-    \textbf{E,F} The fraction of omnibus pathways supported by at least $k$ component tests indicates stronger multi-test support in \textit{Arabidopsis} and greater heterogeneity in fly.}
-\end{figure*}
-
-We next investigated whether the MVN-calibrated omnibus operates as a true integrator or collapses to an effective surrogate for a single component test. In \textit{Arabidopsis}, the discovery set identified by the omnibus procedure was fully contained within the union of discoveries from the individual component tests under the same significance threshold. This demonstrates that the omnibus is not producing unique signals that are decoupled from its constituent evidence layers. In \textit{Drosophila}, however, the omnibus recovered the majority of pathways supported by at least one component test but additionally identified a small subset of pathways not detected by any single component. This behavior illustrates a key strength of the omnibus framework: it can yield statistical significance when multiple component $p$-values are individually suggestive but do not cross the specified threshold on their own. Such omnibus-only hits should not automatically be interpreted as artifacts; rather, they may reflect genuine synergy across component tests and must be evaluated under rigorous null calibration.
-
-The higher-order intersection patterns showed that omnibus-significant pathways were not predominantly driven by calls unique to a single method; instead, they were enriched for multi-test overlap. In \textit{Arabidopsis}, a substantial proportion of omnibus-significant pathways remained significant even under increasingly stringent multi-test support criteria, for example requiring support from at least two or three component methods. By contrast, in \textit{Drosophila}, multi-test support was generally weaker, with a larger fraction of pathways supported by only one or a small number of component methods. This suggests that the \textit{Arabidopsis} BIO6 signal is more consistently detectable across multiple signal archetypes, whereas the \textit{Drosophila} dataset contains a higher proportion of architecture-specific signals detectable only by certain classes of enrichment tests.
-
-\begin{figure*}[!t]
-    \centering
-    \includegraphics[width=\textwidth]{Figures/SuppFig/SuppFig5.omni_vs_component_arabidopsis.png}
-    \caption{\textbf{Component-by-component decomposition of omnibus overlap.}
-    \textbf{A,B} Pairwise overlaps between the omnibus and each component test in \textit{Arabidopsis} and fly.
-    \textbf{C,D} Distribution of omnibus-significant pathways across the number of supporting component tests, reinforcing that omnibus calls are enriched for multi-test support but are not identical to any single component.}
-\end{figure*}
-
-The similarity metrics clarify an important subtlety: the overlap proportion and the Jaccard index answer different questions. The overlap proportion is asymmetric, reflecting how much of a component's discovery set is recovered by the omnibus, whereas the Jaccard index is symmetric and penalizes methods that call many extra pathways beyond the shared set. Consequently, in \textit{Arabidopsis}, cases of high overlap but only moderate Jaccard indicate that a component's calls are largely contained within the omnibus, while the total union remains large because one set contains many additional pathways. In the fly dataset, overlap and Jaccard were more similar in magnitude, implying that component and omnibus discovery set sizes were closer and that the union was less dominated by one method's extra calls. Collectively, Fig.~6 and Supp.~Fig.~5 support the conclusion that the omnibus is broad in the signal types it can detect, yet selective in what it ultimately reports, behaving as an evidence integrator rather than a permissive union rule or a disguised single-component test.
-
-\subsection{MVN global-null diagnostics support overall calibration}
-
-To verify that differences in discovery patterns reflect power differences rather than miscalibration, we assessed all component tests and the omnibus procedure under a dependence-preserving global null using MVN resampling (Supp.~Fig.~6). The Q--Q plots compare the empirical $p$-value distributions to the theoretical uniform distribution implied by the null hypothesis, and the genomic control factor $\lambda$ provides a scalar summary of global inflation or deflation, with $\lambda \approx 1$ indicating appropriate calibration. Operationally, $\lambda$ captures whether the bulk of null test statistics is globally over- or under-dispersed relative to expectation, whereas empirical type I error directly evaluates threshold-level calibration via the observed rejection rate $\Pr(p < \alpha)$ at a chosen $\alpha$. In both datasets, ACAT, Fisher's method, minP, and Stouffer's method yielded $\lambda$ values close to 1, consistent with well-controlled null behavior under the MVN-based calibration scheme. The omnibus test was likewise close to null in both datasets, slightly conservative in \textit{Arabidopsis} and near 1 in \textit{Drosophila}, a desirable property for a combined procedure intended to maintain stable type I error control across heterogeneous pathway architectures.
-
-The main calibration exception was TFisher in the female fly null diagnostics, which showed a markedly elevated $\lambda$, indicating a strong departure from the expected null. The empirical type I error at $\alpha = 0.05$ remained at or below nominal, indicating that TFisher's deviation was not simply more false positives at 0.05. Instead, the result is more consistent with a null distribution shape or scale mismatch that affects the broader $p$-value spectrum without necessarily manifesting as excess rejections at a single threshold. Importantly, the omnibus did not inherit this instability, as both its $\lambda$ and type I error remained close to nominal, consistent with the omnibus functioning as a stabilizing integrator that limits dependence on the idiosyncratic behavior of any single component test. These diagnostics support the conclusion that the CATFISH MVN framework is approximately nominally calibrated for most individual component tests and for the omnibus statistic, even though a subset of components may still exhibit residual miscalibration.
-
-\begin{figure*}[!t]
-    \centering
-    \includegraphics[width=\textwidth]{Figures/SuppFig/SuppFig6.null_calibration_combined.png}
-    \caption{\textbf{MVN null diagnostics support calibrated inference.}
-    \textbf{A} Q--Q plots compare observed versus expected $p$-values under dependence-preserving MVN resampling for each component and the omnibus in \textit{Arabidopsis} and fly.
-    \textbf{B} Genomic control ($\lambda$) summarizes calibration, showing elevated $\lambda$ for TFisher in fly while the omnibus remains near 1.
-    \textbf{C} Type I error at $\alpha = 0.05$ confirms near-nominal rejection rates overall, supporting interpretation of component differences as sensitivity to distinct signal architectures rather than systematic false positives.}
-\end{figure*}
-
-\subsection{Candidate-gene prioritization integrates GWAS, MAGMA, and pathway evidence}
-
-In Fig.~7A,B, we quantified the number of genes supported at each layer under the specified thresholds. For the \textit{Drosophila} analysis, the GWAS evidence layer was deliberately defined using a more permissive significance threshold, reflecting the observation that very few genes satisfy a Bonferroni cutoff. The median number of genes per pathway was lower in \textit{Drosophila} than in \textit{Arabidopsis}; consequently, pathway membership alone constituted a weaker filtering criterion in the fly analysis.
-
-In \textit{Arabidopsis} (Fig.~7C), a visible subset of genes showed concordant evidence across layers, including support from all three layers, consistent with a mixture of strong locus-driven genes. In fly females (Fig.~7D), many top-ranked genes were supported by GWAS and MAGMA but lacked pathway/top-pathway support at the chosen pathway threshold, consistent with either a smaller or shallower pathway mapping, or with pathway-level signals being distributed across many modest genes rather than concentrating on the same top loci that drive GWAS and MAGMA.
-
-Furthermore, genes in the top pathways were enriched for stronger MAGMA signals (Fig.~7E,F), with a clear shift in \textit{Arabidopsis} but a weaker or non-significant shift in fly, indicating that the pathway layer preferentially captures elevated gene-level association in \textit{Arabidopsis}, whereas in fly the enrichment signal is more diffuse.
-
-\begin{figure*}[!t]
-    \centering
-    \includegraphics[width=\textwidth]{Figures/Fig7.candidate_gene_analysis_arabidopsis/Fig7.candidate_gene_analysis_arabidopsis.png}
-    \caption{\textbf{Multi-layer candidate-gene prioritization integrates GWAS locus evidence, MAGMA gene-level association, and pathway enrichment.}
-    Panels \textbf{A/C/E} show \textit{Arabidopsis} (BIO6) and panels \textbf{B/D/F} show female \textit{Drosophila} starvation resistance.
-    \textbf{A,B} UpSet plots summarize overlap among genes supported by each layer at the thresholds used in the main analysis.
-    \textbf{C,D} Gene-level concordance between GWAS and MAGMA: each point is a gene, with the x-axis showing GWAS locus evidence mapped to the gene ($-\log_{10}$ of the minimum GWAS $p$-value among mapped variants) and the y-axis showing MAGMA evidence ($-\log_{10}$ MAGMA $p$-value). Points are colored by which evidence layers support the gene.
-    \textbf{E,F} Distribution of MAGMA evidence for genes inside versus outside top enriched pathways; green curves denote genes in top pathways and gray curves denote genes not in top pathways, with Wilcoxon $p$-values testing for a shift toward stronger MAGMA association among pathway genes.}
-\end{figure*}
-
-For each gene, \texttt{best\_pathway\_p} denotes the smallest calibrated pathway $p$-value among the top enriched pathways that contain the gene (top 10 in \textit{Arabidopsis}; top 20 in fly), and the corresponding pathway identifier is reported as the gene's best-supporting pathway. We also scored candidate genes using a count-based system with continuous evidence strength. Specifically, each gene received a score increment of $+1$ for each evidence layer in which it was supported (GWAS, MAGMA, and pathway analysis). In addition, small weighted contributions derived from continuous test statistics were added using $-\log_{10}(p)$ terms, with the MAGMA-derived component assigned a slightly higher weight than the GWAS- and pathway-derived components. This scoring scheme was intentionally designed so that the overall ranking is driven primarily by the number of independent evidence layers supporting a gene, while the continuous $-\log_{10}(p)$-based contributions serve only to distinguish weakly from strongly supported genes within the same discrete support tier.
-
-In \textit{Arabidopsis}, the top-ranked genes were almost entirely three-layer candidates with strong MAGMA $p$-values and extremely small mapped GWAS $p$-values, and they frequently pointed to a specific best-supporting pathway, for example PWY-5884. In female flies, the highest-scoring genes included a smaller set of three-layer candidates with explicit pathway assignments.
-
-\begin{table*}[!t]
-\centering
-\caption{Top multi-layer candidate genes in \textit{Arabidopsis}.}
-\begin{tabular}{lllllllllll}
-\hline
-Gene & MAGMA $p$ & GWAS min $p$ & Top paths & Best path $p$ & Pathway(s) & GWAS & MAGMA & Pathway & Layers & Score \\
-\hline
-AT1G74420 & 8.48E-07 & 8.13E-10 & 1 & 0.0017   & PWY-5936              & Y & Y & Y & 3 & 5.4003 \\
-AT5G55380 & 1.18E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.2856 \\
-AT5G55340 & 2.18E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.2322 \\
-AT5G55350 & 2.58E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.2177 \\
-AT5G55360 & 4.58E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.1677 \\
-AT5G55330 & 4.61E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.1671 \\
-AT1G74470 & 2.46E-05 & 8.13E-10 & 2 & 5.00E-04 & PWY-5064; PWY-5863    & Y & Y & Y & 3 & 5.1608 \\
-AT5G55370 & 8.62E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.1128 \\
-AT5G55320 & 9.21E-06 & 2.51E-08 & 1 & 4.00E-04 & PWY-5884              & Y & Y & Y & 3 & 5.1070 \\
-AT1G73980 & 7.90E-06 & 5.58E-08 & 1 & 0.0081   & PWY-7193              & Y & Y & Y & 3 & 4.9550 \\
-\hline
-\end{tabular}
-\end{table*}
-
-\begin{table*}[!t]
-\centering
-\caption{Top multi-layer candidate genes in female fly.}
-\begin{tabular}{lllllllllll}
-\hline
-Gene & MAGMA $p$ & GWAS min $p$ & Top paths & Best path $p$ & Pathway(s) & GWAS & MAGMA & Pathway & Layers & Score \\
-\hline
-FBgn0015781 & 2.56E-04 & 3.78E-06 & 1  & 0.0820 & FLYCYC:ARG-PRO-PWY & Y & Y & Y & 3 & 4.3693 \\
-FBgn0036622 & 0.0074   & 1.10E-05 & 1  & 0.1047 & FLYCYC:PWY-7250    & Y & Y & Y & 3 & 4.0196 \\
-FBgn0030904 & 1.23E-05 & 2.22E-07 & NA & NA     & NA                  & Y & Y & N & 2 & 3.6477 \\
-FBgn0034479 & 8.41E-06 & 1.68E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.5924 \\
-FBgn0038673 & 1.67E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2977 \\
-FBgn0038672 & 2.00E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2820 \\
-FBgn0027785 & 2.19E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2741 \\
-FBgn0038674 & 2.38E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2670 \\
-FBgn0053639 & 0.0010   & 2.22E-07 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2639 \\
-FBgn0260779 & 3.42E-04 & 3.78E-06 & NA & NA     & NA                  & Y & Y & N & 2 & 3.2354 \\
-\hline
-\end{tabular}
-\end{table*}
-
-
-
-
-\subsection{The omnibus aggregates component tests rather than recapitulating a single test}
-
-\begin{figure*}[!t]
-    \centering
-    \includegraphics[width=\textwidth]{Figures/Fig6.omni_vs_component_arabidopsis/Fig6.omni_vs_component_arabidopsis.png}
-    \caption{\textbf{Omnibus behaves as a broad union, not a narrow intersection.}
-    Panels A--B compare the omnibus significant set to the union of component significant sets for \textit{Arabidopsis} (A) and fly (B), demonstrating union-consistency in \textit{Arabidopsis} and a small number of omnibus-only calls in fly, consistent with aggregation of sub-threshold component evidence.
-    Panels C--D summarize higher-order intersection structure, showing that omnibus discoveries concentrate in multi-method overlaps while still permitting a limited number of architecture-specific calls.
-    Panels E--F quantify multi-component corroboration by plotting the fraction of omnibus pathways supported by at least $k$ component tests, indicating stronger multi-test support in \textit{Arabidopsis} and greater heterogeneity in fly.}
-\end{figure*}
-
-We next investigated whether the MVN-calibrated omnibus operates as a true integrator or collapses into an effective surrogate for a single component test. Figure~6A,B indicate that, in \textit{Arabidopsis}, the discovery set identified by the omnibus procedure is fully contained within the union of discoveries from the individual component tests under the same significance threshold (Methods). This demonstrates that the omnibus does not produce unique signals that are decoupled from its constituent evidence layers. By contrast, in \textit{Drosophila}, the omnibus recovers the majority of pathways supported by at least one component test, but additionally identifies a small subset of pathways that are not detected by any single component (Fig.~6B). This behavior illustrates a key strength of the omnibus framework, namely that it can yield statistical significance when multiple component $p$-values are individually suggestive but do not cross the specified threshold on their own. Such omnibus-only hits should not automatically be interpreted as artifacts; rather, they may reflect genuine synergy across component tests and therefore require evaluation under rigorous null calibration. In brief, the \textit{Arabidopsis} omnibus discoveries form a subset of the union of component discoveries, with no omnibus-only calls, whereas in \textit{Drosophila} the omnibus recovers most component-supported pathways plus a small number of additional pathways consistent with evidence aggregation.
-
-Figure~6C,D further show that omnibus-significant pathways are not predominantly driven by calls unique to a single method. Instead, they are enriched for multi-test intersection patterns, indicating that the omnibus preferentially retains pathways that are repeatedly identified across distinct enrichment tests (Fig.~6E,F). In \textit{Arabidopsis}, a substantial proportion of omnibus-significant pathways remains supported even under increasingly stringent multi-test criteria, for example requiring support from at least two or three component methods. By contrast, in the \textit{Drosophila} dataset, multi-test support is generally weaker, with a larger fraction of pathways supported by only one or a small number of component methods. This suggests that the \textit{Arabidopsis} BIO6 signal is more consistently detectable across multiple signal archetypes, whereas the \textit{Drosophila} dataset contains a higher proportion of architecture-specific signals that are detectable only by certain classes of enrichment tests.
-
-Supplementary Figure~5 characterizes the relationship between individual components and the omnibus in more detail. In \textit{Arabidopsis} (Supp.~Fig.~5A), certain components, such as Fisher and TFisher, behave as strict subsets of the omnibus: all pathways identified by these components are also detected by the omnibus, whereas the omnibus additionally recovers pathways not captured by those components. By contrast, other methods, notably minP and Stouffer, exhibit substantial bidirectional non-overlap, indicating that they both contribute unique pathway calls and fail to recover a portion of the pathways identified by the omnibus. In the \textit{Drosophila} dataset (Supp.~Fig.~5B), the overlaps are more evenly distributed across components.
-
-The similarity metrics in Supplementary Figure~5 clarify an important subtlety: the overlap proportion and the Jaccard index answer different questions. The overlap proportion is asymmetric, reflecting how much of a component's discovery set is recovered by the omnibus, whereas the Jaccard index is symmetric, measuring the size of the intersection relative to the union, and therefore penalizes methods that identify many additional pathways beyond the shared set. Consequently, in \textit{Arabidopsis}, cases of high overlap but only moderate Jaccard indicate that a component's calls are largely contained within the omnibus, while the total union remains large because one set contains many additional pathways. In the fly dataset, overlap and Jaccard are more similar in magnitude, implying that component and omnibus discovery set sizes are closer and that the union is less dominated by one method's additional calls. Collectively, Figure~6 and Supplementary Figure~5 support the conclusion that the omnibus is broad in the signal types it can detect, yet selective in what it ultimately reports, behaving as an evidence integrator rather than as a permissive union rule or a disguised single-component test.
-
-\begin{figure*}[!t]
-    \centering
-    \includegraphics[width=\textwidth]{Figures/SuppFig/SuppFig5.omni_vs_component_arabidopsis.png}
-    \caption{\textbf{Component-by-component decomposition of omnibus overlap.}
-    Panels A--B show pairwise overlaps between the omnibus and each component test in \textit{Arabidopsis} (A) and fly (B).
-    Panels C--D summarize how omnibus-significant pathways distribute across the number of supporting component tests, reinforcing that omnibus calls are enriched for multi-test support but are not identical to any single component.}
-\end{figure*}
-
-\subsection{MVN global-null diagnostics support overall calibration}
-
-To verify that differences in discovery patterns reflect power rather than miscalibration, we assessed all component tests and the omnibus under a dependence-preserving global null using multivariate normal (MVN) resampling (Supp.~Fig.~6). The Q--Q plots compare the empirical $p$-value distributions to the theoretical uniform distribution expected under the null hypothesis, while the genomic control factor $\lambda$ provides a scalar summary of global inflation or deflation, with $\lambda \approx 1$ indicating appropriate calibration. Operationally, $\lambda$ captures whether the bulk of null test statistics is globally over- or under-dispersed relative to expectation, whereas empirical type I error directly evaluates threshold-level calibration through the observed rejection rate $\Pr(p < \alpha)$ at a chosen $\alpha$. In both datasets, ACAT, Fisher's method, minP, and Stouffer's method yielded $\lambda$ values close to 1, consistent with well-controlled null behavior under the MVN-based calibration scheme. The omnibus test was likewise close to null in both datasets, slightly conservative in \textit{Arabidopsis} and near 1 in \textit{Drosophila}, which is desirable for a combined procedure intended to maintain stable type I error control across heterogeneous pathway architectures.
-
-The main calibration exception was TFisher in the female fly null diagnostics, which showed a markedly elevated $\lambda$ (Supp.~Fig.~6), indicating a clear departure from the expected null. However, the empirical type I error at $\alpha = 0.05$ remained at or below the nominal level, indicating that TFisher's deviation was not simply a matter of excess false positives at a single threshold. Instead, this pattern is more consistent with a mismatch in null distribution shape or scale that affects the broader $p$-value spectrum without necessarily producing excess rejections at $\alpha = 0.05$. Importantly, the omnibus did not inherit this instability, as both its $\lambda$ and type I error remained close to nominal, consistent with the omnibus functioning as a stabilizing integrator that reduces dependence on the idiosyncratic behavior of any single component test. These diagnostics therefore support the conclusion that the CATFISH MVN framework is approximately nominally calibrated for most individual component tests and for the omnibus statistic, even though a subset of components may still exhibit residual miscalibration.
-
-\begin{figure*}[!t]
-    \centering
-    \includegraphics[width=\textwidth]{Figures/SuppFig/SuppFig6.null_calibration_combined.png}
-    \caption{\textbf{MVN null diagnostics support calibrated inference.}
-    Panel A shows Q--Q plots comparing observed versus expected $p$-values under dependence-preserving MVN resampling for each component and the omnibus in \textit{Arabidopsis} and fly.
-    Panel B shows genomic control ($\lambda$), summarizing calibration and highlighting elevated $\lambda$ for TFisher in fly while the omnibus remains near 1.
-    Panel C shows empirical type I error at $\alpha = 0.05$, confirming near-nominal rejection rates overall and supporting the interpretation that component differences primarily reflect sensitivity to distinct signal architectures rather than systematic false positives.}
-\end{figure*}
-
-\subsection{Candidate-gene prioritization integrates GWAS, MAGMA, and pathway evidence}
-
-In Figure~7A,B, we quantified the number of genes supported at each layer under the specified thresholds. For the \textit{Drosophila} analysis, the GWAS evidence layer was deliberately defined using a more permissive significance threshold, reflecting the observation that very few genes satisfy a Bonferroni cutoff. The median number of genes per pathway was lower in \textit{Drosophila} than in \textit{Arabidopsis}. Consequently, pathway membership alone constituted a weaker filtering criterion in the fly analysis.
-
-In \textit{Arabidopsis} (Fig.~7C), a visible subset of genes showed concordant evidence across layers, including support from all three layers, consistent with a mixture of strong locus-driven genes. In fly females (Fig.~7D), many top-ranked genes were supported by GWAS and MAGMA but lacked pathway or top-pathway support at the chosen pathway threshold, consistent with either a smaller or shallower pathway mapping or with pathway-level signals being distributed across many modest genes rather than concentrating on the same top loci that drive GWAS and MAGMA.
-
-Furthermore, genes in the top pathways were enriched for stronger MAGMA signals (Fig.~7E,F), with a clear shift in \textit{Arabidopsis} but a weaker or non-significant shift in fly, indicating that the pathway layer preferentially captures elevated gene-level association in \textit{Arabidopsis}, whereas in fly the enrichment signal is more diffuse.
-
-\begin{figure*}[!t]
-    \centering
-    \includegraphics[width=\textwidth]{Figures/Fig7.candidate_gene_analysis_arabidopsis/Fig7.candidate_gene_analysis_arabidopsis.png}
-    \caption{\textbf{Multi-layer candidate-gene prioritization integrates GWAS locus evidence, MAGMA gene-level association, and pathway enrichment.}
-    Panels A/C/E show \textit{Arabidopsis} (BIO6), and panels B/D/F show female \textit{Drosophila} starvation resistance.
-    Panels A--B show UpSet plots summarizing overlap among genes supported by each layer at the thresholds used in the main analysis, namely GWAS-mapped gene support, MAGMA gene-level support, and membership in top enriched pathways (top 10 pathways in \textit{Arabidopsis} and top 20 in fly).
-    Panels C--D show gene-level concordance between GWAS and MAGMA. Each point represents a gene, with the x-axis showing GWAS locus evidence mapped to the gene, defined as $-\log_{10}$ of the minimum GWAS $p$-value among mapped variants, and the y-axis showing MAGMA evidence, defined as $-\log_{10}$ of the MAGMA gene-level $p$-value. Points are colored according to which evidence layers support the gene, and inset bar charts report the corresponding counts. Dashed lines indicate the significance cutoffs used to define GWAS- and MAGMA-supported genes.
-    Panels E--F show the distribution of MAGMA evidence for genes inside versus outside top enriched pathways; green curves denote genes in top pathways and gray curves denote genes not in top pathways, with Wilcoxon $p$-values testing for a shift toward stronger MAGMA association among pathway genes.}
-\end{figure*}
-
-For each gene, \texttt{best\_pathway\_p} denotes the smallest calibrated pathway $p$-value among the top enriched pathways containing that gene (top 10 in \textit{Arabidopsis}; top 20 in fly), and the corresponding pathway identifier is reported as the gene's best-supporting pathway. We further scored candidate genes using a count-based system with continuous evidence strength. Specifically, each gene received a score increment of $+1$ for each evidence layer in which it was supported, namely GWAS, MAGMA, and pathway analysis. In addition, small weighted contributions derived from continuous test statistics were added using $-\log_{10}(p)$ terms, with the MAGMA-derived component assigned a slightly higher weight than the GWAS- and pathway-derived components. This scoring scheme was intentionally designed so that overall ranking is driven primarily by the number of independent evidence layers supporting a gene, while the continuous $-\log_{10}(p)$ contributions serve only to distinguish weakly from strongly supported genes within the same discrete support tier.
-
-In \textit{Arabidopsis}, the top-ranked genes were almost entirely three-layer candidates with strong MAGMA $p$-values and extremely small mapped GWAS $p$-values, and they frequently pointed to a specific best-supporting pathway, for example PWY-5884, a BioCyc pathway identifier corresponding to wax biosynthesis. In female flies, the highest-scoring genes included a smaller set of three-layer candidates with explicit pathway assignments.
-
-
+These 36 triple-supported genes form the primary set for downstream functional interpretation and validation (Table~\ref{tab:top_genes}). Many participate in pathways directly involved in biomass accumulation, including carbon allocation, nitrogen metabolism, membrane biogenesis, and cellular energy production. The top candidate, \textit{SORBI\_3009G231100} (GWAS rank 2; MAGMA rank 15), is annotated to the CMP-3-deoxy-D-\textit{manno}-octulosonate biosynthesis pathway (PWY-1269), which contributes to cell wall and other polysaccharide processes. Variation affecting cell wall synthesis and remodeling is a plausible determinant of stem volume via effects on radial growth, secondary thickening, and mechanical reinforcement.
 
 
 \section{Conclusion}
