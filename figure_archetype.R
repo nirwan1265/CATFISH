@@ -1,10 +1,10 @@
-# Full script (I–VI) with Archetype VI (CEAB) INCLUDED.
-# Also avoids slice() entirely (uses base indexing) to prevent Rle/list conflicts.
+# Archetype rank-curve figure for the five core pathway signal families:
+# I SDA, II CME, III DPS, IV HDS, V SGP.
+# Simulates gene-level Z from MVN: Z ~ N(mu, Sigma), then converts to p-values.
 
 suppressPackageStartupMessages({
   library(ggplot2)
   library(dplyr)
-  library(tidyr)
   library(patchwork)
   library(scales)
 })
@@ -60,19 +60,57 @@ add_thresholds <- function(g, x = 0.02, size = 3) {
              hjust = 0, vjust = -0.3, size = size)
 }
 
-# ---------------- simulate archetype patterns ----------------
-n <- 220
-p_I   <- c(10^runif(6, -14, -7), runif(n - 6))                              # SDA
-p_II  <- pmin(pmax(rbeta(n, 0.55, 2.6), 1e-8), 1)                           # CME
-p_III <- pmin(pmax(rbeta(n, 0.95, 1.25), 1e-8), 1)                          # DPS
-p_IV  <- c(10^runif(4, -12, -7), rbeta(40, 0.65, 2.8), runif(n - 44))       # HDS
-p_V   <- c(10^runif(1, -20, -12), runif(n - 1))                             # SGP
+# ---------------- simulate archetype patterns from MVN ----------------
+make_exchangeable_sigma <- function(m, rho) {
+  matrix(rho, nrow = m, ncol = m) + diag(1 - rho, m)
+}
 
-# VI — CEAB: in-set shifted vs out-set background (competitive enrichment)
-n_in  <- 120
-n_out <- 400
-p_VI_in  <- pmin(pmax(rbeta(n_in, 0.85, 1.9), 1e-8), 1)
-p_VI_out <- runif(n_out)
+simulate_mvn_p <- function(mu, sigma, one_sided = TRUE) {
+  m <- length(mu)
+  z <- as.numeric(mu + t(chol(sigma)) %*% rnorm(m))
+  p <- if (one_sided) {
+    pnorm(z, lower.tail = FALSE)
+  } else {
+    2 * pnorm(-abs(z))
+  }
+  pmin(pmax(p, .Machine$double.xmin), 1)
+}
+
+m <- 220
+rho <- 0.20
+sigma <- make_exchangeable_sigma(m = m, rho = rho)
+
+# I — SDA: few strong drivers
+mu_I <- rep(0, m)
+idx_I <- sample.int(m, 6)
+mu_I[idx_I] <- 3.2
+p_I <- simulate_mvn_p(mu_I, sigma)
+
+# II — CME: many moderate same-direction effects
+mu_II <- rep(0, m)
+idx_II <- sample.int(m, round(0.45 * m))
+mu_II[idx_II] <- 1.35
+p_II <- simulate_mvn_p(mu_II, sigma)
+
+# III — DPS: diffuse weak shift across most genes
+mu_III <- rep(0, m)
+idx_III <- sample.int(m, round(0.85 * m))
+mu_III[idx_III] <- 0.45
+p_III <- simulate_mvn_p(mu_III, sigma)
+
+# IV — HDS: few strong + broader moderate support
+mu_IV <- rep(0, m)
+idx_driver <- sample.int(m, 4)
+idx_support <- sample(setdiff(seq_len(m), idx_driver), 40)
+mu_IV[idx_driver] <- 3.0
+mu_IV[idx_support] <- 1.1
+p_IV <- simulate_mvn_p(mu_IV, sigma)
+
+# V — SGP: single dominant gene
+mu_V <- rep(0, m)
+idx_V <- sample.int(m, 1)
+mu_V[idx_V] <- 4.2
+p_V <- simulate_mvn_p(mu_V, sigma)
 
 # ---------------- build plotting data ----------------
 df <- bind_rows(
@@ -81,11 +119,6 @@ df <- bind_rows(
   rank_curve(p_III, "Archetype III — DPS"),
   rank_curve(p_IV,  "Archetype IV — HDS"),
   rank_curve(p_V,   "Archetype V — SGP")
-)
-
-df_vi <- bind_rows(
-  rank_curve(p_VI_in,  "Archetype VI — CEAB", group = "in_set"),
-  rank_curve(p_VI_out, "Archetype VI — CEAB", group = "out_set")
 )
 
 # ---------------- I — SDA ----------------
@@ -162,9 +195,6 @@ p4 <- add_thresholds(p4)
 
 # ---------------- V — SGP ----------------
 sgp_dat <- df %>% filter(archetype == "Archetype V — SGP") %>% arrange(rank)
-sgp_tail <- sgp_dat[-1, , drop = FALSE]
-sgp_tail$rank_tail    <- seq_along(sgp_tail$p) / length(sgp_tail$p)
-sgp_tail$mlog10p_tail <- -log10(sgp_tail$p)
 
 k_1e3_sgp <- sum(sgp_dat$p < 1e-3)
 k_gw_sgp  <- sum(sgp_dat$p < 2.5e-6)
@@ -173,45 +203,25 @@ top1 <- sgp_dat[1, , drop = FALSE]
 p5 <- ggplot() +
   geom_line(data = sgp_dat,  aes(rank, mlog10p), linewidth = 0.7) +
   geom_point(data = sgp_dat, aes(rank, mlog10p), size = 0.55, alpha = 0.75) +
-  geom_line(data = sgp_tail, aes(rank_tail, mlog10p_tail), linewidth = 0.7, linetype = "22") +
   geom_point(data = top1, aes(rank, mlog10p), size = 2) +
   coord_cartesian(ylim = c(0, 8.5)) +
   scale_x_continuous(labels = percent_format(accuracy = 1),
                      breaks = c(0, .25, .5, .75, 1)) +
   labs(
     title = "Archetype V — Single-Gene Proxy (SGP)",
-    subtitle = "one dominant gene; tail-only curve ~null after removing it",
+    subtitle = "one dominant gene; remaining genes are mostly null",
     x = "Within-pathway gene rank (fraction)",
     y = expression(-log[10](p))
   ) +
   theme_natureish()
 p5 <- add_thresholds(p5) +
   anno_box(0.12, 8.35,
-           paste0("K(p<1e-3)=", k_1e3_sgp, "   K(p<2.5e-6)=", k_gw_sgp, "\n",
-                  "dashed: tail-only (top gene removed)"))
+           paste0("K(p<1e-3)=", k_1e3_sgp, "   K(p<2.5e-6)=", k_gw_sgp))
 
-# ---------------- VI — CEAB (THIS is archetype 6) ----------------
-p6 <- ggplot(df_vi, aes(rank, mlog10p, linetype = group)) +
-  geom_line(linewidth = 0.75) +
-  scale_linetype_manual(values = c(in_set = "solid", out_set = "22")) +
-  scale_x_continuous(labels = percent_format(accuracy = 1),
-                     breaks = c(0, .25, .5, .75, 1)) +
-  labs(
-    title = "Archetype VI — Competitive Enrichment (CEAB)",
-    subtitle = "in-set curve sits above background (βs > 0 in MAGMA competitive test)",
-    x = "Gene rank (fraction)",
-    y = expression(-log[10](p))
-  ) +
-  theme_natureish()
-
-p6 <- p6 +
-  anno_box(0.08, max(df_vi$mlog10p) * 0.92,
-           "solid: in-set\n dashed: out-of-set", size = 3.2)
-
-# ---------------- compose 2x3 figure (includes VI) ----------------
-fig <- (p1 + p2 + p3) / (p4 + p5 + p6) +
+# ---------------- compose 2x3 layout for five archetypes ----------------
+fig <- (p1 + p2 + p3) / (p4 + p5 + plot_spacer()) +
   plot_annotation(
-    title = "Pathway signal archetypes as gene-level p-value rank curves",
+    title = "Pathway signal archetypes (I-V) as gene-level p-value rank curves",
     theme = theme(plot.title = element_text(face = "bold", size = 13))
   )
 
@@ -224,7 +234,7 @@ fig
 #ggsave("Fig_archetypesIII.png", p3, width = 7.2, height = 4.6, units = "in", dpi = 600)
 #ggsave("Fig_archetypesIV.png", p4, width = 7.2, height = 4.6, units = "in", dpi = 600)
 #ggsave("Fig_archetypesV.png", p5, width = 7.2, height = 4.6, units = "in", dpi = 600)
-#ggsave("Fig_archetypesVI.png", p6, width = 7.2, height = 4.6, units = "in", dpi = 600)
+#ggsave("Fig_archetypes_layout.png", fig, width = 10.8, height = 7.0, units = "in", dpi = 600)
 
 # ggsave("Fig_archetypes_rankcurves.pdf", fig, width = 7.2, height = 4.6, units = "in", device = cairo_pdf)
 # ggsave("Fig_archetypes_rankcurves.png", fig, width = 7.2, height = 4.6, units = "in", dpi = 600)
