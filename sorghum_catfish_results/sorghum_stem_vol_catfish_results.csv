@@ -1,0 +1,460 @@
+"pathway_id","pathway_name","n_genes","acat_p","fisher_p","stouffer_p","minp_p","tfisher_p","omni_p","FDR"
+"ALACAT2-PWY","L-alanine degradation II (to D-lactate)",0,NA,NA,NA,NA,NA,NA,NA
+"ALANINE-DEG3-PWY","L-alanine degradation III",0,NA,NA,NA,NA,NA,NA,NA
+"ALANINE-SYN2-PWY","L-alanine biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"ARG-PRO-PWY","L-arginine degradation VI (arginase 2 pathway)",0,NA,NA,NA,NA,NA,NA,NA
+"ARGASEDEG-PWY","L-arginine degradation I (arginase pathway)",0,NA,NA,NA,NA,NA,NA,NA
+"ARGSPECAT-PWY","spermine biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"ARGSYN-PWY","L-arginine biosynthesis I (via L-ornithine)",0,NA,NA,NA,NA,NA,NA,NA
+"ARGSYNBSUB-PWY","L-arginine biosynthesis II (acetyl cycle)",0,NA,NA,NA,NA,NA,NA,NA
+"ASPARAGINE-BIOSYNTHESIS","L-asparagine biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"ASPARAGINE-DEG1-PWY","L-asparagine degradation I",0,NA,NA,NA,NA,NA,NA,NA
+"ASPARAGINESYN-PWY","L-asparagine biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"ASPARTATE-DEG1-PWY","L-aspartate degradation I",0,NA,NA,NA,NA,NA,NA,NA
+"ASPARTATESYN-PWY","L-aspartate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"ASPSYNII-PWY","cyanide detoxification I",0,NA,NA,NA,NA,NA,NA,NA
+"BSUBPOLYAMSYN-PWY","spermidine biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"CALVIN-PWY","Calvin-Benson-Bassham cycle",0,NA,NA,NA,NA,NA,NA,NA
+"CAROTENOID-PWY","superpathway of carotenoid biosynthesis in plants",0,NA,NA,NA,NA,NA,NA,NA
+"CHLOROPHYLL-SYN","3,8-divinyl-chlorophyllide <i>a</i> biosynthesis I (aerobic, light-dependent)",0,NA,NA,NA,NA,NA,NA,NA
+"CITRULLINE-DEG-PWY","L-citrulline degradation",0,NA,NA,NA,NA,NA,NA,NA
+"COA-PWY","coenzyme A biosynthesis I (prokaryotic)",0,NA,NA,NA,NA,NA,NA,NA
+"CYANCAT-PWY","cyanate degradation",0,NA,NA,NA,NA,NA,NA,NA
+"CYSTSYN-PWY","L-cysteine biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"DETOX1-PWY","superoxide radicals degradation",0,NA,NA,NA,NA,NA,NA,NA
+"DTDPRHAMSYN-PWY","dTDP-L-rhamnose biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"ETHYL-PWY","ethylene biosynthesis I (plants)",0,NA,NA,NA,NA,NA,NA,NA
+"FASYN-ELONG-PWY","fatty acid elongation -- saturated",0,NA,NA,NA,NA,NA,NA,NA
+"GALACTMETAB-PWY","UDP-galactose biosynthesis (salvage pathway from galactose using UDP-glucose)",0,NA,NA,NA,NA,NA,NA,NA
+"GLNSYN-PWY","L-glutamine biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"GLUCONEO-PWY","gluconeogenesis I",0,NA,NA,NA,NA,NA,NA,NA
+"GLUCOSE1PMETAB-PWY","glucose and glucose-1-phosphate degradation",0,NA,NA,NA,NA,NA,NA,NA
+"GLUGLNSYN-PWY","L-glutamate biosynthesis IV",0,NA,NA,NA,NA,NA,NA,NA
+"GLUT-REDOX-PWY","glutathione-glutaredoxin redox reactions",0,NA,NA,NA,NA,NA,NA,NA
+"GLUTAMATE-DEG1-PWY","L-glutamate degradation I",0,NA,NA,NA,NA,NA,NA,NA
+"GLUTAMINDEG-PWY","L-glutamine degradation I",0,NA,NA,NA,NA,NA,NA,NA
+"GLUTATHIONESYN-PWY","glutathione biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"GLUTORN-PWY","L-ornithine biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"GLYCLEAV-PWY","glycine cleavage",0,NA,NA,NA,NA,NA,NA,NA
+"GLYCOLYSIS","glycolysis I (from glucose 6-phosphate)",0,NA,NA,NA,NA,NA,NA,NA
+"GLYOXYLATE-BYPASS","glyoxylate cycle",0,NA,NA,NA,NA,NA,NA,NA
+"GLYSYN-ALA-PWY","glycine biosynthesis III",0,NA,NA,NA,NA,NA,NA,NA
+"GLYSYN2-PWY","glycine biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"HEME-BIOSYNTHESIS-II","heme <i>b</i> biosynthesis I (aerobic)",0,NA,NA,NA,NA,NA,NA,NA
+"HEXPPSYN-PWY","hexaprenyl diphosphate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"HISTSYN-PWY","L-histidine biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"HOMOSER-THRESYN-PWY","L-threonine biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"HOMOSERSYN-PWY","L-homoserine biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"ILEUSYN-PWY","L-isoleucine biosynthesis I (from threonine)",0,NA,NA,NA,NA,NA,NA,NA
+"KDOSYN-PWY","Kdo transfer to lipid IV<sub>A</sub> I",0,NA,NA,NA,NA,NA,NA,NA
+"LEU-DEG2-PWY","L-leucine degradation I",0,NA,NA,NA,NA,NA,NA,NA
+"LEUSYN-PWY","L-leucine biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"LIPAS-PWY","triacylglycerol degradation",0,NA,NA,NA,NA,NA,NA,NA
+"LIPASYN-PWY","phospholipases",0,NA,NA,NA,NA,NA,NA,NA
+"MANNCAT-PWY","D-mannose degradation",0,NA,NA,NA,NA,NA,NA,NA
+"MANNOSYL-CHITO-DOLICHOL-BIOSYNTHESIS","protein <i>N</i>-glycosylation initial phase (eukaryotic)",0,NA,NA,NA,NA,NA,NA,NA
+"METHIONINE-DEG1-PWY","L-methionine degradation I (to L-homocysteine)",0,NA,NA,NA,NA,NA,NA,NA
+"NAGLIPASYN-PWY","lipid IV<sub>A</sub> biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"NONMEVIPP-PWY","methylerythritol phosphate pathway I",0,NA,NA,NA,NA,NA,NA,NA
+"NONOXIPENT-PWY","pentose phosphate pathway (non-oxidative branch)",0,NA,NA,NA,NA,NA,NA,NA
+"OXIDATIVEPENT-PWY","pentose phosphate pathway (oxidative branch) I",0,NA,NA,NA,NA,NA,NA,NA
+"P401-PWY","cyanide degradation",0,NA,NA,NA,NA,NA,NA,NA
+"PANTO-PWY","phosphopantothenate biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PHOSLIPSYN2-PWY","superpathway of phospholipid biosynthesis II (plants)",0,NA,NA,NA,NA,NA,NA,NA
+"POLYAMINSYN3-PWY","superpathway of polyamine biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PROSYN-PWY","L-proline biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PROUT-PWY","L-proline degradation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-1001","cellulose biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-101","photosynthesis light reactions",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-1042","glycolysis IV (plant cytosol)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-1061","homogalacturonan biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-1121","suberin monomers biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-116","coniferin metabolism",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-1269","CMP-3-deoxy-D-<I>manno</I>-octulosonate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-1422","vitamin E biosynthesis (tocopherols)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-1581","plastoquinol-9 biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-1801","formaldehyde oxidation II (glutathione-dependent)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-181","photorespiration",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-1822","indole-3-acetate activation I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-2","putrescine degradation IV",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-2161","folate polyglutamylation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-2161B","glutamate removal from folates",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-2161B-PMN","folate polyglutamylation II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-2261","ascorbate glutathione cycle",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-2301","<i>myo</i>-inositol biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-241","C4 photosynthetic carbon assimilation cycle, NADP-ME type",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-2541","phytosterol biosynthesis (plants)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-2582","brassinosteroid biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-2681","<i>trans</i>-zeatin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-2781","<i>cis</i>-zeatin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-282","cuticular wax biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-2841","cytokinins degradation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-2881","cytokinins 7-<i>N</i>-glucoside biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-2901","cytokinins 9-<i>N</i>-glucoside biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-2902","cytokinin-<i>O</i>-glucosides biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-2981","diterpene phytoalexins precursors biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-3001","superpathway of L-isoleucine biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-3101","flavonol biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-3181","L-tryptophan degradation VI (via tryptamine)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-321","cutin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-3261","UDP-&beta;-L-rhamnose biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-3341","L-proline biosynthesis III",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-3385","choline biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-3461","L-tyrosine biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-3462","L-phenylalanine biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-3561","choline biosynthesis III",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-361","phenylpropanoid biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-3742","tetrahydrofolate biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-3781","aerobic respiration I (cytochrome c)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-381","nitrate reduction II (assimilatory)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-3821","D-galactose detoxification",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-3841","folate transformations II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-3881","mannitol biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-3941","&beta;-alanine biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-3981","&beta;-alanine biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-3982","uracil degradation I (reductive)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-4","UDP-&alpha;-D-galacturonate biosynthesis II (from D-galacturonate)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-401","galactolipid biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-4041","&gamma;-glutamyl cycle",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-4081","glutathione-peroxide redox reactions",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-4201","volatile cinnamoic ester biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-4203","volatile benzenoid biosynthesis I (ester formation)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-4261","glycerol degradation I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-43","putrescine biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-4302","aerobic respiration III (alternative oxidase pathway)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-4321","L-glutamate degradation IV",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-4341","L-glutamate biosynthesis V",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-4361","<i>S</i>-methyl-5-thio-&alpha;-D-ribose 1-phosphate degradation I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-4381","fatty acid biosynthesis initiation I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-4541","lipid-dependent phytate biosynthesis I (via Ins(1,4,5)P<sub>3</sub>)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-46","putrescine biosynthesis III",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-4661","1D-<i>myo</i>-inositol hexakisphosphate biosynthesis III (<i>Spirodela polyrrhiza</i>)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-4821","UDP-&alpha;-D-xylose biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-4841","UDP-&alpha;-D-glucuronate biosynthesis (from <i>myo</i>-inositol)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-4861","UDP-&alpha;-D-galacturonate biosynthesis I (from UDP-D-glucuronate)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-4984","urea cycle",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5027","phylloquinol biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5032","<i>ent</i>-kaurene biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5034","GA<sub>12</sub> biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5035","gibberellin biosynthesis III (early C-13 hydroxylation)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5041","<i>S</i>-adenosyl-L-methionine cycle II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5046","2-oxoisovalerate decarboxylation to isobutanoyl-CoA",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5048","rosmarinic acid biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5049","rosmarinic acid biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5059","pinobanksin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5063","phytyl diphosphate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5068","chlorophyll cycle",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5070","gibberellin biosynthesis I (non C-3, non C-13 hydroxylation)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5080","very long chain fatty acid biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5083","NAD/NADH phosphorylation and dephosphorylation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5084","2-oxoglutarate decarboxylation to succinyl-CoA",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5097","L-lysine biosynthesis VI",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5098","chlorophyll <i>a</i> degradation I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5107","phytol salvage pathway",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5115","GDP-L-galactose biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5116","sakuranetin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5120","geranylgeranyl diphosphate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5121","superpathway of geranylgeranyl diphosphate biosynthesis II (via MEP)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5122","geranyl diphosphate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5123","<i>trans, trans</i>-farnesyl diphosphate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5125","anthocyanin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5129","sphingolipid biosynthesis (plants)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5136","fatty acid &beta;-oxidation II (peroxisome)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5137","fatty acid &beta;-oxidation III (unsaturated, odd number)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5138","unsaturated, even numbered fatty acid &beta;-oxidation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5139","pelargonidin conjugates biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5142","acyl-[acyl-carrier protein] thioesterase pathway",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5143","long-chain fatty acid activation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5147","oleate biosynthesis I (plants)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5148","acyl-CoA hydrolysis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5172","acetyl-CoA biosynthesis III (from citrate)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5173","superpathway of acetyl-CoA biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5176","coumarin biosynthesis (via 2-coumarate)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5188","tetrapyrrole biosynthesis I (from glutamate)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5194","siroheme biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5268","salvianin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5269","cardiolipin biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5284","shisonin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5326","sulfite oxidation IV",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5337","stachyose biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5340","sulfate activation for sulfonation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5350","thiosulfate disproportionation IV (rhodanese)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5365","linear furanocoumarin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5398","crocetin esters biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5410","traumatin and (<i>Z</i>)-3-hexen-1-yl acetate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5434","(3<i>E</i>)-4,8-dimethylnona-1,3,7-triene biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5441","S-methyl-L-methionine cycle",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5453","methylglyoxal degradation III",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5466","matairesinol biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5481","pyruvate fermentation to (<i>S</i>)-lactate",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5486","pyruvate fermentation to ethanol II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5659","GDP-mannose biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5667","CDP-diacylglycerol biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5669","phosphatidylserine and phosphatidylethanolamine biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5670","epoxysqualene biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5686","UMP biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5687","pyrimidine ribonucleotides interconversion",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5690","TCA cycle II (plants and fungi)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5691","urate conversion to allantoin I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5692","allantoin degradation to glyoxylate II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5697","allantoin degradation to ureidoglycolate I (urea producing)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5698","allantoin degradation to ureidoglycolate II (ammonia producing)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5704","urea degradation II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5723","Rubisco shunt",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5745","costunolide biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5783","octaprenyl diphosphate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5800","xylan biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5805","nonaprenyl diphosphate biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5807","heptaprenyl diphosphate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5810","usnate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5829","geraniol and geranial biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5837","2-carboxy-1,4-naphthoquinol biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5859","eugenol and isoeugenol biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5863","superpathway of phylloquinol biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5864","superpathway of plastoquinol biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5886","4-hydroxyphenylpyruvate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5905","hypusine biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5910","superpathway of geranylgeranyldiphosphate biosynthesis I (via mevalonate)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5912","2'-deoxymugineic acid phytosiderophore biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5921","glutaminyl-tRNA<sup>gln</sup> biosynthesis via transamidation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5925","hydroxylated mugineic acid phytosiderophore biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5934","iron reduction and absorption",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5936","xyloglucan biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5943","&beta;-carotene biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5944","zeaxanthin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5945","violaxanthin, antheraxanthin and zeaxanthin interconversion",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5947","lutein biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5957","L-nicotianamine biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5968","cinnamate esters biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5971","palmitate biosynthesis II (bacteria and plants)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5976","dhurrin degradation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5980","xylogalacturonan biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5987","sorgoleone biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5989","stearate biosynthesis II (bacteria and plants)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5995","linoleate biosynthesis I (plants)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-5997","&alpha;-linolenate biosynthesis I (plants and red algae)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6","GDP-L-fucose biosynthesis II (from L-fucose)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6012","acyl carrier protein metabolism",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6014","vernolate biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6019","pseudouridine degradation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6030","serotonin and melatonin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6039","chlorogenic acid biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6040","chlorogenic acid biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6066","IAA biosynthesis VII",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6068","indican biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6069","indigo biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6115","avenacin biosynthesis, initial reactions",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6118","glycerol-3-phosphate shuttle",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6120","L-tyrosine biosynthesis III",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6121","5-aminoimidazole ribonucleotide biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6124","inosine-5'-phosphate biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6147","6-hydroxymethyl-dihydropterin diphosphate biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6163","chorismate biosynthesis from 3-dehydroquinate",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6164","3-dehydroquinate biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6196","D-serine metabolism",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-621","sucrose degradation III (sucrose invertase)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6219","indole-3-acetate inactivation VIII",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-622","starch biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6233","jasmonoyl-amino acid conjugates biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6235","hydroxyjasmonate sulfate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6275","&beta;-caryophyllene biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6290","&beta;-cubebene biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6291","valencene and 7-epi-&alpha;-selinene biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6295","olivetol biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-63","UDP-&beta;-L-arabinose biosynthesis I (from UDP-&alpha;-D-xylose)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6330","acetaldehyde biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6333","acetaldehyde biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6348","phosphate acquisition",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6351","D-<i>myo</i>-inositol (1,4,5)-trisphosphate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6352","3-phosphoinositide biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6360","flavonol glucosylation I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6363","D-<i>myo</i>-inositol (1,4,5)-trisphosphate degradation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6367","D-<i>myo</i>-inositol-5-phosphate metabolism",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6369","inositol diphosphates biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-641","proanthocyanidins biosynthesis from flavanols",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6440","spermine and spermidine degradation II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6441","spermine and spermidine degradation III",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6442","spermidine hydroxycinnamic acid conjugates biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6443","benzoate biosynthesis I (CoA-dependent, &beta;-oxidative)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6457","cinnamoyl-CoA biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6465","&omega;-hydroxylation of caprate and laurate",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6466","pyridoxal 5'-phosphate biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6468","&omega;- hydroxylation of laurate",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6473","4-aminobutanoate degradation IV",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6475","<i>trans</i>-lycopene biosynthesis II (oxygenic phototrophs and green sulfur bacteria)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6483","ceramide degradation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6498","eumelanin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6502","oxidized GTP and dGTP detoxification",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6515","phloridzin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6520","nonaprenyl diphosphate biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6527","stachyose degradation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6535","4-aminobutanoate degradation I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6540","costunolide biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6543","4-aminobenzoate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6546","brassinosteroids inactivation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6549","L-glutamine biosynthesis III",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6554","1D-<i>myo</i>-inositol hexakisphosphate biosynthesis V (from Ins(1,3,4)P3)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6556","pyrimidine ribonucleosides salvage II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6577","farnesylcysteine salvage pathway",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6596","adenosine nucleotides degradation I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6599","guanine and guanosine salvage II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-66","GDP-L-fucose biosynthesis I (from GDP-D-mannose)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6605","adenine and adenosine salvage II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6606","guanosine nucleotides degradation II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6607","guanosine nucleotides degradation I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6613","tetrahydrofolate salvage from 5,10-methenyltetrahydrofolate",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6619","adenine and adenosine salvage VI",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6631","tricetin methylation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6663","plant sterol biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6665","pterostilbene biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6673","caffeoylglucarate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6710","poly-hydroxy fatty acids biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6717","(1,4)-&beta;-D-xylan degradation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6724","starch degradation II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6730","methylhalides biosynthesis (plants)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6733","sporopollenin precursors biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6745","phytochelatins biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6752","<i>o</i>-diquinones biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6754","<i>S</i>-methyl-5'-thioadenosine degradation I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6762","salicylate glucosides biosynthesis IV",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6773","1,3-&beta;-D-glucan biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6786","detoxification of reactive carbonyls in chloroplasts",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6801","volatile esters biosynthesis (during fruit ripening)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6803","phosphatidylcholine acyl editing",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6814","chitin degradation III (carnivorous plants)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6823","molybdenum cofactor biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6837","fatty acid beta-oxidation V (unsaturated, odd number, di-isomerase-dependent)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6890","4-amino-2-methyl-5-diphosphomethylpyrimidine biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6908","thiamine diphosphate biosynthesis IV (eukaryotes)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6922","L-<i>N<sup>&delta;</sup></i>-acetylornithine biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6927","chlorophyll <i>a</i> degradation II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6938","NADH repair",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6949","DIBOA-glucoside biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-695","abscisic acid biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6950","DIMBOA-glucoside biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6959","L-ascorbate degradation V",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6963","ammonia assimilation cycle I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-6964","ammonia assimilation cycle II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-699","brassinosteroid biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-701","L-methionine degradation II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-702","L-methionine biosynthesis II (plants)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7029","terminal olefins biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7039","phosphatidate metabolism, as a signaling molecule",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7060","ornithine-citrulline shuttle",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7101","5-deoxystrigol biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7120","esterified suberin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7141","(3<i>S</i>)-linalool biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7170","phytochromobilin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7176","UTP and CTP <i>de novo</i> biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7183","pyrimidine nucleobases salvage I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7184","pyrimidine deoxyribonucleotides <i>de novo</i> biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7185","UTP and CTP dephosphorylation I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7186","superpathway of scopolin and esculin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7187","pyrimidine deoxyribonucleotides <i>de novo</i> biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7193","pyrimidine ribonucleosides salvage I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7196","superpathway of pyrimidine ribonucleosides salvage",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7197","pyrimidine deoxyribonucleotide phosphorylation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7199","pyrimidine deoxyribonucleosides salvage",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7204","pyridoxal 5'-phosphate salvage II (plants)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7205","CMP phosphorylation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7206","pyrimidine deoxyribonucleotides dephosphorylation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7208","superpathway of pyrimidine nucleobases salvage",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7212","baicalein metabolism",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7213","wogonin metabolism",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7214","baicalein degradation (hydrogen peroxide detoxification)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7219","adenosine ribonucleotides <i>de novo</i> biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7221","guanosine ribonucleotides <i>de novo</i> biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7224","purine deoxyribonucleosides salvage",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7226","guanosine deoxyribonucleotides <i>de novo</i> biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7227","adenosine deoxyribonucleotides <i>de novo</i> biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7252","luteolinidin 5-<i>O</i>-glucoside biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7253","apigeninidin 5-<i>O</i>-glucoside biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7270","L-methionine salvage cycle II (plants)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7280","ternatin C3 biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7343","UDP-&alpha;-D-glucose biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7344","UDP-&alpha;-D-galactose biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7346","UDP-&alpha;-D-glucuronate biosynthesis (from UDP-glucose)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-735","jasmonic acid biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7388","octanoyl-[acyl-carrier protein] biosynthesis (mitochondria, yeast)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7411","phosphatidate biosynthesis (yeast)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7436","vitamin E biosynthesis (tocotrienols)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7458","violdelphin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7464","cyanidin 3,7-diglucoside polyacylation biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7468","benzoyl-&beta;-<i>D</i>-glucopyranose biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7477","momilactone A biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7478","oryzalexin D and E biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7484","phytocassanes biosynthesis, shared reactions",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7489","oryzalexin A, B, and C biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7528","L-methionine salvage cycle I (bacteria and plants)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7546","diphthamide biosynthesis II (eukaryotes)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7560","methylerythritol phosphate pathway II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7590","(7Z,10Z,13Z)-hexadecatrienoate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-762","phospholipid desaturation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7634","vernolate biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7683","nitrite reduction (hemoglobin)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7856","heme <i>a</i> biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7859","jasmonoyl-L-isoleucine inactivation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7861","L-pipecolate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7897","flavonoid di-C-glucosylation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7909","formaldehyde oxidation VII (THF pathway)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-7995","tricin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-8001","felinine and 3-methyl-3-sulfanylbutan-1-ol biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-8011","L-serine biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-8027","parkeol biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-8028","cycloartenol biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-82","UDP-&beta;-L-arabinose biosynthesis II (from &beta;-L-arabinose)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-84","resveratrol biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-861","dhurrin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-862","fructan degradation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-882","L-ascorbate biosynthesis I (L-galactose pathway)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY-922","mevalonate pathway I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY0-1021","L-alanine biosynthesis III",0,NA,NA,NA,NA,NA,NA,NA
+"PWY0-1264","biotin-carboxyl carrier protein assembly",0,NA,NA,NA,NA,NA,NA,NA
+"PWY0-1319","CDP-diacylglycerol biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY0-1325","superpathway of L-asparagine biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY0-1507","biotin biosynthesis from 8-amino-7-oxononanoate I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY0-1535","D-serine degradation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY0-166","superpathway of pyrimidine deoxyribonucleotides <i>de novo</i> biosynthesis (<i>E. coli</i>)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY0-501","lipoate biosynthesis and incorporation I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY0-662","PRPP biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY0A-6303","methyl indole-3-acetate interconversion",0,NA,NA,NA,NA,NA,NA,NA
+"PWY18C3-22","methylsalicylate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY18C3-24","methylsalicylate degradation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY1F-353","glycine betaine biosynthesis III (plants)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY1F-467","phenylpropanoid biosynthesis, initial reactions",0,NA,NA,NA,NA,NA,NA,NA
+"PWY1F-FLAVSYN","flavonoid biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY3O-4107","NAD salvage pathway V (PNC V cycle)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY3O-450","phosphatidylcholine biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWY4FS-10","scopolin biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWY4FS-2","phosphatidylcholine biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY4FS-3","phosphatidylcholine biosynthesis III",0,NA,NA,NA,NA,NA,NA,NA
+"PWY4FS-4","phosphatidylcholine biosynthesis IV",0,NA,NA,NA,NA,NA,NA,NA
+"PWY4FS-6","phosphatidylethanolamine biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"PWY4FS-7","phosphatidylglycerol biosynthesis I (plastidic)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY4FS-8","phosphatidylglycerol biosynthesis II (non-plastidic)",0,NA,NA,NA,NA,NA,NA,NA
+"PWY4LZ-81","Organic Nitrogen Assimilation",0,NA,NA,NA,NA,NA,NA,NA
+"PWY66-423","fructose 2,6-bisphosphate biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWYDQC-4","indole-3-acetate biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"PWYIO2-7","triacylglycerol biosynthesis (Chlamydomonas)",0,NA,NA,NA,NA,NA,NA,NA
+"PWYQT-1","lysine degradation III",0,NA,NA,NA,NA,NA,NA,NA
+"PWYQT-4427","sulfoquinovosyl diacylglycerol biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWYQT-4429","CO<sub>2</sub> fixation into oxaloacetate (anaplerotic)",0,NA,NA,NA,NA,NA,NA,NA
+"PWYQT-4433","CA1P biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWYQT-4445","pyrimidine salvage pathway",0,NA,NA,NA,NA,NA,NA,NA
+"PWYQT-4449","polyisoprenoid biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PWYQT-94","superpathway of polyamine biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"PYRIDNUCSYN-PWY","NAD <i>de novo</i> biosynthesis I (from aspartate)",0,NA,NA,NA,NA,NA,NA,NA
+"PYRUVDEHYD-PWY","pyruvate decarboxylation to acetyl CoA",0,NA,NA,NA,NA,NA,NA,NA
+"RIBOSYN2-PWY","flavin biosynthesis I (bacteria and plants)",0,NA,NA,NA,NA,NA,NA,NA
+"SAM-PWY","S-adenosyl-L-methionine biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"SERSYN-PWY","L-serine biosynthesis I",0,NA,NA,NA,NA,NA,NA,NA
+"SUCSYN-PWY","sucrose biosynthesis I (from photosynthesis)",0,NA,NA,NA,NA,NA,NA,NA
+"SULFMETII-PWY","assimilatory sulfate reduction II",0,NA,NA,NA,NA,NA,NA,NA
+"THIOREDOX-PWY","thioredoxin pathway",0,NA,NA,NA,NA,NA,NA,NA
+"THRESYN-PWY","superpathway of L-threonine biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"TRIGLSYN-PWY","diacylglycerol and triacylglycerol biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"TRPSYN-PWY","L-tryptophan biosynthesis",0,NA,NA,NA,NA,NA,NA,NA
+"TYRFUMCAT-PWY","L-tyrosine degradation I",0,NA,NA,NA,NA,NA,NA,NA
+"UDPNACETYLGALSYN-PWY","UDP-<i>N</i>-acetyl-D-glucosamine biosynthesis II",0,NA,NA,NA,NA,NA,NA,NA
+"VALDEG-PWY","L-valine degradation I",0,NA,NA,NA,NA,NA,NA,NA
+"VALSYN-PWY","L-valine biosynthesis",0,NA,NA,NA,NA,NA,NA,NA

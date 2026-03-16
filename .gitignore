@@ -29,8 +29,28 @@ cache/
 
 # Large data files (>20MB)
 Tables/*.csv
-annot/*.txt
-annot/*.annot
+
+# Sorghum results - EXCLUDE ALL LARGE FILES
+sorghum_catfish_results/genotype/
+sorghum_catfish_results/magma_genes/
+sorghum_catfish_results/annot/
+sorghum_catfish_results/acat/
+sorghum_catfish_results/fisher/
+sorghum_catfish_results/stouffer/
+sorghum_catfish_results/minp/
+sorghum_catfish_results/tfisher/
+sorghum_catfish_results/omnibus/
+sorghum_catfish_results/*_gwas_filtered.txt
+sorghum_catfish_results/*_genes_combined.txt
+sorghum_catfish_results/*_gene_cor_pairs.txt
+*.bed
+*.bim
+*.fam
+*.ped
+*.map
+*.nosex
+*.pval.txt
+*.genes.raw
 
 # Results directories
 acat_results_GLM/
