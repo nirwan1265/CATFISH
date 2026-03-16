@@ -362,8 +362,8 @@ Under LD\_moderate and LD\_strong, several analytically calibrated methods becom
 
 \begin{figure*}[!t]
     \centering
-    %\includegraphics[width=\textwidth]{fig/main/Fig2.block_b_linebar.png}
-    \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio]{fig/main/Fig2.block_b_linebar.png}
+    %\includegraphics[width=\textwidth]{fig/main/Fig2.block_b_panel.png}
+    \includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{fig/main/Fig2.block_b_panel.png}
     \caption{\textbf{Null calibration of CATFISH pathway tests under LD.}
     Null calibration diagnostics for five component tests and the omnibus across three LD regimes (LD\_moderate, $\rho=0.3$; LD\_strong, $\rho=0.7$; LD\_independent, $\rho=0$) and three pathway sizes ($m=5,25,50$).
     Bars show empirical type I error at $\alpha=0.05$ (red dashed reference), and lines show genomic control inflation $\lambda$ (blue dashed reference at $\lambda=1$).
@@ -406,7 +406,7 @@ These results show that robustness requires calibration matched to both the LD s
 
 \begin{figure*}[!t]
     \centering
-    \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio]{fig/main/Fig3.block_d_linebar.png}
+    \includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{fig/main/Fig3.block_d_panel.png}
     \caption{\textbf{Component breakage stress test for omnibus robustness.}
     Stress test under the global null in which $k=1,\ldots,4$ component tests are deliberately misspecified (“broken”), averaged across all combinations of broken components, under three LD regimes and pathway sizes ($m=5,25,50$).
     Bars show empirical type I error at $\alpha=0.05$ (red dashed reference), and lines show genomic control inflation $\lambda$ (blue dashed reference at $\lambda=1$).
@@ -430,7 +430,7 @@ The LOO analysis provides a complementary sensitivity check by recomputing the M
 
 \begin{figure*}[!t]
     \centering
-    \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio]{fig/main/Fig4.block_e_panel.png}
+    \includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{fig/main/Fig4.block_e_panel_ab.png}
     \caption{\textbf{Adaptive filtering and leave-one-out diagnostics for omnibus calibration.}
     Summary diagnostics for omnibus variants based on adaptive component filtering and leave-one-out (LOO) sensitivity analyses.
     \textbf{A.} Genomic inflation factor $\lambda$ for four omnibus variants (analytic, MVN, adaptive+analytic, adaptive+MVN) and for LOO exclusions of each component test (e.g., $-{\rm ACAT}$, $-{\rm Fisher}$, $-{\rm Stouffer}$, $-{\rm TFisher}$, $-{\rm minP}$), compared with using all components (“All”).
@@ -450,7 +450,7 @@ We then aggregated SNP-level associations to genes using MAGMA, testing 33,967 a
 To assess pathway-level organization, we applied CATFISH pathway analysis to 410 sorghum PlantCyc metabolic pathways (ref). CATFISH evaluated pathway enrichment using five component tests (ACAT, Fisher's method, adaptive soft TFisher, minP, and Stouffer's method) and an omnibus test combining them. Statistical inference used MVN resampling, with gene--gene correlation matrices from MAGMA to account for LD. We identified 102 pathways at FDR $< 0.05$, of which 73 remained significant after Bonferroni correction ($p < 0.05/410$). Fig.~\ref{fig:figure4}C shows the top 20 pathways and their $p$-value profiles across component and omnibus tests. The strongest pathway-level signals were detected for gluconeogenesis I (GLUCONEO-PWY), L-glutamate biosynthesis IV (GLUGLNSYN-PWY), L-glutamine degradation I (GLUTAMINDEG-PWY), phospholipases (LIPASYN-PWY), and aerobic respiration I (PWY-3781). Together, these pathways provide a coherent framework for interpreting variation in stem volume. Overall, these results show a clear progression from SNP-level associations to gene-level aggregation and then to pathway-level interpretation under LD-aware calibration (Fig.~\ref{fig:figure4}A--C).
 
 
-\begin{table}[htbp]
+\begin{table*}[htbp]
 \centering
 \caption{Top 9 candidate genes for sorghum stem volume identified by MAGCAT multi-layer integration. All genes show concordant support across GWAS, MAGMA, and pathway enrichment layers. Higher score indicates stronger combined evidence.}
 \label{tab:top9_genes}
@@ -472,7 +472,7 @@ SORBI\_3009G239500 & 9 & $1.97 \times 10^{-11}$ & 120 & $3.13 \times 10^{-9}$ & 
 \bottomrule
 \end{tabular}%
 }
-\end{table}
+\end{table*}
 
 
 
