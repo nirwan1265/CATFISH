@@ -34,6 +34,18 @@ BLOCK_A_CONFIG <- list(
   save_to_ind_figs = TRUE
 )
 
+BLOCK_H_CONFIG <- list(
+  seed = 20260317L,
+  m_values = c(5L, 20L, 50L),
+  rho = 0.20,
+  effect_scales = c(0.5, 0.8, 1.0, 1.2, 1.5, 1.8),
+  n_reps = 250L,
+  n_null_cal = 1500L,
+  alpha = 0.05,
+  tau_grid = c(0.10, 0.05, 0.01),
+  results_dir = "simulation_results"
+)
+
 # Use the same plotting theme style used in the diagnostics scripts.
 plot_theme <- theme_minimal(base_size = 24) +
   theme(
@@ -295,6 +307,36 @@ simulate_archetype_once <- function(archetype, sigma, null_stats,
 
   tibble(
     archetype = archetype$label,
+    method = names(p_cal),
+    p_value = as.numeric(p_cal),
+    rank = as.numeric(method_rank[names(p_cal)]),
+    is_top = names(p_cal) == top_method
+  )
+}
+
+scale_archetype_layers <- function(archetype, effect_scale) {
+  archetype_scaled <- archetype
+  archetype_scaled$layers <- lapply(archetype$layers, function(layer) {
+    layer$delta <- as.numeric(layer$delta) * effect_scale
+    layer
+  })
+  archetype_scaled
+}
+
+simulate_archetype_once_scaled <- function(archetype, sigma, null_stats,
+                                           effect_scale,
+                                           tau_grid = BLOCK_A_CONFIG$tau_grid) {
+  arch_scaled <- scale_archetype_layers(archetype, effect_scale = effect_scale)
+  mu <- make_mu_from_layers(m = nrow(sigma), layers = arch_scaled$layers)
+  z_alt <- as.numeric(MASS::mvrnorm(1, mu = mu, Sigma = sigma))
+  obs_stats <- compute_components_analytic(z_alt, tau_grid = tau_grid)
+  p_cal <- calibrate_from_null(obs_stats, null_stats)
+  method_rank <- rank(p_cal, ties.method = "average")
+  top_method <- names(p_cal)[which.min(p_cal)]
+
+  tibble(
+    archetype = archetype$label,
+    effect_scale = effect_scale,
     method = names(p_cal),
     p_value = as.numeric(p_cal),
     rank = as.numeric(method_rank[names(p_cal)]),
@@ -1147,6 +1189,187 @@ run_block_g <- function(output_dir = "simulation_results", reduced = FALSE) {
   invisible(results)
 }
 
+run_block_h <- function(config = BLOCK_H_CONFIG, reduced = FALSE) {
+  cfg <- config
+  if (isTRUE(reduced)) {
+    cfg$m_values <- intersect(cfg$m_values, c(20L, 50L))
+    cfg$effect_scales <- c(0.6, 1.0, 1.4, 1.8)
+    cfg$n_reps <- 120L
+    cfg$n_null_cal <- 800L
+  }
+
+  dir.create(cfg$results_dir, recursive = TRUE, showWarnings = FALSE)
+
+  method_colors <- c(
+    "ACAT" = "#E41A1C",
+    "Fisher" = "#377EB8",
+    "TFisher" = "#4DAF4A",
+    "minP" = "#984EA3",
+    "Stouffer" = "#FF7F00",
+    "Omnibus" = "#000000"
+  )
+
+  set.seed(cfg$seed)
+  all_results <- list()
+  iter <- 1L
+  total <- length(cfg$m_values) * length(block_a_archetypes) * length(cfg$effect_scales)
+
+  for (m in cfg$m_values) {
+    sigma <- ensure_pd(make_cor_exchangeable(m = m, rho = cfg$rho))
+    message(sprintf("Block H: precomputing null stats for m=%d", m))
+    null_stats <- precompute_null_distribution(
+      m = m,
+      sigma = sigma,
+      n_null = cfg$n_null_cal,
+      seed = cfg$seed + m,
+      tau_grid = cfg$tau_grid
+    )
+
+    for (arch in block_a_archetypes) {
+      for (eff in cfg$effect_scales) {
+        message(sprintf(
+          "Block H: %d/%d | m=%d | %s | effect_scale=%.2f",
+          iter, total, m, arch$code, eff
+        ))
+        res <- bind_rows(lapply(seq_len(cfg$n_reps), function(rep_idx) {
+          simulate_archetype_once_scaled(
+            archetype = arch,
+            sigma = sigma,
+            null_stats = null_stats,
+            effect_scale = eff,
+            tau_grid = cfg$tau_grid
+          ) %>%
+            mutate(replicate = rep_idx, pathway_size = m)
+        }))
+        all_results[[length(all_results) + 1L]] <- res
+        iter <- iter + 1L
+      }
+    }
+  }
+
+  results_long <- bind_rows(all_results) %>%
+    mutate(
+      pathway_size = factor(pathway_size, levels = sort(unique(pathway_size))),
+      archetype = factor(archetype, levels = block_a_archetype_order),
+      method = factor(method, levels = block_a_method_order)
+    )
+
+  summary_df <- results_long %>%
+    group_by(pathway_size, archetype, effect_scale, method) %>%
+    summarize(
+      power = mean(p_value < cfg$alpha),
+      mean_rank = mean(rank),
+      top_probability = mean(is_top),
+      .groups = "drop"
+    )
+
+  regret_df <- summary_df %>%
+    group_by(pathway_size, archetype, effect_scale) %>%
+    mutate(
+      best_power = max(power, na.rm = TRUE),
+      power_regret = best_power - power
+    ) %>%
+    ungroup()
+
+  omnibus_regret <- regret_df %>%
+    filter(method == "Omnibus") %>%
+    group_by(archetype) %>%
+    summarize(
+      mean_regret = mean(power_regret, na.rm = TRUE),
+      median_regret = median(power_regret, na.rm = TRUE),
+      max_regret = max(power_regret, na.rm = TRUE),
+      within_0.05 = mean(power_regret <= 0.05, na.rm = TRUE),
+      within_0.10 = mean(power_regret <= 0.10, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    arrange(archetype)
+
+  p_power <- ggplot(
+    summary_df,
+    aes(x = effect_scale, y = power, color = method, linetype = method)
+  ) +
+    geom_line(linewidth = 0.7) +
+    geom_point(size = 1.6) +
+    facet_grid(pathway_size ~ archetype) +
+    scale_color_manual(values = method_colors) +
+    scale_linetype_manual(values = c(
+      "ACAT" = "solid",
+      "Fisher" = "dashed",
+      "TFisher" = "dotdash",
+      "minP" = "longdash",
+      "Stouffer" = "twodash",
+      "Omnibus" = "solid"
+    )) +
+    labs(
+      x = "Effect-size scale multiplier",
+      y = "Power (alpha = 0.05)",
+      color = "Method",
+      linetype = "Method"
+    ) +
+    block_a_theme +
+    theme(
+      legend.position = "top",
+      axis.text.x = element_text(size = 14),
+      axis.text.y = element_text(size = 14),
+      strip.text = element_text(size = 13, face = "bold")
+    )
+
+  p_regret <- ggplot(
+    regret_df %>% filter(method == "Omnibus"),
+    aes(x = effect_scale, y = power_regret, group = pathway_size, color = pathway_size)
+  ) +
+    geom_hline(yintercept = 0.05, color = "grey50", linetype = "dashed", linewidth = 0.4) +
+    geom_line(linewidth = 0.8) +
+    geom_point(size = 1.8) +
+    facet_wrap(~ archetype, ncol = 3) +
+    scale_color_manual(values = c("5" = "#1b9e77", "20" = "#7570b3", "50" = "#d95f02")) +
+    labs(
+      x = "Effect-size scale multiplier",
+      y = "Omnibus power regret",
+      color = "Pathway size (m)"
+    ) +
+    block_a_theme +
+    theme(
+      legend.position = "top",
+      axis.text.x = element_text(size = 13),
+      axis.text.y = element_text(size = 13),
+      strip.text = element_text(size = 13, face = "bold")
+    )
+
+  out_summary <- file.path(cfg$results_dir, "block_h_archetype_power_summary.csv")
+  out_regret <- file.path(cfg$results_dir, "block_h_omnibus_regret_by_archetype.csv")
+  out_rds <- file.path(cfg$results_dir, "block_h_archetype_power.rds")
+  out_plot_power <- file.path(cfg$results_dir, "block_h_power.png")
+  out_plot_regret <- file.path(cfg$results_dir, "block_h_omnibus_regret.png")
+
+  write.csv(summary_df, out_summary, row.names = FALSE)
+  write.csv(omnibus_regret, out_regret, row.names = FALSE)
+  saveRDS(
+    list(config = cfg, results_long = results_long, summary = summary_df, regret = regret_df,
+         omnibus_regret = omnibus_regret),
+    out_rds
+  )
+
+  ggsave(out_plot_power, p_power, width = 20, height = 12, dpi = 300, bg = "white")
+  ggsave(out_plot_regret, p_regret, width = 16, height = 9, dpi = 300, bg = "white")
+
+  message("Block H outputs written:")
+  message("  - ", out_summary)
+  message("  - ", out_regret)
+  message("  - ", out_rds)
+  message("  - ", out_plot_power)
+  message("  - ", out_plot_regret)
+
+  invisible(list(
+    config = cfg,
+    summary = summary_df,
+    regret = regret_df,
+    omnibus_regret = omnibus_regret,
+    power_plot = p_power,
+    regret_plot = p_regret
+  ))
+}
+
 run_all_figs <- function(run_block_a_flag = TRUE,
                          run_block_b_flag = FALSE,
                          run_block_c_flag = FALSE,
@@ -1154,6 +1377,7 @@ run_all_figs <- function(run_block_a_flag = TRUE,
                          run_block_e_flag = FALSE,
                          run_block_f_flag = FALSE,
                          run_block_g_flag = FALSE,
+                         run_block_h_flag = FALSE,
                          reduced = FALSE,
                          output_dir = "simulation_results") {
   out <- list()
@@ -1171,6 +1395,9 @@ run_all_figs <- function(run_block_a_flag = TRUE,
       output_dir = output_dir,
       reduced = reduced
     )
+  }
+  if (isTRUE(run_block_h_flag)) {
+    out$block_h <- run_block_h(reduced = reduced)
   }
   invisible(out)
 }
