@@ -502,7 +502,7 @@ This sensitivity analysis complements archetype recovery by showing that the sam
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=\textwidth]{simulation_results/block_h_power.png}
+\includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{fig/supp/SuppFig6_block_h_power.png}
 \caption{\textbf{Effect-size sensitivity of CATFISH component and omnibus tests across archetypes.}
 Empirical power at \(\alpha=0.05\) is shown as a function of effect-size scale multiplier for five pathway signal archetypes (SDA, CME, DPS, HDS, SGP), pathway sizes \(m=5,20,50\), and exchangeable within-pathway correlation \(\rho=0.20\).
 Each panel reports MVN-calibrated power for ACAT, Fisher, TFisher, minP, Stouffer, and the omnibus.
@@ -513,7 +513,7 @@ The omnibus is generally competitive across settings but is not uniformly the to
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=\textwidth]{simulation_results/block_h_omnibus_regret.png}
+\includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{fig/supp/Suppfig7_block_h_omnibus_regret.png}
 \caption{\textbf{Omnibus power regret across effect sizes and archetypes.}
 Omnibus regret is defined as \(\max_j \mathrm{Power}_j - \mathrm{Power}_{\mathrm{Omnibus}}\) within each setting, where \(j\) indexes component tests.
 Lower values indicate that the omnibus tracks the best available component method more closely.
@@ -688,6 +688,36 @@ Overall, these results indicate that our integrative framework effectively refin
 Together, these panels show that multi-layer integration narrows a large candidate space to a smaller high-confidence subset supported across independent analytical layers.}
 \label{fig:figure5}
 \end{figure*}
+
+
+\subsection{Computational scaling of Monte Carlo omnibus calibration}
+
+We assessed the computational scaling of the CATFISH omnibus null-calibration workflow as a function of the Monte Carlo sample size ($B$), pathway size, number of pathways, and thread count. For each benchmark, we simulated null $Z$-scores under a multivariate normal model with pairwise correlation $\rho = 0.20$, converted them to one-sided $p$-values, and computed ACAT and Fisher combination statistics for each null draw. Runtime was measured as wall-clock time, and memory usage as approximate peak resident set size.
+
+We varied pathway size $m \in \{10, 20, 50\}$, null draws per pathway $B \in \{50{,}000,\ 100{,}000,\ 250{,}000,\ 500{,}000,\ 1{,}000{,}000\}$, pathways $P \in \{1, 10, 100\}$, and compared 1 vs 4 threads, with $n_{\mathrm{reps}} = 1$ per condition. Benchmarks were run for $P \in \{1, 10\}$, and values for $P = 100$ were extrapolated from trends at matched $(m,B,\mathrm{threads})$.
+
+Runtime increased approximately linearly with $B$ in all conditions (median $R^2 = 0.9993$, range $0.9952$–$0.999996$). Using 4 threads consistently reduced runtime relative to 1 thread, with speedups from $1.08\times$ to $1.72\times$ (median $1.38\times$). At $B = 10^6$ and $P = 10$, runtime fell from 64.5 to 41.0 s for $m = 10$, from 80.0 to 55.6 s for $m = 20$, and from 128.6 to 98.1 s for $m = 50$ when increasing threads from 1 to 4. For the extrapolated $P = 100$ case at $B = 10^6$, runtime decreased from 642.4 to 406.7 s for $m = 10$, from 795.6 to 557.8 s for $m = 20$, and from 1280.2 to 977.8 s under the same change in thread count.
+
+Memory usage scaled mainly with pathway size and $B$ and was effectively insensitive to thread count. At $B = 10^6$, peak memory was ~183 MB for $m = 10$, 336 MB for $m = 20$, and 793 MB for $m = 50$. Overall, runtime scaled nearly linearly with Monte Carlo sample size, multithreading yielded substantial wall-clock savings, and memory requirements were driven by matrix dimensionality rather than parallelization level.
+
+\begin{figure*}[htbp]
+\centering
+\includegraphics[width=\textwidth]{block_i_linear_panel_AB.png}
+\caption{
+\textbf{Computational scaling of MVN-based null calibration across simulation settings.}
+(A) Runtime (seconds) as a function of the number of Monte Carlo null draws per pathway ($B$), evaluated across pathway sizes ($m = 10, 20, 50$), numbers of pathways ($P = 1, 10, 100$), and parallelization levels (1 thread vs.\ 4 threads). Runtime increases approximately linearly with $B$ and scales proportionally with both pathway size and the number of pathways. Parallel execution reduces wall-clock time with near-linear speedup, while preserving the same scaling behavior.
+
+(B) Memory usage (MB) as a function of the number of null draws per pathway ($B$), shown across the same combinations of pathway size ($m$) and pathway count ($P$). Memory requirements increase linearly with $B$ and are driven primarily by pathway size and the number of pathways, reflecting storage of simulated null statistics. Unlike runtime, memory usage is largely insensitive to thread count, indicating that parallelization improves computational efficiency without increasing memory overhead.
+
+Together, these results demonstrate that MVN-based null calibration exhibits predictable and approximately linear scaling in both time and memory, supporting its practical application to large-scale pathway analyses.
+}
+\label{fig:scaling_mvn}
+\end{figure*}
+
+
+%\textbf{Figure X. Computational scaling of Block I Monte Carlo calibration.}
+%\textbf{(A)} Runtime (seconds) versus number of null draws per pathway ($B$) for pathway sizes $m=\{10,20,50\}$ and pathway counts $P=\{1,10,100\}$, comparing 1 thread and 4 threads. Points show observed means; dashed lines show linear fits ($\mathrm{time}=a+bB$). 
+%\textbf{(B)} Memory (MB) versus $B$ for the same settings, with dashed linear fits ($\mathrm{memory}=a+bB$). Exact simulations were run for $P=1$ and $P=10$; $P=100$ values were projected from observed trends.
 
 
 
@@ -1273,13 +1303,44 @@ Analytic calibration is acceptable mainly under independence but becomes miscali
 
 
 
-\subsection{Monte Carlo resolution, tail refinement, and recommended practice}
-
-Because CATFISH calibrates the omnibus $p$-value via finite-sample null resampling, the resulting Monte Carlo $p$-values are discrete, with resolution determined by the number of resamples $B$. Under the plus-one correction, the smallest empirical $p$-value is about $1/(B+1)$, so permutation or Monte Carlo $p$-values should never be reported as exactly zero \citep{Phipson2010}. Thus, a fixed resampling budget is adequate for exploratory pathway screening but can be insufficient for accurately estimating very small tail probabilities. More broadly, the Monte Carlo and permutation-testing literature shows that $p$-value resolution is intrinsically limited by the number of null draws, and that reliable estimation of extreme tails quickly becomes computationally expensive under naive fixed-budget resampling \citep{Knijnenburg2009,Che2014}.
-
-When extremely small pathway $p$-values are scientifically important, several extensions are available. One is adaptive or sequential resampling, which targets additional null draws to the most promising pathways instead of wasting effort on clearly null cases; this approach has a long history in Monte Carlo testing and has been adapted to large-scale genomics \citep{Besag1991,Gandy2009,Che2014}. A second is explicit tail modeling, for example fitting an extreme-value distribution such as a generalized Pareto to the most extreme null replicates, which can greatly improve very small $p$-value estimates with far fewer simulations than the empirical estimator \citep{Knijnenburg2009}. Finally, for ACAT-type combination tests, analytic Cauchy-tail approximations provide accurate small-$p$ behavior under broad dependence structures without explicit tail resampling for that component \citep{LiuXie2020}.
-
-In practice, we recommend a moderate fixed resampling budget for the initial genome-wide pathway scan, followed by adaptive refinement for the top pathways. Omnibus $p$-values should use the plus-one estimator $(e+1)/(B+1)$, where $e$ is the number of null replicates at least as extreme as the observed statistic, to avoid zero-valued Monte Carlo $p$-values \citep{Phipson2010}. A fixed $B$ suffices for broad screening and ranking, whereas pathways near the reporting threshold or multiple-testing cutoff should be re-evaluated with additional resampling to sharpen tail estimates \citep{Che2014}. For further methodological advances, sequential stopping rules or generalized-Pareto tail fitting offer principled ways to estimate extreme tails more efficiently, while analytic ACAT tails remain useful for interpreting ACAT-type components in isolation \citep{Knijnenburg2009,LiuXie2020}. Within the current CATFISH framework, the most natural extension is adaptive resampling of the final omnibus statistic for top pathways, which preserves dependence-aware calibration while increasing resolution only where extra precision is scientifically warranted.
+\subsection{Monte Carlo resolution, tail refinement, and recommended practice}                
+                                                                                                
+Because CATFISH calibrates the omnibus $p$-value via finite-sample null resampling, the       
+resulting Monte Carlo $p$-values are discrete, with resolution determined by the number of    
+resamples $B$. Under the plus-one correction, the smallest empirical $p$-value is             
+approximately $1/(B+1)$, so permutation or Monte Carlo $p$-values should never be reported as 
+exactly zero \citep{Phipson2010}. Thus, a fixed resampling budget with purely empirical       
+estimation is adequate for exploratory pathway screening but can be insufficient for          
+accurately estimating very small tail probabilities. More broadly, the Monte Carlo and        
+permutation-testing literature shows that $p$-value resolution is intrinsically limited by the
+number of null draws, and that reliable estimation of extreme tails quickly becomes          
+computationally expensive under naive fixed-budget resampling \citep{Knijnenburg2009,Che2014}.
+                                                                                            
+To overcome this resolution limit, CATFISH implements the generalized Pareto distribution     
+(GPD) tail extrapolation method of \citet{Knijnenburg2009}. When enabled via the              
+\texttt{tailmode = "hybridgpd"} option, the algorithm fits a GPD to the $k$ most extreme null 
+replicates and uses this fitted distribution to extrapolate $p$-values beyond the empirical   
+floor. This approach can estimate $p$-values orders of magnitude smaller than $1/B$—for       
+example, obtaining $p$-values as small as $10^{-35}$ with $B = 10^6$ permutations—while       
+requiring far fewer simulations than purely empirical estimation would demand for equivalent  
+resolution. The hybrid mode automatically switches between empirical and GPD-extrapolated     
+estimates based on the number of exceedances, ensuring stable estimates across the full range 
+of pathway significance.                                                                      
+                                                                                            
+To make large-scale resampling computationally tractable, CATFISH supports multi-threaded     
+parallelization of the inner null computations via the \texttt{nthreads} parameter. Because   
+each permutation replicate is independent, this parallelization is embarrassingly parallel and
+achieves near-linear speedup with the number of cores—for instance, reducing a 50-hour       
+single-threaded run to under 3 hours with 12 threads.                                         
+                                                                                            
+In practice, we recommend using GPD tail extrapolation with a moderate-to-large resampling    
+budget (e.g., $B = 10^5$ to $10^6$) for genome-wide pathway analysis. Omnibus $p$-values use  
+the plus-one estimator $(e+1)/(B+1)$ for empirical estimation, switching to GPD extrapolation 
+when the number of exceedances falls below a user-specified threshold                         
+\citep{Phipson2010,Knijnenburg2009}. This hybrid approach provides both computational         
+efficiency and accurate estimation of extreme tail probabilities, enabling reliable           
+discrimination among top-ranked pathways that would otherwise be tied at the permutation floor
+under purely empirical estimation.  
 
 
 %@article{Phipson2010,
