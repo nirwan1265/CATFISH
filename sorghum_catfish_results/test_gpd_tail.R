@@ -16,6 +16,20 @@ gene_results <- read.table(
   header = TRUE, stringsAsFactors = FALSE
 )
 
+# Load the SORBI-format pathway file (matches SORBI_3xxx gene IDs in gene_results)
+cat("Loading SORBI-format pathway file...\n")
+pathway_file <- "inst/extdata/pathway/sorghumbicolorcyc_pathways.20230103.SORBI"
+pathway_raw <- read.delim(pathway_file, header = TRUE, stringsAsFactors = FALSE)
+# Convert to required format
+pathways <- data.frame(
+  pathway_id = pathway_raw[["Pathway.id"]],
+  pathway_name = pathway_raw[["Pathway.name"]],
+  gene_id = pathway_raw[["Gene.name"]],  # SORBI format
+  stringsAsFactors = FALSE
+)
+pathways <- unique(pathways)
+cat("Loaded", nrow(pathways), "pathway-gene pairs\n")
+
 # Load gene correlations (full file with ~2.7M pairs)
 cat("Loading correlation pairs (this may take a moment)...\n")
 cor_pairs <- data.table::fread(
@@ -30,9 +44,10 @@ cat("Correlation pairs:", nrow(cor_pairs), "pairs\n")
 # Run with EMPIRICAL mode (original behavior)
 cat("\n=== Running with tail_mode = 'empirical' (original behavior) ===\n")
 set.seed(42)
+t1 <- Sys.time()
 res_empirical <- catfish_omni2_pathways(
   gene_results = gene_results,
-  species = "sorghum",
+  pathways = pathways,  # Use SORBI-format pathways
   gene_col = "GENE",
   p_raw_col = "P",
   z_col = "ZSTAT",
@@ -42,13 +57,15 @@ res_empirical <- catfish_omni2_pathways(
   tail_mode = "empirical",
   min_p = 1e-50
 )
+cat("Time:", difftime(Sys.time(), t1, units = "mins"), "minutes\n")
 
 # Run with HYBRID_GPD mode (new behavior)
 cat("\n=== Running with tail_mode = 'hybrid_gpd' (GPD extrapolation) ===\n")
 set.seed(42)
+t1 <- Sys.time()
 res_gpd <- catfish_omni2_pathways(
   gene_results = gene_results,
-  species = "sorghum",
+  pathways = pathways,  # Use SORBI-format pathways
   gene_col = "GENE",
   p_raw_col = "P",
   z_col = "ZSTAT",
@@ -62,6 +79,7 @@ res_gpd <- catfish_omni2_pathways(
   tail_min_tail = 50L,
   min_p = 1e-50
 )
+cat("Time:", difftime(Sys.time(), t1, units = "mins"), "minutes\n")
 
 # Compare results
 cat("\n=== Comparison of top 20 pathways ===\n")

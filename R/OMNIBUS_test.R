@@ -165,6 +165,10 @@
 #' @param make_PD Logical. If \code{TRUE}, force the pathway correlation matrix \eqn{R_S} to be positive definite
 #'   (using \code{Matrix::nearPD()}) before Cholesky. Strongly recommended. Default \code{TRUE}.
 #'
+#' @param n_threads Integer or \code{NULL}. Number of worker threads for MVN inner null computations.
+#'   If \code{NULL}, uses \code{max(1, detectCores()-1)}. Parallel execution is used only when
+#'   \code{B_mvn >= 1000} and the platform supports fork parallelism.
+#'
 #' @param seed Integer or \code{NULL}. Random seed for reproducible resampling.
 #'
 #' @param output Logical. If \code{TRUE}, write results to CSV in \code{out_dir} and attach the file path as an attribute.
@@ -651,6 +655,24 @@
   if (is.null(Zmat) || !ncol(Zmat)) return(rep(NA_real_, nrow(Zmat)))
   if (is.null(w)) {
     Zs <- rowSums(Zmat) / sqrt(ncol(Zmat))
+  } else if (is.matrix(w)) {
+    if (!all(dim(w) == dim(Zmat))) {
+      stop("When w is a matrix, it must have the same dimensions as Zmat.", call. = FALSE)
+    }
+    W <- matrix(suppressWarnings(as.numeric(w)), nrow = nrow(w), ncol = ncol(w))
+    bad <- !is.finite(W) | is.na(W) | abs(W) <= min_abs_w
+    if (any(bad)) {
+      W_abs <- abs(W)
+      W_abs[bad] <- NA_real_
+      row_repl <- apply(W_abs, 1, function(x) {
+        x <- x[is.finite(x) & !is.na(x)]
+        if (length(x)) stats::median(x) else 1
+      })
+      W[bad] <- row_repl[row(W)][bad]
+    }
+    denom <- sqrt(rowSums(W^2))
+    denom[!is.finite(denom) | is.na(denom) | denom <= 0] <- 1
+    Zs <- rowSums(Zmat * W) / denom
   } else {
     w <- suppressWarnings(as.numeric(w))
     bad <- !is.finite(w) | is.na(w) | abs(w) <= min_abs_w
@@ -726,7 +748,9 @@
   pS <- rep(NA_real_, B)
   if (!is.null(pool_z)) {
     Zmat <- matrix(pool_z[idx_mat], nrow = B, ncol = d)
-    pS <- .stouffer_p_from_Zmat_helper(Zmat, w = NULL,
+    Wmat <- NULL
+    if (!is.null(pool_w)) Wmat <- matrix(pool_w[idx_mat], nrow = B, ncol = d)
+    pS <- .stouffer_p_from_Zmat_helper(Zmat, w = Wmat,
                                        alternative = stouffer_alternative,
                                        min_abs_w = stouffer_min_abs_w)
   }
@@ -975,6 +999,8 @@ catfish_omni2_run <- function(prep,
                             tail_min_B = 10000L,
                             tail_min_tail = 50L,
                             make_PD = TRUE,
+                            # Parallelization
+                            n_threads = NULL,
                             output = FALSE,
                             out_dir = "catfish_omni2") {
 
@@ -990,6 +1016,31 @@ catfish_omni2_run <- function(prep,
   B_global <- as.integer(B_global)
   B_mvn    <- as.integer(B_mvn)
   do_perm  <- (B_global > 0L || B_mvn > 0L)
+
+  # Setup parallelization (MVN inner null computation)
+  n_cores_available <- suppressWarnings(as.integer(parallel::detectCores(logical = FALSE)))
+  if (!is.finite(n_cores_available) || is.na(n_cores_available) || n_cores_available < 1L) {
+    n_cores_available <- 1L
+  }
+  if (is.null(n_threads)) {
+    n_threads <- max(1L, n_cores_available - 1L)
+  }
+  n_threads <- suppressWarnings(as.integer(n_threads))
+  if (!is.finite(n_threads) || is.na(n_threads) || n_threads < 1L) {
+    n_threads <- 1L
+  }
+  n_threads <- as.integer(min(n_threads, n_cores_available))
+
+  supports_fork <- (.Platform$OS.type != "windows")
+  use_parallel <- isTRUE(supports_fork) && (n_threads > 1L) && (B_mvn >= 1000L)
+
+  if (!supports_fork && n_threads > 1L && B_mvn > 0L) {
+    warning("n_threads > 1 requested, but fork parallelism is unsupported on Windows; using serial mode.", call. = FALSE)
+  }
+  if (use_parallel) {
+    message("Parallel processing enabled: ", n_threads, " threads")
+    message("Note: Parallelization applied to inner null computations per pathway")
+  }
 
   pid <- prep$pathway_id
   n_genes <- lengths(prep$g_list_norm)
@@ -1131,7 +1182,7 @@ if (!is.null(prep$z_col)) {
   res$omni_p_global <- NA_real_
   res$omni_p_global_BH <- NA_real_
 
-  if (B_global > 0L) {
+  if (B_global > 0L && perm_mode %in% c("global", "both")) {
 
     if (!is.null(prep$seed)) set.seed(prep$seed)
 
@@ -1166,33 +1217,20 @@ if (!is.null(prep$z_col)) {
 
     # helper for stouffer p from Z matrix
     .stouffer_p_from_Zmat <- function(Zmat, w = NULL) {
-      if (is.null(Zmat) || !ncol(Zmat)) return(rep(NA_real_, nrow(Zmat)))
-      if (is.null(w)) {
-        Zs <- rowSums(Zmat) / sqrt(ncol(Zmat))
-      } else {
-        w <- suppressWarnings(as.numeric(w))
-        bad <- !is.finite(w) | is.na(w) | abs(w) <= stouffer_min_abs_w
-        if (any(bad)) {
-          w_ok <- abs(w[!bad])
-          repl <- if (length(w_ok)) stats::median(w_ok) else 1
-          w[bad] <- repl
-        }
-        denom <- sqrt(sum(w^2))
-        Zs <- as.numeric(Zmat %*% w) / denom
-      }
-
-      if (stouffer_alternative == "greater") {
-        p_out <- stats::pnorm(Zs, lower.tail = FALSE)
-      } else if (stouffer_alternative == "less") {
-        p_out <- stats::pnorm(Zs, lower.tail = TRUE)
-      } else {
-        p_out <- 2 * stats::pnorm(-abs(Zs))
-      }
-      # Clamp to avoid 0/1 extremes
-      pmax(pmin(p_out, 1 - 1e-15), 1e-15)
+      .stouffer_p_from_Zmat_helper(
+        Zmat = Zmat,
+        w = w,
+        alternative = stouffer_alternative,
+        min_abs_w = stouffer_min_abs_w
+      )
     }
 
-    for (i in seq_len(nrow(res))) {
+    n_pathways <- nrow(res)
+    for (i in seq_len(n_pathways)) {
+      # Progress message
+      if (i == 1L || i %% 10L == 0L || i == n_pathways) {
+        message(sprintf("[Global] Pathway %d/%d: %s", i, n_pathways, res$pathway_id[i]))
+      }
 
       d <- res$n_genes[i]
       if (!is.finite(d) || d < prep$min_genes) next
@@ -1237,9 +1275,9 @@ if (!is.null(prep$z_col)) {
       pS <- rep(NA_real_, B_global)
       if (!is.null(pool_z)) {
         Zmat <- matrix(pool_z[idx_mat], nrow = B_global, ncol = d)
-        wvec <- NULL
-        if (!is.null(pool_w)) wvec <- as.numeric(pool_w[idx_mat[1, ]]) # (approx) keep typical scale; optional
-        pS <- .stouffer_p_from_Zmat(Zmat, w = NULL)  # weights in global null typically omitted
+        Wmat <- NULL
+        if (!is.null(pool_w)) Wmat <- matrix(pool_w[idx_mat], nrow = B_global, ncol = d)
+        pS <- .stouffer_p_from_Zmat(Zmat, w = Wmat)
       }
 
       omni_null <- vapply(seq_len(B_global), function(b) {
@@ -1257,8 +1295,8 @@ if (!is.null(prep$z_col)) {
         min_B = tail_min_B,
         min_tail = tail_min_tail
       )
-      # Set calib_mode for pure global mode (not mvn_global which sets it in MVN section)
-      if (perm_mode == "global") {
+      # Track the active calibration in modes that actually run the global block.
+      if (perm_mode %in% c("global", "both")) {
         res$calib_mode[i] <- "global"
       }
     }
@@ -1317,7 +1355,12 @@ if (!is.null(prep$z_col)) {
 
     if (!is.null(prep$seed)) set.seed(prep$seed)
 
-    for (i in seq_len(nrow(res))) {
+    n_pathways <- nrow(res)
+    for (i in seq_len(n_pathways)) {
+      # Progress message
+      if (i == 1L || i %% 10L == 0L || i == n_pathways) {
+        message(sprintf("[MVN] Pathway %d/%d: %s", i, n_pathways, res$pathway_id[i]))
+      }
 
       d <- res$n_genes[i]
       if (!is.finite(d) || d < prep$min_genes) next
@@ -1414,24 +1457,38 @@ if (!is.null(prep$z_col)) {
 
 
       # --- NULL component p-values (same “analytic formulas” you already use) ---
-      pA_null <- vapply(seq_len(B_mvn), function(b) {
-        .catfish_acat_combine(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix))
-      }, numeric(1))
+      # ACAT null - can be parallelized
+      if (use_parallel) {
+        pA_null <- unlist(parallel::mclapply(seq_len(B_mvn), function(b) {
+          .catfish_acat_combine(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix))
+        }, mc.cores = n_threads))
+      } else {
+        pA_null <- vapply(seq_len(B_mvn), function(b) {
+          .catfish_acat_combine(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix))
+        }, numeric(1))
+      }
 
       pF_null <- stats::pchisq(-2 * rowSums(log(P)), df = 2 * ncol(P), lower.tail = FALSE)
 
-      pT_null <- rep(NA_real_, B_mvn)
+      # TFisher null - expensive, parallelize
       if (!requireNamespace("TFisher", quietly = TRUE)) stop("TFisher required for omnibus TFisher null.", call. = FALSE)
-      for (b in seq_len(B_mvn)) {
+
+      .compute_tfisher_null_b <- function(b) {
         pb <- .catfish_fix_p(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix))
-        if (length(pb) < 2L) next
+        if (length(pb) < 2L) return(NA_real_)
         best <- Inf
         for (tau in prep$tau_grid) {
           st <- TFisher::stat.soft(p = pb, tau1 = tau)
           pv <- 1 - as.numeric(TFisher::p.soft(q = st, n = length(pb), tau1 = tau, M = NULL))
           if (is.finite(pv) && pv < best) best <- pv
         }
-        pT_null[b] <- best
+        best
+      }
+
+      if (use_parallel) {
+        pT_null <- unlist(parallel::mclapply(seq_len(B_mvn), .compute_tfisher_null_b, mc.cores = n_threads))
+      } else {
+        pT_null <- vapply(seq_len(B_mvn), .compute_tfisher_null_b, numeric(1))
       }
 
       pM_null <- {
@@ -1505,13 +1562,18 @@ if (!is.null(prep$z_col)) {
         pM_cal_null <- .emp_p_null_lower(pM_null)
         pS_cal_null <- .emp_p_null_lower(pS_null)
 
-        # build omnibus null from the per-draw calibrated component p’s
-        omni_null <- rep(NA_real_, B_mvn)
-        for (b in seq_len(B_mvn)) {
+        # build omnibus null from the per-draw calibrated component p's
+        .compute_omni_null_compcal <- function(b) {
           comps_b <- c(pA_cal_null[b], pF_cal_null[b], pT_cal_null[b], pM_cal_null[b], pS_cal_null[b])
           comps_b <- comps_b[is.finite(comps_b) & !is.na(comps_b)]
-          if (!length(comps_b)) next
-          omni_null[b] <- .catfish_omni_methods(comps_b, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
+          if (!length(comps_b)) return(NA_real_)
+          .catfish_omni_methods(comps_b, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
+        }
+
+        if (use_parallel) {
+          omni_null <- unlist(parallel::mclapply(seq_len(B_mvn), .compute_omni_null_compcal, mc.cores = n_threads))
+        } else {
+          omni_null <- vapply(seq_len(B_mvn), .compute_omni_null_compcal, numeric(1))
         }
 
         res$omni_p_mvn[i] <- .emp_or_gpd_p_lower(
@@ -1531,12 +1593,18 @@ if (!is.null(prep$z_col)) {
         omni_obs <- res$omni_p_analytic[i]
         if (!is.finite(omni_obs) || is.na(omni_obs)) stop("omni_obs not finite")
 
-        omni_null <- vapply(seq_len(B_mvn), function(b) {
+        .compute_omni_null_b <- function(b) {
           comps <- c(pA_null[b], pF_null[b], pT_null[b], pM_null[b], pS_null[b])
           comps <- comps[is.finite(comps) & !is.na(comps)]
           if (!length(comps)) return(NA_real_)
           .catfish_omni_methods(comps, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
-        }, numeric(1))
+        }
+
+        if (use_parallel) {
+          omni_null <- unlist(parallel::mclapply(seq_len(B_mvn), .compute_omni_null_b, mc.cores = n_threads))
+        } else {
+          omni_null <- vapply(seq_len(B_mvn), .compute_omni_null_b, numeric(1))
+        }
 
         res$omni_p_mvn[i] <- .emp_or_gpd_p_lower(
           p_null = omni_null,
@@ -1569,8 +1637,14 @@ if (!is.null(prep$z_col)) {
   # FINALIZE + RETURN (YOU NEED THIS)
   # ============================================================
   res$omni_p_final <- res$omni_p_analytic
-  if (B_global > 0L) res$omni_p_final <- res$omni_p_global
-  if (B_mvn    > 0L) res$omni_p_final <- res$omni_p_mvn
+  if (B_global > 0L) {
+    idx_g <- is.finite(res$omni_p_global) & !is.na(res$omni_p_global)
+    if (any(idx_g)) res$omni_p_final[idx_g] <- res$omni_p_global[idx_g]
+  }
+  if (B_mvn > 0L) {
+    idx_m <- is.finite(res$omni_p_mvn) & !is.na(res$omni_p_mvn)
+    if (any(idx_m)) res$omni_p_final[idx_m] <- res$omni_p_mvn[idx_m]
+  }
   res$omni_p_final_BH <- .catfish_bh(res$omni_p_final)
 
   # Fill in calib_mode for pathways that didn't get resampled
@@ -1779,6 +1853,9 @@ if (!is.null(prep$z_col)) {
 #'   Required for MVN unless \code{magma_cor_pairs} is provided.
 #' @param magma_cor_pairs data.frame or NULL. In-memory correlation pairs with columns \code{gene1}, \code{gene2}, \code{r}.
 #' @param make_PD Logical. If TRUE, forces correlation matrices to be positive definite before Cholesky. Default TRUE.
+#' @param n_threads Integer or NULL. Number of worker threads for MVN inner null computations.
+#'   If NULL, defaults to \code{max(1, detectCores()-1)}. Parallel execution is used only when
+#'   \code{B_mvn >= 1000} and supported by the platform.
 #' @param mvn_calibrate_components Logical. If TRUE, MVN-calibrates each component first, then builds the omnibus
 #'   (and calibrates that omnibus). Default FALSE.
 #'
@@ -1874,6 +1951,8 @@ catfish_omni2_pathways <- function(gene_results,
                                  magma_cor_pairs = NULL,
                                  make_PD = TRUE,
                                  seed = NULL,
+                                 # Parallelization
+                                 n_threads = NULL,
                                  output = FALSE,
                                  out_dir = "catfish_omni2") {
 
@@ -2014,6 +2093,7 @@ catfish_omni2_pathways <- function(gene_results,
     magma_cor_file = magma_cor_file,
     magma_cor_pairs = magma_cor_pairs,
     make_PD = make_PD,
+    n_threads = n_threads,
     output = output,
     out_dir = out_dir
   )

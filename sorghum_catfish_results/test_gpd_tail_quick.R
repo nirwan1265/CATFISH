@@ -16,6 +16,20 @@ gene_results <- read.table(
   header = TRUE, stringsAsFactors = FALSE
 )
 
+# Load the SORBI-format pathway file (matches SORBI_3xxx gene IDs in gene_results)
+cat("Loading SORBI-format pathway file...\n")
+pathway_file <- "inst/extdata/pathway/sorghumbicolorcyc_pathways.20230103.SORBI"
+pathway_raw <- read.delim(pathway_file, header = TRUE, stringsAsFactors = FALSE)
+# Convert to required format
+pathways <- data.frame(
+  pathway_id = pathway_raw[["Pathway.id"]],
+  pathway_name = pathway_raw[["Pathway.name"]],
+  gene_id = pathway_raw[["Gene.name"]],  # SORBI format
+  stringsAsFactors = FALSE
+)
+pathways <- unique(pathways)
+cat("Loaded", nrow(pathways), "pathway-gene pairs\n")
+
 # Load gene correlations (full file with ~2.7M pairs)
 cat("Loading correlation pairs (this may take a moment)...\n")
 cor_pairs <- data.table::fread(
@@ -36,8 +50,7 @@ set.seed(42)
 t1 <- Sys.time()
 res_empirical <- catfish_omni2_pathways(
   gene_results = gene_results,
-  species = "sorghum",
-  pmn_gene_col = "Gene-name",  # Use SORBI format gene IDs
+  pathways = pathways,  # Use custom SORBI-format pathways
   gene_col = "GENE",
   p_raw_col = "P",
   z_col = "ZSTAT",
@@ -55,8 +68,7 @@ set.seed(42)
 t1 <- Sys.time()
 res_gpd <- catfish_omni2_pathways(
   gene_results = gene_results,
-  species = "sorghum",
-  pmn_gene_col = "Gene-name",  # Use SORBI format gene IDs
+  pathways = pathways,  # Use custom SORBI-format pathways
   gene_col = "GENE",
   p_raw_col = "P",
   z_col = "ZSTAT",

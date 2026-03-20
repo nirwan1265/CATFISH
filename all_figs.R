@@ -1378,6 +1378,7 @@ run_all_figs <- function(run_block_a_flag = TRUE,
                          run_block_f_flag = FALSE,
                          run_block_g_flag = FALSE,
                          run_block_h_flag = FALSE,
+                         run_block_i_flag = FALSE,
                          reduced = FALSE,
                          output_dir = "simulation_results") {
   out <- list()
@@ -1399,7 +1400,601 @@ run_all_figs <- function(run_block_a_flag = TRUE,
   if (isTRUE(run_block_h_flag)) {
     out$block_h <- run_block_h(reduced = reduced)
   }
+  if (isTRUE(run_block_i_flag)) {
+    out$block_i <- run_block_i(reduced = reduced)
+  }
   invisible(out)
+}
+
+# ==============================================================================
+# Block I: Computational Benchmark (Time and Memory vs B and Pathway Size)
+# ==============================================================================
+
+BLOCK_I_CONFIG <- list(
+  seed = 20260318L,
+  pathway_sizes = c(10L, 20L, 50L),
+  n_pathways_values = c(1L, 10L, 100L),
+  n_pathways_exact_max = 10L,
+  B_values = c(50000L, 100000L, 250000L, 500000L, 1000000L),
+  thread_values = c(1L, 4L),
+  rho = 0.20,
+  n_reps = 1L,
+  results_dir = "simulation_results",
+  output_dir = file.path("Figures", "Fig_Benchmark")
+)
+
+# Lightweight memory probe for block I benchmarks.
+.block_i_mem_used_mb <- local({
+  has_lobstr <- requireNamespace("lobstr", quietly = TRUE)
+  function() {
+    if (has_lobstr) {
+      as.numeric(lobstr::mem_used()) / (1024^2)
+    } else {
+      # Fallback: approximate from GC summary.
+      sum(gc()[, 2])
+    }
+  }
+})
+
+#' Run a single benchmark iteration
+#' @param m Pathway size (number of genes)
+#' @param B Number of permutations
+#' @param sigma Correlation matrix
+#' @param n_pathways Number of pathways processed in one run
+#' @param threads Number of threads for inner null calculations
+#' @param seed Random seed
+#' @return List with time and memory metrics
+run_benchmark_single <- function(m, B, sigma, n_pathways = 1L, threads = 1L, seed = 123L) {
+  set.seed(seed)
+  n_pathways <- suppressWarnings(as.integer(n_pathways))
+  if (!is.finite(n_pathways) || is.na(n_pathways) || n_pathways < 1L) n_pathways <- 1L
+  threads <- suppressWarnings(as.integer(threads))
+  if (!is.finite(threads) || is.na(threads) || threads < 1L) threads <- 1L
+  if (.Platform$OS.type == "windows") threads <- 1L
+
+  # Track memory baseline (used for approximate peak delta over main steps).
+  gc(reset = TRUE)
+  mem_base <- .block_i_mem_used_mb()
+  mem_trace <- c(mem_base)
+
+  # Time the computation
+  t_start <- proc.time()[["elapsed"]]
+
+  # Process n_pathways sequentially, matching CATFISH's per-pathway MVN workload.
+  checksum <- 0
+  for (p_idx in seq_len(n_pathways)) {
+    Z_null <- MASS::mvrnorm(n = B, mu = rep(0, m), Sigma = sigma)
+    mem_trace <- c(mem_trace, .block_i_mem_used_mb())
+
+    P_null <- pnorm(Z_null, lower.tail = FALSE)
+    P_null <- pmax(pmin(P_null, 1 - 1e-15), 1e-15)
+    mem_trace <- c(mem_trace, .block_i_mem_used_mb())
+
+    # Compute ACAT + Fisher per permutation in one pass.
+    .method_row <- function(b) {
+      p_use <- P_null[b, ]
+      tan_vals <- tan((0.5 - p_use) * pi)
+      acat <- 0.5 - atan(mean(tan_vals)) / pi
+      stat <- -2 * sum(log(p_use))
+      fisher <- stats::pchisq(stat, df = 2 * length(p_use), lower.tail = FALSE)
+      c(acat = acat, fisher = fisher)
+    }
+
+    if (threads > 1L && B >= 1000L) {
+      method_mat <- do.call(rbind, parallel::mclapply(seq_len(B), .method_row, mc.cores = threads))
+    } else {
+      method_mat <- t(vapply(seq_len(B), .method_row, numeric(2)))
+    }
+    acat_null <- method_mat[, "acat"]
+    fisher_null <- method_mat[, "fisher"]
+    mem_trace <- c(mem_trace, .block_i_mem_used_mb())
+
+    checksum <- checksum + sum(acat_null, na.rm = TRUE) + sum(fisher_null, na.rm = TRUE)
+  }
+
+  elapsed_sec <- as.numeric(proc.time()[["elapsed"]] - t_start)
+
+  # Approximate peak memory consumed during benchmarked steps.
+  mem_peak <- max(mem_trace, na.rm = TRUE) - mem_base
+  mem_peak <- max(as.numeric(mem_peak), 0)
+
+  # Keep outputs alive through timing scope and prevent accidental elision.
+  if (!is.finite(checksum) || length(acat_null) != B || length(fisher_null) != B) {
+    stop("Block I benchmark internal size mismatch.", call. = FALSE)
+  }
+
+  list(
+    m = m,
+    n_pathways = n_pathways,
+    B = B,
+    threads = threads,
+    time_sec = elapsed_sec,
+    mem_mb = mem_peak
+  )
+}
+
+#' Run Block I: Computational Benchmark
+#' @param config Configuration list
+#' @param reduced If TRUE, use reduced parameter set for quick testing
+#' @return Invisible list with results and plots
+run_block_i <- function(config = BLOCK_I_CONFIG, reduced = FALSE) {
+  cfg <- config
+  if (isTRUE(reduced)) {
+    cfg$pathway_sizes <- c(10L, 50L)
+    cfg$n_pathways_values <- c(1L, 10L, 100L)
+    cfg$n_pathways_exact_max <- 10L
+    cfg$B_values <- c(50000L, 100000L)
+    cfg$thread_values <- c(1L, 4L)
+    cfg$n_reps <- 1L
+  }
+
+  dir.create(cfg$results_dir, recursive = TRUE, showWarnings = FALSE)
+  dir.create(cfg$output_dir, recursive = TRUE, showWarnings = FALSE)
+
+  n_cores <- suppressWarnings(as.integer(parallel::detectCores(logical = FALSE)))
+  if (!is.finite(n_cores) || is.na(n_cores) || n_cores < 1L) n_cores <- 1L
+
+  cfg$thread_values <- suppressWarnings(as.integer(cfg$thread_values))
+  cfg$thread_values <- sort(unique(cfg$thread_values[is.finite(cfg$thread_values) & !is.na(cfg$thread_values) & cfg$thread_values >= 1L]))
+  if (!length(cfg$thread_values)) cfg$thread_values <- 1L
+  cfg$thread_values <- cfg$thread_values[cfg$thread_values <= n_cores]
+  if (!length(cfg$thread_values)) cfg$thread_values <- 1L
+  if (.Platform$OS.type == "windows") cfg$thread_values <- 1L
+  cfg$n_pathways_values <- suppressWarnings(as.integer(cfg$n_pathways_values))
+  cfg$n_pathways_values <- sort(unique(cfg$n_pathways_values[is.finite(cfg$n_pathways_values) & !is.na(cfg$n_pathways_values) & cfg$n_pathways_values >= 1L]))
+  if (!length(cfg$n_pathways_values)) cfg$n_pathways_values <- 1L
+  cfg$n_pathways_exact_max <- suppressWarnings(as.integer(cfg$n_pathways_exact_max))
+  if (!is.finite(cfg$n_pathways_exact_max) || is.na(cfg$n_pathways_exact_max) || cfg$n_pathways_exact_max < 1L) {
+    cfg$n_pathways_exact_max <- max(cfg$n_pathways_values)
+  }
+  n_pathways_bench <- cfg$n_pathways_values[cfg$n_pathways_values <= cfg$n_pathways_exact_max]
+  if (!length(n_pathways_bench)) n_pathways_bench <- min(cfg$n_pathways_values)
+
+  set.seed(cfg$seed)
+
+  # Run benchmarks
+  results_list <- list()
+  total_iters <- length(cfg$pathway_sizes) * length(n_pathways_bench) * length(cfg$B_values) * length(cfg$thread_values) * cfg$n_reps
+  iter <- 1L
+
+  for (m in cfg$pathway_sizes) {
+    # Create correlation matrix for this pathway size
+    sigma <- ensure_pd(make_cor_exchangeable(m = m, rho = cfg$rho))
+
+    for (n_pathways in n_pathways_bench) {
+      for (B in cfg$B_values) {
+        for (threads in cfg$thread_values) {
+          for (rep_idx in seq_len(cfg$n_reps)) {
+            message(sprintf(
+              "Block I: %d/%d | m=%d | pathways=%d | B=%s | threads=%d | rep=%d",
+              iter, total_iters, m, n_pathways, format(B, big.mark = ","), threads, rep_idx
+            ))
+
+            res <- run_benchmark_single(
+              m = m,
+              n_pathways = n_pathways,
+              B = B,
+              sigma = sigma,
+              threads = threads,
+              seed = cfg$seed + iter
+            )
+            res$replicate <- rep_idx
+            results_list[[length(results_list) + 1L]] <- res
+            iter <- iter + 1L
+          }
+        }
+      }
+    }
+  }
+
+  # Combine results
+  results_df <- do.call(rbind, lapply(results_list, as.data.frame))
+
+  # Summarize across replicates
+  summary_df <- results_df %>%
+    group_by(m, n_pathways, B, threads) %>%
+    summarize(
+      time_sec_mean = mean(time_sec),
+      time_sec_median = stats::median(time_sec),
+      time_sec_sd = sd(time_sec, na.rm = TRUE),
+      mem_mb_mean = mean(mem_mb),
+      mem_mb_median = stats::median(mem_mb),
+      mem_mb_sd = sd(mem_mb, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    mutate(
+      estimate_type = "observed",
+      time_sec_sd = ifelse(is.na(time_sec_sd), 0, time_sec_sd),
+      mem_mb_sd = ifelse(is.na(mem_mb_sd), 0, mem_mb_sd)
+    )
+
+  # Extrapolate larger pathway-count settings (e.g., 100) from observed settings (e.g., 1 and 10).
+  missing_np <- setdiff(cfg$n_pathways_values, sort(unique(summary_df$n_pathways)))
+  if (length(missing_np)) {
+    pred_rows <- list()
+    idx <- 1L
+    key_df <- unique(summary_df[, c("m", "B", "threads"), drop = FALSE])
+    for (k in seq_len(nrow(key_df))) {
+      sub <- summary_df[
+        summary_df$m == key_df$m[k] &
+          summary_df$B == key_df$B[k] &
+          summary_df$threads == key_df$threads[k],
+        , drop = FALSE
+      ]
+      if (nrow(sub) < 2L || length(unique(sub$n_pathways)) < 2L) next
+
+      fit_time_mean <- stats::lm(time_sec_mean ~ n_pathways, data = sub)
+      fit_time_med  <- stats::lm(time_sec_median ~ n_pathways, data = sub)
+      fit_mem_mean  <- stats::lm(mem_mb_mean ~ n_pathways, data = sub)
+      fit_mem_med   <- stats::lm(mem_mb_median ~ n_pathways, data = sub)
+
+      for (np in missing_np) {
+        pred_rows[[idx]] <- data.frame(
+          m = key_df$m[k],
+          n_pathways = as.integer(np),
+          B = key_df$B[k],
+          threads = key_df$threads[k],
+          time_sec_mean = pmax(as.numeric(stats::predict(fit_time_mean, newdata = data.frame(n_pathways = np))), 0),
+          time_sec_median = pmax(as.numeric(stats::predict(fit_time_med, newdata = data.frame(n_pathways = np))), 0),
+          time_sec_sd = NA_real_,
+          mem_mb_mean = pmax(as.numeric(stats::predict(fit_mem_mean, newdata = data.frame(n_pathways = np))), 0),
+          mem_mb_median = pmax(as.numeric(stats::predict(fit_mem_med, newdata = data.frame(n_pathways = np))), 0),
+          mem_mb_sd = NA_real_,
+          estimate_type = "projected",
+          stringsAsFactors = FALSE
+        )
+        idx <- idx + 1L
+      }
+    }
+    if (length(pred_rows)) {
+      summary_df <- dplyr::bind_rows(summary_df, do.call(rbind, pred_rows))
+    }
+  }
+
+  summary_df <- summary_df %>%
+    group_by(m, n_pathways, B) %>%
+    mutate(
+      time_baseline_1thread = ifelse(any(threads == 1L), time_sec_median[threads == 1L][1], min(time_sec_median, na.rm = TRUE)),
+      speedup_vs_1thread = time_baseline_1thread / time_sec_median
+    ) %>%
+    ungroup() %>%
+    mutate(
+      pathway_size = factor(paste0("m = ", m), levels = paste0("m = ", sort(unique(m)))),
+      n_pathways_label = factor(
+        paste0("P = ", n_pathways),
+        levels = paste0("P = ", sort(unique(cfg$n_pathways_values)))
+      ),
+      B_label = format(B, big.mark = ",", scientific = FALSE),
+      total_null_draws = B * n_pathways,
+      thread_label = factor(
+        ifelse(threads == 1L, "1 thread", paste0(threads, " threads")),
+        levels = unique(ifelse(sort(unique(threads)) == 1L, "1 thread", paste0(sort(unique(threads)), " threads")))
+      ),
+      time_plot = pmax(time_sec_median, 1e-8)
+    )
+
+  # Paper-ready benchmark table.
+  table_df <- summary_df %>%
+    transmute(
+      pathway_size = m,
+      n_pathways = n_pathways,
+      B = B,
+      total_null_draws = B * n_pathways,
+      threads = threads,
+      estimate_type = estimate_type,
+      time_sec_mean = round(time_sec_mean, 4),
+      time_sec_median = round(time_sec_median, 4),
+      time_sec_sd = round(time_sec_sd, 4),
+      speedup_vs_1thread = round(speedup_vs_1thread, 3),
+      mem_mb_mean = round(mem_mb_mean, 2),
+      mem_mb_median = round(mem_mb_median, 2),
+      mem_mb_sd = round(mem_mb_sd, 2)
+    ) %>%
+    arrange(pathway_size, n_pathways, B, threads)
+
+  # Linear model for runtime prediction: time_sec_mean = intercept + slope * B
+  time_model_df <- summary_df %>%
+    group_by(m, n_pathways, threads, pathway_size, n_pathways_label, thread_label) %>%
+    summarize(
+      intercept = {
+        fit <- stats::lm(time_sec_median ~ B)
+        as.numeric(stats::coef(fit)[1])
+      },
+      slope_per_B = {
+        fit <- stats::lm(time_sec_median ~ B)
+        as.numeric(stats::coef(fit)[2])
+      },
+      r2 = {
+        fit <- stats::lm(time_sec_median ~ B)
+        as.numeric(summary(fit)$r.squared)
+      },
+      .groups = "drop"
+    ) %>%
+    mutate(
+      sec_per_10k_B = slope_per_B * 10000,
+      sec_per_100k_B = slope_per_B * 100000
+    )
+
+  # Prediction table at practical B values.
+  pred_B_targets <- sort(unique(c(cfg$B_values, 500000L, 1000000L)))
+  prediction_df <- merge(
+    time_model_df,
+    data.frame(B_pred = pred_B_targets, stringsAsFactors = FALSE),
+    by = NULL
+  ) %>%
+    mutate(
+      pred_time_sec = pmax(intercept + slope_per_B * B_pred, 0),
+      pred_time_min = pred_time_sec / 60
+    ) %>%
+    dplyr::select(
+      m, n_pathways, threads, B_pred, pred_time_sec, pred_time_min,
+      intercept, slope_per_B, r2
+    ) %>%
+    arrange(m, n_pathways, threads, B_pred)
+
+  # Smooth line data for linear-fit overlay.
+  pred_line_df <- merge(
+    time_model_df,
+    data.frame(B = seq(min(cfg$B_values), max(cfg$B_values), length.out = 100), stringsAsFactors = FALSE),
+    by = NULL
+  ) %>%
+    mutate(pred_time_sec = pmax(intercept + slope_per_B * B, 0))
+
+  # Linear model for memory prediction: mem_mb_mean = intercept + slope * B
+  memory_model_df <- summary_df %>%
+    group_by(m, n_pathways, threads, pathway_size, n_pathways_label, thread_label) %>%
+    summarize(
+      intercept_mem = {
+        fit <- stats::lm(mem_mb_mean ~ B)
+        as.numeric(stats::coef(fit)[1])
+      },
+      slope_mem_per_B = {
+        fit <- stats::lm(mem_mb_mean ~ B)
+        as.numeric(stats::coef(fit)[2])
+      },
+      r2_mem = {
+        fit <- stats::lm(mem_mb_mean ~ B)
+        as.numeric(summary(fit)$r.squared)
+      },
+      .groups = "drop"
+    )
+
+  mem_pred_line_df <- merge(
+    memory_model_df,
+    data.frame(B = seq(min(cfg$B_values), max(cfg$B_values), length.out = 100), stringsAsFactors = FALSE),
+    by = NULL
+  ) %>%
+    mutate(pred_mem_mb = pmax(intercept_mem + slope_mem_per_B * B, 0))
+
+  # Create time plot (faceted by pathway size and number of pathways; color = threads).
+  p_time <- ggplot(summary_df, aes(x = B, y = time_plot, color = thread_label, group = thread_label)) +
+    geom_line(linewidth = 1.2) +
+    geom_point(size = 3) +
+    geom_errorbar(
+      aes(ymin = pmax(time_plot - time_sec_sd, 1e-8), ymax = time_plot + time_sec_sd),
+      width = 0.05 * max(summary_df$B),
+      linewidth = 0.6
+    ) +
+    facet_grid(rows = vars(n_pathways_label), cols = vars(pathway_size), scales = "free_y", switch = "y") +
+    scale_x_log10(
+      breaks = cfg$B_values,
+      labels = function(x) format(x, big.mark = ",", scientific = FALSE)
+    ) +
+    scale_y_log10() +
+    scale_color_brewer(palette = "Dark2") +
+    labs(
+      title = "Block I: Runtime vs Resampling Budget",
+      subtitle = "Core MVN null workload (ACAT + Fisher), faceted by pathway size and number of pathways",
+      x = "Number of null draws per pathway (B)",
+      y = "Time (seconds)",
+      color = "Threads"
+    ) +
+    block_a_theme +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 16),
+      legend.position = "top",
+      strip.placement = "outside",
+      strip.text.x = element_text(size = 18, face = "bold"),
+      strip.text.y.left = element_text(size = 16, face = "bold", angle = 0),
+      strip.background = element_rect(fill = "grey95", color = "grey80")
+    )
+
+  # Create memory plot (same facets for direct read-across).
+  p_memory <- ggplot(summary_df, aes(x = B, y = mem_mb_mean, color = thread_label, group = thread_label)) +
+    geom_line(linewidth = 1.2) +
+    geom_point(size = 3) +
+    geom_errorbar(
+      aes(ymin = pmax(mem_mb_mean - mem_mb_sd, 0), ymax = mem_mb_mean + mem_mb_sd),
+      width = 0.05 * max(summary_df$B),
+      linewidth = 0.6
+    ) +
+    facet_grid(rows = vars(n_pathways_label), cols = vars(pathway_size), scales = "free_y", switch = "y") +
+    scale_x_log10(
+      breaks = cfg$B_values,
+      labels = function(x) format(x, big.mark = ",", scientific = FALSE)
+    ) +
+    scale_color_brewer(palette = "Dark2") +
+    labs(
+      title = "Block I: Memory vs Resampling Budget",
+      subtitle = "Approximate peak resident memory during benchmarked workload",
+      x = "Number of null draws per pathway (B)",
+      y = "Memory (MB)",
+      color = "Threads"
+    ) +
+    block_a_theme +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 16),
+      legend.position = "top"
+    )
+
+  # Linear-fit runtime plot for prediction use.
+  axis_breaks_linear <- c(50000L, 100000L, 250000L, 500000L, 1000000L)
+  axis_labels_linear <- c("50,000", "100,000", "250,000", "500,000", "1,000,000")
+
+  p_time_linear <- ggplot(summary_df, aes(x = B, y = time_sec_mean, color = thread_label, group = thread_label)) +
+    geom_point(size = 2.8) +
+    geom_line(linewidth = 0.8, alpha = 0.5) +
+    geom_line(
+      data = pred_line_df,
+      aes(x = B, y = pred_time_sec, color = thread_label, group = thread_label),
+      linewidth = 1.1,
+      linetype = "dashed"
+    ) +
+    facet_grid(n_pathways_label ~ pathway_size, scales = "free_y", switch = "y") +
+    scale_x_continuous(
+      breaks = axis_breaks_linear,
+      labels = axis_labels_linear
+    ) +
+    scale_color_brewer(palette = "Dark2") +
+    labs(
+      x = "Number of null draws per pathway (B)",
+      y = "Time (seconds)",
+      color = "Threads"
+    ) +
+    block_a_theme +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 16),
+      legend.position = "top",
+      strip.placement = "outside",
+      strip.text.x = element_text(size = 18, face = "bold"),
+      strip.text.y.left = element_text(size = 16, face = "bold", angle = 90),
+      strip.background = element_rect(fill = "grey95", color = "grey80")
+    )
+
+  p_memory_linear <- ggplot(summary_df, aes(x = B, y = mem_mb_mean, color = thread_label, group = thread_label)) +
+    geom_point(size = 2.8) +
+    geom_line(linewidth = 0.8, alpha = 0.5) +
+    geom_line(
+      data = mem_pred_line_df,
+      aes(x = B, y = pred_mem_mb, color = thread_label, group = thread_label),
+      linewidth = 1.1,
+      linetype = "dashed"
+    ) +
+    facet_grid(n_pathways_label ~ pathway_size, scales = "free_y", switch = "y") +
+    scale_x_continuous(
+      breaks = axis_breaks_linear,
+      labels = axis_labels_linear
+    ) +
+    scale_color_brewer(palette = "Dark2") +
+    labs(
+      x = "Number of null draws per pathway (B)",
+      y = "Memory (MB)",
+      color = "Threads"
+    ) +
+    block_a_theme +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 16),
+      legend.position = "none",
+      strip.placement = "outside",
+      strip.text.x = element_text(size = 18, face = "bold"),
+      strip.text.y.left = element_text(size = 16, face = "bold", angle = 90),
+      strip.background = element_rect(fill = "grey95", color = "grey80")
+    )
+
+  # Speedup plot: makes threading benefit explicit.
+  p_speedup <- ggplot(
+    summary_df %>% dplyr::filter(threads > 1L),
+    aes(x = B, y = speedup_vs_1thread, color = thread_label, group = thread_label)
+  ) +
+    geom_hline(yintercept = 1, linetype = "dashed", color = "grey40", linewidth = 0.8) +
+    geom_line(linewidth = 1.2) +
+    geom_point(size = 3) +
+    facet_grid(n_pathways_label ~ pathway_size, scales = "free_y") +
+    scale_x_log10(
+      breaks = cfg$B_values,
+      labels = function(x) format(x, big.mark = ",", scientific = FALSE)
+    ) +
+    scale_color_brewer(palette = "Dark2") +
+    labs(
+      title = "Block I: Thread Speedup vs B",
+      subtitle = "Speedup > 1 means faster than 1-thread baseline",
+      x = "Number of null draws per pathway (B)",
+      y = "Speedup (vs 1 thread)",
+      color = "Threads"
+    ) +
+    block_a_theme +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 16),
+      legend.position = "top"
+    )
+
+  # Create combined panel
+  combined_plot <- (p_time / p_memory) +
+    plot_annotation(tag_levels = "A")
+
+  # Combined linear panel (A=time, B=memory) for manuscript.
+  linear_panel_plot <- (p_time_linear / p_memory_linear) +
+    plot_annotation(tag_levels = "A")
+
+  # Save outputs
+  out_csv <- file.path(cfg$results_dir, "block_i_benchmark_summary.csv")
+  out_table_csv <- file.path(cfg$results_dir, "block_i_benchmark_table.csv")
+  out_model_csv <- file.path(cfg$results_dir, "block_i_time_linear_model.csv")
+  out_pred_csv <- file.path(cfg$results_dir, "block_i_time_predictions.csv")
+  out_rds <- file.path(cfg$results_dir, "block_i_benchmark.rds")
+  out_time_plot <- file.path(cfg$output_dir, "block_i_time.png")
+  out_time_linear_plot <- file.path(cfg$output_dir, "block_i_time_linear_fit.png")
+  out_memory_linear_plot <- file.path(cfg$output_dir, "block_i_memory_linear_fit.png")
+  out_linear_panel_plot <- file.path(cfg$output_dir, "block_i_linear_panel_AB.png")
+  out_speedup_plot <- file.path(cfg$output_dir, "block_i_speedup.png")
+  out_memory_plot <- file.path(cfg$output_dir, "block_i_memory.png")
+  out_combined_plot <- file.path(cfg$output_dir, "block_i_benchmark_panel.png")
+
+  write.csv(summary_df, out_csv, row.names = FALSE)
+  write.csv(table_df, out_table_csv, row.names = FALSE)
+  write.csv(time_model_df, out_model_csv, row.names = FALSE)
+  write.csv(prediction_df, out_pred_csv, row.names = FALSE)
+  saveRDS(
+    list(
+      config = cfg,
+      results_raw = results_df,
+      summary = summary_df,
+      table = table_df,
+      time_model = time_model_df,
+      time_predictions = prediction_df,
+      memory_model = memory_model_df
+    ),
+    out_rds
+  )
+
+  ggsave(out_time_plot, p_time, width = 12, height = 8, dpi = 300, bg = "white")
+  ggsave(out_time_linear_plot, p_time_linear, width = 12, height = 8, dpi = 300, bg = "white")
+  ggsave(out_memory_linear_plot, p_memory_linear, width = 12, height = 8, dpi = 300, bg = "white")
+  ggsave(out_linear_panel_plot, linear_panel_plot, width = 12, height = 14, dpi = 300, bg = "white")
+  ggsave(out_speedup_plot, p_speedup, width = 12, height = 8, dpi = 300, bg = "white")
+  ggsave(out_memory_plot, p_memory, width = 12, height = 8, dpi = 300, bg = "white")
+  ggsave(out_combined_plot, combined_plot, width = 12, height = 14, dpi = 300, bg = "white")
+
+  message("Block I outputs written:")
+  message("  - ", out_csv)
+  message("  - ", out_table_csv)
+  message("  - ", out_model_csv)
+  message("  - ", out_pred_csv)
+  message("  - ", out_rds)
+  message("  - ", out_time_plot)
+  message("  - ", out_time_linear_plot)
+  message("  - ", out_memory_linear_plot)
+  message("  - ", out_linear_panel_plot)
+  message("  - ", out_speedup_plot)
+  message("  - ", out_memory_plot)
+  message("  - ", out_combined_plot)
+
+  invisible(list(
+    config = cfg,
+    results_raw = results_df,
+    summary = summary_df,
+    table = table_df,
+    time_model = time_model_df,
+    time_predictions = prediction_df,
+    memory_model = memory_model_df,
+    time_plot = p_time,
+    time_linear_plot = p_time_linear,
+    memory_linear_plot = p_memory_linear,
+    linear_panel_plot = linear_panel_plot,
+    speedup_plot = p_speedup,
+    memory_plot = p_memory,
+    combined_plot = combined_plot
+  ))
 }
 
 if (sys.nframe() == 0L) {
