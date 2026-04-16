@@ -3,6 +3,20 @@
 
 library(data.table)
 
+# ==============================================================================
+# CONFIGURATION - Change tau option here
+# ==============================================================================
+TAU_OPTION <- "strict"  # "default" or "strict"
+
+if (TAU_OPTION == "strict") {
+  PATHWAY_FILE <- "sorghum_catfish_results/sorghum_stem_vol_CATFISH_B1000000_GPD_strict_tau.csv"
+  OUT_SUFFIX <- "_strict_tau"
+} else {
+  PATHWAY_FILE <- "sorghum_catfish_results/sorghum_stem_vol_CATFISH_B1000000_GPD.csv"
+  OUT_SUFFIX <- ""
+}
+# ==============================================================================
+
 # Load gene results (GWAS + MAGMA)
 cat("Loading gene results...\n")
 gene_results <- read.table(
@@ -12,10 +26,8 @@ gene_results <- read.table(
 
 # Load GPD pathway results (B=1M)
 cat("Loading GPD pathway results (B=1M)...\n")
-pathway_results <- read.csv(
-  "sorghum_catfish_results/sorghum_stem_vol_CATFISH_B1000000_GPD.csv",
-  stringsAsFactors = FALSE
-)
+cat("Using:", PATHWAY_FILE, "\n")
+pathway_results <- read.csv(PATHWAY_FILE, stringsAsFactors = FALSE)
 
 # Load pathway-gene mapping
 cat("Loading pathway-gene mapping...\n")
@@ -139,9 +151,11 @@ cat("Old top gene:", old_results$GENE[1], "score:", old_results$score[1], "\n")
 cat("New top gene:", candidates$GENE[1], "score:", candidates$score[1], "\n")
 
 # Save results
-write.csv(candidates, "sorghum_catfish_results/candidate_genes_GPD_B1M_scored.csv", row.names = FALSE)
-cat("\nResults saved to: sorghum_catfish_results/candidate_genes_GPD_B1M_scored.csv\n")
+outfile_all <- paste0("sorghum_catfish_results/candidate_genes_GPD_B1M_scored", OUT_SUFFIX, ".csv")
+write.csv(candidates, outfile_all, row.names = FALSE)
+cat("\nResults saved to:", outfile_all, "\n")
 
 # Save top 200
-write.csv(head(candidates, 200), "sorghum_catfish_results/candidate_genes_top200_GPD_B1M.csv", row.names = FALSE)
-cat("Top 200 saved to: sorghum_catfish_results/candidate_genes_top200_GPD_B1M.csv\n")
+outfile_top <- paste0("sorghum_catfish_results/candidate_genes_top200_GPD_B1M", OUT_SUFFIX, ".csv")
+write.csv(head(candidates, 200), outfile_top, row.names = FALSE)
+cat("Top 200 saved to:", outfile_top, "\n")

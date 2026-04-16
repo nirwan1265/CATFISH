@@ -3,6 +3,36 @@
 library(devtools)
 load_all(".")
 
+# ==============================================================================
+# CONFIGURATION - Change these settings as needed
+# ==============================================================================
+
+# Tau grid options:
+#   "default"  = c(0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001) - liberal, original
+#   "strict"   = c(1e-5, 1e-6, 1e-7) - strict for extreme signals
+#   "custom"   = define your own below
+
+TAU_OPTION <- "strict"  # Change to "default", "strict", or "custom"
+
+# If TAU_OPTION is "custom", define your tau_grid here:
+CUSTOM_TAU <- c(1e-5, 1e-6, 1e-7)
+
+# Set tau_grid based on option
+tau_grid <- switch(TAU_OPTION,
+  "default" = c(0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001),
+  "strict"  = c(1e-5, 1e-6, 1e-7),
+  "custom"  = CUSTOM_TAU
+)
+
+# Output file suffix
+tau_suffix <- switch(TAU_OPTION,
+  "default" = "",
+  "strict"  = "_strict_tau",
+  "custom"  = "_custom_tau"
+)
+
+# ==============================================================================
+
 # Load data
 gene_results <- read.table(
   "sorghum_catfish_results/sorghum_stem_vol_genes_combined.txt",
@@ -34,6 +64,7 @@ cat("\n============================================================\n")
 cat("GPD MODE (Knijnenburg tail extrapolation) - PARALLEL\n")
 cat("B =", format(B_perm, big.mark=","), "permutations\n")
 cat("Threads:", n_threads, "\n")
+cat("tau_grid =", paste(format(tau_grid, scientific = TRUE), collapse = ", "), "\n")
 cat("============================================================\n")
 cat("Start time:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n\n")
 
@@ -49,6 +80,7 @@ res <- catfish_omni2_pathways(
   B_perm = B_perm,
   perm_mode = "mvn",
   magma_cor_pairs = cor_pairs,
+  tau_grid = tau_grid,
   tail_mode = "hybrid_gpd",
   tail_switch_exceed = 10L,
   tail_gpd_k = 250L,
@@ -85,7 +117,30 @@ comparison <- comparison[order(comparison$p_1M), ]
 cat("\nTop 10 pathways comparison:\n")
 print(head(comparison, 10))
 
+# Summary stats
+bonf <- 0.05 / nrow(res)
+cat("\n=== Bonferroni threshold:", format(bonf, digits = 3), "===\n")
+cat("\nSignificant pathways (Bonferroni < 0.05):\n")
+cat("  ACAT:    ", sum(res$acat_p < bonf), "\n")
+cat("  Fisher:  ", sum(res$fisher_p < bonf), "\n")
+cat("  TFisher: ", sum(res$tfisher_p_analytic < bonf, na.rm = TRUE), "\n")
+cat("  minP:    ", sum(res$minp_p_analytic < bonf), "\n")
+cat("  Stouffer:", sum(res$stouffer_p_analytic < bonf), "\n")
+cat("  Omnibus: ", sum(res$omni_p_final < bonf), "\n")
+
+cat("\n=== tau_hat distribution ===\n")
+print(table(res$tau_hat))
+
+cat("\n=== Dominant component (all pathways) ===\n")
+print(table(res$dominant_component))
+
+sig_res <- res[res$omni_p_final < bonf, ]
+if (nrow(sig_res) > 0) {
+  cat("\n=== Dominant component (Bonferroni significant) ===\n")
+  print(table(sig_res$dominant_component))
+}
+
 # Save results
-outfile <- "sorghum_catfish_results/sorghum_stem_vol_CATFISH_B1000000_GPD.csv"
+outfile <- paste0("sorghum_catfish_results/sorghum_stem_vol_CATFISH_B1000000_GPD", tau_suffix, ".csv")
 write.csv(res, outfile, row.names = FALSE)
 cat("\nResults saved to:", outfile, "\n")

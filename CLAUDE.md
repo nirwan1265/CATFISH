@@ -207,3 +207,228 @@ pathway_bonus = -log10(best_pathway_p) / 10  # scaled down
 ```
 
 See `sorghum_catfish_results/calculate_scores_GPD.R` for implementation.
+
+## Computational Benchmarks
+
+Block I benchmark added to `all_figs.R` for paper figure showing:
+- Runtime vs B (permutation count) - linear scaling
+- Runtime vs pathway size - linear scaling
+- Memory usage remains stable
+- 12 threads provides ~10x speedup over single-threaded
+
+**Config:**
+- Pathway sizes: 10, 25, 50, 100 genes
+- B values: 1000, 5000, 10000, 50000, 100000
+- 3 replicates per condition
+- Results saved to `simulation_results/block_i_benchmark.rds`
+
+## Manuscript Review (CATFISH.pdf) - Issues to Fix
+
+### Critical Issues
+
+1. **Missing/Placeholder References**: Multiple "(ref)" citations need actual references
+   - Section 2.2: "The tail can be approximated (ref)"
+   - Section 2.1.3: "P = 2×Φ(−|z|) (ref)"
+   - Throughout Supplementary Materials
+
+2. **Raw BibTeX in Text**: Section A2.9 has unrendered BibTeX entries like `\citep{gholami.2022}`, `\citet{zhu.2024}` that need fixing
+
+3. **Inconsistent Archetype Naming**:
+   - Main text uses "DPE" (Diffuse Polygenic Enrichment)
+   - CLAUDE.md and some sections use "DPS" (Diffuse Polygenic Shift)
+   - Need to standardize to one naming convention
+
+4. **Outdated Results**:
+   - Manuscript uses B=10,000 results (p-value floor ~10^-4)
+   - Should update to B=1,000,000 GPD results (p-values to 10^-35)
+   - This significantly strengthens the biological findings
+
+### Sections Needing Completion
+
+1. **Graphical Abstract**: Currently empty placeholder
+2. **Data Availability**: Section exists but needs content
+3. **Code Availability**: Section exists but needs content
+4. **Author Contributions**: Section exists but needs content
+5. **Declaration of Competing Interest**: Needs actual statement
+
+### Suggestions for Improvement
+
+1. Add comparison table: B=10k empirical vs B=1M GPD results
+2. Include computational benchmark figure (Block I from all_figs.R)
+3. Add runtime/scalability discussion for large-scale analyses
+4. Consider adding Arabidopsis case study as validation
+
+### File Locations
+- Manuscript: `/Users/nirwantandukar/Downloads/CATFISH.pdf`
+- Results to update from: `sorghum_catfish_results/sorghum_stem_vol_CATFISH_B1000000_GPD.csv`
+
+## TFisher Tau Parameter Tuning
+
+### Problem
+With the default liberal `tau_grid = c(0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001)`, TFisher was dominating the omnibus results:
+- TFisher found 84 significant pathways while other methods found ~47-48
+- TFisher dominated 100% of Bonferroni-significant pathways
+- The omnibus was essentially just TFisher
+
+### Understanding Tau
+- **tau** is the threshold for including p-values in TFisher combination
+- `tau = 0.2` is **liberal** (includes genes with p < 0.2)
+- `tau = 1e-7` is **strict** (only includes genes with p < 0.0000001)
+- For data with extreme signals (very small p-values), use strict tau
+
+### Solution: Strict Tau Grid
+Changed to `tau_grid = c(1e-5, 1e-6, 1e-7)` for sorghum (strong signals):
+- TFisher significant: 84 → 29
+- TFisher dominance: 100% → 56%
+- Other methods (Fisher, ACAT) now contribute to significant pathways
+- Omnibus: 75 → 52 (more conservative but balanced)
+
+### Data-Dependent Behavior
+- **Sorghum** (strong signals): TFisher dominates with liberal tau, use strict tau
+- **Arabidopsis** (weak signals): TFisher gives p=0.73 with strict tau (no genes < 1e-5), Stouffer dominates
+
+### Configuration
+All scripts now have a `TAU_OPTION` at the top:
+```r
+TAU_OPTION <- "strict"  # "default" or "strict"
+# default = c(0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001)
+# strict  = c(1e-5, 1e-6, 1e-7)
+```
+
+## Current State (March 2026)
+
+### Completed Analyses
+- ✅ Sorghum stem volume: B=1M GPD, strict tau, 12 threads (~1 hour, 410 pathways)
+- ✅ Arabidopsis cold trait: B=1M GPD, 12 threads (1.86 hours, 321 pathways)
+- ✅ Candidate gene scoring for both species
+- ✅ Computational benchmark (Block I in all_figs.R)
+- ✅ TFisher tau tuning investigation
+
+### Sorghum Results (Strict Tau)
+**File:** `sorghum_stem_vol_CATFISH_B1000000_GPD_strict_tau.csv`
+
+| Method | Bonferroni Significant |
+|--------|------------------------|
+| ACAT | 47 |
+| Fisher | 48 |
+| TFisher | 29 |
+| minP | 47 |
+| Stouffer | 24 |
+| Omnibus | 52 |
+
+**Dominant component (Bonferroni significant):**
+- TFisher: 29 (56%)
+- Fisher: 13 (25%)
+- ACAT: 7 (13%)
+- Stouffer: 2 (4%)
+- minP: 1 (2%)
+
+**Candidate genes:**
+- 21 genes with 3-layer support
+- 186 genes with 2-layer support
+- Top gene: SORBI_3009G231300 (score 9.06)
+
+### Key Scripts
+- `sorghum_catfish_results/run_catfish_GPD_1M.R` - Sorghum analysis (TAU_OPTION configurable)
+- `sorghum_catfish_results/calculate_scores_GPD.R` - Sorghum scoring (TAU_OPTION configurable)
+- `sorghum_figure4_and_supp.R` - Figure 4 + supplementary tables (TAU_OPTION configurable)
+- `sorghum_figure5_and_table.R` - Figure 5 candidate genes (TAU_OPTION configurable)
+- `sorghum_supplementary_figure.R` - Supplementary figure (TAU_OPTION configurable)
+- `arabidopsis_catfish_results/run_catfish_GPD_1M_arabidopsis.R` - Arabidopsis analysis
+- `all_figs.R` - Block I benchmark code
+
+### Output Files (Strict Tau)
+- `sorghum_stem_vol_CATFISH_B1000000_GPD_strict_tau.csv` - Pathway results
+- `candidate_genes_GPD_B1M_scored_strict_tau.csv` - All scored genes
+- `candidate_genes_top200_GPD_B1M_strict_tau.csv` - Top 200 candidates
+- `Figure4_GWAS_MAGMA_Pathway_strict_tau.png/pdf`
+- `Figure5_Candidate_Genes_strict_tau.png/pdf`
+- `Supplementary_Figure_Component_Tests_strict_tau.png/pdf`
+- `TableS3_Pathways_FDR_lt0.05_strict_tau.csv` - 96 pathways FDR < 0.05
+- `TableS4_Pathway_genes_detailed_strict_tau.csv` - Gene-pathway associations
+- `Table_Genes_All_Three_Layers_strict_tau.csv` - 35 genes with 3-layer support
+
+### Notes
+- B=5M was attempted for sorghum but killed - GPD with B=1M already achieves 10^-35 p-values
+- Higher B provides diminishing returns when using GPD tail extrapolation
+- Recommended: B=1M with GPD for production analyses
+- Use strict tau for data with extreme gene-level signals
+
+---
+
+## DGRP Chili Pepper Project (April 2026)
+
+### Overview
+
+GWAS analysis of *Drosophila melanogaster* DGRP lines fed different chili peppers.
+
+**Location:** `DGRP_chilipeppers/`
+
+### Experimental Design
+
+- **69 DGRP lines** (inbred, genotypes publicly available)
+- **4 treatments:**
+  - C = Control
+  - B = Bell pepper (non-spicy)
+  - S = Serrano (medium spicy)
+  - H = Habanero (very spicy)
+- **Phenotypes:**
+  - Body Weight (BW) - measured separately for Males (M) and Females (F)
+  - Triglycerides (TG) - sexes pooled
+- **3 replicates per line/treatment/sex**
+
+### Current Progress
+
+**Step 1: BLUPs computed** ✅
+- Script: `01_compute_BLUPs.R`
+- Output: `BLUPs_all_traits.csv` (21 traits)
+- Individual trait files in `blups_for_gwas/` folder (ready for DGRP web tool)
+
+**Traits computed:**
+- 8 BW traits: BW_C_F, BW_C_M, BW_B_F, BW_B_M, BW_S_F, BW_S_M, BW_H_F, BW_H_M
+- 4 TG traits: TG_C, TG_B, TG_S, TG_H
+- 9 derived traits:
+  - BW_spicy_F/M, BW_nonspicy_F/M (averages)
+  - BW_capsaicin_F/M = spicy - nonspicy (capsaicin effect contrast)
+  - TG_spicy, TG_nonspicy, TG_capsaicin
+
+**Heritability (Line variance %):**
+| Trait | Heritability |
+|-------|-------------|
+| BW_S_F | 91.4% |
+| BW_H_F | 87.6% |
+| TG_H | 85.4% |
+| TG_B | 84.5% |
+| BW_H_M | 58.5% |
+
+### Next Steps
+
+**Step 2: Run GWAS**
+- Option A: DGRP2 web tool (http://dgrp2.gnets.ncsu.edu/) - upload trait files
+- Option B: Local GWAS with DGRP VCF + PLINK/GEMMA
+
+**Step 3: Post-GWAS analysis**
+- Manhattan plots
+- Gene annotation
+- Compare hits across treatments (spicy vs non-spicy)
+- Potentially run CATFISH pathway analysis
+
+### Key Questions
+
+1. Do hot pepper treatments alter genetic architecture of TG/BW?
+2. Are there capsaicin-responsive loci (GxE)?
+3. Sex differences in response to spicy food?
+
+### Files
+
+```
+DGRP_chilipeppers/
+├── 01_compute_BLUPs.R          # BLUP computation script
+├── phenotype.csv               # Raw phenotype data
+├── BLUPs_all_traits.csv        # All 21 trait BLUPs
+├── BLUP_summary_stats.csv      # Trait summaries
+└── blups_for_gwas/             # Individual trait files for GWAS
+    ├── BW_*.txt                # Body weight traits
+    ├── TG_*.txt                # Triglyceride traits
+    └── *_capsaicin.txt         # Capsaicin contrast traits
+```

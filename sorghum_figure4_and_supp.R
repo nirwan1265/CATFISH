@@ -11,6 +11,22 @@ library(patchwork)
 OUT_DIR <- "sorghum_catfish_results"
 
 # ==============================================================================
+# CONFIGURATION - Change tau option here
+# ==============================================================================
+# Options: "default", "strict"
+TAU_OPTION <- "strict"
+
+# Set input file and output suffix based on tau option
+if (TAU_OPTION == "strict") {
+  PATHWAY_FILE <- file.path(OUT_DIR, "sorghum_stem_vol_CATFISH_B1000000_GPD_strict_tau.csv")
+  OUT_SUFFIX <- "_strict_tau"
+} else {
+  PATHWAY_FILE <- file.path(OUT_DIR, "sorghum_stem_vol_CATFISH_B1000000_GPD.csv")
+  OUT_SUFFIX <- ""
+}
+# ==============================================================================
+
+# ==============================================================================
 # Plot Theme
 # ==============================================================================
 
@@ -165,11 +181,9 @@ cat("Panel B done\n")
 # ==============================================================================
 
 cat("\n=== Loading Pathway data ===\n")
+cat("Using:", PATHWAY_FILE, "\n")
 
-pathway_results <- read.csv(
-  file.path(OUT_DIR, "sorghum_stem_vol_catfish_results_MVN.csv"),
-  stringsAsFactors = FALSE
-)
+pathway_results <- read.csv(PATHWAY_FILE, stringsAsFactors = FALSE)
 
 cat("Total pathways:", nrow(pathway_results), "\n")
 
@@ -237,14 +251,14 @@ fig4 <- (panel_a / panel_b / panel_c) +
   plot_layout(heights = c(1, 1, 1.2))
 
 ggsave(
-  file.path(OUT_DIR, "Figure4_GWAS_MAGMA_Pathway.png"),
+  file.path(OUT_DIR, paste0("Figure4_GWAS_MAGMA_Pathway", OUT_SUFFIX, ".png")),
   fig4,
   width = 12, height = 16,
   dpi = 300, bg = "white"
 )
 
 ggsave(
-  file.path(OUT_DIR, "Figure4_GWAS_MAGMA_Pathway.pdf"),
+  file.path(OUT_DIR, paste0("Figure4_GWAS_MAGMA_Pathway", OUT_SUFFIX, ".pdf")),
   fig4,
   width = 12, height = 16,
   bg = "white"
@@ -340,7 +354,7 @@ cat("Pathways with FDR < 0.05:", nrow(pathway_sig), "\n")
 
 write.csv(
   pathway_sig,
-  file.path(OUT_DIR, "TableS3_Pathways_FDR_lt0.05.csv"),
+  file.path(OUT_DIR, paste0("TableS3_Pathways_FDR_lt0.05", OUT_SUFFIX, ".csv")),
   row.names = FALSE
 )
 
@@ -369,7 +383,7 @@ cat("Total gene-pathway associations:", nrow(pathway_genes_full), "\n")
 
 write.csv(
   pathway_genes_full,
-  file.path(OUT_DIR, "TableS4_Pathway_genes_detailed.csv"),
+  file.path(OUT_DIR, paste0("TableS4_Pathway_genes_detailed", OUT_SUFFIX, ".csv")),
   row.names = FALSE
 )
 

@@ -13,6 +13,22 @@ library(cowplot)
 OUT_DIR <- "sorghum_catfish_results"
 
 # ==============================================================================
+# CONFIGURATION - Change tau option here
+# ==============================================================================
+# Options: "default", "strict"
+TAU_OPTION <- "strict"
+
+# Set input file and output suffix based on tau option
+if (TAU_OPTION == "strict") {
+  PATHWAY_FILE <- file.path(OUT_DIR, "sorghum_stem_vol_CATFISH_B1000000_GPD_strict_tau.csv")
+  OUT_SUFFIX <- "_strict_tau"
+} else {
+  PATHWAY_FILE <- file.path(OUT_DIR, "sorghum_stem_vol_CATFISH_B1000000_GPD.csv")
+  OUT_SUFFIX <- ""
+}
+# ==============================================================================
+
+# ==============================================================================
 # Plot Theme (matching all_figs.R)
 # ==============================================================================
 
@@ -36,11 +52,9 @@ plot_theme <- theme_minimal(base_size = 24) +
 # ==============================================================================
 
 cat("=== Loading CATFISH Results ===\n")
+cat("Using:", PATHWAY_FILE, "\n")
 
-omni_results <- read.csv(
-  file.path(OUT_DIR, "sorghum_stem_vol_catfish_results_MVN.csv"),
-  stringsAsFactors = FALSE
-)
+omni_results <- read.csv(PATHWAY_FILE, stringsAsFactors = FALSE)
 
 cat("Total pathways:", nrow(omni_results), "\n")
 
@@ -95,7 +109,7 @@ rownames(upset_matrix) <- all_pathways
 upset_df <- as.data.frame(upset_matrix)
 
 # Save UpSet plot
-png(file.path(OUT_DIR, "SuppFig_A_UpSet.png"),
+png(file.path(OUT_DIR, paste0("SuppFig_A_UpSet", OUT_SUFFIX, ".png")),
     width = 3600, height = 2800, res = 300)
 upset(
   upset_df,
@@ -182,7 +196,7 @@ panel_b <- ggplot(qq_df, aes(x = expected, y = observed, color = significance)) 
   ) +
   guides(color = guide_legend(override.aes = list(size = 4)))
 
-ggsave(file.path(OUT_DIR, "SuppFig_B_QQplot.png"), panel_b,
+ggsave(file.path(OUT_DIR, paste0("SuppFig_B_QQplot", OUT_SUFFIX, ".png")), panel_b,
        width = 10, height = 9, dpi = 300, bg = "white")
 
 cat("Panel B saved\n")
@@ -281,7 +295,7 @@ panel_c <- ggplot(combined_long, aes(x = Method2, y = Method1, fill = Value)) +
   ) +
   coord_fixed()
 
-ggsave(file.path(OUT_DIR, "SuppFig_C_Jaccard_Corr.png"), panel_c,
+ggsave(file.path(OUT_DIR, paste0("SuppFig_C_Jaccard_Corr", OUT_SUFFIX, ".png")), panel_c,
        width = 10, height = 9, dpi = 300, bg = "white")
 
 cat("Panel C saved\n")
@@ -336,7 +350,7 @@ panel_d <- ggplot(pval_long, aes(x = method, y = neg_log10_p, fill = method)) +
     plot.caption = element_text(size = 14, hjust = 0.5)
   )
 
-ggsave(file.path(OUT_DIR, "SuppFig_D_Pval_Dist.png"), panel_d,
+ggsave(file.path(OUT_DIR, paste0("SuppFig_D_Pval_Dist", OUT_SUFFIX, ".png")), panel_d,
        width = 10, height = 8, dpi = 300, bg = "white")
 
 cat("Panel D saved\n")
@@ -349,7 +363,7 @@ cat("\n=== Combining All Panels ===\n")
 
 # Read Panel A as image
 panel_a_plot <- ggdraw() +
-  draw_image(file.path(OUT_DIR, "SuppFig_A_UpSet.png")) +
+  draw_image(file.path(OUT_DIR, paste0("SuppFig_A_UpSet", OUT_SUFFIX, ".png"))) +
   draw_label("A", x = 0.02, y = 0.98, hjust = 0, vjust = 1,
              fontface = "bold", size = 32)
 
@@ -374,10 +388,10 @@ bottom_row <- plot_grid(panel_c_plot, panel_d_plot, ncol = 2,
 supp_fig <- plot_grid(top_row, bottom_row, nrow = 2,
                       rel_heights = c(1.1, 1))
 
-ggsave(file.path(OUT_DIR, "Supplementary_Figure_Component_Tests.png"), supp_fig,
+ggsave(file.path(OUT_DIR, paste0("Supplementary_Figure_Component_Tests", OUT_SUFFIX, ".png")), supp_fig,
        width = 22, height = 20, dpi = 300, bg = "white")
 
-ggsave(file.path(OUT_DIR, "Supplementary_Figure_Component_Tests.pdf"), supp_fig,
+ggsave(file.path(OUT_DIR, paste0("Supplementary_Figure_Component_Tests", OUT_SUFFIX, ".pdf")), supp_fig,
        width = 22, height = 20, bg = "white")
 
 cat("\n=== DONE ===\n")

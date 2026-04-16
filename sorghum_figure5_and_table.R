@@ -22,6 +22,22 @@ library(cowplot)
 OUT_DIR <- "sorghum_catfish_results"
 
 # ==============================================================================
+# CONFIGURATION - Change tau option here
+# ==============================================================================
+# Options: "default", "strict"
+TAU_OPTION <- "strict"
+
+# Set input file and output suffix based on tau option
+if (TAU_OPTION == "strict") {
+  PATHWAY_FILE <- file.path(OUT_DIR, "sorghum_stem_vol_CATFISH_B1000000_GPD_strict_tau.csv")
+  OUT_SUFFIX <- "_strict_tau"
+} else {
+  PATHWAY_FILE <- file.path(OUT_DIR, "sorghum_stem_vol_CATFISH_B1000000_GPD.csv")
+  OUT_SUFFIX <- ""
+}
+# ==============================================================================
+
+# ==============================================================================
 # Plot Theme
 # ==============================================================================
 
@@ -113,10 +129,8 @@ cat("MAGMA genes:", nrow(magma_gene), "\n")
 cat("MAGMA genes with FDR < 0.05:", sum(magma_gene$magma_fdr < 0.05), "\n")
 
 # Load Pathway results
-pathway_results <- read.csv(
-  file.path(OUT_DIR, "sorghum_stem_vol_catfish_results_MVN.csv"),
-  stringsAsFactors = FALSE
-)
+cat("Using:", PATHWAY_FILE, "\n")
+pathway_results <- read.csv(PATHWAY_FILE, stringsAsFactors = FALSE)
 
 # Bonferroni correction for pathways
 n_pathways <- nrow(pathway_results)
@@ -199,7 +213,7 @@ upset_df <- upset_df[rowSums(upset_df) > 0, ]
 
 cat("Genes with at least one hit:", nrow(upset_df), "\n")
 
-png(file.path(OUT_DIR, "Figure5_A_UpSet.png"),
+png(file.path(OUT_DIR, paste0("Figure5_A_UpSet", OUT_SUFFIX, ".png")),
     width = 4000, height = 3200, res = 300)
 upset(
   upset_df,
@@ -271,7 +285,7 @@ panel_b <- ggplot(summary_counts, aes(x = Category, y = Count, fill = Category))
   ) +
   ylim(0, max(summary_counts$Count) * 1.15)
 
-ggsave(file.path(OUT_DIR, "Figure5_B_Summary.png"), panel_b,
+ggsave(file.path(OUT_DIR, paste0("Figure5_B_Summary", OUT_SUFFIX, ".png")), panel_b,
        width = 12, height = 10, dpi = 300, bg = "white")
 
 cat("Panel B saved\n")
@@ -328,7 +342,7 @@ panel_c <- ggplot(density_data, aes(x = logP, fill = Group)) +
     plot.caption = element_text(size = 18, hjust = 0.5)
   )
 
-ggsave(file.path(OUT_DIR, "Figure5_C_Density.png"), panel_c,
+ggsave(file.path(OUT_DIR, paste0("Figure5_C_Density", OUT_SUFFIX, ".png")), panel_c,
        width = 14, height = 8, dpi = 300, bg = "white")
 
 cat("Panel C saved\n")
@@ -397,7 +411,7 @@ panel_d <- ggplot(scatter_df, aes(x = gwas_logP, y = magma_logP, color = highlig
   guides(color = guide_legend(nrow = 2, byrow = TRUE,
                                override.aes = list(size = 6, alpha = 1)))
 
-ggsave(file.path(OUT_DIR, "Figure5_D_Scatter.png"), panel_d,
+ggsave(file.path(OUT_DIR, paste0("Figure5_D_Scatter", OUT_SUFFIX, ".png")), panel_d,
        width = 12, height = 10, dpi = 300, bg = "white")
 
 cat("Panel D saved\n")
@@ -411,7 +425,7 @@ cat("\n=== Combining panels ===\n")
 # Use cowplot for better image handling
 # Create top row: UpSet (A) + Summary bar (B)
 panel_a_plot <- ggdraw() +
-  draw_image(file.path(OUT_DIR, "Figure5_A_UpSet.png")) +
+  draw_image(file.path(OUT_DIR, paste0("Figure5_A_UpSet", OUT_SUFFIX, ".png"))) +
   draw_label("A", x = 0.02, y = 0.98, hjust = 0, vjust = 1,
              fontface = "bold", size = 32)
 
@@ -439,10 +453,10 @@ bottom_row <- plot_grid(panel_c_plot, panel_d_plot, ncol = 2,
 fig5 <- plot_grid(top_row, bottom_row, nrow = 2,
                   rel_heights = c(1.2, 1))
 
-ggsave(file.path(OUT_DIR, "Figure5_Candidate_Genes.png"), fig5,
+ggsave(file.path(OUT_DIR, paste0("Figure5_Candidate_Genes", OUT_SUFFIX, ".png")), fig5,
        width = 24, height = 26, dpi = 300, bg = "white")
 
-ggsave(file.path(OUT_DIR, "Figure5_Candidate_Genes.pdf"), fig5,
+ggsave(file.path(OUT_DIR, paste0("Figure5_Candidate_Genes", OUT_SUFFIX, ".pdf")), fig5,
        width = 24, height = 26, bg = "white")
 
 cat("Figure 5 saved!\n")
@@ -469,7 +483,7 @@ cat("Genes in all three layers:", nrow(all_three_genes), "\n")
 # Save the table
 write.csv(
   all_three_genes,
-  file.path(OUT_DIR, "Table_Genes_All_Three_Layers.csv"),
+  file.path(OUT_DIR, paste0("Table_Genes_All_Three_Layers", OUT_SUFFIX, ".csv")),
   row.names = FALSE
 )
 

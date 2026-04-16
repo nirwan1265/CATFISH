@@ -1418,6 +1418,9 @@ BLOCK_I_CONFIG <- list(
   B_values = c(50000L, 100000L, 250000L, 500000L, 1000000L),
   thread_values = c(1L, 4L),
   rho = 0.20,
+  tau_grid = c(0.10, 0.05, 0.01),
+  min_p = 1e-15,
+  stouffer_alternative = "greater",
   n_reps = 1L,
   results_dir = "simulation_results",
   output_dir = file.path("Figures", "Fig_Benchmark")
@@ -1442,15 +1445,24 @@ BLOCK_I_CONFIG <- list(
 #' @param sigma Correlation matrix
 #' @param n_pathways Number of pathways processed in one run
 #' @param threads Number of threads for inner null calculations
+#' @param tau_grid Adaptive TFisher tau grid
+#' @param min_p Lower p clipping bound for numerical stability
+#' @param stouffer_alternative Stouffer alternative ("greater", "less", "two.sided")
 #' @param seed Random seed
 #' @return List with time and memory metrics
-run_benchmark_single <- function(m, B, sigma, n_pathways = 1L, threads = 1L, seed = 123L) {
+run_benchmark_single <- function(m, B, sigma, n_pathways = 1L, threads = 1L,
+                                 tau_grid = c(0.10, 0.05, 0.01), min_p = 1e-15,
+                                 stouffer_alternative = "greater", seed = 123L) {
   set.seed(seed)
   n_pathways <- suppressWarnings(as.integer(n_pathways))
   if (!is.finite(n_pathways) || is.na(n_pathways) || n_pathways < 1L) n_pathways <- 1L
   threads <- suppressWarnings(as.integer(threads))
   if (!is.finite(threads) || is.na(threads) || threads < 1L) threads <- 1L
   if (.Platform$OS.type == "windows") threads <- 1L
+  tau_grid <- sort(unique(as.numeric(tau_grid)))
+  tau_grid <- tau_grid[is.finite(tau_grid) & !is.na(tau_grid) & tau_grid > 0 & tau_grid < 1]
+  if (!length(tau_grid)) tau_grid <- c(0.10, 0.05, 0.01)
+  stouffer_alternative <- match.arg(stouffer_alternative, c("greater", "less", "two.sided"))
 
   # Track memory baseline (used for approximate peak delta over main steps).
   gc(reset = TRUE)
@@ -1467,29 +1479,95 @@ run_benchmark_single <- function(m, B, sigma, n_pathways = 1L, threads = 1L, see
     mem_trace <- c(mem_trace, .block_i_mem_used_mb())
 
     P_null <- pnorm(Z_null, lower.tail = FALSE)
-    P_null <- pmax(pmin(P_null, 1 - 1e-15), 1e-15)
+    P_null <- pmax(pmin(P_null, 1 - min_p), min_p)
     mem_trace <- c(mem_trace, .block_i_mem_used_mb())
 
-    # Compute ACAT + Fisher per permutation in one pass.
-    .method_row <- function(b) {
-      p_use <- P_null[b, ]
-      tan_vals <- tan((0.5 - p_use) * pi)
-      acat <- 0.5 - atan(mean(tan_vals)) / pi
-      stat <- -2 * sum(log(p_use))
-      fisher <- stats::pchisq(stat, df = 2 * length(p_use), lower.tail = FALSE)
-      c(acat = acat, fisher = fisher)
+    # Full five-component workload per null draw:
+    # ACAT, Fisher, adaptive TFisher, minP, Stouffer, then omnibus across components.
+    acat_null <- {
+      tan_vals <- tan((0.5 - P_null) * pi)
+      tstat <- rowMeans(tan_vals)
+      p <- 0.5 - atan(tstat) / pi
+      pmax(pmin(p, 1 - min_p), min_p)
     }
 
-    if (threads > 1L && B >= 1000L) {
-      method_mat <- do.call(rbind, parallel::mclapply(seq_len(B), .method_row, mc.cores = threads))
+    fisher_null <- {
+      stat <- -2 * rowSums(log(P_null))
+      p <- stats::pchisq(stat, df = 2 * ncol(P_null), lower.tail = FALSE)
+      pmax(pmin(p, 1 - min_p), min_p)
+    }
+
+    tfisher_row <- function(b) {
+      pb <- P_null[b, ]
+      pb <- pmax(pmin(pb, 1 - min_p), min_p)
+      if (length(pb) < 2L) return(NA_real_)
+
+      # Exact adaptive soft-TFisher when available; fallback approximation otherwise.
+      if (use_tfisher_pkg) {
+        best <- Inf
+        for (tau in tau_grid) {
+          st <- TFisher::stat.soft(p = pb, tau1 = tau)
+          pv <- 1 - as.numeric(TFisher::p.soft(q = st, n = length(pb), tau1 = tau, M = NULL))
+          if (is.finite(pv) && pv < best) best <- pv
+        }
+        if (is.finite(best)) {
+          return(pmax(pmin(best, 1 - min_p), min_p))
+        }
+      }
+
+      tfisher_ps <- vapply(tau_grid, function(tau) {
+        keep <- pb[pb < tau]
+        if (!length(keep)) return(1)
+        stat <- -2 * sum(log(keep))
+        stats::pchisq(stat, df = 2 * length(keep), lower.tail = FALSE)
+      }, numeric(1))
+      p_tf <- min(tfisher_ps) * length(tau_grid)
+      pmax(pmin(p_tf, 1 - min_p), min_p)
+    }
+
+    if (threads > 1L && B >= 1000L && .Platform$OS.type != "windows") {
+      tfisher_null <- unlist(parallel::mclapply(seq_len(B), tfisher_row, mc.cores = threads))
     } else {
-      method_mat <- t(vapply(seq_len(B), .method_row, numeric(2)))
+      tfisher_null <- vapply(seq_len(B), tfisher_row, numeric(1))
     }
-    acat_null <- method_mat[, "acat"]
-    fisher_null <- method_mat[, "fisher"]
+
+    minp_null <- {
+      pmin_gene <- apply(P_null, 1, min)
+      p <- 1 - (1 - pmin_gene)^ncol(P_null)
+      pmax(pmin(p, 1 - min_p), min_p)
+    }
+
+    stouffer_null <- {
+      z_st <- rowSums(Z_null) / sqrt(ncol(Z_null))
+      if (stouffer_alternative == "greater") {
+        p <- stats::pnorm(z_st, lower.tail = FALSE)
+      } else if (stouffer_alternative == "less") {
+        p <- stats::pnorm(z_st, lower.tail = TRUE)
+      } else {
+        p <- 2 * stats::pnorm(-abs(z_st))
+      }
+      pmax(pmin(p, 1 - min_p), min_p)
+    }
+
+    method_mat <- cbind(acat_null, fisher_null, tfisher_null, minp_null, stouffer_null)
+    method_mat <- pmax(pmin(method_mat, 1 - min_p), min_p)
+    tan_method <- tan((0.5 - method_mat) * pi)
+    valid_counts <- rowSums(is.finite(tan_method) & !is.na(tan_method))
+    tan_sum <- rowSums(ifelse(is.finite(tan_method) & !is.na(tan_method), tan_method, 0))
+    omni_null <- rep(NA_real_, B)
+    ok <- valid_counts > 0
+    omni_null[ok] <- 0.5 - atan(tan_sum[ok] / valid_counts[ok]) / pi
+    omni_null <- pmax(pmin(omni_null, 1 - min_p), min_p)
+
     mem_trace <- c(mem_trace, .block_i_mem_used_mb())
 
-    checksum <- checksum + sum(acat_null, na.rm = TRUE) + sum(fisher_null, na.rm = TRUE)
+    checksum <- checksum +
+      sum(acat_null, na.rm = TRUE) +
+      sum(fisher_null, na.rm = TRUE) +
+      sum(tfisher_null, na.rm = TRUE) +
+      sum(minp_null, na.rm = TRUE) +
+      sum(stouffer_null, na.rm = TRUE) +
+      sum(omni_null, na.rm = TRUE)
   }
 
   elapsed_sec <- as.numeric(proc.time()[["elapsed"]] - t_start)
@@ -1499,7 +1577,13 @@ run_benchmark_single <- function(m, B, sigma, n_pathways = 1L, threads = 1L, see
   mem_peak <- max(as.numeric(mem_peak), 0)
 
   # Keep outputs alive through timing scope and prevent accidental elision.
-  if (!is.finite(checksum) || length(acat_null) != B || length(fisher_null) != B) {
+  if (!is.finite(checksum) ||
+      length(acat_null) != B ||
+      length(fisher_null) != B ||
+      length(tfisher_null) != B ||
+      length(minp_null) != B ||
+      length(stouffer_null) != B ||
+      length(omni_null) != B) {
     stop("Block I benchmark internal size mismatch.", call. = FALSE)
   }
 
@@ -1576,6 +1660,9 @@ run_block_i <- function(config = BLOCK_I_CONFIG, reduced = FALSE) {
               B = B,
               sigma = sigma,
               threads = threads,
+              tau_grid = cfg$tau_grid,
+              min_p = cfg$min_p,
+              stouffer_alternative = cfg$stouffer_alternative,
               seed = cfg$seed + iter
             )
             res$replicate <- rep_idx
@@ -1784,7 +1871,7 @@ run_block_i <- function(config = BLOCK_I_CONFIG, reduced = FALSE) {
     scale_color_brewer(palette = "Dark2") +
     labs(
       title = "Block I: Runtime vs Resampling Budget",
-      subtitle = "Core MVN null workload (ACAT + Fisher), faceted by pathway size and number of pathways",
+      subtitle = "Full five-component omnibus workload (ACAT, Fisher, TFisher, minP, Stouffer), faceted by pathway size and number of pathways",
       x = "Number of null draws per pathway (B)",
       y = "Time (seconds)",
       color = "Threads"
@@ -1816,7 +1903,7 @@ run_block_i <- function(config = BLOCK_I_CONFIG, reduced = FALSE) {
     scale_color_brewer(palette = "Dark2") +
     labs(
       title = "Block I: Memory vs Resampling Budget",
-      subtitle = "Approximate peak resident memory during benchmarked workload",
+      subtitle = "Approximate peak resident memory during full five-component omnibus workload",
       x = "Number of null draws per pathway (B)",
       y = "Memory (MB)",
       color = "Threads"

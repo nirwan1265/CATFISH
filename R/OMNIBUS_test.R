@@ -974,6 +974,7 @@ catfish_omni2_prepare <- function(gene_results,
 catfish_omni2_run <- function(prep,
                             omnibus = c("ACAT","minP"),
                             # component wrapper params
+                            use_tfisher = TRUE,
                             do_fix = TRUE,
                             stouffer_min_abs_w = 1e-8,
                             stouffer_alternative = c("greater","two.sided","less"),
@@ -1095,21 +1096,26 @@ res$acat_p <- acat_tab$acat_p[match(res$pathway_id, acat_tab$pathway_id)]
   )
   res$fisher_p <- fish_tab$fisher_p[match(res$pathway_id, fish_tab$pathway_id)]
 
-  tf_tab <- tfisher_fun(
-  gene_results = gene_df,
-  pathways     = pw_list,
-  gene_col     = prep$gene_col,
-  p_col        = prep$p_use_col,
-  tau_grid     = prep$tau_grid,
-  min_p        = prep$min_p,
-  do_fix       = isTRUE(do_fix),
-  output       = FALSE
-)
+  # TFisher (optional - can be disabled with use_tfisher = FALSE)
+  res$tfisher_p_analytic <- NA_real_
+  res$tau_hat            <- NA_real_
+  res$tfisher_stat_hat   <- NA_real_
 
-res$tfisher_p_analytic <- tf_tab$tfisher_p_omni[match(res$pathway_id, tf_tab$pathway_id)]
-res$tau_hat            <- tf_tab$tau_hat[match(res$pathway_id, tf_tab$pathway_id)]
-res$tfisher_stat_hat   <- tf_tab$tfisher_stat_hat[match(res$pathway_id, tf_tab$pathway_id)]
-
+  if (isTRUE(use_tfisher)) {
+    tf_tab <- tfisher_fun(
+      gene_results = gene_df,
+      pathways     = pw_list,
+      gene_col     = prep$gene_col,
+      p_col        = prep$p_use_col,
+      tau_grid     = prep$tau_grid,
+      min_p        = prep$min_p,
+      do_fix       = isTRUE(do_fix),
+      output       = FALSE
+    )
+    res$tfisher_p_analytic <- tf_tab$tfisher_p_omni[match(res$pathway_id, tf_tab$pathway_id)]
+    res$tau_hat            <- tf_tab$tau_hat[match(res$pathway_id, tf_tab$pathway_id)]
+    res$tfisher_stat_hat   <- tf_tab$tfisher_stat_hat[match(res$pathway_id, tf_tab$pathway_id)]
+  }
 
 minp_tab <- minp_fun(
   gene_results     = gene_df,
@@ -1168,9 +1174,12 @@ if (!is.null(prep$z_col)) {
   res$omni_p_analytic <- vapply(seq_len(nrow(res)), function(i) {
     comps <- c(res$acat_p[i],
                res$fisher_p[i],
-               res$tfisher_p_analytic[i],
                res$minp_p_analytic[i],
                res$stouffer_p_analytic[i])
+    # Include TFisher only if enabled
+    if (isTRUE(use_tfisher) && is.finite(res$tfisher_p_analytic[i])) {
+      comps <- c(comps, res$tfisher_p_analytic[i])
+    }
     if (isTRUE(include_magma_eff) && is.finite(res$magma_pvalue[i])) comps <- c(comps, res$magma_pvalue[i])
     .catfish_omni_methods(comps, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
   }, numeric(1))
@@ -1470,25 +1479,28 @@ if (!is.null(prep$z_col)) {
 
       pF_null <- stats::pchisq(-2 * rowSums(log(P)), df = 2 * ncol(P), lower.tail = FALSE)
 
-      # TFisher null - expensive, parallelize
-      if (!requireNamespace("TFisher", quietly = TRUE)) stop("TFisher required for omnibus TFisher null.", call. = FALSE)
+      # TFisher null - expensive, parallelize (only if use_tfisher = TRUE)
+      pT_null <- rep(NA_real_, B_mvn)
+      if (isTRUE(use_tfisher)) {
+        if (!requireNamespace("TFisher", quietly = TRUE)) stop("TFisher required for omnibus TFisher null.", call. = FALSE)
 
-      .compute_tfisher_null_b <- function(b) {
-        pb <- .catfish_fix_p(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix))
-        if (length(pb) < 2L) return(NA_real_)
-        best <- Inf
-        for (tau in prep$tau_grid) {
-          st <- TFisher::stat.soft(p = pb, tau1 = tau)
-          pv <- 1 - as.numeric(TFisher::p.soft(q = st, n = length(pb), tau1 = tau, M = NULL))
-          if (is.finite(pv) && pv < best) best <- pv
+        .compute_tfisher_null_b <- function(b) {
+          pb <- .catfish_fix_p(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix))
+          if (length(pb) < 2L) return(NA_real_)
+          best <- Inf
+          for (tau in prep$tau_grid) {
+            st <- TFisher::stat.soft(p = pb, tau1 = tau)
+            pv <- 1 - as.numeric(TFisher::p.soft(q = st, n = length(pb), tau1 = tau, M = NULL))
+            if (is.finite(pv) && pv < best) best <- pv
+          }
+          best
         }
-        best
-      }
 
-      if (use_parallel) {
-        pT_null <- unlist(parallel::mclapply(seq_len(B_mvn), .compute_tfisher_null_b, mc.cores = n_threads))
-      } else {
-        pT_null <- vapply(seq_len(B_mvn), .compute_tfisher_null_b, numeric(1))
+        if (use_parallel) {
+          pT_null <- unlist(parallel::mclapply(seq_len(B_mvn), .compute_tfisher_null_b, mc.cores = n_threads))
+        } else {
+          pT_null <- vapply(seq_len(B_mvn), .compute_tfisher_null_b, numeric(1))
+        }
       }
 
       pM_null <- {
@@ -1921,6 +1933,7 @@ catfish_omni2_pathways <- function(gene_results,
                                  min_p = 1e-50,
                                  min_genes = 2L,
                                  # component knobs
+                                 use_tfisher = TRUE,
                                  do_fix = TRUE,
                                  stouffer_min_abs_w = 1e-8,
                                  stouffer_alternative = c("greater","two.sided","less"),
@@ -2071,6 +2084,7 @@ catfish_omni2_pathways <- function(gene_results,
   catfish_omni2_run(
     prep = prep,
     omnibus = omnibus,
+    use_tfisher = use_tfisher,
     do_fix = do_fix,
     stouffer_min_abs_w = stouffer_min_abs_w,
     stouffer_alternative = stouffer_alternative,

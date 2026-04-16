@@ -40,9 +40,16 @@ sorghum_catfish_results/stouffer/
 sorghum_catfish_results/minp/
 sorghum_catfish_results/tfisher/
 sorghum_catfish_results/omnibus/
+sorghum_catfish_results/figures/
+sorghum_catfish_results/*_strict_tau.csv
+sorghum_catfish_results/*_strict_tau.png
+sorghum_catfish_results/*_strict_tau.pdf
+sorghum_catfish_results/*_tau*.csv
+arabidopsis_catfish_results/*_strict_tau.csv
 sorghum_catfish_results/*_gwas_filtered.txt
 sorghum_catfish_results/*_genes_combined.txt
 sorghum_catfish_results/*_gene_cor_pairs.txt
+Figures/Fig_Sorghum_Component_Tests/
 *.bed
 *.bim
 *.fam
