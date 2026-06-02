@@ -399,6 +399,227 @@ plot_metric_heatmap <- function(summary_df, value_col, title, fill_limits,
   }
 }
 
+block_a_method_colors <- c(
+  "ACAT" = "#E41A1C",
+  "Fisher" = "#377EB8",
+  "TFisher" = "#4DAF4A",
+  "minP" = "#984EA3",
+  "Stouffer" = "#FF7F00",
+  "Omnibus" = "#222222"
+)
+
+compact_archetype_labels <- c(
+  "Archetype I - SDA" = "Type I",
+  "Archetype II - CME" = "Type II",
+  "Archetype III - DPS" = "Type III",
+  "Archetype IV - HDS" = "Type IV",
+  "Archetype V - SGP" = "Type V"
+)
+
+build_block_a_by_m_compact_summary <- function(summary_by_m) {
+  power_best <- summary_by_m %>%
+    group_by(pathway_size, archetype) %>%
+    arrange(desc(power), method) %>%
+    slice(1) %>%
+    ungroup() %>%
+    transmute(
+      pathway_size,
+      archetype,
+      metric = "Power",
+      best_method = method,
+      value = power,
+      label = sprintf("%.2f\n%s", power, method)
+    )
+
+  rank_best <- summary_by_m %>%
+    group_by(pathway_size, archetype) %>%
+    arrange(mean_rank, method) %>%
+    slice(1) %>%
+    ungroup() %>%
+    transmute(
+      pathway_size,
+      archetype,
+      metric = "Mean rank",
+      best_method = method,
+      value = mean_rank,
+      label = sprintf("%.2f\n%s", mean_rank, method)
+    )
+
+  top_best <- summary_by_m %>%
+    group_by(pathway_size, archetype) %>%
+    arrange(desc(top_probability), method) %>%
+    slice(1) %>%
+    ungroup() %>%
+    transmute(
+      pathway_size,
+      archetype,
+      metric = "Top method",
+      best_method = method,
+      value = top_probability,
+      label = sprintf("%.2f\n%s", top_probability, method)
+    )
+
+  bind_rows(power_best, rank_best, top_best) %>%
+    mutate(
+      pathway_size = factor(pathway_size, levels = c(50, 20, 5), labels = c("G=50", "G=20", "G=5")),
+      archetype_short = factor(
+        compact_archetype_labels[as.character(archetype)],
+        levels = c("Type I", "Type II", "Type III", "Type IV", "Type V")
+      ),
+      metric = factor(metric, levels = c("Power", "Mean rank", "Top method")),
+      x_group = interaction(archetype_short, metric, lex.order = TRUE),
+      best_method = factor(best_method, levels = names(block_a_method_colors))
+    )
+}
+
+plot_block_a_by_m_compact <- function(summary_by_m) {
+  compact_df <- build_block_a_by_m_compact_summary(summary_by_m)
+
+  ggplot(compact_df, aes(x = x_group, y = pathway_size, fill = best_method)) +
+    geom_tile(color = "white", linewidth = 0.6) +
+    geom_text(aes(label = label), size = 4.2, fontface = "bold", lineheight = 0.95) +
+    facet_grid(~ archetype_short, scales = "free_x", space = "free_x", switch = "x") +
+    scale_fill_manual(values = block_a_method_colors, drop = FALSE) +
+    labs(
+      x = NULL,
+      y = NULL,
+      fill = "Winning method",
+      title = "Pathway-size sensitivity of archetype verification",
+      subtitle = "Each cell shows the best summary for that G x archetype setting:\nPower = highest power, Mean rank = lowest mean rank, Top method = highest top-method probability"
+    ) +
+    scale_x_discrete(labels = rep(c("Power", "Mean rank", "Top method"), 5)) +
+    block_a_theme +
+    theme(
+      strip.placement = "outside",
+      strip.background = element_blank(),
+      strip.text.x = element_text(face = "bold", size = 18),
+      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 14),
+      axis.text.y = element_text(face = "bold", size = 16),
+      panel.spacing.x = unit(0.8, "lines"),
+      legend.position = "top",
+      legend.title = element_text(face = "bold", size = 16),
+      legend.text = element_text(size = 14)
+    )
+}
+
+write_block_a_by_m_compact <- function(
+    summary_csv = file.path("simulation_results", "block_a_archetype_summary_by_m.csv"),
+    results_dir = "simulation_results",
+    supp_dir = file.path("fig", "supp")) {
+  if (!file.exists(summary_csv)) {
+    stop("Could not find summary file: ", summary_csv, call. = FALSE)
+  }
+
+  dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
+  dir.create(supp_dir, recursive = TRUE, showWarnings = FALSE)
+
+  summary_by_m <- read.csv(summary_csv, stringsAsFactors = FALSE)
+  compact_plot <- plot_block_a_by_m_compact(summary_by_m)
+
+  results_path <- file.path(results_dir, "block_a_archetype_recovery_by_m_compact.png")
+  supp_path <- file.path(supp_dir, "SuppFig2_block_a_archetype_recovery_by_m_compact.png")
+
+  ggsave(results_path, compact_plot, width = 18, height = 7.5, dpi = 300, bg = "white")
+  ggsave(supp_path, compact_plot, width = 18, height = 7.5, dpi = 300, bg = "white")
+
+  invisible(list(
+    plot = compact_plot,
+    results_path = results_path,
+    supp_path = supp_path
+  ))
+}
+
+write_block_a_by_m_tables <- function(
+    summary_csv = file.path("simulation_results", "block_a_archetype_summary_by_m.csv"),
+    tables_dir = file.path("fig", "supp", "tables")) {
+  if (!file.exists(summary_csv)) {
+    stop("Could not find summary file: ", summary_csv, call. = FALSE)
+  }
+
+  dir.create(tables_dir, recursive = TRUE, showWarnings = FALSE)
+
+  summary_by_m <- read.csv(summary_csv, stringsAsFactors = FALSE)
+  compact_df <- build_block_a_by_m_compact_summary(summary_by_m) %>%
+    dplyr::select(pathway_size, archetype_short, metric, best_method, value) %>%
+    dplyr::mutate(
+      value = dplyr::case_when(
+        metric == "Mean rank" ~ sprintf("%.2f", value),
+        TRUE ~ sprintf("%.2f", value)
+      )
+    )
+
+  compact_wide <- compact_df %>%
+    tidyr::pivot_wider(
+      names_from = metric,
+      values_from = c(best_method, value),
+      names_glue = "{metric}_{.value}"
+    ) %>%
+    dplyr::rename(
+      G = pathway_size,
+      Archetype = archetype_short
+    ) %>%
+    dplyr::arrange(factor(G, levels = c("G=5", "G=20", "G=50")), Archetype)
+
+  compact_csv <- file.path(tables_dir, "TableS_Archetype_Verification_ByG_Compact.csv")
+  full_csv <- file.path(tables_dir, "TableS_Archetype_Verification_ByG_Full.csv")
+  latex_path <- file.path(tables_dir, "TableS_Archetype_Verification_ByG_Compact.tex")
+
+  utils::write.csv(compact_wide, compact_csv, row.names = FALSE)
+
+  full_export <- summary_by_m %>%
+    dplyr::mutate(
+      G = paste0("G=", pathway_size),
+      Archetype = compact_archetype_labels[archetype]
+    ) %>%
+    dplyr::select(G, Archetype, method, power, mean_rank, top_probability, median_p)
+  utils::write.csv(full_export, full_csv, row.names = FALSE)
+
+  latex_lines <- c(
+    "\\begin{table*}[!t]",
+    "\\centering",
+    "\\caption{Compact summary of fixed-parameter archetype verification across pathway sizes. For each pathway size (G) and archetype, entries report the best-performing method for power, mean rank, and top-method probability, together with the corresponding value.}",
+    "\\label{tab:supp_archetype_verification_byG}",
+    "\\small",
+    "\\begin{tabular}{llcccccc}",
+    "\\hline",
+    "G & Archetype & Power method & Power & Rank method & Mean rank & Top method & Top prob.\\\\",
+    "\\hline"
+  )
+
+  for (i in seq_len(nrow(compact_wide))) {
+    row <- compact_wide[i, ]
+    latex_lines <- c(
+      latex_lines,
+      sprintf(
+        "%s & %s & %s & %s & %s & %s & %s & %s\\\\",
+        row$G,
+        row$Archetype,
+        row$Power_best_method,
+        row$Power_value,
+        row$`Mean rank_best_method`,
+        row$`Mean rank_value`,
+        row$`Top method_best_method`,
+        row$`Top method_value`
+      )
+    )
+  }
+
+  latex_lines <- c(
+    latex_lines,
+    "\\hline",
+    "\\end{tabular}",
+    "\\end{table*}"
+  )
+
+  writeLines(latex_lines, latex_path)
+
+  invisible(list(
+    compact_csv = compact_csv,
+    full_csv = full_csv,
+    latex = latex_path
+  ))
+}
+
 run_block_a <- function(config = BLOCK_A_CONFIG) {
   dir.create(config$results_dir, recursive = TRUE, showWarnings = FALSE)
   if (isTRUE(config$save_to_ind_figs)) {
