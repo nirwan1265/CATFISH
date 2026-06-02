@@ -432,3 +432,203 @@ DGRP_chilipeppers/
     ├── TG_*.txt                # Triglyceride traits
     └── *_capsaicin.txt         # Capsaicin contrast traits
 ```
+
+---
+
+## Arabidopsis TuMV (Turnip Mosaic Virus) Project (April 2026)
+
+### Overview
+
+GWAS and CATFISH pathway analysis of *Arabidopsis thaliana* response to Turnip Mosaic Virus infection.
+
+**Location:** `/Users/nirwantandukar/Documents/Research/results/GWAS/CATFISH/arabidopsis/`
+
+### Phenotypes
+
+- **TuMV_G_14** - Viral symptom severity at day 14 (G = symptom grade)
+- **TuMV_G_21** - Viral symptom severity at day 21
+- **TuMV_S_14** - (not analyzed yet)
+- **TuMV_S_21** - (not analyzed yet)
+
+### Analysis Completed
+
+**MAGMA gene analysis** ✅
+- 5 chromosomes per phenotype
+- 28,435 genes per trait
+- Gene correlation pairs extracted for MVN resampling
+
+**CATFISH pathway analysis** ✅
+- B = 100,000 permutations
+- 264 AraCyc pathways tested
+- 8 threads, GPD tail extrapolation
+
+### Results Summary
+
+| Trait | FDR < 0.05 | Bonferroni | MAGMA-sig genes |
+|-------|------------|------------|-----------------|
+| TuMV_G_14 | 13 pathways | 11 pathways | 8 genes |
+| TuMV_G_21 | 2 pathways | 2 pathways | 4 genes |
+
+**Top pathways (TuMV_G_14):**
+1. cyanide detoxification I (p = 4.93e-17)
+2. L-cysteine biosynthesis I (p = 1.09e-09)
+3. volatile benzenoid biosynthesis I (p = 1.30e-08)
+4. guanosine nucleotides degradation II (p = 2.74e-07)
+
+**Top pathways (TuMV_G_21):**
+1. choline biosynthesis III (p = 3.35e-06)
+2. L-cysteine biosynthesis I (p = 2.51e-05)
+
+### Candidate Genes
+
+All MAGMA-significant genes are in a tight cluster on **chromosome 2**:
+
+| Gene | TuMV_G_14 P-value | TuMV_G_21 P-value |
+|------|-------------------|-------------------|
+| AT2G14095 | 2.44e-14 | 1.10e-09 |
+| AT2G14080 | 2.49e-14 | 4.39e-09 |
+| AT2G14100 | 5.34e-14 | 3.27e-10 |
+| AT2G14070 | 1.20e-12 | 1.69e-08 |
+| AT2G14110 | 7.56e-09 | - |
+| AT2G14115 | 1.27e-08 | - |
+| AT2G14120 | 8.34e-08 | - |
+| AT2G14060 | 5.25e-07 | - |
+
+This cluster suggests a single causal locus with LD spreading across adjacent genes.
+
+### Files
+
+```
+arabidopsis/
+├── run_catfish_TuMV.R                    # Main analysis script
+├── figure_TuMV_validation.R              # Figure generation script
+├── TuMV_validation_summary.txt           # Validation story write-up
+├── TuMV_G_14_validation_figure.png/pdf   # 4-panel validation figure
+├── TuMV_G_14_CATFISH_B1e+05.csv          # Pathway results (264 pathways)
+├── TuMV_G_14_candidate_genes_top200.csv  # Top 200 candidate genes
+├── TuMV_G_14_candidate_genes_scored.csv  # All scored genes
+├── TuMV_G_21_CATFISH_B1e+05.csv
+├── TuMV_G_21_candidate_genes_top200.csv
+├── TuMV_G_21_candidate_genes_scored.csv
+├── TuMV_*.txt                            # GWAS summary stats
+├── validate_arabidopsis/                 # Validation papers (PDFs)
+└── magma_genes/
+    ├── TuMV_G_14_chr*.genes.out          # MAGMA output per chromosome
+    ├── TuMV_G_14_genes_combined.txt      # Combined gene results
+    ├── TuMV_G_14_gene_cor_pairs.txt      # Gene correlations for MVN
+    ├── TuMV_G_21_chr*.genes.out
+    ├── TuMV_G_21_genes_combined.txt
+    └── TuMV_G_21_gene_cor_pairs.txt
+```
+
+### Independent Validation
+
+**Key finding:** Our candidate genes were independently validated by a separate paper!
+
+- **Our GWAS:** Used symptom severity phenotypes (TuMV_G_14, TuMV_G_21)
+- **Validation paper:** "Genetic basis of Arabidopsis thaliana responses to infection by naïve and adapted isolates of turnip mosaic virus"
+- **Result:** Validated 2 genes from our AT2G14xxx cluster using different phenotypes
+
+This is strong evidence because:
+1. Different phenotypes → same causal region
+2. Same virus system (TuMV)
+3. Same 1001 Genomes resource
+4. Consistent across timepoints (day 14 and day 21)
+
+### Figures Generated
+
+- `TuMV_G_14_validation_figure.png/pdf` - 4-panel figure:
+  - A. GWAS Manhattan (3.3M SNPs)
+  - B. MAGMA Manhattan (validated genes in red)
+  - C. Top 15 pathways bubble plot
+  - D. Top 20 candidate genes with scores
+- `TuMV_validation_summary.txt` - Full validation write-up
+
+### Notes
+
+- Cyanide/cysteine pathways are classic plant defense responses - biologically relevant for viral infection
+- Gene-pathway matching returned 0 matches due to ID mismatch (AraCyc uses gene names like "GAMT2", MAGMA uses "AT" locus IDs)
+- Could re-run with `gene_col = "Gene-id"` in pathway loading to fix this
+- Day 14 shows stronger signal than day 21 (more pathways, more genes)
+
+---
+
+## Maize Nitrogen CATFISH Analysis (May 2026)
+
+### Overview
+
+CATFISH pathway analysis of maize nitrogen use efficiency.
+
+**Location:** `/Users/nirwantandukar/Documents/Research/results/GWAS/CATFISH/maize_nitrogen/`
+
+**MAGMA results:** `/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/`
+
+### Key Details
+
+- **Sample size:** N = 3,107
+- **Genes tested:** 34,873
+- **Pathways tested:** 427 (CornCyc)
+- **Permutations:** B = 100,000 with GPD tail extrapolation
+
+### 3-Layer Scoring Pipeline
+
+This analysis established the full 3-layer scoring methodology:
+
+**Layer 1 - GWAS:** Uses `P_SNPWISE_TOP1` (best SNP p-value in gene)
+**Layer 2 - MAGMA:** Uses `P` (gene-level multi-SNP model)
+**Layer 3 - Pathway:** Membership in significant pathways (FDR < 0.10)
+
+**Scoring Formula:**
+```
+score = -log10(gwas_rank/n) + -log10(magma_rank/n) + pathway_bonus
+```
+
+**Pathway Bonus (Multi-Pathway Boost):**
+```
+base_bonus = 0.1 × log2(n_all_pathways + 1)      # Any pathway
+sig_bonus = (-log10(best_p)/10) × log2(n_sig_pathways + 1)  # Significant pathways
+```
+
+This rewards:
+1. Genes in ANY annotated pathway (biological function known)
+2. Genes in SIGNIFICANT pathways (trait-relevant)
+3. Genes in MULTIPLE pathways (hub genes, stronger evidence)
+
+### Results
+
+**Top Pathways:**
+| Pathway | P-value |
+|---------|---------|
+| Glutathione biosynthesis | 8.59e-08 |
+| Glycine biosynthesis III | 1.14e-06 |
+| L-homoserine biosynthesis | 2.02e-06 |
+
+**Layer Support:**
+- 3-layer: 1 gene (Zm00001eb220040)
+- 2-layer: 4 genes
+- 1-layer: 182 genes
+
+**Top Candidate:** Zm00001eb220040 (Chr 5, score 8.84)
+- 3-layer support (GWAS + MAGMA + Pathway)
+- In 2 significant pathways
+
+### Files
+
+```
+maize_nitrogen/
+├── README.md                              # Full documentation
+├── run_catfish_maize_N.R                  # CATFISH analysis script
+├── calculate_scores_3layer.R             # 3-layer scoring script
+├── maize_N_CATFISH_B1e+05_GPD.csv         # Pathway results
+├── maize_N_candidate_genes_3layer_scored.csv  # All genes scored
+├── maize_N_candidate_genes_3layer_top200.csv  # Top 200
+├── maize_N_genes_in_sig_pathways.csv      # Genes in sig pathways
+└── magma_gene_cor_pairs_maize_N.txt       # Gene correlations
+```
+
+### Notes
+
+- Signals are weaker than sorghum/arabidopsis (no Bonferroni-significant genes)
+- Used relaxed thresholds: GWAS < 1e-5, MAGMA < 1e-4
+- Top candidates cluster on chromosome 5 (22-141 Mb region)
+- Used default tau grid (appropriate for weaker signals)

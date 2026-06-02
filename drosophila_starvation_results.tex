@@ -1,0 +1,174 @@
+% ==============================================================================
+% Drosophila melanogaster Starvation Resistance - CATFISH Results
+% ==============================================================================
+% Data from: candidate_gene_analysis_fly_female.R and candidate_gene_analysis_fly_male.R
+% Trait: Starvation resistance (male and female)
+% ==============================================================================
+
+\documentclass[11pt]{article}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{geometry}
+\usepackage{caption}
+\usepackage{array}
+
+\geometry{margin=0.75in}
+
+\begin{document}
+
+\section*{Top Candidate Genes - Drosophila Starvation Resistance}
+
+\subsection*{Scoring Formula}
+
+\begin{equation}
+\text{score} = \underbrace{(\text{hit}_{\text{gwas}} + \text{hit}_{\text{magma}} + \text{hit}_{\text{pathway}})}_{\text{layer indicators (0 or 1)}} + 0.2 \cdot (-\log_{10} p_{\text{magma}}) + 0.1 \cdot (-\log_{10} p_{\text{gwas}}) + 0.1 \cdot (-\log_{10} p_{\text{pathway}})
+\end{equation}
+
+\vspace{0.5cm}
+
+% ==============================================================================
+% FEMALE Top Candidate Genes Table
+% ==============================================================================
+
+\subsection*{Female Starvation Resistance}
+
+\begin{table}[h!]
+\centering
+\caption{Top Candidate Genes - Fly Female Starvation}
+\small
+\begin{tabular}{clccccccc}
+\toprule
+\textbf{Rank} & \textbf{Gene} & \textbf{MAGMA P} & \textbf{FDR} & \textbf{GWAS P} & \textbf{SNPs} & \textbf{Pathways} & \textbf{Layers} & \textbf{Score} \\
+\midrule
+\multicolumn{9}{l}{\textit{3-Layer Support (GWAS + MAGMA + Pathway)}} \\
+1 & FBgn0015781 & 2.56e-04 & 0.403 & 3.78e-06 & 1118 & 1 & 3 & 4.37 \\
+2 & FBgn0036622 & 7.45e-03 & 0.701 & 1.10e-05 & 649 & 1 & 3 & 4.02 \\
+3 & FBgn0036623 & 8.22e-03 & 0.705 & 1.10e-05 & 666 & 1 & 3 & 4.01 \\
+\midrule
+\multicolumn{9}{l}{\textit{2-Layer Support (GWAS + MAGMA)}} \\
+4 & FBgn0030904 & 1.23e-05 & 0.077 & 2.22e-07 & 802 & -- & 2 & 3.65 \\
+5 & FBgn0034479 & 8.41e-06 & 0.077 & 1.68e-06 & 836 & -- & 2 & 3.59 \\
+6 & FBgn0038673 & 1.67e-04 & 0.403 & 3.78e-06 & 1095 & -- & 2 & 3.30 \\
+7 & FBgn0038672 & 2.00e-04 & 0.403 & 3.78e-06 & 1093 & -- & 2 & 3.28 \\
+8 & FBgn0027785 & 2.19e-04 & 0.403 & 3.78e-06 & 1096 & -- & 2 & 3.27 \\
+9 & FBgn0038674 & 2.38e-04 & 0.403 & 3.78e-06 & 1121 & -- & 2 & 3.27 \\
+10 & FBgn0053639 & 1.02e-03 & 0.701 & 2.22e-07 & 792 & -- & 2 & 3.26 \\
+\bottomrule
+\end{tabular}
+\label{tab:female_genes}
+\end{table}
+
+\begin{table}[h!]
+\centering
+\caption{Pathways for Female 3-Layer Genes}
+\begin{tabular}{lll}
+\toprule
+\textbf{Gene} & \textbf{Pathway ID} & \textbf{Pathway Name} \\
+\midrule
+FBgn0015781 & FLYCYC:ARG-PRO-PWY & Arginine and proline metabolism \\
+FBgn0036622 & FLYCYC:PWY-7250 & Fatty acid biosynthesis \\
+FBgn0036623 & FLYCYC:PWY-7250 & Fatty acid biosynthesis \\
+\bottomrule
+\end{tabular}
+\label{tab:female_pathways}
+\end{table}
+
+\vspace{1cm}
+
+% ==============================================================================
+% MALE Top Candidate Genes Table
+% ==============================================================================
+
+\subsection*{Male Starvation Resistance}
+
+\begin{table}[h!]
+\centering
+\caption{Top Candidate Genes - Fly Male Starvation}
+\small
+\begin{tabular}{clccccccc}
+\toprule
+\textbf{Rank} & \textbf{Gene} & \textbf{MAGMA P} & \textbf{FDR} & \textbf{GWAS P} & \textbf{SNPs} & \textbf{Pathways} & \textbf{Layers} & \textbf{Score} \\
+\midrule
+\multicolumn{9}{l}{\textit{3-Layer Support (GWAS + MAGMA + Pathway)}} \\
+1 & FBgn0000109 & 6.12e-04 & 0.657 & 1.21e-07 & 1090 & 1 & 3 & 4.42 \\
+2 & FBgn0032234 & 1.95e-03 & 0.657 & 6.69e-06 & 859 & 1 & 3 & 4.14 \\
+\midrule
+\multicolumn{9}{l}{\textit{2-Layer Support (GWAS + MAGMA)}} \\
+3 & FBgn0035290 & 3.35e-04 & 0.657 & 1.21e-07 & 1549 & -- & 2 & 3.39 \\
+4 & FBgn0052296 & 5.56e-04 & 0.657 & 1.92e-07 & 2090 & -- & 2 & 3.32 \\
+5 & FBgn0262624 & 8.91e-04 & 0.657 & 1.21e-07 & 1214 & -- & 2 & 3.30 \\
+6 & FBgn0264606 & 1.85e-03 & 0.657 & 1.92e-07 & 2562 & -- & 2 & 3.22 \\
+7 & FBgn0033516 & 4.80e-04 & 0.657 & 2.91e-06 & 896 & -- & 2 & 3.22 \\
+8 & FBgn0036405 & 4.46e-04 & 0.657 & 4.49e-06 & 1110 & -- & 2 & 3.20 \\
+9 & FBgn0283503 & 4.54e-04 & 0.657 & 4.49e-06 & 1085 & -- & 2 & 3.20 \\
+10 & FBgn0036406 & 5.21e-04 & 0.657 & 4.49e-06 & 1114 & -- & 2 & 3.19 \\
+\midrule
+\multicolumn{9}{l}{\textit{2-Layer Support (MAGMA + Pathway)}} \\
+19 & FBgn0050005 & 5.92e-03 & 0.690 & 1.00e-05 & 1149 & 1 & 2 & 3.05 \\
+20 & FBgn0050000 & 5.99e-03 & 0.690 & 1.00e-05 & 1169 & 1 & 2 & 3.05 \\
+\bottomrule
+\end{tabular}
+\label{tab:male_genes}
+\end{table}
+
+\begin{table}[h!]
+\centering
+\caption{Pathways for Male 3-Layer and Pathway-Supported Genes}
+\begin{tabular}{lll}
+\toprule
+\textbf{Gene} & \textbf{Pathway ID} & \textbf{Pathway Name} \\
+\midrule
+FBgn0000109 & FLYCYC:PWY66-162 & Ethanol degradation pathway \\
+FBgn0032234 & FLYCYC:PWY0-1301 & Melatonin degradation \\
+FBgn0050005 & FLYCYC:PWY-7942 & Acetoin biosynthesis \\
+FBgn0050000 & FLYCYC:PWY-7942 & Acetoin biosynthesis \\
+\bottomrule
+\end{tabular}
+\label{tab:male_pathways}
+\end{table}
+
+\vspace{1cm}
+
+% ==============================================================================
+% Layer Thresholds
+% ==============================================================================
+
+\subsection*{Layer Definitions}
+
+\begin{table}[h!]
+\centering
+\caption{Evidence Layer Thresholds Used}
+\begin{tabular}{llll}
+\toprule
+\textbf{Layer} & \textbf{Mode} & \textbf{Female} & \textbf{Male} \\
+\midrule
+GWAS & Top percentile & Top 1\% & Top 1\% \\
+MAGMA & Top percentile & Top 5\% & Top 5\% \\
+Pathway & Top K & Top 20 pathways & Top 10 pathways \\
+\bottomrule
+\end{tabular}
+\label{tab:thresholds}
+\end{table}
+
+% ==============================================================================
+% Summary
+% ==============================================================================
+
+\subsection*{Summary}
+
+\begin{table}[h!]
+\centering
+\caption{Layer Support Summary}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Support Level} & \textbf{Female} & \textbf{Male} \\
+\midrule
+3-layer (GWAS + MAGMA + Pathway) & 3 genes & 2 genes \\
+2-layer (GWAS + MAGMA) & many & many \\
+2-layer (MAGMA + Pathway) & 0 & 2 genes \\
+\bottomrule
+\end{tabular}
+\label{tab:summary}
+\end{table}
+
+\end{document}
