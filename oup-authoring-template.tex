@@ -165,36 +165,82 @@ We divide pathway signals into a set of archetypes that describe different ways 
     \label{fig:archetypes_rankcurves}
 \end{figure*}
 
-% \subsubsection{1.2.1.1 Archetype I --- Sparse Driver Architecture (SSS)}
-\subsubsection{1.2.1.1 Archetype I --- Strong sparse Signal (SSS)}
 
-Strong sparse Signal (SSS) describes pathway patterns in which the overall signal is dominated by a small subset of strongly associated genes, while the majority of genes within the pathway exhibit behavior consistent with the null hypothesis. Under SSS there exists a subset of genes with extremely small ordered $p$-values, $p_{(1)}, \dots, p_{(K)} \ll \alpha$, followed by a large collection of genes whose $p$-values, $p_{(K+1)}, \dots, p_{(G)}$, are approximately distributed as $\mathrm{Uniform}(0,1)$. The ranked gene-level $p$-value curve therefore shows a pronounced elbow (Fig. \ref{fig:archetypes_rankcurves}A) that suggests the association is driven by a small number of genes rather than widespread enrichment across the entire pathway.
+\subsubsection{1.2.1.1 Archetype I --- Strong Sparse Signal (SSS)}
 
-From a biological perspective, SSS is expected when the behavior of a pathway is governed predominantly by one or a small number of bottleneck genes, such as a committed-step enzyme, a rate-limiting regulatory factor, or an essential transporter, such that genetic effects are concentrated at a limited set of key control points \citep{MorenoSanchez2008, Naz2023, Tanner2018, Song2020}. A canonical example is aspartokinase in the aspartate-derived amino acid biosynthetic pathway. This pathway converts aspartate into the essential amino acids lysine, threonine, methionine, and isoleucine \citep{Galili2011}. Its initial reaction is catalyzed by aspartokinase, which phosphorylates aspartate to generate aspartyl-phosphate \citep{Hasenoehrl2019}. As this enzyme functions at the entry point of a branched pathway, variation in its activity can influence flux across the entire network, whereas the effects of many downstream enzymes are more distributed or buffered. This network architecture is therefore expected to produce a sparse association pattern in which one or a few genes exhibit very strong signals, while the majority of genes remain close to null. Within CATFISH, pathways of the SSS type are most efficiently detected by ACAT and minP.
+Strong Sparse Signal (SSS) describes pathways where a small subset of genes carries most of the association evidence and the rest are near null. In the ranked gene-level profile, this appears as one or a few extremely small ordered $p$-values followed by a sharp drop toward null-like behavior (Fig. \ref{fig:archetypes_rankcurves}A; Table \ref{tab:archetype_summary}). Thus, SSS reflects pathway-level signal driven by a few high-evidence genes rather than broad pathway-wide enrichment.
 
-\subsubsection{1.2.1.2 Archetype II --- Moderate dense signal (MDS)}
+SSS is expected when pathway behavior is controlled by one or a few bottleneck genes, such as a committed-step enzyme, rate-limiting regulator, or essential transporter \citep{MorenoSanchez2008, Naz2023, Tanner2018, Song2020}. A representative example is aspartokinase in the aspartate-derived amino acid biosynthetic pathway, which produces lysine, threonine, methionine, and isoleucine from aspartate \citep{Galili2011}. Aspartokinase catalyzes the entry reaction by phosphorylating aspartate to aspartyl-phosphate \citep{Hasenoehrl2019}. Variation at this enzyme can generate a strong localized signal while many downstream genes remain buffered or near null. Within CATFISH, SSS-type pathways are expected to be detected most efficiently by ACAT and minP.
 
-Moderate dense signal (MDS) refers to architectures in which a large number of genes exhibit modest yet non-negligible statistical associations, without any single gene exerting a disproportionately strong influence on the overall signal. Here, we assume a substantial proportion of genes attain moderately small $p$-values, typically on the order of $10^{-3}$ to $0.05$, and the most highly ranked genes are not several orders of magnitude more significant than the bulk of the distribution. Consequently, the ordered gene-level $p$-value profile is characterized by a broad shoulder, indicating a diffuse enrichment pattern  (Fig. \ref{fig:archetypes_rankcurves}B).
+\subsubsection{1.2.1.2 Archetype II --- Moderate Dense Signal (MDS)}
 
-From a biological standpoint, MDS is most likely in pathways whose output reflects the collective behavior of many interacting components rather than a single dominant effector. Cytokine-driven immune signaling is a canonical example. Cytokine activity is shaped by redundancy and pleiotropy, with related ligands often sharing receptors, downstream signaling modules, and overlapping transcriptional programs, while the overall output is further shaped by cell type--specific context and multilayered feedback (\cite{Jiang2021CytoSig, Megha2021Inflammation}). A representative case is TNF$\alpha$/IL-1$\beta$--to--NF-$\kappa$B signaling, where responses propagate through sequential receptor engagement, adaptor recruitment, kinase cascade activation, and transcriptional and post-transcriptional regulation, rather than a single determinative node (\cite{Verstrepen2008NFkB, vanLoo2011NFkB}). In these pathways, inflammatory cytokines such as TNF-$\alpha$ and IL-1$\beta$ signal via their receptors to activate intracellular modules including NF-$\kappa$B and MAPK, whose downstream kinases act across multiple regulatory tiers, including chromatin remodeling, mRNA stability, and translational control (\cite{Cargnello2011MAPK}). Genetic variation in such pathways is more likely to produce many modest perturbations distributed across the network than a single large-effect change. Within CATFISH, this architecture should favor statistical procedures that aggregate consistent moderate signals across many genes, particularly Fisher's and Stouffer's methods, with soft TFisher also performing well when enrichment is concentrated in a moderately sized subset of pathway genes.
+Moderate Dense Signal (MDS) describes pathway patterns where many genes show modest but consistent associations, without a single dominant gene. In ranked gene-level profiles, this appears as a broad shoulder of moderately small $p$-values rather than a sharp peak (Fig. \ref{fig:archetypes_rankcurves}B; Table \ref{tab:archetype_summary}). MDS thus reflects coordinated enrichment where pathway-level evidence comes from the combined contribution of many genes.
 
-\subsubsection*{1.2.1.3 Archetype III --- Weak diffuse enrichment (WDE)}
+Biologically, MDS is expected in pathways whose output depends on many interacting components rather than a single key effector. Cytokine-driven immune signaling is a representative example. In TNF$\alpha$/IL-1$\beta$--to--NF-$\kappa$B signaling, pathway activity depends on receptor engagement, adaptor recruitment, kinase cascades, feedback, and downstream transcriptional and post-transcriptional control \citep{Jiang2021CytoSig, Megha2021Inflammation, Verstrepen2008NFkB, vanLoo2011NFkB, Cargnello2011MAPK}. Genetic variation in such pathways is therefore more likely to cause many moderate perturbations across the network than a single large-effect change. Within CATFISH, MDS-type pathways are expected to favor methods that aggregate consistent moderate evidence across many genes, particularly Fisher's and Stouffer's methods, with soft TFisher also performing well when enrichment is concentrated in a moderately sized subset.
 
-Weak diffuse enrichment (WDE) denotes architectures in which genes exhibit, on average, slightly stronger association evidence than the genome-wide background, even though few or none individually surpass conventional significance thresholds. In such pathways, most gene-level $p$-values remain greater than 0.05, yet the aggregate evidence shows a subtle but systematic departure from the null distribution (Fig. \ref{fig:archetypes_rankcurves}C). This pattern is reflected as a mild excess of modestly small $p$-values and a gentle downward deflection in the ranked $p$-value curve relative to its null expectation. WDE therefore represents a broadly distributed, weak pathway-wide enrichment pattern across many genes.
+\subsubsection{1.2.1.3 Archetype III --- Weak Diffuse Enrichment (WDE)}
 
-From a biological perspective, WDE corresponds to canonical polygenic architectures in which pathway-level signals emerge from the cumulative contribution of many small effects. Human height is a classic example, as it is influenced by thousands of variants across many loci, while most individual variant or gene effects are small (\cite{Guo2018HeightGWAS, Yengo2022HeightSaturation}). Instead, biologically coherent pathways, such as TGF-$\beta$ signaling, Hedgehog signaling, and genes involved in the growth-plate extracellular matrix, may exhibit enrichment only at the level of cumulative pathway-wide association (\cite{LangoAllen2010Height, Guo2018HeightGWAS}). Under this regime, methods that are sensitive to distributed enrichment across many genes, such as Stouffer’s method and Fisher’s method, are more congruent with the underlying biological architecture (\cite{deLeeuw2015MAGMA}).
+Weak Diffuse Enrichment (WDE) describes pathways where most genes are individually non-significant, yet the pathway shows a subtle overall shift toward stronger association. In the ranked gene-level profile, this appears as a gentle, pathway-wide deflection rather than a sharp peak or broad shoulder (Fig. \ref{fig:archetypes_rankcurves}C; Table \ref{tab:archetype_summary}). WDE thus reflects weak but widespread enrichment across many genes.
 
-\subsubsection{1.2.1.4 Archetype IV --- Mixed signal architecture (MSA)}
+Biologically, WDE corresponds to highly polygenic architectures where pathway signals arise from many small effects. Human height is a classic example: it is influenced by thousands of variants with individually small effects \citep{Guo2018HeightGWAS, Yengo2022HeightSaturation}. In this context, coherent pathways such as TGF-$\beta$ signaling, Hedgehog signaling, and growth-plate extracellular matrix processes are often detectable mainly through cumulative pathway-level enrichment rather than strong single-gene signals \citep{LangoAllen2010Height, Guo2018HeightGWAS}. Within CATFISH, WDE-type pathways are expected to favor methods that capture distributed enrichment across many genes, particularly Stouffer's and Fisher's methods \citep{deLeeuw2015MAGMA}.
 
-Mixed signal architecture (MSA) denotes architectures in which a limited number of genes exhibit strong or very strong association signals, while a broader set of additional genes provides more moderate evidence of association. The ranked gene-level profile combines features of both sparse and coordinated patterns. One or a few top genes show very strong significance, several others show moderate signals, and the rest are essentially null. This results in a pronounced peak at the top of the ranking, accompanied by supporting signals, positioning MSA, on statistical grounds, between the SSS and the MDS models.
 
-From a biological standpoint, MSA is expected to arise in pathways with a few core regulatory elements that have large, pathway-defining effects, embedded in a broader network of auxiliary components that provide secondary modulation. Low-density lipoprotein (LDL) cholesterol metabolism exemplifies this structure. Rare, high-effect variants in genes such as \textit{LDLR}, \textit{APOB}, and \textit{PCSK9} are primary determinants of monogenic familial hypercholesterolemia, whereas population-level variation in LDL-C is further shaped by a polygenic background of common alleles with small to moderate effects across many LDL-modulating genes (\cite{Umlai2025LDLC, Peloso2022WGSbloodlipids}). Consistent with this, GWAS of lipoprotein traits implicate a broader set of genes involved in lipoprotein metabolism and remodeling, including \textit{ABCA1}, \textit{LIPC}, \textit{CETP}, \textit{PLTP}, \textit{ANGPTL3}, and \textit{SORT1}. These observations suggest that pathway-level association signals often reflect a few dominant loci superimposed on more distributed supporting effects (\cite{Chasman2009LipoproteinProfiles}). Within CATFISH, this mixed genetic architecture is expected to be well captured by methods that accommodate both strong, localized signals and more widespread moderate enrichment, particularly adaptive soft TFisher and Fisher’s method.
+\subsubsection{1.2.1.4 Archetype IV --- Mixed Signal Architecture (MSA)}
+
+Mixed Signal Architecture (MSA) denotes pathway patterns where one or a few genes show strong association while many others provide moderate support. In ranked gene-level profiles, this appears as a sharp leading peak with a moderate shoulder, placing MSA between the sparse SSS and coordinated MDS regimes (Fig. \ref{fig:archetypes_rankcurves}D; Table \ref{tab:archetype_summary}). Thus, MSA reflects pathway-level evidence combining localized strong signals with broader moderate enrichment.
+
+Biologically, MSA is expected in pathways with a few core regulatory elements that have large, pathway-defining effects embedded in a wider network of auxiliary components. Low-density lipoprotein (LDL) cholesterol metabolism illustrates this pattern. Rare, high-effect variants in \textit{LDLR}, \textit{APOB}, and \textit{PCSK9} drive monogenic familial hypercholesterolemia, whereas population-level LDL-C variation also reflects common alleles with small to moderate effects across additional lipid-modulating genes \citep{Umlai2025LDLC, Peloso2022WGSbloodlipids}. GWAS of lipoprotein traits further implicate genes involved in lipoprotein metabolism and remodeling, including \textit{ABCA1}, \textit{LIPC}, \textit{CETP}, \textit{PLTP}, \textit{ANGPTL3}, and \textit{SORT1} \citep{Chasman2009LipoproteinProfiles}. Within CATFISH, MSA-type pathways should be well captured by methods that accommodate both strong localized signals and moderate distributed support, particularly adaptive soft TFisher and Fisher's method.
 
 \subsubsection{1.2.1.5 Archetype V --- Single-Gene Proxy Pathway (SGP)}
 
-The Single-Gene Proxy (SGP) pattern describes pathways that achieve statistical significance predominantly due to the presence of a single, highly associated gene, while the remaining genes are essentially null. In such cases, the leading gene exhibits an extremely small \(p\)-value, whereas the rest of the pathway shows negligible enrichment. Accordingly, the apparent pathway-level association largely disappears once this single gene is excluded from the analysis. From a statistical perspective, this configuration can be viewed as a boundary case of SSS. However, its substantive interpretation differs, as the pathway-level finding provides little additional information beyond what is already captured by the underlying gene-level association.
+The Single-Gene Proxy (SGP) pattern describes pathways whose significance is driven by one strongly associated gene, with the remaining genes near null. In the ranked gene-level profile, this appears as a single extreme peak followed by an otherwise null-like distribution (Fig. \ref{fig:archetypes_rankcurves}E; Table \ref{tab:archetype_summary}). Statistically, SGP is a boundary case of SSS, but differs in interpretation because the pathway result adds little beyond the dominant gene-level association.
 
-From a biological perspective, SGP is expected when a pathway is dominated by a single major driver gene, particularly when the annotation is small or when overlapping pathway definitions repeatedly capture the same gene. Phenylalanine metabolism provides a representative example. \textit{PAH} encodes phenylalanine hydroxylase, the enzyme that catalyzes the rate-limiting conversion of phenylalanine to tyrosine, and pathogenic variation in \textit{PAH} is the principal cause of phenylketonuria (PKU) and most cases of PAH deficiency \citep{Flydal2013PAH,Elhawary2022PKU}. Although broader phenylalanine-metabolism annotations may also include genes involved in tetrahydrobiopterin synthesis, recycling, chaperoning, or related metabolic processes, these represent secondary or rarer contributors relative to the dominant role of \textit{PAH} in classic hyperphenylalaninemia. Pathway-level significance in such settings may largely reflect the influence of a single major driver rather than the coordinated signal distributed across the pathway. Within CATFISH, this architecture is therefore expected to be captured most readily by minP and ACAT. However, such findings should be interpreted cautiously as primarily gene-centric associations, rather than as strong evidence that the pathway as a whole is jointly implicated.
+Biologically, SGP arises when a pathway is effectively defined by one major gene, especially in small or overlapping annotations. Phenylalanine metabolism illustrates this: \textit{PAH} encodes phenylalanine hydroxylase, the rate-limiting enzyme for converting phenylalanine to tyrosine, and pathogenic \textit{PAH} variation is the main cause of phenylketonuria and most PAH deficiency \citep{Flydal2013PAH, Elhawary2022PKU}. Although broader phenylalanine-metabolism pathways may include genes for tetrahydrobiopterin synthesis, recycling, chaperoning, or related processes, the dominant role of \textit{PAH} means pathway-level significance may largely reflect a gene-centric signal rather than coordinated pathway enrichment. In CATFISH, SGP-type pathways are expected to be detected primarily by minP and ACAT, but should be interpreted cautiously as single-gene-driven associations.
+
+
+\begin{table*}[!t]
+\centering
+\caption{\textbf{Summary of pathway signal archetypes and expected CATFISH component sensitivity.}
+Each archetype represents a conceptual ranked gene-level association profile rather than an empirically learned class of real pathways.}
+\label{tab:archetype_summary}
+\small
+\begin{tabular}{p{0.20\textwidth} p{0.34\textwidth} p{0.24\textwidth} p{0.15\textwidth}}
+\hline
+\textbf{Archetype} & \textbf{Gene-level $p$-value pattern} & \textbf{Ranked-profile shape} & \textbf{Expected sensitive tests} \\
+\hline
+
+Strong Sparse Signal (SSS) &
+A small number of genes have extremely small $p$-values, while most genes remain close to null. &
+Sharp early peak followed by a rapid drop; pronounced elbow. &
+ACAT, minP \\
+
+Moderate Dense Signal (MDS) &
+Many genes show modest but consistent association, without one clearly dominant gene. &
+Broad shoulder of moderate signals across a substantial fraction of the pathway. &
+Fisher, Stouffer, soft TFisher \\
+
+Weak Diffuse Enrichment (WDE) &
+Most genes are individually non-significant, but the pathway shows a subtle overall shift toward smaller $p$-values. &
+Gentle pathway-wide deflection with few or no strong individual peaks. &
+Stouffer, Fisher \\
+
+Mixed Signal Architecture (MSA) &
+One or a few strong genes occur together with a broader set of moderate supporting signals. &
+Strong leading peak plus a moderate shoulder. &
+soft TFisher, Fisher, ACAT \\
+
+Single-Gene Proxy (SGP) &
+One dominant gene accounts for most of the pathway-level signal, while the remaining genes are near null. &
+Single extreme peak followed by an otherwise null-like profile. &
+minP, ACAT \\
+
+\hline
+\end{tabular}
+\end{table*}
+
+
+
+
 
 \section{2 Methods}
 
