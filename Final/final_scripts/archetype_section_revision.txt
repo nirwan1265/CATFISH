@@ -1,0 +1,87 @@
+\subsection*{3.1 Archetype-specific response profiles in stylized correlated MVN simulations}
+
+Figures~\ref{fig:supp_blockA_archetype_recovery_by_m}, \ref{fig:blockH_power}, and \ref{fig:blockH_regret} summarize two complementary simulation analyses. These experiments are intended to verify expected test behavior under stylized signal families rather than to classify real GWAS pathways. First, fixed-parameter archetype verification (Fig.~\ref{fig:supp_blockA_archetype_recovery_by_m}) is summarized across pathway sizes (\(G=5,20,50\)) and archetypes using three metrics: empirical power at \(\alpha=0.05\), mean within-replicate rank (lower is better), and top-method probability, i.e. the probability of producing the smallest pathway-level \(p\)-value in a replicate. For each \(G \times\) archetype setting, the figure reports the best-performing method and its value for each metric. Second, effect-size sensitivity (Fig.~\ref{fig:blockH_power}) evaluates how performance changes as the archetype-specific mean-shift scale increases across pathway sizes (\(m=5,20,50\)). Omnibus robustness is summarized by power regret (Fig.~\ref{fig:blockH_regret}),
+\[
+\max_{j \in \mathcal{M}} \mathrm{Power}_j - \mathrm{Power}_{\mathrm{Omnibus}},
+\]
+where
+\[
+\mathcal{M}=\{\mathrm{ACAT}, \mathrm{Fisher}, \mathrm{TFisher}, \mathrm{minP}, \mathrm{Stouffer}\}.
+\]
+Smaller regret indicates that the omnibus more closely tracks the best-performing component.
+
+\subsubsection{3.1.1 Sparse architectures remain the most stable and consistently favor tail-sensitive methods.}
+
+The clearest and most consistent patterns occur under SSS and SGP. In the fixed-parameter verification results, SSS is dominated by minP and ACAT across pathway sizes. At \(m=5\), minP has the highest power (0.762), with ACAT close behind (0.720), and minP most often ranks first (top-method probability 0.504). At \(m=20\), minP and ACAT again have the highest power (0.920 and 0.900), whereas ACAT most often yields the smallest \(p\)-value (0.710). At \(m=50\), ACAT and minP have nearly identical power (0.958 and 0.964), but ACAT overwhelmingly dominates top-method probability (0.882 vs.\ 0.048). Thus, SSS consistently favors extreme-tail procedures, with minP maximizing rejection probability and ACAT increasingly dominating top-method probability as pathway size grows. The omnibus is not the leading SSS method, but it remains detectably powered rather than collapsing entirely.
+
+This pattern is even stronger under SGP. At \(m=5\), SGP is detected almost exclusively by ACAT, minP, and TFisher, with minP having the highest power (0.958) and ACAT the highest top-method probability (0.772). At \(m=20\), minP again has the highest power (0.908), whereas ACAT most often produces the smallest \(p\)-value (0.688). At \(m=50\), minP remains the most powerful (0.938), and ACAT continues to dominate top-method probability (0.786). Although the omnibus retains appreciable power under SGP (0.926, 0.704, 0.632 for \(m=5,20,50\)), it rarely attains the highest top-method probability, consistent with SGP being a highly concentrated gene-proxy architecture.
+
+The effect-size analysis yields concordant conclusions (Fig.~\ref{fig:blockH_power}). In SSS, across 18 pathway-size\(\times\)effect-size settings, minP has the highest power in 8 settings, ACAT in 7, TFisher in 2, and Fisher in 1. In SGP, sparse dominance intensifies: minP is optimal in 11 settings, ACAT in 6, and TFisher in 1. The omnibus retains reasonably high power but is not top-ranked in these sparse settings, and its mean power declines with pathway size in both architectures (SSS: 0.887 \(\rightarrow\) 0.717 \(\rightarrow\) 0.561; SGP: 0.835 \(\rightarrow\) 0.671 \(\rightarrow\) 0.465 for \(m=5,20,50\)). Regret is correspondingly largest in sparse regimes, especially SGP (mean 0.148, median 0.078, maximum 0.500; within 0.05 of the best method in 38.9\% of settings) and SSS (mean 0.088, median 0.020, maximum 0.380; within 0.05 in 55.6\%). Overall, sparse architectures are best captured by ACAT and minP, whereas the omnibus is better interpreted as a robustness-oriented compromise than as an optimal detector for sparse settings.
+
+\subsubsection{3.1.2 WDE behaves as a diffuse-enrichment regime most closely aligned with Stouffer-like aggregation.}
+
+Within the fixed-parameter verification results, absolute power differences across pathway sizes are modest for WDE, but rank-based and top-method summaries are highly stable. At \(m=5\), Stouffer has the highest power (0.208), the lowest mean rank (2.863), and the largest top-method probability (0.442). At \(m=20\), Fisher, Stouffer, and the omnibus have nearly identical power (0.264, 0.266, 0.264), yet Stouffer again has the best mean rank (2.922) and the highest top-method probability (0.384). At \(m=50\), Stouffer still gives the greatest power (0.270), the best mean rank (3.110), and the highest top-method probability (0.296), while the omnibus retains similar power (0.268) but is rarely ranked first (0.062). These results are consistent with WDE behaving as a pathway-wide weak-enrichment regime in which Stouffer is the most archetype-aligned specialist, Fisher remains competitive, and the omnibus is intermediate but close in power.
+
+This ordering largely persists across effect sizes (Fig.~\ref{fig:blockH_power}). Stouffer achieves the highest power in 11 of 18 pathway-size\(\times\)effect-size settings, while TFisher leads in 3, ACAT in 2, Omnibus in 1, and minP in 1. For \(m=5\) and \(m=20\), Stouffer typically exceeds omnibus power across most effect multipliers. At \(m=50\), their power curves are closer, and the advantage diminishes. Regret is smallest in WDE (mean 0.024, maximum 0.060), with the omnibus lying within 0.05 of the best method in 88.9\% of settings and within 0.10 in all settings. Thus, although Stouffer is the most WDE-aligned component, WDE is also the regime in which the omnibus most consistently behaves as a near-optimal generalist.
+
+\subsubsection{3.1.3 MDS remains intermediate, with mixed leadership across both pathway size and effect magnitude.}
+
+MDS remains the least cleanly resolved archetype in the fixed-parameter results, although performance becomes somewhat more structured as \(m\) increases. At \(m=5\), Fisher and Stouffer have the highest power (0.330 and 0.326), Stouffer has the highest top-method probability (0.352), and the omnibus shows only moderate power (0.308). At \(m=20\), TFisher is most powerful (0.486), Fisher has the best mean rank (2.808), and the omnibus is competitive but not dominant (power 0.448; mean rank 3.281). At \(m=50\), TFisher strengthens further (power 0.552; top-method probability 0.340), Fisher still has the best mean rank (2.795), and the omnibus remains mid-range (power 0.478; mean rank 3.203; top-method probability 0.140). Overall, MDS is the archetype most sensitive to pathway size.
+
+The effect-size sensitivity analysis confirms MDS as a genuinely intermediate regime with mixed leadership rather than a single dominant detector (Fig.~\ref{fig:blockH_power}). Across the 18 pathway-size\(\times\)effect-size settings, Stouffer and TFisher each lead in 5 settings, Fisher and minP in 3 each, and ACAT in 2. The omnibus remains competitive but is not top-ranked, and its mean power declines with pathway size (0.576 at \(m=5\), 0.510 at \(m=20\), 0.289 at \(m=50\)). Regret is moderate (mean 0.050, median 0.028, max 0.172), and the omnibus lies within 0.05 of the best method in 61.1\% of settings and within 0.10 in 83.3\%. Thus, MDS is precisely the sort of regime in which multi-component integration is useful, because the best-performing component varies with both effect size and pathway size.
+
+\subsubsection{3.1.4 MSA becomes increasingly favorable to balanced procedures as pathway size increases and remains mixed across effect sizes.}
+
+Among the non-sparse archetypes, MSA shows the strongest pathway-size dependence in the fixed-parameter verification analysis. At \(m=5\), Fisher has the highest power (0.566), Stouffer has the highest top-method probability (0.374), and the omnibus is competitive in power (0.536) but never top-ranked. At \(m=20\), the expected MSA pattern emerges more clearly: TFisher has the highest power (0.606), Fisher has the best mean rank (2.765), and the omnibus remains close in power (0.568) but with a low top-method probability (0.040). At \(m=50\), the MSA structure is clearer still. TFisher has the highest power (0.718), the omnibus attains the best mean rank (2.899), and Fisher and TFisher both retain substantial top-method probabilities (0.196 and 0.282). Thus, as pathway size grows, MSA becomes more identifiable and the omnibus becomes more competitive once both driver and support layers are adequately represented.
+
+Across effect sizes, MSA again shows heterogeneous leadership rather than a single dominant detector (Fig.~\ref{fig:blockH_power}). Across the 18 pathway-size\(\times\)effect-size settings, TFisher leads in 6, Stouffer in 5, ACAT in 4, Fisher in 2, and minP in 1. Omnibus power is high overall but declines with pathway size (mean 0.719 at \(m=5\), 0.619 at \(m=20\), 0.385 at \(m=50\)), indicating increasing divergence from the best specialized component in larger pathways. Regret is moderate (mean 0.047, median 0.028, maximum 0.168), and the omnibus lies within 0.05 of the best method in 72.2\% of settings and within 0.10 in 83.3\%. As in MDS, MSA highlights the practical value of multi-component integration when no single specialist dominates consistently.
+
+\subsubsection{3.1.5 The omnibus is rarely the winner, but often remains near-competitive.}
+
+Across pathway sizes in the fixed-parameter verification analysis, the omnibus is rarely the most archetype-aligned method under top-method probability summaries, but it also seldom falls to the lowest tier except in highly sparse settings. Under SSS and SGP, omnibus remains detectably powered but is not the preferred specialist; ACAT and minP are more architecture-matched and therefore achieve better rank and top-method probability. In WDE, omnibus power is typically close to the leading methods, though Stouffer more often attains the smallest within-replicate \(p\)-value. In MDS and MSA, the omnibus usually occupies a middle-to-upper position and often tracks the leading method without systematically dominating.
+
+The effect-size sensitivity curves show the same pattern (Fig.~\ref{fig:blockH_power}). In non-sparse or intermediate regimes, omnibus often stays close to the best component: at \(m=20\) and effect multiplier \(=1.2\), omnibus power is 0.580 in MDS versus 0.592 (best, TFisher), and 0.740 in MSA versus 0.752 (best, TFisher). In WDE at the same setting, omnibus reaches 0.288 versus 0.332 (best, Stouffer), and remains close at higher signal (\(m=20\), multiplier \(=1.8\): 0.496 versus 0.516). In contrast, sparse regimes show larger gaps, especially at larger pathway sizes and low-to-moderate effects (\(m=50\), multiplier \(=0.8\): SSS 0.184 vs.\ 0.564 best; SGP 0.104 vs.\ 0.604 best).
+
+Figure~\ref{fig:blockH_regret} quantifies this directly. Regret is smallest for WDE (mean 0.024), intermediate for MDS/MSA (0.050/0.047), and largest in sparse regimes, especially SGP/SSS (0.148/0.088). Consistent with this, omnibus regret increases with pathway size overall (mean regret \(m=5: 0.019\), \(m=20: 0.051\), \(m=50: 0.145\)). Thus, CATFISH components are complementary rather than redundant. Sparse architectures favor ACAT/minP, diffuse architectures favor Stouffer/Fisher-type aggregation, and hybrid architectures have mixed leaders. The omnibus is therefore best viewed as a robustness-oriented hedge rather than as an architecture-specific optimum.
+
+\begin{table*}[!t]
+\centering
+\caption{\textbf{Summary of archetype-specific response profiles across pathway size and effect magnitude.} Fixed-parameter verification is summarized using pathway-size analyses, whereas effect-size sensitivity summarizes performance across the pathway-size \(\times\) effect-size grid. Omnibus regret is defined as \(\max_{j \in \mathcal{M}} \mathrm{Power}_j - \mathrm{Power}_{\mathrm{Omnibus}}\), where smaller values indicate that the omnibus more closely tracks the best-performing component.}
+\label{tab:archetype_summary}
+\small
+\begin{tabular}{p{1.3cm} p{3.0cm} p{2.9cm} p{2.4cm} p{4.5cm}}
+\hline
+\textbf{Archetype} & \textbf{Pathway-size verification} & \textbf{Effect-size sensitivity} & \textbf{Omnibus regret} & \textbf{Interpretation} \\
+\hline
+SSS &
+ACAT and minP dominate across pathway sizes; ACAT increasingly dominates top-method probability as \(m\) grows. &
+Tail-sensitive methods dominate across the 18 pathway-size\(\times\)effect-size settings (minP 8, ACAT 7, TFisher 2, Fisher 1). &
+Mean 0.088; median 0.020; max 0.380; within 0.05 of best in 55.6\%. &
+Sparse-driver architectures are best captured by extreme-tail procedures; the omnibus remains reasonably powered but is not optimal. \\
+\hline
+SGP &
+ACAT and minP dominate more strongly than in SSS; minP gives highest power, ACAT most often gives the smallest \(p\)-value. &
+Sparse dominance intensifies (minP 11, ACAT 6, TFisher 1). &
+Mean 0.148; median 0.078; max 0.500; within 0.05 of best in 38.9\%. &
+Single-gene proxy architectures are the least favorable setting for the omnibus and most strongly favor extreme-tail methods. \\
+\hline
+WDE &
+Stouffer is most archetype-aligned across pathway sizes; Fisher remains competitive; omnibus is intermediate but close in power. &
+Stouffer most often leads (11 of 18 settings), with omnibus tracking closely across pathway sizes and effect strengths. &
+Mean 0.024; max 0.060; within 0.05 of best in 88.9\%; within 0.10 in 100\%. &
+Diffuse weak-enrichment is the regime in which the omnibus most closely matches the best specialist, while Stouffer remains the most archetype-aligned component. \\
+\hline
+MDS &
+Intermediate regime; Fisher/Stouffer lead at small \(m\), TFisher strengthens at larger \(m\); omnibus is competitive but not dominant. &
+No single uniformly best detector: Stouffer and TFisher lead in 5 settings each, Fisher and minP in 3 each, ACAT in 2. &
+Mean 0.050; median 0.028; max 0.172; within 0.05 of best in 61.1\%; within 0.10 in 83.3\%. &
+MDS is a mixed regime in which the best component varies with pathway size and effect magnitude, making multi-component integration useful. \\
+\hline
+MSA &
+Pathway-size sensitivity is strongest here; Fisher leads at small \(m\), TFisher at larger \(m\), and omnibus becomes more competitive as \(m\) grows. &
+Mixed leadership across settings (TFisher 6, Stouffer 5, ACAT 4, Fisher 2, minP 1). &
+Mean 0.047; median 0.028; max 0.168; within 0.05 of best in 72.2\%; within 0.10 in 83.3\%. &
+Hybrid driver-support architectures are best handled by balanced or mixed procedures; the omnibus is useful because no single specialist dominates consistently. \\
+\hline
+\end{tabular}
+\end{table*}
