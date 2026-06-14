@@ -159,7 +159,7 @@ We divide pathway signals into a set of archetypes that describe different ways 
 
 \begin{figure*}[!t]
     \centering
-    \includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{fig/supp/SuppFig1_archetypes_rankcurves.png}
+    \includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{Final/final_main_fig/Fig1.png}
     \caption{\textbf{Ranked gene-level association profiles for five pathway signal archetypes.}
     Panels illustrate conceptual within-pathway $-\log_{10}(p)$ profiles for Sparse Driver Architecture (SSS), Coordinated Moderate Enrichment (MDS), Diffuse Polygenic Enrichment (WDE), Hybrid Driver--Support (MSA), and Single-Gene Proxy (SGP). Horizontal lines mark representative significance thresholds. SSS shows several extreme genes, MDS shows broad moderate enrichment, WDE shows a subtle pathway-wide enrichment pattern, MSA combines strong drivers with moderate support, and SGP is dominated by a single leading gene. These archetypes motivate the use of complementary CATFISH component tests because different methods are preferentially sensitive to different ranked signal shapes.}
     \label{fig:archetypes_rankcurves}
@@ -255,7 +255,7 @@ where $\Sigma$ is an exchangeable correlation matrix with pairwise correlation \
 
 \begin{figure*}[!t]
     \centering
-    \includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{fig/supp/SuppFig2_block_a_archetype_recovery_by_m_compact.png}
+    \includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{Final/final_main_fig/Fig3.png}
     \caption{\textbf{Pathway-size sensitivity of archetype verification for CATFISH component tests.}
     Correlated MVN simulations were repeated at pathway sizes \(G=5\), \(20\), and \(50\) genes under an exchangeable correlation structure (\(\rho=0.20\); 500 replicates per archetype). Archetype-specific mean-shift patterns were scaled proportionally with pathway size to preserve the qualitative signal family across settings. For each \(G \times\) archetype setting, the figure reports the best-performing method and corresponding value for three summaries: power at \(\alpha=0.05\), mean rank of pathway-level \(p\)-values (lower is better), and top-method probability (frequency of yielding the smallest pathway-level \(p\)-value within replicate). Sparse archetypes remain dominated by tail-sensitive methods (ACAT/minP), WDE remains most consistent with Stouffer-like aggregation under diffuse weak-enrichment patterns, and MDS/MSA show mixed leadership with greater pathway-size sensitivity. These stylized simulations verify expected method specialization rather than classify real pathways.}
     \label{fig:supp_blockA_archetype_recovery_by_m}
@@ -586,46 +586,31 @@ Hybrid driver-support architectures are best handled by balanced or mixed proced
 To assess whether CATFISH yields valid and stable inference under realistic pathway dependence, we performed MVN-based simulations and diagnostic analyses of calibration, sensitivity, and failure modes for the full framework. We systematically varied signal architecture, pathway size, effect magnitude, within-pathway LD (gene--gene correlation), and calibration quality, including incomplete or zero-imputed correlation matrices and structured matched-misspecification stress tests. We also evaluated adaptive calibration procedures and leave-one-out diagnostics to assess the stability of pathway-level inference. Full simulation designs and parameter settings appear in Appendix~1 and key results are summarized below.
 
 
-
 \begin{figure*}[!t]
     \centering
-    \includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{fig/main/Fig2.block_b_panel.png}
-    \caption{\textbf{Null calibration of CATFISH pathway tests under LD.}
-    Results are shown for five component tests and the omnibus across three LD regimes (LD\_independent, $\rho=0$; LD\_moderate, $\rho=0.3$; LD\_strong, $\rho=0.7$) and pathway sizes ($m=5,25,50$).
-    \textbf{A}, genomic-control inflation factor $\lambda$ (dashed line at $\lambda=1$).
-    \textbf{B}, empirical type I error at $\alpha=0.05$ (dashed line at 0.05).
-    Red bars denote analytic calibration under an independence assumption; blue bars denote MVN calibration using resampled null $Z$-scores from the pathway correlation matrix.}
-    \label{fig:blockB_null_calibration}
+    \includegraphics[width=\textwidth,height=0.90\textheight,keepaspectratio]{Final/final_main_fig/Fig4.png}
+    \caption{\textbf{LD-aware null calibration and sensitivity to incomplete correlation information.}
+    \textbf{A--B.} Null calibration of CATFISH component and omnibus pathway tests under three LD regimes: LD\_independent (\(\rho=0\)), LD\_moderate (\(\rho=0.3\)), and LD\_strong (\(\rho=0.7\)), evaluated across pathway sizes \(m=5,25,50\). 
+    \textbf{A}, genomic-control inflation factor \(\lambda\), with the dashed horizontal line marking \(\lambda=1\). 
+    \textbf{B}, empirical type I error at \(\alpha=0.05\), with the dashed horizontal line marking the nominal 0.05 level. Red bars denote analytic calibration under an independence assumption, whereas blue bars denote MVN calibration using null resampling from the pathway correlation matrix.
+    \textbf{C--D.} Sensitivity of omnibus calibration to incomplete correlation information. Null data were generated from a true block-correlation matrix, after which increasing fractions of off-diagonal entries were removed. Three calibration strategies were compared: analytic fallback, MVN calibration using the true correlation matrix, and MVN calibration after imputing missing correlations to zero.
+    \textbf{C}, genomic-control inflation factor \(\lambda\) as a function of missing-correlation fraction.
+    \textbf{D}, empirical type I error at \(\alpha=0.05\) as a function of missing-correlation fraction.
+    Across both analyses, MVN calibration using complete correlation information provides the most reliable false-positive control. Zero-imputed MVN improves over analytic fallback when correlations are incomplete but remains approximate under high missingness, especially for larger pathways.}
+    \label{fig:fig4_ld_calibration_missing_corr}
 \end{figure*}
 
 
 
 
-\begin{figure*}[!t]
-    \centering
-    \includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{fig/supp/SuppFig3_block_c_panel.png}
-    \caption{\textbf{Sensitivity of omnibus calibration to missing correlations.}
-    Omnibus calibration under incomplete LD information, evaluated by randomly removing a fraction of off-diagonal entries from the pathway correlation matrix and comparing three strategies: analytic fallback (ignores correlations), MVN calibration using the true correlation matrix, and MVN calibration after imputing missing correlations to zero.
-    \textbf{A.} Genomic control inflation $\lambda$ as a function of fraction missing for pathway sizes $m=5,25,50$ (dashed reference at $\lambda=1$).
-    \textbf{B.} Empirical type I error at $\alpha=0.05$ as a function of fraction missing (dashed reference at 0.05). Across missingness levels, MVN with the true correlation matrix remains best calibrated, zero-imputed MVN is intermediate but can remain meaningfully inflated at high missingness, and analytic fallback is consistently miscalibrated.}
-    \label{fig:blockC_missing_corr}
-\end{figure*}
 
 
 
+\subsubsection{3.2.1 LD-aware null calibration and sensitivity to incomplete correlations}
 
-\begin{figure*}[!t]
-    \centering
-    \includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{fig/main/Fig3.block_d_panel.png}
-    \caption{\textbf{Component-breakage stress test of matched recalibration.}
-    Global-null stress test in which \(k=1,\ldots,4\) of five component tests are intentionally made anti-conservative (“broken”), with results averaged across all \(\binom{5}{k}\) breakage combinations, for LD\(_\text{independent}\), LD\(_\text{moderate}\), and LD\(_\text{strong}\), and pathway sizes \(m=5,25,50\).
-    \textbf{A}, genomic-control inflation factor \(\lambda\) (dashed blue reference at \(\lambda=1\)).
-    \textbf{B}, empirical type I error at \(\alpha=0.05\) (dashed red reference at 0.05).
-    Colored bars correspond to component tests (ACAT, Fisher, TFisher, minP, Stouffer), and black bars denote the omnibus with breakage-matched MVN recalibration.
-    As \(k\) increases, several component tests become increasingly miscalibrated, especially under moderate/strong LD, whereas the matched-recalibrated omnibus remains comparatively stable and near nominal across settings. This reflects recovery under a known, matched distortion pattern rather than robustness to arbitrary misspecification.}
-    \label{fig:blockD_breakage}
-\end{figure*}
+We first evaluated CATFISH calibration under global-null simulations with increasing gene--gene correlation (Fig.~\ref{fig:blockB_null_calibration}). Under LD\(_\text{independent}\), empirical type I error remained close to the nominal \(\alpha=0.05\) level for most component tests and for the MVN-calibrated omnibus. However, under LD\(_\text{moderate}\) and LD\(_\text{strong}\), methods calibrated under an independence assumption became increasingly anti-conservative. Mean type I error increased to 0.174 and 0.222 for Fisher, 0.214 and 0.297 for Stouffer, and 0.180 and 0.243 for Omnibus\(_\text{Analytical}\), respectively. TFisher also showed inflation, although less severely, while ACAT was the most stable component test under correlated nulls but still mildly inflated. In contrast, Omnibus\(_\text{MVN}\) remained close to nominal across LD settings, with mean type I error of 0.060 under LD\(_\text{moderate}\) and 0.053 under LD\(_\text{strong}\). For example, at LD\(_\text{moderate}\) with \(m=50\), type I error was 0.052 for Omnibus\(_\text{MVN}\), compared with 0.072 for ACAT and 0.224 for Omnibus\(_\text{Analytical}\). At LD\(_\text{strong}\) with \(m=50\), Omnibus\(_\text{MVN}\) was slightly conservative (0.044), whereas Omnibus\(_\text{Analytical}\) was strongly inflated (0.326). These results support LD-aware MVN calibration as the primary inferential framework for controlling false positives in CATFISH.
 
+We next evaluated whether MVN calibration remained reliable when the pathway correlation matrix was incomplete (Fig.~\ref{fig:blockC_missing_corr}). Null data were generated from a true block-correlation matrix (\(\rho=0.5\)), after which a fraction of off-diagonal entries was removed and either ignored analytically or imputed to zero before MVN calibration. The analytic fallback, which ignores correlation, was consistently miscalibrated, with mean type I error of 0.201 and maximum type I error of 0.284. MVN calibration using the true correlation matrix was well calibrated, with mean type I error of 0.054 and mean \(\lambda=0.944\). Zero-imputed MVN improved substantially over the analytic fallback, with mean type I error of 0.076, but remained less accurate than true-correlation MVN, especially at larger pathway sizes and high missingness. For example, at 70\% missingness and \(m=50\), type I error was 0.284 for analytic fallback, 0.146 for zero-imputed MVN, and 0.052 for true-correlation MVN. Thus, partial LD information is preferable to ignoring LD entirely, but highly incomplete correlation matrices should be treated as lower-confidence calibration inputs unless supported by more complete LD information.
 
 \begin{figure*}[!t]
     \centering
@@ -639,15 +624,6 @@ To assess whether CATFISH yields valid and stable inference under realistic path
 \end{figure*}
 
 
-
-
-
-\subsubsection{3.2.1 LD-aware null calibration and sensitivity to incomplete correlations}
-
-We first evaluated CATFISH calibration under global-null simulations with increasing gene--gene correlation (Fig.~\ref{fig:blockB_null_calibration}). Under LD\(_\text{independent}\), empirical type I error remained close to the nominal \(\alpha=0.05\) level for most component tests and for the MVN-calibrated omnibus. However, under LD\(_\text{moderate}\) and LD\(_\text{strong}\), methods calibrated under an independence assumption became increasingly anti-conservative. Mean type I error increased to 0.174 and 0.222 for Fisher, 0.214 and 0.297 for Stouffer, and 0.180 and 0.243 for Omnibus\(_\text{Analytical}\), respectively. TFisher also showed inflation, although less severely, while ACAT was the most stable component test under correlated nulls but still mildly inflated. In contrast, Omnibus\(_\text{MVN}\) remained close to nominal across LD settings, with mean type I error of 0.060 under LD\(_\text{moderate}\) and 0.053 under LD\(_\text{strong}\). For example, at LD\(_\text{moderate}\) with \(m=50\), type I error was 0.052 for Omnibus\(_\text{MVN}\), compared with 0.072 for ACAT and 0.224 for Omnibus\(_\text{Analytical}\). At LD\(_\text{strong}\) with \(m=50\), Omnibus\(_\text{MVN}\) was slightly conservative (0.044), whereas Omnibus\(_\text{Analytical}\) was strongly inflated (0.326). These results support LD-aware MVN calibration as the primary inferential framework for controlling false positives in CATFISH.
-
-We next evaluated whether MVN calibration remained reliable when the pathway correlation matrix was incomplete (Fig.~\ref{fig:blockC_missing_corr}). Null data were generated from a true block-correlation matrix (\(\rho=0.5\)), after which a fraction of off-diagonal entries was removed and either ignored analytically or imputed to zero before MVN calibration. The analytic fallback, which ignores correlation, was consistently miscalibrated, with mean type I error of 0.201 and maximum type I error of 0.284. MVN calibration using the true correlation matrix was well calibrated, with mean type I error of 0.054 and mean \(\lambda=0.944\). Zero-imputed MVN improved substantially over the analytic fallback, with mean type I error of 0.076, but remained less accurate than true-correlation MVN, especially at larger pathway sizes and high missingness. For example, at 70\% missingness and \(m=50\), type I error was 0.284 for analytic fallback, 0.146 for zero-imputed MVN, and 0.052 for true-correlation MVN. Thus, partial LD information is preferable to ignoring LD entirely, but highly incomplete correlation matrices should be treated as lower-confidence calibration inputs unless supported by more complete LD information.
-
 \subsubsection{3.2.2 Stress tests and diagnostic perturbations}
 
 We then evaluated component-level misspecification using a structured breakage stress test under the global null (Fig.~\ref{fig:blockD_breakage}). In this experiment, \(k=1,\ldots,4\) of the five component tests were intentionally made anti-conservative by transforming their \(p\)-values as \(p^\gamma\), with \(\gamma=0.7\). For each LD setting and pathway size, all \(\binom{5}{k}\) breakage combinations were evaluated, and the omnibus statistic was recalibrated using an MVN null matched to the same breakage pattern. As the number of broken components increased, several individual tests became increasingly unstable, particularly under LD\(_\text{moderate}\) and LD\(_\text{strong}\). For example, at \(k=4\), LD\(_\text{strong}\), and \(m=25\), type I error reached 0.370 for Stouffer and 0.273 for Fisher, whereas the breakage-matched MVN-calibrated omnibus remained at 0.058. A similar pattern occurred under LD\(_\text{moderate}\) with \(m=50\) and \(k=4\), where type I error reached 0.326 for Stouffer and 0.294 for Fisher, while the omnibus remained at 0.072.
@@ -657,7 +633,22 @@ Across all stress-test settings, Omnibus\(_\text{MVN}\) had mean type I error of
 Finally, we evaluated adaptive component filtering and leave-one-out (LOO) sensitivity as practical diagnostics for the omnibus framework (Fig.~\ref{fig:blockE_adaptive_loo}). Adaptive filtering removed poorly calibrated components based on training null simulations before recomputing the omnibus, whereas LOO recomputed the MVN-calibrated omnibus after excluding each component in turn. In the averaged summary, the analytical omnibus remained anti-conservative (type I error \(=0.156\)) despite a conservative \(\lambda\) estimate (\(\lambda=0.439\)), again showing that \(\lambda\) alone can be misleading for calibration assessment. By contrast, MVN-based variants were near nominal, with type I error of 0.041 for standard MVN and 0.053 for Adaptive+MVN, and \(\lambda\) values closer to 1. LOO diagnostics were also stable: type I error ranged from 0.051 to 0.058 and \(\lambda\) ranged from 1.03 to 1.08 across component exclusions. These results indicate that standard MVN calibration is the simplest default, while adaptive filtering and LOO are useful secondary diagnostics for identifying dependence on poorly calibrated or individually dominant components.
 
 
+\begin{figure*}[!t]
+    \centering
+    \includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{fig/main/Fig5.png}
+    \caption{\textbf{Stress-test and diagnostic evaluation of omnibus calibration.}
+    \textbf{A--B}, component-breakage stress test under the global null. For each setting, \(k=1,\ldots,4\) of the five component tests were deliberately made anti-conservative (“broken”), and results were averaged over all combinations of broken components across three LD regimes (LD\_independent, \(\rho=0\); LD\_moderate, \(\rho=0.3\); LD\_strong, \(\rho=0.7\)) and pathway sizes (\(m=5,25,50\)).
+    \textbf{A}, genomic-control inflation factor \(\lambda\) (blue dashed reference at \(\lambda=1\)).
+    \textbf{B}, empirical type I error at \(\alpha=0.05\) (red dashed reference at 0.05).
+    Colored bars correspond to the component tests, and black bars denote the omnibus recalibrated under a breakage-matched MVN null. As the number of broken components increases, several individual component tests become increasingly miscalibrated, particularly under moderate and strong LD, whereas the matched-calibrated omnibus remains comparatively stable.
 
+    \textbf{C--D}, robustness diagnostics for omnibus calibration based on adaptive component filtering and leave-one-out (LOO) sensitivity analysis.
+    \textbf{C}, genomic-control inflation factor \(\lambda\) (blue dashed reference at \(\lambda=1\)).
+    \textbf{D}, empirical type I error at \(\alpha=0.05\) (red dashed reference at 0.05).
+    In the adaptive setting, four omnibus variants are compared: Analytical, MVN, Adaptive+Analytical, and Adaptive+MVN. In the LOO setting, the MVN-calibrated omnibus is recomputed after excluding each component in turn (\(-\)ACAT, \(-\)Fisher, \(-\)Stouffer, \(-\)TFisher, \(-\)minP) and compared with the full omnibus (“All”).
+    Across these diagnostics, MVN-based calibration remains near nominal, whereas analytically calibrated variants are more sensitive to misspecification. Together, these results show that omnibus robustness depends primarily on dependence-aware calibration rather than on any single component test.}
+    \label{fig:blockE_combined_robustness}
+\end{figure*}
 
 
 
