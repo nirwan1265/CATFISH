@@ -1,14 +1,29 @@
 # CATFISH
 
-CATFISH is an R package for GWAS pathway analysis built on MAGMA gene-level outputs.  
-It combines multiple pathway tests (ACAT, Fisher, adaptive soft TFisher, minP, Stouffer) into one final pathway-level result, with optional LD-aware MVN calibration using MAGMA gene-gene correlations.
+**CATFISH** (Combining **C**auchy combination test (ACAT), **A**daptive **T**Fisher, **F**isher's method, m**I**n-P, and **S**touffer's method for **H**olistic pathway analysis) is an R package for post-GWAS pathway enrichment analysis. It takes MAGMA gene-level outputs and evaluates pathways using five complementary statistical tests, then combines them into a single LD-aware omnibus result.
+
+CATFISH is built around the idea that different pathway signal architectures favor different statistical tests — so instead of picking one, it runs all five and calibrates the final result under a pathway-specific multivariate normal (MVN) null built from MAGMA gene-gene correlations.
 
 ## What CATFISH does
 
-- Runs complementary pathway tests from gene-level GWAS statistics.
-- Combines component tests into an omnibus p-value (`ACAT` or `minP`).
-- Supports LD-aware calibration with MVN resampling using MAGMA correlation pairs.
+- Runs five complementary pathway tests from gene-level GWAS statistics (ACAT, Fisher, adaptive soft TFisher, minP, Stouffer).
+- Combines component tests into an omnibus p-value via ACAT or minP across methods.
+- Calibrates the omnibus under an LD-aware MVN null using MAGMA gene-gene correlations.
+- Supports GPD tail extrapolation (Knijnenburg et al. 2009) for p-values well below the permutation floor.
 - Includes built-in pathway loaders for `maize`, `sorghum`, `arabidopsis`, `plant`, and `fly`.
+- Provides a 3-layer candidate gene scoring pipeline integrating SNP-, gene-, and pathway-level evidence.
+
+## Pathway signal archetypes
+
+CATFISH is motivated by five conceptual pathway signal archetypes — statistical templates that explain why different component tests are needed. Because the true signal architecture of a real pathway is unknown, CATFISH evaluates all five and lets the omnibus pick up signal regardless of its shape.
+
+| Archetype | Abbrev | Gene-level p-value pattern | Ranked-profile shape | Best methods |
+|-----------|--------|---------------------------|---------------------|-------------|
+| Strong Sparse Signal | **SSS** | Few genes with extremely small p-values; most near null | Sharp early peak, pronounced elbow | ACAT, minP |
+| Moderate Dense Signal | **MDS** | Many genes with modest consistent signal, no dominant gene | Broad shoulder across much of the pathway | Fisher, Stouffer, soft TFisher |
+| Weak Diffuse Enrichment | **WDE** | Subtle pathway-wide shift; few or none individually significant | Gentle pathway-wide deflection | Stouffer, Fisher |
+| Mixed Signal Architecture | **MSA** | One/few strong drivers plus broader moderate support | Strong leading peak plus moderate shoulder | soft TFisher, Fisher, ACAT |
+| Single-Gene Proxy | **SGP** | One dominant gene; rest near null | Single extreme peak, otherwise null-like | minP, ACAT *(interpret cautiously — gene-centric)* |
 
 ## Installation
 
@@ -107,13 +122,14 @@ For multi-chromosome analyses, run this per chromosome and concatenate (header o
 
 ### Step 5: Load pathways
 
-Known species pathways:
+Built-in species pathways (Plant Metabolic Network + FlyCyc):
 
 ```r
 pathways <- catfish_load_pathways(species = "sorghum")
+# species options: "maize", "sorghum", "arabidopsis", "plant", "fly"
 ```
 
-Custom pathways as long-format data frame:
+Custom pathways as a long-format data frame:
 
 ```r
 pathways <- data.frame(
@@ -167,6 +183,38 @@ omni <- catfish_omni2_pathways(
   seed = 123
 )
 ```
+
+## Tau grid recommendations
+
+The `tau_grid` parameter controls how soft TFisher weights gene-level p-values. The right choice depends on signal strength in your data:
+
+**Default grid** — suitable for moderate or weak signals (arabidopsis, human GWAS):
+```r
+tau_grid = c(0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001)
+```
+
+**Strict grid** — recommended for strong-signal data (e.g. sorghum). With the default grid on strong-signal data, TFisher can dominate the omnibus (100% of significant pathways), suppressing Fisher, ACAT, and Stouffer contributions:
+```r
+tau_grid = c(1e-5, 1e-6, 1e-7)
+```
+
+All usage scripts include a `TAU_OPTION` toggle at the top (`"default"` or `"strict"`) to switch between these grids.
+
+## 3-layer candidate gene scoring
+
+Beyond pathway enrichment, CATFISH supports multilayer candidate gene prioritization by integrating evidence across three levels:
+
+- **Layer 1 (GWAS):** Gene-level GWAS p-value rank (`P_SNPWISE_TOP1` or equivalent)
+- **Layer 2 (MAGMA):** Gene-level multi-SNP model p-value
+- **Layer 3 (Pathway):** Membership in significant pathways, with a multi-pathway bonus for hub genes
+
+```
+score = -log10(gwas_rank/n) + -log10(magma_rank/n) + pathway_bonus
+```
+
+The pathway bonus rewards genes in any annotated pathway (biological function known), genes in statistically significant pathways (trait-relevant), and genes in multiple significant pathways (hub genes with stronger evidence). Genes are categorized by layer support (1-, 2-, or 3-layer), with 3-layer genes being the strongest candidates.
+
+See `candidate_gene_analysis_*.R` scripts for worked examples across sorghum, arabidopsis, maize, and fly.
 
 ## Core parameter guide
 
@@ -273,25 +321,46 @@ omni <- catfish_omni2_pathways(
 - Parallelizes ACAT null, TFisher null, and omnibus null computations
 - Only activates when `B >= 1000` to avoid overhead on small jobs
 - Near-linear speedup with number of cores
+- Windows falls back to serial mode (fork parallelism unsupported)
 
-**Example benchmark**: Sorghum analysis with 410 pathways and B = 1,000,000 completed in ~1 hour using 12 threads (vs. 50+ hours single-threaded).
+**Benchmarks (sorghum, 410 pathways, B = 1,000,000):**
+
+| Threads | Runtime |
+|---------|---------|
+| 1 | ~50+ hours |
+| 12 | ~1 hour |
 
 ## Main output columns
 
 `catfish_omni2_pathways()` returns one row per pathway, including:
 
-- component p-values: `acat_p`, `fisher_p`, `tfisher_p_analytic`, `minp_p_analytic`, `stouffer_p_analytic`
-- optional `magma_pvalue` (if provided via `magma_out`)
-- omnibus p-values: `omni_p_analytic`, `omni_p_global`, `omni_p_mvn`, `omni_p_final`
-- diagnostics such as dominant component and calibration impact fields
+- Component p-values: `acat_p`, `fisher_p`, `tfisher_p_analytic`, `minp_p_analytic`, `stouffer_p_analytic`
+- Optional `magma_pvalue` (if provided via `magma_out`)
+- Omnibus p-values: `omni_p_analytic`, `omni_p_global`, `omni_p_mvn`, `omni_p_final`
+- Multiple testing adjusted: `omni_p_final_BH`, `omni_p_final_q_storey`
+- Diagnostics: `dominant_component`, `agreement_score`, `calibration_impact`, `calib_mode`
+- Gene info: `genes_used`, `gene_pvals_used`
 
-## Reproducible examples in this repo
+## Reproducible examples
 
-- Full workflow script: `usage2.R`
-- Sorghum MVN + GPD run: `sorghum_catfish_results/run_catfish_GPD_1M.R`
+- `usage2.R` — full multi-chromosome workflow (maize/sorghum)
+- `usage3_arabidopsis.R` — arabidopsis cold trait
+- `usage4_drosophila.R` — *Drosophila* starvation
+- `sorghum_catfish_results/run_catfish_GPD_1M.R` — sorghum B=1M GPD run
+
+## Real-data applications
+
+CATFISH has been applied to:
+
+- **Sorghum stem volume** (410 PMN pathways, B=1M GPD, strict tau): top pathway aerobic respiration I (p = 5.96×10⁻³⁵), 52 Bonferroni-significant pathways, 21 genes with 3-layer support
+- **Arabidopsis cold response** (321 AraCyc pathways, B=1M GPD): top pathway wax esters biosynthesis I (p = 7.70×10⁻⁵)
+- **Arabidopsis TuMV infection** (264 AraCyc pathways, B=100k GPD): top pathway cyanide detoxification I (p = 4.93×10⁻¹⁷); candidate genes independently validated
+- **Maize nitrogen use efficiency** (427 CornCyc pathways, B=100k GPD): top pathway glutathione biosynthesis (p = 8.59×10⁻⁸)
+- **Drosophila starvation** (FlyCyc pathways, male + female)
 
 ## Notes
 
 - CATFISH relies on MAGMA outputs; make sure MAGMA runs successfully before CATFISH steps.
 - MVN calibration requires valid gene-gene correlation pairs (`gene1`, `gene2`, `r`).
-- For publication-grade calibration, consider `perm_mode = "mvn"` and larger `B_perm`.
+- For publication-grade calibration, use `perm_mode = "mvn"`, `tail_mode = "hybrid_gpd"`, and `B_perm = 1000000`.
+- Use strict `tau_grid = c(1e-5, 1e-6, 1e-7)` for data with strong gene-level signals; default grid for moderate/weak signals.
