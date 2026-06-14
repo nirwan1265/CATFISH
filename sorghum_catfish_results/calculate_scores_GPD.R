@@ -155,6 +155,11 @@ outfile_all <- paste0("sorghum_catfish_results/candidate_genes_GPD_B1M_scored", 
 write.csv(candidates, outfile_all, row.names = FALSE)
 cat("\nResults saved to:", outfile_all, "\n")
 
+# Save top 50
+outfile_top50 <- paste0("sorghum_catfish_results/candidate_genes_top50_GPD_B1M", OUT_SUFFIX, ".csv")
+write.csv(head(candidates, 50), outfile_top50, row.names = FALSE)
+cat("Top 50 saved to:", outfile_top50, "\n")
+
 # Save top 200
 outfile_top <- paste0("sorghum_catfish_results/candidate_genes_top200_GPD_B1M", OUT_SUFFIX, ".csv")
 write.csv(head(candidates, 200), outfile_top, row.names = FALSE)
