@@ -636,8 +636,6 @@ We characterized the genetic architecture of dry tons per acre in sorghum using 
 
 MAGMA gene-based testing consolidated dense local SNP signals into interpretable loci and identified strong associations for \textit{SORBI\_3004G140501} ($p = 2.95 \times 10^{-11}$), \textit{SORBI\_3008G028800} ($p = 3.71 \times 10^{-11}$), \textit{SORBI\_3004G140800} ($p = 4.10 \times 10^{-11}$), \textit{SORBI\_3008G028850} ($p = 1.52 \times 10^{-10}$), and \textit{SORBI\_3009G083900} ($p = 2.69 \times 10^{-10}$). These top MAGMA signals overlapped major GWAS peaks on chromosomes 4, 8, and 9, indicating broad concordance between SNP- and gene-level analyses and a shared set of underlying loci.
 
-To extend locus-level signals to pathways, we applied CATFISH to MAGMA gene statistics using the omnibus framework with multivariate normal calibration, generalized Pareto tail correction, $B = 10^{6}$ permutations, and the strict TFisher $\tau$ grid ($10^{-5}$, $10^{-6}$, $10^{-7}$). CATFISH detected significant enrichment for pathways in lipid metabolism, energy production, and nitrogen-related biosynthesis. The strongest omnibus associations were vitamin E (tocopherol) biosynthesis ($p = 1.95 \times 10^{-9}$), \textit{de novo} adenosine ribonucleotide biosynthesis ($p = 2.25 \times 10^{-9}$), oleate biosynthesis I (plants) ($p = 2.89 \times 10^{-7}$), palmitate biosynthesis II ($p = 3.54 \times 10^{-7}$), plant sterol biosynthesis II ($p = 3.76 \times 10^{-7}$), and stearate biosynthesis II ($p = 4.36 \times 10^{-7}$). Additional enriched pathways included aerobic respiration I, photosynthesis light reactions, glutamine metabolism, and triacylglycerol biosynthesis and degradation.
-
 \begin{table*}[htbp]
 \centering
 \caption{\textbf{Top five candidate genes for dry tons per acre based on the integrated scoring system.} Candidates were prioritized by combining SNP-level GWAS, MAGMA gene-level association, and CATFISH pathway support. Pathway statistics correspond to the best supporting pathway assigned to each gene.}
@@ -656,8 +654,9 @@ Gene & GWAS $p$-value & GWAS rank & MAGMA $p$-value & MAGMA rank & Pathway $p$-v
 \end{tabular}
 \end{table*}
 
-These results indicate that dry tons per acre is shaped by coordinated genetic variation across SNPs, gene-level clusters, and higher-order metabolic pathways. The convergence of GWAS, MAGMA, and CATFISH implicates lipid biosynthesis, respiratory metabolism, and carbon–nitrogen allocation as key processes underlying biomass productivity variation in sorghum.
+To extend locus-level signals to pathways, we applied CATFISH to MAGMA gene statistics using the omnibus framework with multivariate normal calibration, generalized Pareto tail correction, $B = 10^{6}$ permutations, and the strict TFisher $\tau$ grid ($10^{-5}$, $10^{-6}$, $10^{-7}$). CATFISH detected significant enrichment for pathways in lipid metabolism, energy production, and nitrogen-related biosynthesis. The strongest omnibus associations were vitamin E (tocopherol) biosynthesis ($p = 1.95 \times 10^{-9}$), \textit{de novo} adenosine ribonucleotide biosynthesis ($p = 2.25 \times 10^{-9}$), oleate biosynthesis I (plants) ($p = 2.89 \times 10^{-7}$), palmitate biosynthesis II ($p = 3.54 \times 10^{-7}$), plant sterol biosynthesis II ($p = 3.76 \times 10^{-7}$), and stearate biosynthesis II ($p = 4.36 \times 10^{-7}$). Additional enriched pathways included aerobic respiration I, photosynthesis light reactions, glutamine metabolism, and triacylglycerol biosynthesis and degradation.
 
+These results indicate that dry tons per acre is shaped by coordinated genetic variation across SNPs, gene-level clusters, and higher-order metabolic pathways. The convergence of GWAS, MAGMA, and CATFISH implicates lipid biosynthesis, respiratory metabolism, and carbon–nitrogen allocation as key processes underlying biomass productivity variation in sorghum.
 
 \begin{figure*}[!t]
     \centering
