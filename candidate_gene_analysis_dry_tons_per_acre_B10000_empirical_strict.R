@@ -18,10 +18,6 @@ MAGMA_MODE          <- "top_pct"
 MAGMA_FDR_THRESHOLD <- 0.30
 MAGMA_TOP_PCT       <- 5
 
-PATHWAY_MODE          <- "fdr"
-TOP_K_PATHWAYS        <- 20
-PATHWAY_FDR_THRESHOLD <- 0.05
-
 WINDOW_SIZE <- 25000
 
 BASE_DIR <- "/Users/nirwantandukar/Documents/Research/results/CATFISH/MAGMA/Dry_tons_per_acre"
@@ -219,44 +215,57 @@ omni_col <- if ("omni_p_final" %in% names(omni_results)) {
   "omni_p_analytic"
 }
 
-if (PATHWAY_MODE == "fdr") {
-  omni_results$pathway_fdr <- p.adjust(omni_results[[omni_col]], method = "BH")
-  top_pathways <- omni_results %>%
-    filter(pathway_fdr < PATHWAY_FDR_THRESHOLD) %>%
-    arrange(.data[[omni_col]])
-} else {
-  top_pathways <- omni_results %>%
-    arrange(.data[[omni_col]]) %>%
-    slice_head(n = TOP_K_PATHWAYS)
-}
+omni_results <- omni_results %>%
+  arrange(.data[[omni_col]], pathway_name, pathway_id) %>%
+  mutate(pathway_rank = dplyr::row_number())
 
-pathway_genes_list <- strsplit(top_pathways$genes_used, ";")
+pathway_genes_list <- strsplit(omni_results$genes_used, ";")
 pathway_genes <- data.frame(
-  pathway_id = rep(top_pathways$pathway_id, lengths(pathway_genes_list)),
-  pathway_name = rep(top_pathways$pathway_name, lengths(pathway_genes_list)),
-  pathway_p = rep(top_pathways[[omni_col]], lengths(pathway_genes_list)),
+  pathway_id = rep(omni_results$pathway_id, lengths(pathway_genes_list)),
+  pathway_name = rep(omni_results$pathway_name, lengths(pathway_genes_list)),
+  pathway_p = rep(omni_results[[omni_col]], lengths(pathway_genes_list)),
+  pathway_rank = rep(omni_results$pathway_rank, lengths(pathway_genes_list)),
   GENE = trimws(unlist(pathway_genes_list)),
   stringsAsFactors = FALSE
 )
+
+pathway_genes <- pathway_genes %>%
+  filter(!is.na(GENE), nzchar(GENE))
+
+pathway_best <- pathway_genes %>%
+  arrange(pathway_rank, pathway_name, pathway_id) %>%
+  group_by(GENE) %>%
+  slice_head(n = 1) %>%
+  ungroup() %>%
+  transmute(
+    GENE,
+    best_pathway_id = pathway_id,
+    best_pathway_name = pathway_name,
+    best_pathway_p = pathway_p,
+    pathway_rank = pathway_rank
+  )
 
 pathway_gene_support <- pathway_genes %>%
   group_by(GENE) %>%
   summarise(
     n_top_pathways = n_distinct(pathway_id),
-    best_pathway_p = min(pathway_p, na.rm = TRUE),
     mean_pathway_mlog10p = mean(-log10(pathway_p), na.rm = TRUE),
     pathways = paste(pathway_id, collapse = "; "),
+    pathway_names = paste(pathway_name, collapse = "; "),
     .groups = "drop"
   ) %>%
-  arrange(best_pathway_p, GENE) %>%
-  mutate(pathway_rank = dplyr::row_number())
+  left_join(pathway_best, by = "GENE") %>%
+  arrange(pathway_rank, GENE)
 
-cat("Selected pathways for support: ", nrow(top_pathways), "\n", sep = "")
-cat("Genes with pathway support: ", nrow(pathway_gene_support), "\n\n", sep = "")
+n_pathways_total <- nrow(omni_results)
+cat("Total pathways used for scoring: ", n_pathways_total, "\n", sep = "")
+cat("Genes with pathway membership: ", nrow(pathway_gene_support), "\n\n", sep = "")
 
 ## -----------------------------------------------------------------------------
 ## 5. Integrate three layers and score genes
 ## -----------------------------------------------------------------------------
+
+n_genes_total <- nrow(magma_gene)
 
 gene_evidence <- magma_gene %>%
   left_join(gwas_gene, by = "GENE") %>%
@@ -270,19 +279,24 @@ gene_evidence <- magma_gene %>%
     },
     hit_pathway = !is.na(n_top_pathways) & n_top_pathways >= 1,
     support_layers = hit_gwas + hit_magma + hit_pathway,
-    score = (hit_gwas * 1) + (hit_magma * 1) + (hit_pathway * 1) +
-      0.2 * ifelse(!is.na(magma_p), -log10(magma_p), 0) +
-      0.1 * ifelse(!is.na(gwas_min_p), -log10(gwas_min_p), 0) +
-      0.1 * ifelse(!is.na(best_pathway_p), -log10(best_pathway_p), 0)
+    gwas_rank_score = ifelse(!is.na(gwas_rank), -log10(gwas_rank / n_genes_total), 0),
+    magma_rank_score = ifelse(!is.na(magma_rank), -log10(magma_rank / n_genes_total), 0),
+    pathway_rank_score = ifelse(!is.na(pathway_rank), -log10(pathway_rank / n_pathways_total), 0),
+    multi_pathway_bonus = ifelse(!is.na(n_top_pathways), log10(n_top_pathways + 1), 0),
+    score = gwas_rank_score +
+      magma_rank_score +
+      0.5 * pathway_rank_score +
+      0.3 * multi_pathway_bonus
   ) %>%
-  arrange(desc(score), desc(support_layers), magma_p, gwas_min_p)
+  arrange(desc(score), gwas_rank, magma_rank, pathway_rank, GENE)
 
 top50 <- gene_evidence %>%
   select(
     GENE, score, support_layers,
+    gwas_rank_score, magma_rank_score, pathway_rank_score, multi_pathway_bonus,
     magma_p, magma_fdr, magma_rank, magma_z,
     gwas_min_p, gwas_n_snps, gwas_rank,
-    n_top_pathways, best_pathway_p, pathway_rank, pathways,
+    n_top_pathways, best_pathway_p, pathway_rank, best_pathway_id, best_pathway_name, pathways, pathway_names,
     hit_gwas, hit_magma, hit_pathway
   ) %>%
   slice_head(n = 50)
@@ -290,9 +304,10 @@ top50 <- gene_evidence %>%
 top200 <- gene_evidence %>%
   select(
     GENE, score, support_layers,
+    gwas_rank_score, magma_rank_score, pathway_rank_score, multi_pathway_bonus,
     magma_p, magma_fdr, magma_rank, magma_z,
     gwas_min_p, gwas_n_snps, gwas_rank,
-    n_top_pathways, best_pathway_p, pathway_rank, pathways,
+    n_top_pathways, best_pathway_p, pathway_rank, best_pathway_id, best_pathway_name, pathways, pathway_names,
     hit_gwas, hit_magma, hit_pathway
   ) %>%
   slice_head(n = 200)

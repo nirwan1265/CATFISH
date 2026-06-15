@@ -1,0 +1,10 @@
+parameter,value
+seed,1
+m,220
+rho,0.20
+archetype_I_drivers,6
+archetype_II_fraction,0.45
+archetype_III_fraction,0.85
+archetype_IV_drivers,4
+archetype_IV_support,40
+archetype_V_drivers,1

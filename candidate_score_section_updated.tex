@@ -1,0 +1,79 @@
+\section{A3 Candidate-gene prioritization score}\label{app:candidate_score}
+
+To prioritize genes supported across multiple analytical layers, we combined evidence from
+GWAS locus support, MAGMA gene-level significance, and pathway-level enrichment into a
+single continuous composite score. Rather than thresholding each layer independently and
+summing binary indicators, we adopted a rank-normalized formulation that places all three
+evidence sources on a common $-\log_{10}$ scale before combining them.
+
+\paragraph{Rank normalization.}
+For a gene $g$ with rank $r_{\mathrm{GWAS}}(g)$ among all genes ordered by minimum
+within-locus GWAS $p$-value, rank $r_{\mathrm{MAGMA}}(g)$ among all genes ordered by
+MAGMA $p$-value, and rank $r_{\mathrm{PATH}}(g)$ among all pathways ordered by
+CATFISH omnibus $p$-value (taking the rank of the gene's best-ranked pathway), we define
+rank scores
+\[
+  S_{\mathrm{GWAS}}(g)
+    = -\log_{10}\!\left(\frac{r_{\mathrm{GWAS}}(g)}{N_{\mathrm{genes}}}\right), \qquad
+  S_{\mathrm{MAGMA}}(g)
+    = -\log_{10}\!\left(\frac{r_{\mathrm{MAGMA}}(g)}{N_{\mathrm{genes}}}\right), \qquad
+  S_{\mathrm{PATH}}(g)
+    = -\log_{10}\!\left(\frac{r_{\mathrm{PATH}}(g)}{N_{\mathrm{pathways}}}\right),
+\]
+where $N_{\mathrm{genes}}$ is the total number of genes with MAGMA results and
+$N_{\mathrm{pathways}}$ is the total number of pathways tested. Genes not overlapping
+any GWAS locus receive $S_{\mathrm{GWAS}}(g) = 0$; genes not annotated to any pathway
+receive $S_{\mathrm{PATH}}(g) = 0$.
+
+\paragraph{Multi-pathway hub bonus.}
+Genes appearing in multiple pathways receive an additional bonus,
+\[
+  B_{\mathrm{hub}}(g) = \log_{10}\!\left(n_{\mathrm{pathways}}(g) + 1\right),
+\]
+where $n_{\mathrm{pathways}}(g)$ is the number of distinct pathways containing gene $g$.
+This term rewards biological connectivity: a gene implicated in several pathways has
+stronger pathway-level biological context than one annotated to a single pathway.
+
+\paragraph{Composite score.}
+The final score is
+\[
+  \mathrm{score}(g)
+  \;=\; S_{\mathrm{GWAS}}(g)
+      + S_{\mathrm{MAGMA}}(g)
+      + 0.5\, S_{\mathrm{PATH}}(g)
+      + 0.3\, B_{\mathrm{hub}}(g).
+\]
+
+\paragraph{Rationale for weights.}
+All three rank scores share the same $-\log_{10}(\mathrm{rank}/N)$ scale, making the
+weighting directly interpretable: a pathway weight of $0.5$ means that pathway evidence
+contributes at half the strength of either GWAS or MAGMA evidence per unit of rank score.
+This downweighting reflects the nature of pathway evidence: a pathway $p$-value is a
+set-level statistic distributed across all genes in that pathway rather than a
+gene-specific measurement. Awarding full weight to pathway rank would overstate the
+gene-level resolution that pathway analysis actually provides. The GWAS and MAGMA
+components receive equal weight because, at this stage of integration, GWAS locus support
+and MAGMA gene-level aggregation are regarded as complementary but equivalent sources of
+direct genetic evidence; MAGMA's advantage in aggregating multi-SNP signal is already
+captured implicitly through its typically more significant gene-level $p$-values, which
+translate to higher rank scores naturally. The hub bonus coefficient of $0.3$ was chosen
+to be appreciable but subordinate: a gene in five pathways gains
+$0.3 \times \log_{10}(6) \approx 0.23$ additional score units, which is meaningful for
+ranking within a tier of similarly-scoring genes but cannot promote a gene lacking primary
+GWAS or MAGMA support.
+
+\paragraph{Layer support annotation.}
+Separately from the composite score, we annotated each gene with discrete layer support
+indicators,
+\[
+  \mathbf{1}\{\mathrm{GWAS}\}, \quad
+  \mathbf{1}\{\mathrm{MAGMA}\}, \quad
+  \mathbf{1}\{\mathrm{PATH}\},
+\]
+where a gene was counted as a GWAS hit if its minimum locus $p$-value fell within the
+top 1\% of all genes, as a MAGMA hit if its MAGMA $p$-value fell within the top 5\%, and
+as a pathway hit if it belonged to at least one annotated pathway. The sum
+$\mathrm{layers}(g) = \mathbf{1}\{\mathrm{GWAS}\} + \mathbf{1}\{\mathrm{MAGMA}\} +
+\mathbf{1}\{\mathrm{PATH}\}$ was used as a secondary filter for downstream interpretation:
+genes with $\mathrm{layers}(g) \geq 2$ were considered multi-layer candidates and
+prioritized for biological follow-up.

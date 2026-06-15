@@ -1,0 +1,37 @@
+pathway_size,rho,method,n_components,drop_label,lambda,lambda_se,type1_05,type1_05_se,type1_01,type1_01_se,source,method_label,lambda,lambda_se,type1_05,type1_05_se
+5,0,omnibus_analytical,5,Drop: stouffer,0.609819456,0.084397738,0.03,0.009848858,0.023333333,0.008715673,Adaptive,Adaptive+Analytic,0.453917933,NA,0.047037037,NA
+5,0,omnibus_mvn,5,Drop: stouffer,0.931880358,0.183730323,0.03,0.009848858,0.006666667,0.004698305,Adaptive,Adaptive+MVN,0.970700256,NA,0.052962963,NA
+5,0,omnibus_adaptive,4,Drop: stouffer,0.527682366,0.059964075,0.023333333,0.008715673,0.023333333,0.008715673,Adaptive,Analytic,0.439254174,NA,0.155555556,NA
+5,0,omnibus_adaptive_mvn,4,Drop: stouffer,0.903360252,0.125716089,0.053333333,0.012972906,0.016666667,0.007391186,Adaptive,MVN,0.989900477,NA,0.041111111,NA
+5,0.3,omnibus_analytical,5,Drop: stouffer,0.519820442,0.088195494,0.076666667,0.015361086,0.046666667,0.012177697,Leave-one-out,"""-ACAT""",1.035389749,NA,0.054888889,NA
+5,0.3,omnibus_mvn,5,Drop: stouffer,0.903360252,0.115136496,0.046666667,0.012177697,0.01,0.005744563,Leave-one-out,"""-Fisher""",1.056230306,NA,0.054666667,NA
+5,0.3,omnibus_adaptive,4,Drop: stouffer,0.462600336,0.07780095,0.063333333,0.014062032,0.033333333,0.010363755,Leave-one-out,"""-Stouffer""",1.07661225,NA,0.051333333,NA
+5,0.3,omnibus_adaptive_mvn,4,Drop: stouffer,0.936272887,0.130124815,0.063333333,0.014062032,0.01,0.005744563,Leave-one-out,"""-Tfisher""",1.05812942,NA,0.058444444,NA
+5,0.7,omnibus_analytical,5,"Drop: fisher, stouffer",0.26760341,0.088569232,0.16,0.02116601,0.08,0.01566312,Leave-one-out,"""-minP""",1.030965958,NA,0.054666667,NA
+5,0.7,omnibus_mvn,5,"Drop: fisher, stouffer",0.745041838,0.122386625,0.05,0.012583057,0.013333333,0.006622073,Leave-one-out,All,1.047630311,NA,0.055555556,NA
+5,0.7,omnibus_adaptive,3,"Drop: fisher, stouffer",0.220223214,0.052389765,0.046666667,0.012177697,0.04,0.011313708,,,,,,
+5,0.7,omnibus_adaptive_mvn,3,"Drop: fisher, stouffer",0.760331461,0.125382107,0.043333333,0.011755219,0.013333333,0.006622073,,,,,,
+25,0,omnibus_analytical,5,"Drop: acat, fisher, tfisher, stouffer",0.789746979,0.13276972,0.046666667,0.012177697,0.023333333,0.008715673,,,,,,
+25,0,omnibus_mvn,5,"Drop: acat, fisher, tfisher, stouffer",1.162827625,0.172547998,0.03,0.009848858,0.003333333,0.003327773,,,,,,
+25,0,omnibus_adaptive,1,"Drop: acat, fisher, tfisher, stouffer",1.109707603,0.134499459,0.046666667,0.012177697,0.003333333,0.003327773,,,,,,
+25,0,omnibus_adaptive_mvn,1,"Drop: acat, fisher, tfisher, stouffer",1.079099374,0.145972611,0.046666667,0.012177697,0,0,,,,,,
+25,0.3,omnibus_analytical,5,"Drop: fisher, tfisher, stouffer",0.307876838,0.108723225,0.173333333,0.021854739,0.116666667,0.018534253,,,,,,
+25,0.3,omnibus_mvn,5,"Drop: fisher, tfisher, stouffer",0.756482957,0.112110476,0.043333333,0.011755219,0.003333333,0.003327773,,,,,,
+25,0.3,omnibus_adaptive,2,"Drop: fisher, tfisher, stouffer",0.475554364,0.126048725,0.043333333,0.011755219,0,0,,,,,,
+25,0.3,omnibus_adaptive_mvn,2,"Drop: fisher, tfisher, stouffer",0.951928723,0.142297942,0.033333333,0.010363755,0,0,,,,,,
+25,0.7,omnibus_analytical,5,"Drop: acat, fisher, tfisher, stouffer",0.144004833,0.109450888,0.283333333,0.026016377,0.216666667,0.023785305,,,,,,
+25,0.7,omnibus_mvn,5,"Drop: acat, fisher, tfisher, stouffer",1.170840032,0.137253888,0.04,0.011313708,0.006666667,0.004698305,,,,,,
+25,0.7,omnibus_adaptive,1,"Drop: acat, fisher, tfisher, stouffer",0.046389679,0.017250116,0.033333333,0.010363755,0.003333333,0.003327773,,,,,,
+25,0.7,omnibus_adaptive_mvn,1,"Drop: acat, fisher, tfisher, stouffer",1.181172293,0.132747911,0.073333333,0.015050532,0.016666667,0.007391186,,,,,,
+50,0,omnibus_analytical,5,Drop: tfisher,0.55045613,0.080407304,0.066666667,0.014401646,0.016666667,0.007391186,,,,,,
+50,0,omnibus_mvn,5,Drop: tfisher,0.894831517,0.12380386,0.043333333,0.011755219,0.006666667,0.004698305,,,,,,
+50,0,omnibus_adaptive,4,Drop: tfisher,0.677774105,0.081514291,0.043333333,0.011755219,0.006666667,0.004698305,,,,,,
+50,0,omnibus_adaptive_mvn,4,Drop: tfisher,0.869149205,0.086004673,0.03,0.009848858,0.006666667,0.004698305,,,,,,
+50,0.3,omnibus_analytical,5,"Drop: fisher, tfisher, stouffer",0.558543323,0.242980542,0.25,0.025,0.163333333,0.02134288,,,,,,
+50,0.3,omnibus_mvn,5,"Drop: fisher, tfisher, stouffer",1.108990148,0.159820548,0.056666667,0.013348602,0.01,0.005744563,,,,,,
+50,0.3,omnibus_adaptive,2,"Drop: fisher, tfisher, stouffer",0.514983346,0.128482421,0.086666667,0.016243517,0.023333333,0.008715673,,,,,,
+50,0.3,omnibus_adaptive_mvn,2,"Drop: fisher, tfisher, stouffer",0.960947639,0.131265438,0.083333333,0.015957118,0.023333333,0.008715673,,,,,,
+50,0.7,omnibus_analytical,5,"Drop: acat, fisher, tfisher, stouffer",0.205416155,0.157484897,0.313333333,0.026780313,0.27,0.025632011,,,,,,
+50,0.7,omnibus_mvn,5,"Drop: acat, fisher, tfisher, stouffer",1.234849563,0.138345213,0.03,0.009848858,0.006666667,0.004698305,,,,,,
+50,0.7,omnibus_adaptive,1,"Drop: acat, fisher, tfisher, stouffer",0.050346382,0.013994123,0.036666667,0.010850841,0.003333333,0.003327773,,,,,,
+50,0.7,omnibus_adaptive_mvn,1,"Drop: acat, fisher, tfisher, stouffer",1.094040468,0.107914714,0.05,0.012583057,0.003333333,0.003327773,,,,,,

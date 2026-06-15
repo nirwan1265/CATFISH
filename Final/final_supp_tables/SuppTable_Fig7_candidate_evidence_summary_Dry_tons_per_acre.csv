@@ -1,0 +1,7 @@
+evidence_class,n_genes
+None,28976
+Pathway only,3236
+MAGMA only,1232
+GWAS + MAGMA,315
+MAGMA + Pathway,121
+All 3,28
