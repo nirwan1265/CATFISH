@@ -10,9 +10,9 @@ suppressPackageStartupMessages({
 ## Parameters
 ## -----------------------------------------------------------------------------
 
-GWAS_MODE           <- "top_pct"
-GWAS_P_THRESHOLD    <- 1e-5
-GWAS_TOP_PCT        <- 1
+GWAS_MODE        <- "top_pct"
+GWAS_P_THRESHOLD <- 1e-5
+GWAS_TOP_PCT     <- 1
 
 MAGMA_MODE          <- "top_pct"
 MAGMA_FDR_THRESHOLD <- 0.30
@@ -20,74 +20,78 @@ MAGMA_TOP_PCT       <- 5
 
 WINDOW_SIZE <- 25000
 
-TRAIT    <- "Starvation_stress_male"
-BASE_DIR <- "/Users/nirwantandukar/Documents/Research/results/CATFISH/DGRP/Fly_starvation_male"
-GWAS_FILE <- "/Users/nirwantandukar/Documents/Research/data/DGRP/Starvation_stress/raw_gwas/raw_GWAS_Starvation_stress_male_DGRP.csv"
-GENE_LOC_FILE <- "/Users/nirwantandukar/Documents/Github/MAGCAT/inst/extdata/fly.genes.loc"
+TRAIT          <- "BW_control_female"
+CHROMS         <- c("2L", "2R", "3L", "3R", "X")
+MAGMA_BASE     <- "/Users/nirwantandukar/Documents/Research/results/CATFISH/MAGMA/BW_control_female"
+BASE_DIR       <- "/Users/nirwantandukar/Documents/Research/results/CATFISH/DGRP/BW_control_female"
+CATFISH_SUBDIR <- "CATFISH_permutation_B1000000_mvn_GPD"
+GWAS_FILE      <- "/Users/nirwantandukar/Documents/Research/results/DGRP/DGRP_chilipeppers/GWAS_BLUEs/BW_control_female.assoc.txt"
+GENE_LOC_FILE  <- "/Users/nirwantandukar/Documents/Github/MAGCAT/inst/extdata/fly.genes.loc"
 
-OUT_DIR <- file.path(BASE_DIR, "candidate_gene_scoring_B100000_GPD")
+OUT_DIR <- file.path(BASE_DIR, "candidate_gene_scoring")
 dir.create(OUT_DIR, recursive = TRUE, showWarnings = FALSE)
 
-CHR_MAP <- c("2L" = 1L, "2R" = 2L, "3L" = 3L, "3R" = 4L, "4" = 5L, "X" = 6L, "Y" = 7L)
+CHR_MAP <- c("2L"=1L,"2R"=2L,"3L"=3L,"3R"=4L,"4"=5L,"X"=6L,"Y"=7L)
 
 ## -----------------------------------------------------------------------------
 ## Helpers
 ## -----------------------------------------------------------------------------
 
-pick_completed_catfish_csv <- function(base_dir) {
+pick_completed_catfish_csv <- function(base_dir, subdir, trait) {
   csvs <- c(
-    file.path(base_dir, "CATFISH_permutation_B100000_mvn_GPD",
-              paste0(TRAIT, "_CATFISH_ACAT_mvn_B100000_GPD.csv")),
-    file.path(base_dir, "CATFISH_permutation_B100000_mvn_GPD", "omni_acat_mvn.csv"),
-    "/Users/nirwantandukar/Documents/Github/MAGCAT/catfish_omnibus_results_Fly_male_B10000/omni_acat_mvn.csv"
+    file.path(base_dir, subdir, paste0(trait, "_CATFISH_ACAT_mvn_B1000000_GPD.csv")),
+    file.path(base_dir, subdir, paste0(trait, "_CATFISH_ACAT_mvn_B100000_GPD.csv")),
+    file.path(base_dir, subdir, "omni_acat_mvn.csv")
   )
   hit <- csvs[file.exists(csvs)]
-  if (!length(hit)) stop("No completed CATFISH result CSV found under: ", base_dir, call. = FALSE)
+  if (!length(hit)) stop("No CATFISH CSV found. Run run_catfish_BW_control_female.R first.", call. = FALSE)
+  message("Using CATFISH CSV: ", hit[[1]])
   hit[[1]]
 }
 
-pick_completed_gene_table <- function(base_dir) {
-  tsvs <- c(
-    file.path(base_dir, "CATFISH_permutation_B100000_mvn_GPD",
-              paste0(TRAIT, "_combined_genes.tsv")),
-    file.path(base_dir, "CATFISH_permutation_B100000_mvn_GPD", "combined_genes.tsv")
-  )
-  hit <- tsvs[file.exists(tsvs)]
-  if (!length(hit)) stop("No combined MAGMA gene table found under: ", base_dir, call. = FALSE)
-  hit[[1]]
+pick_completed_gene_table <- function(base_dir, subdir, trait) {
+  hit <- file.path(base_dir, subdir, paste0(trait, "_combined_genes.tsv"))
+  if (!file.exists(hit)) stop("No combined gene table found. Run run_catfish_BW_control_female.R first.", call. = FALSE)
+  hit
 }
 
 read_gene_loc_clean <- function(path) {
   x <- read.delim(path, stringsAsFactors = FALSE, check.names = FALSE)
-  req <- c("GENE", "CHR", "START", "STOP")
-  miss <- setdiff(req, names(x))
-  if (length(miss)) stop("Gene location file missing columns: ", paste(miss, collapse = ", "), call. = FALSE)
-  x <- x[, req, drop = FALSE]
+  x <- x[, c("GENE","CHR","START","STOP"), drop = FALSE]
   x$GENE  <- as.character(x$GENE)
   x$CHR   <- as.integer(x$CHR)
   x$START <- as.integer(x$START)
   x$STOP  <- as.integer(x$STOP)
-  x <- x[!duplicated(x$GENE), , drop = FALSE]
+  x <- x[!duplicated(x$GENE), ]
   x$START_EXT <- pmax(0L, x$START - WINDOW_SIZE)
   x$STOP_EXT  <- x$STOP + WINDOW_SIZE
   x
 }
 
-read_fly_gwas <- function(gwas_file) {
+read_assoc_gwas <- function(gwas_file, chr_map) {
   x <- fread(gwas_file, header = TRUE)
-  col_map <- c("P-Value"="P","P_Value"="P","pvalue"="P","p.value"="P",
-               "Positions"="POS","Position"="POS","BP"="POS","pos"="POS",
-               "Chromosome"="CHR","chromosome"="CHR","chr"="CHR",
-               "SNP"="SNP_ID","snp"="SNP_ID","rs"="SNP_ID")
+
+  # Standardise GEMMA / PLINK / GAPIT column names
+  col_map <- c(
+    "p_wald"="P","P.value"="P","p.value"="P","P-Value"="P","pvalue"="P",
+    "ps"="POS","pos"="POS","BP"="POS","Pos"="POS","Position"="POS",
+    "chr"="CHR","Chr"="CHR","chromosome"="CHR","Chromosome"="CHR",
+    "rs"="SNP","SNP"="SNP","snp"="SNP"
+  )
   for (old in names(col_map)) {
     if (old %in% names(x) && !col_map[[old]] %in% names(x))
       setnames(x, old, col_map[[old]])
   }
-  req <- c("CHR", "POS", "P")
+
+  req <- c("CHR","POS","P")
   miss <- setdiff(req, names(x))
-  if (length(miss)) stop("GWAS file missing columns: ", paste(miss, collapse = ", "), call. = FALSE)
-  x[, CHR := CHR_MAP[as.character(CHR)]]
-  x <- x[!is.na(CHR)]
+  if (length(miss)) stop("GWAS file missing columns: ", paste(miss, collapse=", "), call.=FALSE)
+
+  # Map chromosome arms to numeric if needed
+  if (is.character(x$CHR) || any(x$CHR %in% names(chr_map))) {
+    x[, CHR := chr_map[as.character(CHR)]]
+  }
+  x <- x[!is.na(CHR) & !is.na(POS)]
   x[, CHR := as.integer(CHR)]
   x[, POS := as.integer(POS)]
   x
@@ -97,8 +101,8 @@ read_fly_gwas <- function(gwas_file) {
 ## Inputs
 ## -----------------------------------------------------------------------------
 
-CATFISH_CSV     <- pick_completed_catfish_csv(BASE_DIR)
-MAGMA_GENE_FILE <- pick_completed_gene_table(BASE_DIR)
+CATFISH_CSV     <- pick_completed_catfish_csv(BASE_DIR, CATFISH_SUBDIR, TRAIT)
+MAGMA_GENE_FILE <- pick_completed_gene_table(BASE_DIR, CATFISH_SUBDIR, TRAIT)
 
 cat("Using CATFISH CSV:      ", CATFISH_CSV, "\n", sep = "")
 cat("Using MAGMA gene table: ", MAGMA_GENE_FILE, "\n", sep = "")
@@ -116,7 +120,8 @@ cat("Genes in annotation after dedup: ", nrow(gene_loc), "\n", sep = "")
 ## 2. GWAS layer
 ## -----------------------------------------------------------------------------
 
-gwas_dt <- read_fly_gwas(GWAS_FILE)
+cat("Reading GWAS file...\n")
+gwas_dt <- read_assoc_gwas(GWAS_FILE, CHR_MAP)
 cat("Total GWAS SNPs: ", nrow(gwas_dt), "\n", sep = "")
 
 gene_dt <- as.data.table(gene_loc)
@@ -221,7 +226,7 @@ cat("Total pathways used for scoring: ", n_pathways_total, "\n", sep = "")
 cat("Genes with pathway membership:   ", nrow(pathway_gene_support), "\n\n", sep = "")
 
 ## -----------------------------------------------------------------------------
-## 5. Integrate three layers and score genes
+## 5. Integrate and score
 ## -----------------------------------------------------------------------------
 
 n_genes_total <- nrow(magma_gene)
@@ -266,9 +271,9 @@ select_cols <- intersect(select_cols, names(gene_evidence))
 top50  <- gene_evidence %>% select(all_of(select_cols)) %>% slice_head(n = 50)
 top200 <- gene_evidence %>% select(all_of(select_cols)) %>% slice_head(n = 200)
 
-all_file    <- file.path(OUT_DIR, paste0("candidate_genes_all_",   TRAIT, "_B100000_GPD.csv"))
-top50_file  <- file.path(OUT_DIR, paste0("candidate_genes_top50_",  TRAIT, "_B100000_GPD.csv"))
-top200_file <- file.path(OUT_DIR, paste0("candidate_genes_top200_", TRAIT, "_B100000_GPD.csv"))
+all_file    <- file.path(OUT_DIR, paste0("candidate_genes_all_",   TRAIT, ".csv"))
+top50_file  <- file.path(OUT_DIR, paste0("candidate_genes_top50_",  TRAIT, ".csv"))
+top200_file <- file.path(OUT_DIR, paste0("candidate_genes_top200_", TRAIT, ".csv"))
 
 write.csv(gene_evidence %>% select(all_of(select_cols)), all_file,    row.names = FALSE)
 write.csv(top50,                                          top50_file,  row.names = FALSE)
@@ -281,15 +286,3 @@ cat("  ", top200_file, "\n\n", sep = "")
 
 cat("Top 10 genes by score:\n")
 print(top50 %>% slice_head(n = 10))
-
-## Top 20 by each method
-top50_gwas    <- gene_evidence %>% filter(!is.na(gwas_rank))  %>% arrange(gwas_rank)  %>% slice_head(n=50) %>% pull(GENE)
-top50_magma   <- gene_evidence %>% filter(!is.na(magma_rank)) %>% arrange(magma_rank) %>% slice_head(n=50) %>% pull(GENE)
-top50_score   <- gene_evidence %>% arrange(desc(score))       %>% slice_head(n=50)
-top50_catfish <- ifelse(top50_score$support_layers == 3, paste0(top50_score$GENE, " *"), top50_score$GENE)
-
-top50_df <- data.frame(Rank=1:50, Male_GWAS=top50_gwas, Male_MAGMA=top50_magma, Male_CATFISH=top50_catfish)
-cat("\nTop 50 by method (Male):\n")
-print(top50_df)
-write.csv(top50_df, file.path(OUT_DIR, "top50_by_method_male.csv"), row.names=FALSE)
-cat("Saved: ", file.path(OUT_DIR, "top50_by_method_male.csv"), "\n")

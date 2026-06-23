@@ -1,0 +1,15 @@
+ontology,ID,Description,n_gene_sets,gene_sets,best_p_adjust
+BP,GO:0009101,glycoprotein biosynthetic process,2,GWAS_Gln_Goodman; GWAS_Protein_Goodman,1.2254198417711789e-4
+BP,GO:0051453,regulation of intracellular pH,2,GWAS_Gln_Goodman; GWAS_Protein_Goodman,0.0050401147628471215
+MF,GO:0015386,potassium:proton antiporter activity,2,GWAS_Gln_Goodman; GWAS_Protein_Goodman,0.010769240304830415
+BP,GO:0006749,glutathione metabolic process,1,GWAS_Protein_Goodman,0.0011790522046827249
+MF,GO:0003700,DNA-binding transcription factor activity,1,Fst_landraces_N,0.001652472722999047
+MF,GO:0016846,carbon-sulfur lyase activity,1,Fst_IC_stover,0.0029471047322367303
+BP,GO:0046148,pigment biosynthetic process,1,GWAS_Asn_Goodman,0.008087568679497507
+MF,GO:0047372,monoacylglycerol lipase activity,1,GWAS_Asn_Goodman,0.008087568679497507
+MF,GO:0043295,glutathione binding,1,GWAS_Asp_Goodman,0.013277226995324302
+BP,GO:0010230,alternative respiration,1,Fst_J_grain,0.017038993187383184
+MF,GO:0009916,alternative oxidase activity,1,Fst_J_grain,0.017038993187383184
+MF,GO:0102721,ubiquinol:oxygen oxidoreductase activity,1,Fst_J_grain,0.017038993187383184
+MF,GO:0000976,transcription cis-regulatory region binding,1,Fst_landraces_N,0.022600062017679685
+MF,GO:0004364,glutathione transferase activity,1,GWAS_Protein_Goodman,0.0332957108591034

@@ -290,3 +290,15 @@ cat("  ", top200_file, "\n\n", sep = "")
 
 cat("Top 10 genes by score:\n")
 print(top50 %>% slice_head(n = 10))
+
+## Top 20 by each method
+top50_gwas    <- gene_evidence %>% filter(!is.na(gwas_rank))  %>% arrange(gwas_rank)  %>% slice_head(n=50) %>% pull(GENE)
+top50_magma   <- gene_evidence %>% filter(!is.na(magma_rank)) %>% arrange(magma_rank) %>% slice_head(n=50) %>% pull(GENE)
+top50_score   <- gene_evidence %>% arrange(desc(score))       %>% slice_head(n=50)
+top50_catfish <- ifelse(top50_score$support_layers == 3, paste0(top50_score$GENE, " *"), top50_score$GENE)
+
+top50_df <- data.frame(Rank=1:50, Female_GWAS=top50_gwas, Female_MAGMA=top50_magma, Female_CATFISH=top50_catfish)
+cat("\nTop 50 by method (Female):\n")
+print(top50_df)
+write.csv(top50_df, file.path(OUT_DIR, "top50_by_method_female.csv"), row.names=FALSE)
+cat("Saved: ", file.path(OUT_DIR, "top50_by_method_female.csv"), "\n")

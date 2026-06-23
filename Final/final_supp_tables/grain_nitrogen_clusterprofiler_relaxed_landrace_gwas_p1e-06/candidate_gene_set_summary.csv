@@ -1,0 +1,11 @@
+gene_set,n_candidate_genes,n_go_mapped_genes,pct_go_mapped
+Fst_landraces_N,759,622,81.9
+GWAS_Asn_Goodman,754,538,71.4
+Fst_IC_stover,652,455,69.8
+Fst_J_grain,642,442,68.8
+GWAS_PHG_landraces_N,575,423,73.6
+GWAS_Protein_Goodman,550,405,73.6
+GWAS_Gln_Goodman,471,345,73.2
+GWAS_Asp_Goodman,410,275,67.1
+GWAS_Glu_Goodman,307,197,64.2
+GWAS_GBS_landraces_N,237,165,69.6
