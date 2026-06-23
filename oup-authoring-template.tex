@@ -500,27 +500,25 @@ We conducted an empirical calibration using real genotypes from the sorghum Bioe
 \subsection*{3.1 Archetype-specific response profiles}
 
 We assessed whether CATFISH component tests yield distinct responses across five pathway architectures.
-% Figure~\ref{fig:supp_blockA_archetype_recovery_by_m} summarizes fixed-parameter archetype verification across pathway sizes, and Supplementary Figures~\ref{fig:blockH_power} and \ref{fig:blockH_regret} summarize effect-size sensitivity and omnibus power regret. 
-Under Strong Sparse Signal (SSS), minP and ACAT consistently dominated across pathway sizes (Fig. ~\ref{fig:supp_blockA_archetype_recovery_by_m}). At \(m=5\), minP had the highest power (0.762), with ACAT close behind (0.720). The minP most often produced the smallest pathway-level \(p\)-value. At \(m=20\) and \(m=50\), minP and ACAT again had the highest power, while ACAT increasingly dominated top-method probability, reaching 0.882 at \(m=50\). The Single-Gene Proxy (SGP) archetype showed an even stronger extreme-tail pattern. The minP had the highest power for all pathway sizes (0.958, 0.908, 0.938 for \(m=5,20,50\)), whereas ACAT most often yielded the smallest \(p\)-value. Across the effect-size grid, minP and ACAT were also the most frequent winners in SSS and SGP, indicating that sparse and single-gene-driven signals are best captured by tail-sensitive procedures (Supplementary Figures~\ref{fig:blockH_power} \& \ref{fig:blockH_regret}; Supplementary Table ~1).
+% Figure~\ref{fig:archetype_verification} summarizes fixed-parameter archetype verification across pathway sizes, and Supplementary Figures~\ref{fig:blockH_power} and \ref{fig:blockH_regret} summarize effect-size sensitivity and omnibus power regret. 
+Under Strong Sparse Signal (SSS), minP and ACAT consistently dominated across pathway sizes (Fig. ~\ref{fig:archetype_verification}). At \(m=5\), minP had the highest power (0.762), with ACAT close behind (0.720). The minP most often produced the smallest pathway-level \(p\)-value. At \(m=20\) and \(m=50\), minP and ACAT again had the highest power, while ACAT increasingly dominated top-method probability, reaching 0.882 at \(m=50\). The Single-Gene Proxy (SGP) archetype showed an even stronger extreme-tail pattern. The minP had the highest power for all pathway sizes (0.958, 0.908, 0.938 for \(m=5,20,50\)), whereas ACAT most often yielded the smallest \(p\)-value. Across the effect-size grid, minP and ACAT were also the most frequent winners in SSS and SGP, indicating that sparse and single-gene-driven signals are best captured by tail-sensitive procedures (Supplementary Figures~\ref{fig:blockH_power} \& \ref{fig:blockH_regret}; Supplementary Table ~1).
 
 
-\begin{figure*}[!t]
-    \centering
-    \includegraphics[width=\textwidth,height=0.7\textheight,keepaspectratio]{fig/supp/SuppFig2_block_a_archetype_recovery_by_m.png}
-    \caption{\textbf{Pathway-size sensitivity of archetype verification for CATFISH component tests.}
-    Correlated MVN simulations were repeated at pathway sizes \(m=5\), \(20\), and \(50\) under an exchangeable correlation structure (\(\rho=0.20\); 500 replicates per archetype). Archetype-specific mean-shift patterns were scaled proportionally with pathway size to preserve the qualitative signal family across settings.
-    \textbf{A.} Power at \(\alpha=0.05\).
-    \textbf{B.} Mean rank of method-specific pathway-level \(p\)-values (lower is better).
-    \textbf{C.} Top-method probability, defined as the frequency with which a method yields the smallest pathway-level \(p\)-value within replicate.
-    Sparse archetypes remain dominated by tail-sensitive methods (ACAT/minP) across all pathway sizes, WDE remains most consistent with Stouffer-like aggregation under diffuse weak-enrichment patterns, and MDS/MSA show greater sensitivity to pathway size, with clearer separation emerging at larger \(m\). These stylized simulations verify expected method specialization rather than classify real pathways. The omnibus is rarely the top-performing method but generally remains competitive across all archetypes and pathway sizes.}
-    \label{fig:supp_blockA_archetype_recovery_by_m}
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{Final/final_main_fig/Fig3.png}
+\caption{
+\textbf{Pathway-size sensitivity of archetype verification.}
+Each panel summarizes simulation results for one pathway signal archetype across three pathway sizes ($G=5, 20, 50$). For each archetype–size combination, we compared CATFISH component tests (ACAT, Fisher, TFisher, minP, Stouffer) and the omnibus statistic using three summaries: power (empirical power at the target significance threshold), mean rank (average rank across replicates), and top-method probability (probability of being the best method in a replicate). Each cell is colored by the best method under that summary, and the number in the cell gives the corresponding summary value. The figure shows that optimal methods depend on both signal architecture and pathway size: sparse archetypes favor minP or ACAT; coordinated or diffuse same-direction signals favor Fisher or Stouffer; and hybrid architectures often favor TFisher or Fisher. Overall, no single component test is uniformly best, motivating a pathway-level omnibus procedure that performs well across heterogeneous signal regimes.
+}
+\label{fig:archetype_verification}
 \end{figure*}
 
-Weak Diffuse Enrichment (WDE) showed the opposite pattern (Fig.~\ref{fig:supp_blockA_archetype_recovery_by_m}). Stouffer's method was the most consistently aligned component, with the highest power, best mean rank, and highest top-method probability across pathway sizes. At \(m=20\), Fisher, Stouffer, and the omnibus had nearly identical power (0.264, 0.266, 0.264), but Stouffer still had the best mean rank and top-method probability. Across the effect-size grid, Stouffer had the highest power in 11 of 18 settings. Omnibus regret was lowest in WDE (mean 0.024, maximum 0.060), indicating that it closely tracked the best component even when not top ranked (Supplementary Figures~\ref{fig:blockH_power} \& \ref{fig:blockH_regret}; Supplementary Table ~1).
+Weak Diffuse Enrichment (WDE) showed the opposite pattern (Fig.~\ref{fig:archetype_verification}). Stouffer's method was the most consistently aligned component, with the highest power, best mean rank, and highest top-method probability across pathway sizes. At \(m=20\), Fisher, Stouffer, and the omnibus had nearly identical power (0.264, 0.266, 0.264), but Stouffer still had the best mean rank and top-method probability. Across the effect-size grid, Stouffer had the highest power in 11 of 18 settings. Omnibus regret was lowest in WDE (mean 0.024, maximum 0.060), indicating that it closely tracked the best component even when not top ranked (Supplementary Figures~\ref{fig:blockH_power} \& \ref{fig:blockH_regret}; Supplementary Table ~1).
 
-Moderate Dense Signal (MDS) and Mixed Signal Architecture (MSA) showed more heterogeneous behavior (Fig. ~\ref{fig:supp_blockA_archetype_recovery_by_m}). In MDS, no single component dominated across pathway size or effect magnitude. Fisher and Stouffer were strongest at small \(m\), whereas TFisher strengthened at larger \(m\). Across the effect-size grid, Stouffer and TFisher each led in five settings, Fisher and minP in three each, and ACAT in two. MSA showed similar heterogeneity with stronger pathway-size dependence. Fisher performed best at small \(m\), TFisher at larger \(m\), and the omnibus became more competitive once both strong-driver and moderate-support components were represented. Across effect sizes, TFisher led most often in MSA, followed by Stouffer and ACAT (Supplementary Figures~\ref{fig:blockH_power} \& \ref{fig:blockH_regret}; Supplementary Table ~1).
+Moderate Dense Signal (MDS) and Mixed Signal Architecture (MSA) showed more heterogeneous behavior (Fig. ~\ref{fig:archetype_verification}). In MDS, no single component dominated across pathway size or effect magnitude. Fisher and Stouffer were strongest at small \(m\), whereas TFisher strengthened at larger \(m\). Across the effect-size grid, Stouffer and TFisher each led in five settings, Fisher and minP in three each, and ACAT in two. MSA showed similar heterogeneity with stronger pathway-size dependence. Fisher performed best at small \(m\), TFisher at larger \(m\), and the omnibus became more competitive once both strong-driver and moderate-support components were represented. Across effect sizes, TFisher led most often in MSA, followed by Stouffer and ACAT (Supplementary Figures~\ref{fig:blockH_power} \& \ref{fig:blockH_regret}; Supplementary Table ~1).
 
-The omnibus test was rarely the best method but generally remained competitive, except in the sparsest settings (Fig.~\ref{fig:supp_blockA_archetype_recovery_by_m}). Regret was lowest for WDE (0.024), moderate for MDS and MSA (0.050 and 0.047), and highest for sparse architectures, especially SGP and SSS (0.148 and 0.088). Omnibus regret increased with pathway size, from 0.019 at \(m=5\) to 0.051 at \(m=20\) and 0.145 at \(m=50\). The component tests were complementary. ACAT and minP favored sparse signals, whereas Stouffer and Fisher-type aggregation favored diffuse signals. Moreover, TFisher worked well for mixed or moderately dense signals (Supplementary Figures~\ref{fig:blockH_power} \& \ref{fig:blockH_regret}; Supplementary Table ~1).
+The omnibus test was rarely the best method but generally remained competitive, except in the sparsest settings (Fig.~\ref{fig:archetype_verification}). Regret was lowest for WDE (0.024), moderate for MDS and MSA (0.050 and 0.047), and highest for sparse architectures, especially SGP and SSS (0.148 and 0.088). Omnibus regret increased with pathway size, from 0.019 at \(m=5\) to 0.051 at \(m=20\) and 0.145 at \(m=50\). The component tests were complementary. ACAT and minP favored sparse signals, whereas Stouffer and Fisher-type aggregation favored diffuse signals. Moreover, TFisher worked well for mixed or moderately dense signals (Supplementary Figures~\ref{fig:blockH_power} \& \ref{fig:blockH_regret}; Supplementary Table ~1).
 
 
 
@@ -1028,6 +1026,7 @@ D.~I.~Chasman, G.~Par\'e, S.~Mora, J.~C.~Hopewell, G.~Peloso, R.~Clarke, L.~A.~C
 
 %%%%%%%%%%%%%%
 
+\clearpage
 \newpage
 
 \begin{appendices}
@@ -1047,34 +1046,34 @@ Link: https://pmc.ncbi.nlm.nih.gov/articles/PMC6391732/
 
 
 
-\subsection*{A2 Expanded description of pathway signal archetypes}
+\section{A2 Expanded description of pathway signal archetypes}
 \label{app:archetype_details}
 
-\subsubsection*{A2.1 Strong Sparse Signal (SSS)}
+\subsection{A2.1 Strong Sparse Signal (SSS)}
 
 Strong Sparse Signal (SSS) describes pathway patterns in which a small subset of genes carries most of the association evidence, while the remaining genes are close to null. In the ranked gene-level profile, this appears as one or a few extremely small ordered \(p\)-values followed by a sharp drop toward null-like behavior. Thus, SSS reflects pathway-level signal driven by a limited number of high-evidence genes rather than broad pathway-wide enrichment.
 
 Biologically, SSS is expected when pathway behavior is controlled by one or a few bottleneck genes, such as a committed-step enzyme, rate-limiting regulator, or essential transporter \citep{MorenoSanchez2008, Naz2023, Tanner2018, Song2020}. A representative example is aspartokinase in the aspartate-derived amino acid biosynthetic pathway, which produces lysine, threonine, methionine, and isoleucine from aspartate \citep{Galili2011}. Aspartokinase catalyzes the entry reaction by phosphorylating aspartate to aspartyl-phosphate \citep{Hasenoehrl2019}. Variation at this entry-point enzyme can generate a strong localized signal while many downstream genes remain buffered or near null. Within CATFISH, SSS-type pathways are expected to be detected most efficiently by ACAT and minP.
 
-\subsubsection*{A2.2 Moderate Dense Signal (MDS)}
+\subsection{A2.2 Moderate Dense Signal (MDS)}
 
 Moderate Dense Signal (MDS) describes pathway patterns in which many genes show modest but consistent association, without a single dominant gene. In ranked gene-level profiles, this appears as a broad shoulder of moderately small \(p\)-values rather than a sharp sparse peak. MDS therefore reflects coordinated enrichment where pathway-level evidence comes from the combined contribution of many genes.
 
 Biologically, MDS is expected in pathways whose output depends on many interacting components rather than a single key effector. Cytokine-driven immune signaling is a representative example. In TNF\(\alpha\)/IL-1\(\beta\)--to--NF-\(\kappa\)B signaling, pathway activity depends on receptor engagement, adaptor recruitment, kinase cascades, feedback, and downstream transcriptional and post-transcriptional control \citep{Jiang2021CytoSig, Megha2021Inflammation, Verstrepen2008NFkB, vanLoo2011NFkB, Cargnello2011MAPK}. Genetic variation in such pathways is therefore more likely to cause many moderate perturbations across the network than a single large-effect change. Within CATFISH, MDS-type pathways are expected to favor methods that aggregate consistent moderate evidence across many genes, particularly Fisher's and Stouffer's methods, with soft TFisher also performing well when enrichment is concentrated in a moderately sized subset.
 
-\subsubsection*{A2.3 Weak Diffuse Enrichment (WDE)}
+\subsection{A2.3 Weak Diffuse Enrichment (WDE)}
 
 Weak Diffuse Enrichment (WDE) describes pathway patterns in which most genes are individually non-significant, yet the pathway shows a subtle overall shift toward stronger association. In the ranked gene-level profile, this appears as a gentle pathway-wide deflection rather than a sharp peak or broad shoulder. WDE therefore reflects weak but widespread enrichment across many genes.
 
 Biologically, WDE corresponds to highly polygenic architectures where pathway signals arise from many small effects. Human height is a classic example, as it is influenced by thousands of variants with individually small effects \citep{Guo2018HeightGWAS, Yengo2022HeightSaturation}. In this context, coherent pathways such as TGF-\(\beta\) signaling, Hedgehog signaling, and growth-plate extracellular matrix processes may be detectable mainly through cumulative pathway-level enrichment rather than strong single-gene signals \citep{LangoAllen2010Height, Guo2018HeightGWAS}. Within CATFISH, WDE-type pathways are expected to favor methods that capture distributed enrichment across many genes, particularly Stouffer's and Fisher's methods \citep{deLeeuw2015MAGMA}.
 
-\subsubsection*{A2.4 Mixed Signal Architecture (MSA)}
+\subsection{A2.4 Mixed Signal Architecture (MSA)}
 
 Mixed Signal Architecture (MSA) describes pathway patterns in which one or a few genes show strong association while a broader set of genes provides moderate support. In ranked gene-level profiles, this appears as a sharp leading peak with a moderate shoulder, placing MSA between the sparse SSS and coordinated MDS regimes. MSA therefore reflects pathway-level evidence that combines localized strong signals with broader moderate enrichment.
 
 Biologically, MSA is expected in pathways with a few core regulatory elements that have large, pathway-defining effects embedded in a wider network of auxiliary components. Low-density lipoprotein (LDL) cholesterol metabolism illustrates this pattern. Rare, high-effect variants in \textit{LDLR}, \textit{APOB}, and \textit{PCSK9} drive monogenic familial hypercholesterolemia, whereas population-level LDL-C variation also reflects common alleles with small to moderate effects across additional lipid-modulating genes \citep{Umlai2025LDLC, Peloso2022WGSbloodlipids}. GWAS of lipoprotein traits further implicate genes involved in lipoprotein metabolism and remodeling, including \textit{ABCA1}, \textit{LIPC}, \textit{CETP}, \textit{PLTP}, \textit{ANGPTL3}, and \textit{SORT1} \citep{Chasman2009LipoproteinProfiles}. Within CATFISH, MSA-type pathways should be well captured by methods that accommodate both strong localized signals and moderate distributed support, particularly adaptive soft TFisher and Fisher's method.
 
-\subsubsection*{A2.5 Single-Gene Proxy (SGP)}
+\subsection{A2.5 Single-Gene Proxy (SGP)}
 
 The Single-Gene Proxy (SGP) pattern describes pathways whose significance is driven primarily by one strongly associated gene, with the remaining genes near null. In the ranked gene-level profile, this appears as a single extreme peak followed by an otherwise null-like distribution. Statistically, SGP can be viewed as a boundary case of SSS, but its interpretation differs because the pathway result adds little beyond the dominant gene-level association.
 
@@ -1559,7 +1558,7 @@ B+1
 
 This unified calibration targets the null distribution of the complete pathway-analysis workflow by recomputing all component tests and the omnibus operator under the same dependence-preserving null draw. Because all component statistics are computed from the same simulated pathways, the MVN procedure preserves both within-pathway gene dependence and cross-method dependence. CATFISH therefore does not calibrate each component and then recalibrate the omnibus. Instead, the recommended inferential quantity is the empirically calibrated omnibus statistic obtained once under the full MVN null pipeline.
 
-\subsection{A3.9 Optional MVN calibration of component statistics}
+\subsection{A3.9 MVN calibration of component statistics}
 
 CATFISH can optionally report MVN-calibrated component $p$-values for diagnostic purposes. For a given component $j$, its MVN-calibrated value is
 \[
@@ -1785,7 +1784,7 @@ For reporting and interpretation, CATFISH uses a tiered framework. When pathway-
 
 % \subsection{A2.5 Sources of dependence}
 
-% Dependence in CATFISH arises at two levels. First, the component pathway tests are deterministically coupled because they all use the same within-pathway gene-level evidence, $\{p_g\}_{g \in S}$ and, when used, $\{Z_g\}_{g \in S}$. Thus, the resulting component pathway $p$-values are correlated even if the genes are independent. Under sparse architectures such as SSS and SGP, one or a few extremely small gene-level $p$-values drive multiple statistics. The same extreme gene determines $\min P$, pushes ACAT via its heavy-tail Cauchy transform, and contributes disproportionately to Fisher and TFisher. Under WDE, no single gene dominates, instead, a weak but widespread shift across many genes creates an excess of moderately small $p$-values and a modest shift in the mean gene-level $Z$ distribution. This broad signal is captured by Fisher and TFisher through the accumulation of many moderate $-\log(p)$ terms, and by Stouffer through coherent aggregation of $Z$ scores. As a result, Fisher, TFisher, and Stouffer become positively correlated under WDE-type alternatives, and Stouffer-like methods tend to perform best because they are directly tuned to elevation in association-strength scores (More examples in the archetype section) (Fig.~\ref{fig:supp_blockA_archetype_recovery_by_m})
+% Dependence in CATFISH arises at two levels. First, the component pathway tests are deterministically coupled because they all use the same within-pathway gene-level evidence, $\{p_g\}_{g \in S}$ and, when used, $\{Z_g\}_{g \in S}$. Thus, the resulting component pathway $p$-values are correlated even if the genes are independent. Under sparse architectures such as SSS and SGP, one or a few extremely small gene-level $p$-values drive multiple statistics. The same extreme gene determines $\min P$, pushes ACAT via its heavy-tail Cauchy transform, and contributes disproportionately to Fisher and TFisher. Under WDE, no single gene dominates, instead, a weak but widespread shift across many genes creates an excess of moderately small $p$-values and a modest shift in the mean gene-level $Z$ distribution. This broad signal is captured by Fisher and TFisher through the accumulation of many moderate $-\log(p)$ terms, and by Stouffer through coherent aggregation of $Z$ scores. As a result, Fisher, TFisher, and Stouffer become positively correlated under WDE-type alternatives, and Stouffer-like methods tend to perform best because they are directly tuned to elevation in association-strength scores (More examples in the archetype section) (Fig.~\ref{fig:archetype_verification})
 
 % Second, gene-level inputs within a pathway may be correlated due to LD, overlapping SNP mappings, shared genomic structure, or broader polygenic effects, creating additional gene–gene dependence and strengthening deterministic coupling among component tests. Post hoc choices across methods, such as taking the minimum statistic or adaptively selecting the TFisher threshold, further increase dependence. Thus, analytic across-method combinations that assume independence can be miscalibrated, motivating the dependence-aware null calibration framework described below.
 
@@ -1845,23 +1844,25 @@ For reporting and interpretation, CATFISH uses a tiered framework. When pathway-
 
 
 
-\subsection{A4 Simulation-based evaluation of CATFISH}
+\section{A4 Simulation-based evaluation of CATFISH}
 
 To evaluate CATFISH under realistic pathway dependence and stylized signal architectures, we ran a series of multivariate normal (MVN) and phenotype-permutation simulations. These simulations addressed five questions: (i) whether CATFISH component tests recover the expected pathway signal archetypes; (ii) how sensitive archetype-specific performance profiles are to effect-size magnitude and pathway size; (iii) whether analytic versus LD-aware MVN calibration controls false positives under different LD regimes; (iv) how robust omnibus calibration is to incomplete correlation information and deliberate component misspecification; and (v) whether adaptive filtering, leave-one-out diagnostics, and optional component-level MVN calibration function as intended. In all simulations, CATFISH used the five component tests---ACAT, Fisher, TFisher, minP, and Stouffer---together with the omnibus statistic.
 
-\subsubsection{A4.1 Archetype verification simulations}
+\subsection{A4.1 Archetype verification simulations}
 
 We first performed a targeted simulation study to verify that CATFISH component tests exhibit the expected sensitivity profiles under stylized pathway signal archetypes. Gene-level statistics were simulated under a correlated MVN model,
-[
+
+\[
 \mathbf{Z} \sim \mathcal{N}(\mu,\Sigma),
-]
+\]
+
 where $\Sigma$ was an exchangeable correlation matrix with pairwise correlation $\rho=0.20$, and $\mu$ encoded the archetype-specific pathway signal pattern. Because CATFISH uses non-directional MAGMA-derived gene-level inputs, these alternatives were defined by the magnitude and distribution of pathway enrichment rather than by signed positive or negative biological effects. In this setting, departures from zero represent stronger aggregate association evidence rather than a directionally signed biological effect.
 
 We considered pathway sizes $m \in {5,20,50}$ and generated 500 independent replicates per archetype for each pathway size. To preserve each archetype's qualitative structure across sizes, signal layers were scaled proportionally with $m$ rather than fixing the absolute number of perturbed genes. The five archetypes were sparse strong signal (SSS), representing a few highly associated genes; moderate distributed signal (MDS), representing broader moderate enrichment; weak diffuse enrichment (WDE), representing subtle pathway-wide enrichment; mixed support architecture (MSA), representing a hybrid driver-plus-support regime; and single-gene proxy (SGP), representing an extreme sparse architecture dominated by one driver gene.
 
 For each replicate, we applied ACAT, Fisher, TFisher, minP, Stouffer, and the omnibus test. We evaluated performance using three complementary metrics: (i) empirical power at $\alpha=0.05$; (ii) the mean within-replicate rank of each method's pathway-level $p$-value, where lower rank indicates stronger evidence; and (iii) the top-method probability, defined as the probability that a method yielded the smallest pathway-level $p$-value among all methods within a replicate. These simulations were designed to confirm expected method behavior under stylized signal families, not to classify real GWAS pathways into discrete archetypes.
 
-\subsubsection{A4.2 Effect-size sensitivity simulations}
+\subsection{A4.2 Effect-size sensitivity simulations}
 
 To assess how archetype-specific performance varied with signal strength, we repeated the correlated MVN simulations across the same five archetypes and pathway sizes while scaling the baseline archetype-specific mean-shift layers by the effect-size multipliers
 [
@@ -1881,13 +1882,13 @@ where
 \]
 Smaller regret indicates that the omnibus more closely matches the best-performing component method within a given pathway-size and effect-size configuration.
 
-\subsubsection{A4.3 Null calibration under LD}
+\subsection{A4.3 Null calibration under LD}
 
 We evaluated null calibration under varying within-pathway dependence. Under the global null, gene-level $Z$-scores were simulated from MVN distributions under three LD regimes: $\mathrm{LD}*{\mathrm{independent}}$ ($\rho=0$), $\mathrm{LD}*{\mathrm{moderate}}$ ($\rho=0.3$), and $\mathrm{LD}_{\mathrm{strong}}$ ($\rho=0.7$). We considered pathway sizes $m \in {5,25,50}$. For each setting, we computed analytic pathway $p$-values assuming independence and MVN-calibrated pathway $p$-values using null draws from the pathway correlation matrix.
 
 Calibration was summarized using the genomic-control inflation factor $\lambda$ and empirical type~I error at $\alpha=0.05$. Values of $\lambda$ near 1 indicate good global calibration, whereas empirical type~I error near 0.05 indicates appropriate false-positive control at the nominal threshold. These simulations were applied to both component tests and the omnibus statistic, allowing direct comparison between independence-based analytic calibration and dependence-aware MVN calibration.
 
-\subsubsection{A4.4 Robustness to missing correlation information}
+\subsection{A4.4 Robustness to missing correlation information}
 
 Because empirical analyses may yield incomplete pathway gene--gene correlation matrices, we assessed how sensitive omnibus calibration was to missing correlations. Using a true block-structured correlation matrix with $\rho=0.5$, we simulated null data for pathway sizes $m \in {5,25,50}$ and then randomly removed varying fractions of off-diagonal entries from the correlation matrix:
 [
@@ -1896,7 +1897,7 @@ Because empirical analyses may yield incomplete pathway gene--gene correlation m
 
 For each incomplete matrix, we compared three calibration strategies: (i) an analytic fallback that assumed independent tests; (ii) MVN calibration using the full true correlation matrix; and (iii) MVN calibration with missing correlations imputed as zero. After zero imputation, the matrix was symmetrized and projected to the nearest positive-definite correlation matrix before MVN resampling. Calibration was summarized using genomic-control inflation $\lambda$ and empirical type~I error at $\alpha=0.05$.
 
-\subsubsection{A4.5 Component-breakage stress-test simulations}
+\subsection{A4.5 Component-breakage stress-test simulations}
 
 To assess robustness to component misspecification, we conducted a structured component-breakage stress test under the global null. Here, misspecification was defined as deliberately induced anti-conservative behavior, meaning that an affected component test had empirical type~I error above the nominal level. For each LD regime ($\mathrm{LD}_{\mathrm{independent}}$, $\mathrm{LD}_{\mathrm{moderate}}$, and $\mathrm{LD}_{\mathrm{strong}}$) and each pathway size ($m=5,25,50$), we selected
 \[
@@ -1906,19 +1907,19 @@ of the five component tests and applied anti-conservative distortion to the sele
 
 In the current implementation, breakage was induced by transforming the affected component $p$-values using a power distortion with $\gamma=0.7$, making those components increasingly anti-conservative. The omnibus statistic was then recalibrated against a breakage-matched MVN null, applying the same broken-component pattern to the null replicates before constructing the omnibus reference distribution. Calibration was summarized using $\lambda$ and empirical type~I error at $\alpha=0.05$, allowing us to assess whether matched recalibration stabilizes the omnibus when multiple components are intentionally misspecified.
 
-\subsubsection{A4.6 Adaptive filtering and leave-one-out diagnostic simulations}
+\subsection{A4.6 Adaptive filtering and leave-one-out diagnostic simulations}
 
 We evaluated two additional robustness diagnostics for the omnibus framework: adaptive component filtering and leave-one-out (LOO) sensitivity analysis. In the adaptive filtering procedure, component tests were first screened using training null simulations, and miscalibrated components were excluded before recomputing the omnibus statistic. We compared four omnibus variants: (i) Analytical, using all five components with analytic calibration; (ii) MVN, using all five components with MVN calibration; (iii) Adaptive+Analytical, recomputing the omnibus after filtering and then using analytic calibration; and (iv) Adaptive+MVN, recomputing the omnibus after filtering and then using MVN calibration. In full simulation mode, adaptive filtering used $n_{\mathrm{train}}=200$ training null simulations and $n_{\mathrm{test}}=300$ test null simulations per setting.
 
 The LOO analysis assessed sensitivity by recomputing the MVN-calibrated omnibus after excluding each component in turn ($-$ACAT, $-$Fisher, $-$TFisher, $-$minP, $-$Stouffer) and comparing these reduced-component results to the full five-component omnibus. For both adaptive filtering and LOO diagnostics, calibration was summarized using genomic-control inflation $\lambda$ and empirical type~I error at $\alpha=0.05$.
 
-\subsubsection{A4.7 MVN calibration of individual component statistics}
+\subsection{A4.7 MVN calibration of individual component statistics}
 
 Although CATFISH directly calibrates the final omnibus statistic, we also applied optional MVN calibration to individual component tests as a diagnostic. For component $j$, the MVN-calibrated $p$-value was defined by comparing its observed statistic to the corresponding null distribution generated under the same MVN pipeline used for omnibus calibration. We compared analytic and MVN-calibrated component $p$-values under $\mathrm{LD}*{\mathrm{independent}}$, $\mathrm{LD}*{\mathrm{moderate}}$, and $\mathrm{LD}_{\mathrm{strong}}$ for pathway sizes $m=5,25,50$, using $\lambda$ and empirical type~I error at $\alpha=0.05$ as diagnostics.
 
 These simulations verified that the MVN framework behaves as expected at the component level. However, because calibrated component statistics remain jointly dependent across methods, they are not used as independent inferential units. CATFISH therefore bases final pathway inference on direct MVN calibration of the omnibus statistic rather than on combining marginally recalibrated component $p$-values.
 
-\subsubsection{A4.8 Calibration of the pathway omnibus under a phenotype-permutation null}
+\subsection{A4.8 Calibration of the pathway omnibus under a phenotype-permutation null}
 
 To assess whether CATFISH maintains type~I error under realistic LD in empirical genotype data, we evaluated its calibration using a phenotype-permutation null rather than by simulation from the internal MVN model. Using real genotypes from the sorghum Bioenergy Association Panel (BAP; $\sim$1.6 million SNPs with minor allele frequency $\geq 0.01$), we randomly permuted dry biomass yield (t ac$^{-1}$) across individuals. This removes true genotype--phenotype associations while preserving the observed LD structure, allele frequencies, gene lengths, SNP density, and pathway membership.
 
@@ -2291,16 +2292,8 @@ The final prioritization score is
 \subsection{A5.4 Rationale for weights.}
 Since all rank scores use the same $-\log_{10}(\mathrm{rank}/N)$ scale, the weights act as relative importance multipliers. Pathway evidence is given weight $0.5$ (half that of GWAS or MAGMA) because pathway $p$-values are set-level, shared across all genes in a pathway, not gene-specific. Moreover, full weight would exaggerate gene-level resolution. GWAS and MAGMA receive equal weight as complementary but equivalent sources of direct genetic evidence at this stage. MAGMA’s benefit in aggregating multi-SNP signal is already reflected in its typically smaller gene-level $p$-values and thus higher rank scores. The hub bonus coefficient $0.3$ is meaningful but secondary. For example, a gene in five pathways gains $0.3\times\log_{10}(6)\approx 0.23$ score units—enough to improve its position within a tier but not to elevate a gene lacking primary GWAS or MAGMA support.
 
-\paragraph{A5.6 Discrete layer support annotation.}
-Separately from the composite score, we annotated each gene with binary support indicators
-
-\[
-\mathbf{1}\{\mathrm{GWAS}\}, \quad
-\mathbf{1}\{\mathrm{MAGMA}\}, \quad
-\mathbf{1}\{\mathrm{PATH}\},
-\]
-
-A gene was labeled a GWAS hit if its minimum locus $p$-value was in the top 1\% of all genes, a MAGMA hit if its MAGMA $p$-value was in the top 5\%, and a pathway hit if it belonged to at least one annotated pathway. We reported $L_g = \mathbf{1}\{\mathrm{GWAS}\}+\mathbf{1}\{\mathrm{MAGMA}\}+\mathbf{1}\{\mathrm{PATH}\}$ alongside the composite score; genes with $L_g \geq 2$ were considered multi-layer candidates and prioritized for follow-up. The binary indicators and composite score are aligned: genes with higher $L_g$ almost always outrank those with lower $L_g$, since extra layers typically contribute more to the rank score than within-layer differences.
+\subsection{Rank-based support thresholds under non-significance}
+For polygenic traits, individual SNP and gene-level associations rarely reach genome-wide significance after Bonferroni correction, and CATFISH pathway enrichment may also fall below formal thresholds when pathway databases are small or sample sizes modest (ref). In these cases, we defined GWAS support as the top 1\% of genes by minimum locus $p$-value, MAGMA support as the top 5\% of genes by gene-level $p$-value, and pathway support as membership in any annotated pathway. When statistically significant pathways were identified, only those were used, otherwise, we retained the top 20 pathways or top 10\% by omnibus $p$-value. These rank-based fallbacks keep the multi-layer annotation informative even when formal significance is not achieved.
 
 
 \section{A6 Computational scaling of Monte Carlo omnibus calibration}
@@ -2329,8 +2322,11 @@ Memory usage scaled mainly with pathway size and $B$ and was effectively insensi
 %\textbf{(B)} Memory (MB) versus $B$ for the same settings, with dashed linear fits ($\mathrm{memory}=a+bB$). Exact simulations were run for $P=1$ and $P=10$; $P=100$ values were projected from observed trends.
 
 
+
+\newpage
 \clearpage
 \section{Supplementary Figures}
+\clearpage
 
 \begin{figure*}[!t]
 \centering
