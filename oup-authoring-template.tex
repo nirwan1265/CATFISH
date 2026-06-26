@@ -422,10 +422,8 @@ In addition to LD-aware MVN calibration, CATFISH provides a global gene-set resa
 
 
 \subsection{2.3 Candidate-gene prioritization}
-To prioritize genes for downstream interpretation, CATFISH integrates three evidence
-layers: locus-level GWAS support, MAGMA gene-level association, and CATFISH
-pathway-level enrichment. For each gene $g$, we defined a composite score based on
-rank-normalized evidence across all three layers,
+To prioritize genes for downstream interpretation, CATFISH integrates three evidence layers: locus-level GWAS support, MAGMA gene-level association, and CATFISH pathway-level enrichment. For each gene $g$, we defined a composite score based on rank-normalized evidence across all three layers,
+
 \[
 \mathrm{Score}(g)
 = S_{\mathrm{GWAS}}(g)
@@ -433,18 +431,8 @@ rank-normalized evidence across all three layers,
 + 0.5\,S_{\mathrm{PATH}}(g)
 + 0.3\,B_{\mathrm{hub}}(g),
 \]
-where each rank score $S(\cdot) = -\log_{10}(\mathrm{rank}/N)$ places all evidence
-sources on a common scale, and $B_{\mathrm{hub}}(g) = \log_{10}(n_{\mathrm{pathways}}(g)+1)$
-rewards genes with membership in multiple pathways. Genes with no GWAS locus overlap
-receive $S_{\mathrm{GWAS}}(g)=0$; genes not annotated to any pathway receive
-$S_{\mathrm{PATH}}(g)=0$ and $B_{\mathrm{hub}}(g)=0$. Pathway evidence is downweighted
-to half the strength of GWAS or MAGMA (weight $0.5$) because pathway $p$-values are
-set-level statistics shared across all genes in a pathway rather than gene-specific
-measurements. For interpretability, we also computed a discrete layer support count
-$L_g = \mathbf{1}\{\mathrm{GWAS}\} + \mathbf{1}\{\mathrm{MAGMA}\} + \mathbf{1}\{\mathrm{PATH}\}$
-and prioritized genes with $L_g \geq 2$ as multi-layer candidates for biological
-follow-up. Full details of the scoring procedure are given in Appendix~A5.
 
+where each rank score $S(\cdot) = -\log_{10}(\mathrm{rank}/N)$ places all evidence sources on a common scale, and $B_{\mathrm{hub}}(g) = \log_{10}(n_{\mathrm{pathways}}(g)+1)$ rewards genes with membership in multiple pathways. Genes with no GWAS locus overlap receive $S_{\mathrm{GWAS}}(g)=0$; genes not annotated to any pathway receive $S_{\mathrm{PATH}}(g)=0$ and $B_{\mathrm{hub}}(g)=0$. Pathway evidence is downweighted to half the strength of GWAS or MAGMA (weight $0.5$) because pathway $p$-values are set-level statistics shared across all genes in a pathway rather than gene-specific measurements. For interpretability, we also computed a discrete layer support count $L_g = \mathbf{1}\{\mathrm{GWAS}\} + \mathbf{1}\{\mathrm{MAGMA}\} + \mathbf{1}\{\mathrm{PATH}\}$ and prioritized genes with $L_g \geq 2$ as multi-layer candidates for biological follow-up. Full details of the scoring procedure are given in Appendix~A5.
 
 
 \subsection{2.4 Simulation-based evaluation of CATFISH}
@@ -491,18 +479,21 @@ We conducted an empirical calibration using real genotypes from the sorghum Bioe
 
 
 
-
-
-
-
 \section{3 Results}
 
 \subsection*{3.1 Archetype-specific response profiles}
 
-We assessed whether CATFISH component tests yield distinct responses across five pathway architectures.
-% Figure~\ref{fig:archetype_verification} summarizes fixed-parameter archetype verification across pathway sizes, and Supplementary Figures~\ref{fig:blockH_power} and \ref{fig:blockH_regret} summarize effect-size sensitivity and omnibus power regret. 
-Under Strong Sparse Signal (SSS), minP and ACAT consistently dominated across pathway sizes (Fig. ~\ref{fig:archetype_verification}). At \(m=5\), minP had the highest power (0.762), with ACAT close behind (0.720). The minP most often produced the smallest pathway-level \(p\)-value. At \(m=20\) and \(m=50\), minP and ACAT again had the highest power, while ACAT increasingly dominated top-method probability, reaching 0.882 at \(m=50\). The Single-Gene Proxy (SGP) archetype showed an even stronger extreme-tail pattern. The minP had the highest power for all pathway sizes (0.958, 0.908, 0.938 for \(m=5,20,50\)), whereas ACAT most often yielded the smallest \(p\)-value. Across the effect-size grid, minP and ACAT were also the most frequent winners in SSS and SGP, indicating that sparse and single-gene-driven signals are best captured by tail-sensitive procedures (Supplementary Figures~\ref{fig:blockH_power} \& \ref{fig:blockH_regret}; Supplementary Table ~1).
+We evaluated CATFISH component tests across five pathway architectures. Under Strong Sparse Signal (SSS), tail-sensitive procedures consistently dominated (Fig.~\ref{fig:archetype_verification}). At \(m=5\), minP had the highest power (0.762), closely followed by ACAT (0.720), and most often produced the smallest pathway-level \(p\)-value (top-method probability \(=0.504\)). At \(m=20\), minP again had the highest power (0.920), while ACAT most often yielded the smallest \(p\)-value (0.710). At \(m=50\), minP and TFisher shared the highest power (0.964), but ACAT clearly dominated both mean rank (1.574) and top-method probability (0.882). The Single-Gene Proxy (SGP) archetype showed an even stronger extreme-tail pattern: minP had the highest power at all pathway sizes (0.958, 0.908, 0.938 for \(m=5,20,50\)), whereas ACAT most often gave the smallest \(p\)-value (0.772, 0.688, 0.786). Across the effect-size grid, sparse regimes were consistently dominated by tail-sensitive procedures, with minP most often maximizing power and ACAT frequently achieving the best within-replicate ranking, indicating that sparse and single-gene-driven signals are best captured by extreme-tail methods (Supplementary Figures~\ref{fig:blockH_power}, \ref{fig:blockH_regret}; Supplementary Table~1).
 
+Weak Diffuse Enrichment (WDE) showed the opposite pattern (Fig.~\ref{fig:archetype_verification}). Stouffer's method was the most consistently aligned component, with the highest power at all three pathway sizes (0.208, 0.266, 0.270 for \(m=5,20,50\)) and the highest top-method probability (0.442, 0.384, 0.296). At \(m=20\), Fisher, Stouffer, and the omnibus had nearly identical power (0.264, 0.266, 0.264), but Stouffer still had the best mean rank and top-method probability. At \(m=50\), Fisher slightly beat Stouffer on mean rank (3.023 vs. 3.110), but Stouffer kept the strongest overall power and top-method behavior. Across the effect-size grid, Stouffer was most often the power leader, especially at weak and intermediate signals, while Fisher- and TFisher-like aggregation sometimes matched it at stronger signals. Omnibus regret was lowest in WDE (mean 0.016, max 0.044), indicating it closely tracked the best component even when not top-ranked (Supplementary Figures~\ref{fig:blockH_power} \& \ref{fig:blockH_regret}; Supplementary Table~1).
+
+Moderate Dense Signal (MDS) and Mixed Signal Architecture (MSA) showed a clearer TFisher advantage than in earlier simulations (Fig.~\ref{fig:archetype_verification}). In MDS, Fisher had the highest power at \(m=5\) (0.330; mean rank 3.095), with Stouffer giving the highest top-method probability (0.352), but TFisher became the power leader at \(m=20\) and \(m=50\) (0.486 and 0.552) and also had the highest top-method probability there (0.286 and 0.340). Fisher still had the best mean rank at \(m=20\) and \(m=50\) (2.808 and 2.795), indicating that in MDS, stability of rankings and raw power can favor different methods. Across the effect-size grid, TFisher was most often the power leader in MDS. MSA showed a similar but more pathway-size-dependent pattern: Fisher was strongest at \(m=5\) (power 0.566; mean rank 2.727), while TFisher led at \(m=20\) and \(m=50\) (0.606 and 0.718). At \(m=50\), the omnibus test became competitive in MSA (power 0.642; mean rank 2.899), approaching the best components. Across effect sizes, TFisher was again most often the power leader, suggesting that mixed driver-plus-support architectures are best captured by adaptive truncation rather than strictly tail-only or fully diffuse aggregation (Supplementary Figures~\ref{fig:blockH_power} \& \ref{fig:blockH_regret}; Supplementary Table~1).
+
+The omnibus test was rarely the single best method but generally remained competitive outside the sparsest settings (Fig.~\ref{fig:archetype_verification}). Regret was lowest for WDE (0.016), modest for MSA and MDS (0.025 and 0.031), intermediate for SSS (0.060), and highest for SGP (0.107). Omnibus regret also increased with pathway size, but less dramatically than in the earlier version of the analysis: the mean regret was 0.021 at \(m=5\), 0.051 at \(m=20\), and 0.071 at \(m=50\). Thus, the component tests remained complementary. ACAT and minP favored sparse signals, Stouffer and Fisher-type aggregation favored diffuse signals, and TFisher was particularly effective for moderate dense and mixed-support architectures. These updated simulations therefore sharpen the case for a multi-component omnibus framework: no single component was uniformly optimal, but the pattern of specialization across archetypes became more distinct after updating the TFisher implementation (Supplementary Figures~\ref{fig:blockH_power} \& \ref{fig:blockH_regret}; Supplementary Table~1).
+
+%============================================================
+% MAIN FIGURE 3
+%============================================================
 
 \begin{figure*}[t]
 \centering
@@ -514,20 +505,17 @@ Each panel summarizes simulation results for one pathway signal archetype across
 \label{fig:archetype_verification}
 \end{figure*}
 
-Weak Diffuse Enrichment (WDE) showed the opposite pattern (Fig.~\ref{fig:archetype_verification}). Stouffer's method was the most consistently aligned component, with the highest power, best mean rank, and highest top-method probability across pathway sizes. At \(m=20\), Fisher, Stouffer, and the omnibus had nearly identical power (0.264, 0.266, 0.264), but Stouffer still had the best mean rank and top-method probability. Across the effect-size grid, Stouffer had the highest power in 11 of 18 settings. Omnibus regret was lowest in WDE (mean 0.024, maximum 0.060), indicating that it closely tracked the best component even when not top ranked (Supplementary Figures~\ref{fig:blockH_power} \& \ref{fig:blockH_regret}; Supplementary Table ~1).
-
-Moderate Dense Signal (MDS) and Mixed Signal Architecture (MSA) showed more heterogeneous behavior (Fig. ~\ref{fig:archetype_verification}). In MDS, no single component dominated across pathway size or effect magnitude. Fisher and Stouffer were strongest at small \(m\), whereas TFisher strengthened at larger \(m\). Across the effect-size grid, Stouffer and TFisher each led in five settings, Fisher and minP in three each, and ACAT in two. MSA showed similar heterogeneity with stronger pathway-size dependence. Fisher performed best at small \(m\), TFisher at larger \(m\), and the omnibus became more competitive once both strong-driver and moderate-support components were represented. Across effect sizes, TFisher led most often in MSA, followed by Stouffer and ACAT (Supplementary Figures~\ref{fig:blockH_power} \& \ref{fig:blockH_regret}; Supplementary Table ~1).
-
-The omnibus test was rarely the best method but generally remained competitive, except in the sparsest settings (Fig.~\ref{fig:archetype_verification}). Regret was lowest for WDE (0.024), moderate for MDS and MSA (0.050 and 0.047), and highest for sparse architectures, especially SGP and SSS (0.148 and 0.088). Omnibus regret increased with pathway size, from 0.019 at \(m=5\) to 0.051 at \(m=20\) and 0.145 at \(m=50\). The component tests were complementary. ACAT and minP favored sparse signals, whereas Stouffer and Fisher-type aggregation favored diffuse signals. Moreover, TFisher worked well for mixed or moderately dense signals (Supplementary Figures~\ref{fig:blockH_power} \& \ref{fig:blockH_regret}; Supplementary Table ~1).
-
-
+%============================================================
+% END FIGURE
+%============================================================
 
 
 \subsubsection{3.2 LD-aware null calibration and sensitivity to incomplete correlations}
 
-We first evaluated CATFISH calibration under global-null simulations with increasing gene--gene correlation (Fig.~\ref{fig:fig4_ld_calibration_missing_corr}A--B; Supplementary Table~2). Under LD\(_\text{independent}\), empirical type I error remained close to the nominal \(\alpha=0.05\) level for most component tests and for the MVN-calibrated omnibus. Under LD\(_\text{moderate}\) and LD\(_\text{strong}\), however, methods calibrated under an independence assumption became increasingly anti-conservative. Mean type I error increased to 0.174 and 0.222 for Fisher, 0.214 and 0.297 for Stouffer, and 0.180 and 0.243 for Omnibus\(_\text{Analytical}\), respectively. TFisher also showed inflation, although less severely, while ACAT was the most stable component test under correlated nulls but remained mildly inflated. In contrast, Omnibus\(_\text{MVN}\) remained close to the nominal across LD settings, with a mean type I error of 0.060 under LD\(_\text{moderate}\) and 0.053 under LD\(_\text{strong}\). For example, at LD\(_\text{moderate}\) with \(m=50\), type I error was 0.052 for Omnibus\(_\text{MVN}\), compared with 0.072 for ACAT and 0.224 for Omnibus\(_\text{Analytical}\). At LD\(_\text{strong}\) with \(m=50\), Omnibus\(_\text{MVN}\) was slightly conservative (0.044), whereas Omnibus\(_\text{Analytical}\) was strongly inflated (0.326). The corresponding \(\lambda\) summaries showed that the MVN calibration kept the omnibus closer to the null expectation across correlated settings, whereas several analytically calibrated tests deviated substantially under moderate and strong LD.
+We first evaluated CATFISH calibration under global-null simulations with increasing gene–gene correlation (Fig.~\ref{fig:fig4_ld_calibration_missing_corr}A–B; Supplementary Table~2). Under LD\(_\text{independent}\), empirical type I error stayed close to the nominal \(\alpha=0.05\) for most component tests and both MVN-based omnibus variants. Under LD\(_\text{moderate}\) and LD\(_\text{strong}\), however, methods assuming independence became increasingly anti-conservative: mean type I error rose to 0.152 and 0.215 for Fisher, 0.191 and 0.297 for Stouffer, and 0.153 and 0.230 for Omnibus\(_\text{Combined,Analytic}\). TFisher also departed from nominal levels, whereas ACAT was relatively stable and minP became conservative. In contrast, both LD-aware omnibus calibrations remained near 0.05: for Omnibus\(_\text{Combined}\), mean type I error was 0.055 under LD\(_\text{moderate}\) and 0.049 under LD\(_\text{strong}\); for Omnibus\(_\text{Alone}\), 0.054 and 0.045, respectively. Across correlated settings, Omnibus\(_\text{Alone}\) was generally closer to the ideal \(\lambda=1\); averaged over LD\(_\text{moderate}\) and LD\(_\text{strong}\), mean \(\lambda\) was 0.832 for Omnibus\(_\text{Combined}\) and 0.970 for Omnibus\(_\text{Alone}\), indicating that direct MVN calibration of the omnibus statistic better tracked the null. Thus, LD-aware calibration corrected the analytic omnibus’s anti-conservatism, with the omnibus-only MVN route generally offering the best calibration.
 
-We next evaluated whether MVN calibration remained stable when the pathway correlation matrix was incomplete (Fig.~\ref{fig:fig4_ld_calibration_missing_corr}C--D; Supplementary Table ~3). Null data were generated from a true block-correlation matrix (\(\rho=0.5\)), after which a fraction of off-diagonal entries was removed and either ignored analytically or imputed to zero before MVN calibration. The analytic fallback, which ignores correlation, was consistently miscalibrated, with a mean type I error of 0.201 and maximum type I error of 0.284. MVN calibration using the true correlation matrix was well calibrated, with a mean type I error of 0.054 and mean \(\lambda=0.944\). Zero-imputed MVN improved substantially over the analytic fallback, with a mean type I error of 0.076, but remained less accurate than true-correlation MVN, especially at larger pathway sizes and high missingness. For example, at 70\% missingness and \(m=50\), type I error was 0.284 for analytic fallback, 0.146 for zero-imputed MVN, and 0.052 for true-correlation MVN. Overall,  the true-correlation MVN was the best calibrated, zero-imputed MVN as intermediate, and the analytic fallback as the most inflated.
+We next tested whether MVN calibration remained stable with an incomplete pathway correlation matrix (Fig.~\ref{fig:fig4_ld_calibration_missing_corr}C--D; Supplementary Table~3). Null data were generated from a true block-correlation matrix (\(\rho=0.5\)), then a fraction of off-diagonal entries was removed and either ignored analytically or imputed to zero before MVN calibration. The analytic fallback, which ignores correlation, was consistently miscalibrated (mean type I error 0.199 for the omnibus). With the true correlation matrix, both MVN approaches were near nominal: mean type I error was 0.049 for Omnibus\(_\text{Combined}\) and 0.050 for Omnibus\(_\text{Alone}\). Zero-imputed MVN improved calibration over the analytic fallback but remained less accurate than true-correlation MVN, with mean type I error 0.070 for Omnibus\(_\text{Combined}\) and 0.074 for Omnibus\(_\text{Alone}\). The two MVN approaches differed most in \(\lambda\): with true-correlation MVN, mean \(\lambda\) was 0.851 for Omnibus\(_\text{Combined}\) and 0.984 for Omnibus\(_\text{Alone}\); with zero-imputed MVN, 0.740 and 0.923, respectively. At 70\% missingness and \(m=50\), the analytic fallback was highly inflated (type I error 0.272), whereas true-correlation MVN stayed near nominal (0.036 for Omnibus\(_\text{Combined}\), 0.052 for Omnibus\(_\text{Alone}\)). Under zero-imputed MVN at this setting, both omnibus tests worsened but still clearly outperformed the analytic fallback (0.116 for Omnibus\(_\text{Combined}\), 0.140 for Omnibus\(_\text{Alone}\)). Overall, true-correlation MVN gave the best calibration, zero-imputed MVN was intermediate, and the analytic fallback was most inflated; Omnibus\(_\text{Alone}\) was typically closest to the ideal \(\lambda=1\), whereas Omnibus\(_\text{Combined}\) sometimes had slightly smaller type I error under severe missingness.
+
 
 \begin{figure*}[!t]
     \centering
@@ -546,12 +534,13 @@ We next evaluated whether MVN calibration remained stable when the pathway corre
 
 \subsubsection{3.3 Stress tests and diagnostic perturbations}
 
-We next evaluated component-level misspecification using a structured breakage stress test under the global null (Fig.~\ref{fig:blockE_combined_robustness}A--B; Supplementary Table~4). This analysis tested whether the omnibus statistic remains calibrated when one or more component tests are anti-conservative. We distorted \(k=1,\ldots,4\) of the five component tests by transforming their \(p\)-values as \(p^\gamma\) with \(\gamma=0.7\). For each LD setting and pathway size, all \(\binom{5}{k}\) breakage combinations were evaluated, and the omnibus statistic was recalibrated using an MVN null matched to the same breakage pattern.
+We evaluated component-level misspecification using a structured breakage stress test under the global null (Fig.~\ref{fig:blockE_combined_robustness}A--B; Supplementary Table~4). In this analysis, \(k=1,\ldots,4\) of the five component tests were made anti-conservative by transforming their pathway-level \(p\)-values as \(p^\gamma\) with \(\gamma=0.7\). For each LD setting and pathway size, all \(\binom{5}{k}\) breakage combinations were evaluated. We then compared two MVN-based omnibus strategies: \emph{Omnibus Combined}, which recalibrates component \(p\)-values before recombining them, and \emph{Omnibus Alone}, which recalibrates the omnibus statistic directly under the matched null. This is a matched-distortion calibration experiment, not a robustness test to arbitrary misspecification.
 
-As more components were broken, several individual tests showed increasing type I error, especially under LD\(_\text{moderate}\) and LD\(_\text{strong}\). For example, at \(k=4\), LD\(_\text{strong}\), and \(G=25\), type I error was 0.370 for Stouffer and 0.273 for Fisher, versus 0.058 for the breakage-matched MVN-calibrated omnibus. Under LD\(_\text{moderate}\) with \(G=50\) and \(k=4\), type I error was 0.326 for Stouffer and 0.294 for Fisher, versus 0.072 for the omnibus. The corresponding \(\lambda\) summaries showed that several component tests became increasingly unstable with more breakage, whereas the matched-calibrated omnibus remained comparatively stable across LD regimes and pathway sizes. Across all stress-test settings, Omnibus\(_\text{MVN}\) had a mean type I error of 0.0595, a mean absolute deviation from 0.05 of 0.0113, and a maximum type I error of 0.0736. In contrast, mean type I error was 0.220 for Stouffer, 0.178 for Fisher, 0.108 for ACAT, 0.104 for TFisher, and 0.0768 for minP. Thus, under matched breakage, the recalibrated omnibus stayed close to nominal, whereas several individual components became increasingly anti-conservative as more components were broken. This reflects calibration to a known, matched distortion pattern rather than robustness to arbitrary misspecification.
+As more components were broken, several individual tests became strongly anti-conservative under LD\(_\text{moderate}\) and LD\(_\text{strong}\). For instance, at \(k=4\), LD\(_\text{strong}\), \(m=25\), type I error was 0.370 for Stouffer, 0.273 for Fisher, and 0.309 for the analytical omnibus, versus 0.058 for Omnibus\(_\text{Alone}\) and 0.056 for Omnibus\(_\text{Combined}\). At LD\(_\text{moderate}\), \(k=4\), \(m=50\), type I error was 0.326 for Stouffer, 0.294 for Fisher, and 0.312 for the analytical omnibus, versus 0.072 for Omnibus\(_\text{Alone}\) and 0.084 for Omnibus\(_\text{Combined}\). Overall, the matched MVN-calibrated omnibus was far more stable than the broken components, though the two MVN variants differed. Across all stress tests, Omnibus\(_\text{Alone}\) had the best calibration (mean type I error 0.0595, mean absolute deviation from 0.05 of 0.0113, maximum type I error 0.0736, mean \(\lambda=1.03\)). Omnibus\(_\text{Combined}\) was slightly more conservative (mean type I error 0.0637, mean absolute deviation 0.0148, maximum type I error 0.0840, mean \(\lambda=0.844\)). Thus, matched MVN recalibration stabilized the omnibus under structured component breakage, and directly calibrating the omnibus statistic generally outperformed recalibrating components and then recombining them.
 
-We next used adaptive component filtering and leave-one-out (LOO) sensitivity as perturbation diagnostics of the omnibus framework (Fig.~\ref{fig:blockE_combined_robustness}C--D; Supplementary Tables~5--6). These tests asked whether omnibus calibration depended on a poorly calibrated subset of components or any single component. In adaptive filtering, components with poor calibration in training null simulations were removed before recomputing the omnibus. In LOO, we recomputed the MVN-calibrated omnibus after excluding each component in turn to see whether any one component dominated the calibration profile. In the averaged adaptive-filtering summary, the analytical omnibus stayed anti-conservative (type I error \(=0.156\)) despite a conservative genomic-control estimate (\(\lambda=0.439\)), again showing that \(\lambda\) alone did not capture tail calibration. Adaptive+Analytical brought type I error near nominal (\(0.047\)) but remained strongly conservative by \(\lambda\) (\(0.454\)), indicating unstable analytic calibration even after filtering. In contrast, MVN-based methods were more consistent. The standard MVN had type I error \(=0.041\) with \(\lambda=0.990\), and Adaptive+MVN had type I error \(=0.053\) with \(\lambda=0.971\). Thus, adaptive filtering did not clearly improve on standard MVN, but confirmed that removing poorly calibrated components did not destabilize the omnibus. LOO diagnostics were similarly stable. Excluding ACAT, Fisher, Stouffer, TFisher, or minP one at a time yielded type I error values of 0.051–0.058 and \(\lambda\) of 1.03–1.08. No single exclusion caused a qualitative calibration failure, and the full MVN-calibrated omnibus was comparable to all LOO variants. Overall, MVN-calibrated omnibus performance was not driven by any dominant component and was robust to both adaptive filtering and single-component deletion, whereas analytically calibrated variants were more sensitive to misspecification.
+We next used adaptive component filtering and leave-one-out (LOO) sensitivity as perturbation diagnostics of the omnibus framework (Fig.~\ref{fig:blockE_combined_robustness}C--D; Supplementary Tables~5--6), testing whether omnibus calibration depended on a poorly calibrated subset or any single component. In adaptive filtering, components with poor null calibration in training simulations were removed before recomputing the omnibus; in LOO analyses, we recomputed the omnibus after excluding each component in turn. The analytically calibrated omnibus remained unstable: averaged across settings, the full analytical omnibus had type I error 0.154 with \(\lambda=0.460\), and Adaptive+Analytical reduced type I error to 0.0485 but remained strongly conservative by \(\lambda\) (\(0.445\)). MVN-based approaches were more coherent. For the full omnibus, Omnibus\(_\text{Alone}\) had type I error 0.0400 with \(\lambda=1.02\), whereas Omnibus\(_\text{Combined}\) had similar tail error (0.0493) but was more conservative overall (\(\lambda=0.831\)). After adaptive filtering, Adaptive+Alone had type I error 0.0522 with \(\lambda=1.02\), and Adaptive+Combined had type I error 0.0519 with \(\lambda=0.799\). Thus, adaptive filtering did not improve on the standard MVN omnibus and mainly confirmed that the MVN-calibrated omnibus was not driven by the worst-calibrated components.
 
+LOO diagnostics reached the same conclusion. Under direct omnibus calibration, excluding ACAT, Fisher, TFisher, minP, or Stouffer one at a time gave mean type I error 0.0407–0.0444 and mean \(\lambda\) 0.976–1.02; the full omnibus was similarly stable. Under component-recalibrate-then-combine, LOO type I error stayed near nominal (0.0440–0.0456), but \(\lambda\) was consistently lower (0.805–0.942), reflecting conservative shrinkage rather than better calibration. No single exclusion produced qualitative calibration failure. Overall, the omnibus is not driven by any single component, and the practical message is that the direct MVN-calibrated omnibus (\emph{Omnibus Alone}) is the more stable default; component-wise recalibration with recombination can sometimes improve tail metrics but yields a more conservative global calibration.
 
 
 \begin{figure*}[!t]
@@ -572,7 +561,7 @@ We next used adaptive component filtering and leave-one-out (LOO) sensitivity as
 \subsection{3.4 Integrated GWAS, MAGMA, and CATFISH analyses identify metabolic pathways associated with dry tons per acre in sorghum}
 % \subsection{3.3 From SNP associations to pathway-level aggregation}
 
-We characterized the genetic architecture of dry tons per acre in bioenergy association panel (BAP) using GWAS (Supplementary Table~7) , followed by gene-based aggregation with MAGMA (Supplementary Table~8). The GWAS identified several strong association peaks, with the most significant SNPs on chromosome 4 at 40,965,614 bp ($p = 3.98 \times 10^{-15}$), chromosome 7 at 14,664,850 bp ($p = 4.08 \times 10^{-15}$), chromosome 6 at 11,249,320 bp ($p = 4.58 \times 10^{-14}$), chromosome 9 at 17,713,323 bp ($p = 1.45 \times 10^{-13}$), and chromosome 8 at 2,608,927 bp ($p = 3.11 \times 10^{-13}$) (Fig. \ref{fig:dry_tons_sorghum_integrated}A).
+We characterized the genetic architecture of dry tons per acre in bioenergy association panel (BAP) using GWAS (Supplementary Table~7) , followed by gene-based aggregation with MAGMA (Supplementary Table~8) (ref, BAP paper). The GWAS identified several strong association peaks, with the most significant SNPs on chromosome 4 at 40,965,614 bp ($p = 3.98 \times 10^{-15}$), chromosome 7 at 14,664,850 bp ($p = 4.08 \times 10^{-15}$), chromosome 6 at 11,249,320 bp ($p = 4.58 \times 10^{-14}$), chromosome 9 at 17,713,323 bp ($p = 1.45 \times 10^{-13}$), and chromosome 8 at 2,608,927 bp ($p = 3.11 \times 10^{-13}$) (Fig. \ref{fig:dry_tons_sorghum_integrated}A).
 
 MAGMA gene-based testing consolidated dense local SNP signals into interpretable loci and identified strong associations for \textit{SORBI\_3004G140501} ($p = 2.95 \times 10^{-11}$), \textit{SORBI\_3008G028800} ($p = 3.71 \times 10^{-11}$), \textit{SORBI\_3004G140800} ($p = 4.10 \times 10^{-11}$), \textit{SORBI\_3008G028850} ($p = 1.52 \times 10^{-10}$), and \textit{SORBI\_3009G083900} ($p = 2.69 \times 10^{-10}$) (Fig. \ref{fig:dry_tons_sorghum_integrated}B). These top MAGMA signals overlapped major GWAS peaks on chromosomes 4, 8, and 9, indicating broad concordance between SNP- and gene-level analyses and a shared set of underlying loci.
 
@@ -594,9 +583,9 @@ Gene & GWAS $p$-value & GWAS rank & MAGMA $p$-value & MAGMA rank & Pathway $p$-v
 \end{tabular}
 \end{table*}
 
-To extend locus-level signals to pathways, we applied CATFISH to MAGMA gene statistics using the omnibus framework with multivariate normal calibration, generalized Pareto tail correction, and $B = 10^{6}$ permutations. CATFISH detected significant enrichment for pathways in lipid metabolism, energy production, and nitrogen-related biosynthesis (Fig. \ref{fig:dry_tons_sorghum_integrated}C; Supplementary Table~9). The strongest omnibus associations were vitamin E (tocopherol) biosynthesis ($p = 1.95 \times 10^{-9}$), \textit{de novo} adenosine ribonucleotide biosynthesis ($p = 2.25 \times 10^{-9}$), oleate biosynthesis I (plants) ($p = 2.89 \times 10^{-7}$), palmitate biosynthesis II ($p = 3.54 \times 10^{-7}$), plant sterol biosynthesis II ($p = 3.76 \times 10^{-7}$), and stearate biosynthesis II ($p = 4.36 \times 10^{-7}$). Additional enriched pathways included aerobic respiration I, photosynthesis light reactions, glutamine metabolism, and triacylglycerol biosynthesis and degradation.
+To extend locus-level signals to pathways, we applied CATFISH to MAGMA gene statistics using the direct MVN-calibrated omnibus (\emph{Omnibus Alone}) with generalized Pareto tail correction and \(B = 10^{4}\) null draws. CATFISH identified strong pathway-level enrichment spanning lipid metabolism, redox biology, and carbon--nitrogen metabolism (Fig.~\ref{fig:dry_tons_sorghum_integrated}C; Supplementary Table~9). The strongest omnibus associations were diacylglycerol and triacylglycerol biosynthesis (\(p = 1.65 \times 10^{-8}\)), thioredoxin pathway (\(p = 2.29 \times 10^{-7}\)), L-glutamine biosynthesis III (\(p = 4.42 \times 10^{-7}\)), cutin biosynthesis (\(p = 5.03 \times 10^{-7}\)), 3-phosphoinositide biosynthesis (\(p = 5.15 \times 10^{-7}\)), and pyrimidine ribonucleosides salvage I (\(p = 6.23 \times 10^{-7}\)). Additional highly ranked pathways included L-valine biosynthesis, gluconeogenesis I, phospholipases, NAD/NADH phosphorylation and dephosphorylation, octanoyl-[acyl-carrier protein] biosynthesis, tetrahydrofolate biosynthesis II, organic nitrogen assimilation, sporopollenin precursor biosynthesis, triacylglycerol degradation, photosynthesis light reactions, aerobic respiration I, and the Rubisco shunt.
 
-These results indicate that dry tons per acre are shaped by coordinated genetic variation across SNPs, gene-level clusters, and higher-order metabolic pathways. The convergence of GWAS, MAGMA, and CATFISH implicates lipid biosynthesis, respiratory metabolism, and carbon–nitrogen allocation as key processes underlying biomass productivity variation in BAP.
+These results indicate that dry tons per acre is shaped by coordinated genetic variation across SNPs, gene-level clusters, and higher-order metabolic pathways. The convergence of GWAS, MAGMA, and CATFISH implicates lipid remodeling, redox and energy metabolism, and carbon--nitrogen assimilation as key processes underlying biomass productivity variation in BAP.
 
 \begin{figure*}[!t]
     \centering
@@ -609,15 +598,14 @@ These results indicate that dry tons per acre are shaped by coordinated genetic 
 \end{figure*}
 
 
+
 \subsection{3.5 CATFISH component tests reveal complementary pathway signals and refine candidate-gene prioritization for dry tons per acre}
 
-To evaluate CATFISH component tests for dry tons per acre, we compared pathway-level results from ACAT, Fisher, TFisher, minP, Stouffer, and the omnibus framework (Fig.~\ref{fig:catfish_components_candidates}). Bonferroni-significant pathway counts varied widely, indicating that these tests did not recover the same pathways but instead emphasized different aspects of pathway-level signal. Fisher and Stouffer detected broad enrichment, TFisher was more selective, and the omnibus test yielded many significant pathways, consistent with its role as a multi-component integrator (Fig.~\ref{fig:catfish_components_candidates}A).
+To evaluate CATFISH component tests for dry tons per acre, we compared pathway-level results from ACAT, Fisher, TFisher, minP, Stouffer, and the final MVN-calibrated omnibus (Fig.~\ref{fig:catfish_components_candidates}). Bonferroni-significant pathway counts differed across methods, showing that component tests prioritized different aspects of pathway-level signal. TFisher detected the most significant pathways (\(n=222\)), followed by Fisher (\(n=150\)) and Stouffer (\(n=146\)), while ACAT and minP were more selective (\(n=29\) each). The omnibus identified 79 significant pathways, an intermediate number consistent with its role as a calibrated integrator rather than a proxy for the most aggressive component (Fig.~\ref{fig:catfish_components_candidates}A; Supplementary Table~11).
 
-Ranked pathway-level signals differed across CATFISH component tests (Fig.~\ref{fig:catfish_components_candidates}B; Supplementary Table~11). Fisher, Stouffer, and the omnibus statistic preserved strong evidence over many pathway ranks, whereas ACAT and minP dropped off more steeply, and TFisher was highly concentrated on a few top pathways with little signal elsewhere. These patterns indicate that the dry tons per acre signal reflects both strong effects in a subset of pathways and a broader distributed component, which Fisher, Stouffer, and omnibus-type aggregation capture more effectively. Top omnibus-ranked pathways included vitamin E biosynthesis, \textit{de novo} adenosine ribonucleotide biosynthesis, oleate biosynthesis I, palmitate biosynthesis II, plant sterol biosynthesis II, stearate biosynthesis II, aerobic respiration I, L-glutamine degradation I, photosynthesis light reactions, and diacylglycerol and triacylglycerol biosynthesis. Several relate directly to lipid biosynthesis or remodeling (fatty acid, sterol, triacylglycerol metabolism), and others to energy production, nitrogen metabolism, and core biosynthesis (ref). Overall, dry biomass productivity is associated with coordinated pathway-level variation across lipid metabolism, respiration/photosynthesis, and central biosynthetic processes. The differing component-test profiles further highlight CATFISH’s integrative value, as each test emphasizes distinct regions of the pathway signal distribution rather than yielding identical rankings.
+Ranked pathway-level signals also differed across CATFISH methods (Fig.~\ref{fig:catfish_components_candidates}B). Fisher, TFisher, Stouffer, and the omnibus retained strong signal across many pathway ranks, whereas ACAT and minP declined more steeply after the top pathways. Component tests clustered by expected signal sensitivity: Fisher and TFisher were highly concordant (Spearman \(\rho = 0.98\)), Fisher and Stouffer were also strongly correlated (\(\rho = 0.97\)), and ACAT tracked minP most closely (\(\rho = 0.97\)) (Fig.~\ref{fig:catfish_components_candidates}C). The omnibus most closely resembled Fisher (\(\rho = 0.96\)), TFisher (\(\rho = 0.96\)), and Stouffer (\(\rho = 0.92\)), but its top-ranked pathways were not identical to any single component, indicating that the final ranking reflected shared support across methods rather than any one component.
 
-Pairwise comparisons showed that CATFISH component tests clustered by their expected signal sensitivities (Fig.~\ref{fig:catfish_components_candidates}C). ACAT and minP were nearly identical, with near‑perfect rank correlation and strong overlap of Bonferroni‑significant pathways, consistent with shared sensitivity to sparse, extreme‑tail signals. Fisher and Stouffer also agreed closely, reflecting their shared sensitivity to broader, distributed enrichment. By contrast, TFisher was weakly or negatively correlated with Fisher and Stouffer, suggesting that it targeted a more selective subset of pathway signals. However, the omnibus statistic did not mirror any single component. Its rank correlations with individual methods were only weak to moderate (highest with Fisher and Stouffer), and its significant pathways were modest in overlap and distributed across components. This pattern indicates that the omnibus integrates information from several tests rather than reproducing the ranking or significant-set structure of any one method.
-
-Next, we integrated CATFISH pathway support with SNP-level GWAS and MAGMA gene-level associations to refine candidate-gene prioritization (Appendix X). Most genes lacked support from all three sources, but integration yielded a smaller high-confidence subset with multilayer support. In total, 28 genes were supported by GWAS, MAGMA, and significant pathway membership, with additional genes supported by GWAS plus MAGMA, MAGMA plus pathway evidence, MAGMA only, or pathway evidence only. Top candidates included \textit{SORBI\_3008G029200}, \textit{SORBI\_3004G014400}, \textit{SORBI\_3006G032800}, \textit{SORBI\_3006G032700}, and \textit{SORBI\_3009G066100}. Thus, combining CATFISH pathway enrichment with locus- and gene-level association evidence narrows the candidate search space and prioritizes genes supported across complementary analytical layers.
+Top omnibus-ranked pathways included diacylglycerol and triacylglycerol biosynthesis, the thioredoxin pathway, L-glutamine biosynthesis III, cutin biosynthesis, 3-phosphoinositide biosynthesis, pyrimidine ribonucleosides salvage I, L-valine biosynthesis, gluconeogenesis I, phospholipases, and NAD/NADH phosphorylation and dephosphorylation. These highlight lipid biosynthesis and remodeling, redox regulation, respiratory and carbon metabolism, and nitrogen assimilation as key pathway-level correlates of biomass productivity. Although TFisher often contributed very small \(p\)-values to top omnibus pathways, the omnibus ranking did not simply mirror TFisher, indicating that CATFISH integrates complementary pathway evidence across sparse, dense, and mixed signal regimes rather than reducing to a single dominant component.
 
 
 \begin{figure*}[!t]
@@ -631,6 +619,55 @@ Next, we integrated CATFISH pathway support with SNP-level GWAS and MAGMA gene-l
     \label{fig:catfish_components_candidates}
 \end{figure*}
 
+
+
+\begin{table*}[ht]
+\centering
+\caption{Top dry tons per acre signals under three prioritization strategies. The left panel shows the top 10 GWAS SNPs with nearby genes assigned using the same $\pm 25$ kb gene-extension rule used in the candidate-scoring pipeline. The center panel shows the top 10 MAGMA genes. The right panel shows the top 10 genes supported by all three evidence layers (GWAS + MAGMA + pathway) under the composite CATFISH scoring framework.}
+\label{tab:dry_tons_top10_layers}
+\scriptsize
+\begin{tabular}{p{0.14\textwidth} p{0.17\textwidth} p{0.08\textwidth} p{0.14\textwidth} p{0.08\textwidth} p{0.14\textwidth} p{0.06\textwidth} p{0.17\textwidth} rr}
+\hline
+\multicolumn{3}{c}{\textbf{GWAS SNPs}} &
+\multicolumn{2}{c}{\textbf{MAGMA genes}} &
+\multicolumn{5}{c}{\textbf{All 3 layers (composite)}} \\
+SNP & Nearby gene(s) & $p$ &
+Gene & $p$ &
+Gene & Score & Best pathway & GWAS rank & MAGMA rank \\
+\hline
+Chr04pos40965614.1 & SORBI\_3004G140501, SORBI\_3004G140600, SORBI\_3004G140800 & $3.98\times10^{-15}$ &
+SORBI\_3004G140501 & $2.95\times10^{-11}$ &
+SORBI\_3008G029200 & 8.081 & palmitate biosynthesis II (bacteria and plants) & 7 & 10 \\
+Chr07pos14664850.1 & --- & $4.08\times10^{-15}$ &
+SORBI\_3008G028800 & $3.71\times10^{-11}$ &
+SORBI\_3006G032800 & 6.385 & (1,4)-$\beta$-D-xylan degradation & 24 & 46 \\
+Chr06pos11249320.1 & --- & $4.58\times10^{-14}$ &
+SORBI\_3004G140800 & $4.10\times10^{-11}$ &
+SORBI\_3006G032700 & 6.346 & thiosulfate disproportionation IV (rhodanese) & 23 & 68 \\
+Chr09pos17713323.1 & SORBI\_3009G090500 & $1.45\times10^{-13}$ &
+SORBI\_3008G028850 & $1.52\times10^{-10}$ &
+SORBI\_3009G066100 & 6.248 & crocetin esters biosynthesis & 16 & 81 \\
+Chr04pos40965691.1 & SORBI\_3004G140501, SORBI\_3004G140600, SORBI\_3004G140800 & $2.37\times10^{-13}$ &
+SORBI\_3009G083900 & $2.69\times10^{-10}$ &
+SORBI\_3004G014400 & 6.237 & cycloartenol biosynthesis & 76 & 35 \\
+Chr04pos40965707.1 & SORBI\_3004G140501, SORBI\_3004G140600, SORBI\_3004G140800 & $2.37\times10^{-13}$ &
+SORBI\_3004G102200 & $2.77\times10^{-10}$ &
+SORBI\_3008G001400 & 6.131 & tetrahydrofolate biosynthesis II & 49 & 141 \\
+Chr04pos40965581.1 & SORBI\_3004G140501, SORBI\_3004G140600, SORBI\_3004G140800 & $3.03\times10^{-13}$ &
+SORBI\_3008G028900 & $3.02\times10^{-10}$ &
+SORBI\_3008G009300 & 5.939 & aerobic respiration I (cytochrome c) & 163 & 49 \\
+Chr04pos40965626.1 & SORBI\_3004G140501, SORBI\_3004G140600, SORBI\_3004G140800 & $3.03\times10^{-13}$ &
+SORBI\_3009G090500 & $6.53\times10^{-10}$ &
+SORBI\_3004G210000 & 5.769 & L-valine biosynthesis & 61 & 302 \\
+Chr08pos2608927.1 & SORBI\_3008G028900, SORBI\_3008G029000, SORBI\_3008G029200, SORBI\_3008G029300, SORBI\_3008G029400 & $3.11\times10^{-13}$ &
+SORBI\_3008G029300 & $7.77\times10^{-10}$ &
+SORBI\_3008G009000 & 5.674 & aerobic respiration I (cytochrome c) & 160 & 92 \\
+Chr04pos44230531.1 & --- & $5.99\times10^{-13}$ &
+SORBI\_3008G029200 & $1.02\times10^{-9}$ &
+SORBI\_3006G037700 & 5.568 & pyrimidine ribonucleosides salvage I & 236 & 134 \\
+\hline
+\end{tabular}
+\end{table*}
 
 \section{4 Discussion}
 
@@ -658,6 +695,19 @@ The component-breakage stress test provides an additional robustness check. When
 Adaptive filtering and leave-one-out diagnostics support this conclusion in practice. MVN-based omnibus variants remained near nominal, whereas analytical variants were more sensitive to misspecification. Leave-one-out analyses indicated that dropping any single component did not materially affect calibration, suggesting no single component dominated omnibus behavior. Adaptive filtering may help flag poorly calibrated components but did not clearly improve on standard MVN calibration. Thus, standard MVN calibration appears to be the simplest and most reliable default, with adaptive filtering and leave-one-out analyses serving as secondary diagnostics.
 
 Thus, these findings define CATFISH’s calibration rationale. Component tests provide sensitivity to different pathway architectures, while MVN calibration supplies the inferential layer that combines them under LD. The key point is that CATFISH’s robustness comes not from each component being perfectly calibrated in all scenarios, but from the omnibus framework modeling their joint null behavior when given appropriate correlation information. Thus, CATFISH achieves a practical balance between flexibility and error control, as long as dependence-aware calibration and diagnostic checks are included in the inference workflow.
+
+
+\subsection{4.3 Pathway-aware prioritization refines candidate-gene interpretation for sorghum dry biomass yield}
+
+The dry tons per acre analysis illustrates how pathway-aware prioritization refines candidate-gene interpretation for a complex biomass phenotype. Sorghum dry biomass yield reflects interacting processes such as plant architecture, carbon partitioning, cell-wall deposition, and structural carbohydrate accumulation \citep{Brenton2016}. In our analysis, GWAS-only and MAGMA-only rankings were dominated by highly significant loci, often clusters of neighboring genes with similar support (Table X). By integrating GWAS locus support, MAGMA gene-level evidence, and CATFISH pathway support, the all-three-layer prioritization did not simply select the smallest marginal $p$-values, it also highlighted candidates whose association evidence was embedded in pathways plausibly related to biomass accumulation and composition.
+
+The top all-three-layer candidate, \textit{SORBI\_3008G029200}, was supported by the oleate biosynthesis I pathway. This gene also ranked highly in GWAS and MAGMA, but its integrated score adds biological context by linking the association signal to lipid metabolism and related regulatory processes. Lipid-derived pathways and surface/cell-wall traits can influence plant growth, stress responses, and biomass composition. In rice, overexpression of \textit{OsWRKY89} altered internode development, increased wax deposition, and increased culm lignification, showing that regulatory genes in lipid- and defense-associated pathways can affect structural traits relevant to biomass \citep{Wang2007}. Thus, the pathway-supported ranking of \textit{SORBI\_3008G029200} is biologically plausible but should be viewed as a prioritized hypothesis rather than direct evidence of causality.
+
+The second-ranked candidate, \textit{SORBI\_3004G014400}, was supported by plant sterol biosynthesis II. Sterol and broader isoprenoid metabolism influence membrane organization, growth regulation, and hormone-mediated development. In potato, altering HMGR and FPS modified sterol and isoprenoid metabolism and increased stem height, above-ground biomass, tuber weight, and, in some overexpression lines, accelerated flowering \citep{Moehninsi2020}. In Arabidopsis, sterols are also required for proper lipid-droplet assembly and seed oil accumulation, indicating a broader role in plant lipid organization and storage \citep{Yu2021}. Although these studies do not directly establish the function of \textit{SORBI\_3004G014400} in sorghum, they highlight the relevance of sterol metabolism to growth and biomass traits.
+
+The third-ranked candidate, \textit{SORBI\_3006G032800}, was supported by a xylan degradation pathway. This is particularly relevant for a dry biomass phenotype because xylan is a major hemicellulosic component of grass cell walls and a key determinant of lignocellulosic biomass composition. In perennial grass biomass, cellulose, xylan, and lignin are the main structural components, and xylan deconstruction is central to converting plant biomass into fermentable sugars for biofuel production \citep{Dodd2009,Basit2019}. Thus, a xylan-related candidate from the integrated score aligns with sorghum dry matter biology, where variation in cell-wall polysaccharide metabolism can affect both structural biomass and biomass quality.
+
+Together, these candidates demonstrate the rationale for CATFISH-based prioritization. The integrated score does not prove causality, and all genes still need functional validation. However, unlike GWAS-only or MAGMA-only ranking, the three-layer strategy adds biological context by asking whether a gene is both statistically supported and in a pathway relevant to the phenotype. For polygenic biomass traits, where many genes act through shared processes, this pathway-aware framework refines broad association signals to candidates with stronger mechanistic plausibility for validation.
 
 
 
@@ -1021,6 +1071,43 @@ G.~M.~Peloso et~al.
 D.~I.~Chasman, G.~Par\'e, S.~Mora, J.~C.~Hopewell, G.~Peloso, R.~Clarke, L.~A.~Cupples, A.~Hamsten, S.~Kathiresan, A.~M\"alarstig, J.~M.~Ordovas, S.~Ripatti, A.~N.~Parker, J.~P.~Miletich, and P.~M.~Ridker.
 \newblock Forty-three loci associated with plasma lipoprotein size, concentration, and cholesterol content in genome-wide analysis.
 \newblock {\em PLoS Genetics}, 5(11):e1000730, 2009.
+
+\bibitem[Brenton et al.(2016)]{Brenton2016}
+Zachary~W. Brenton, Elizabeth~A. Cooper, Mathew~T. Myers, Richard~E. Boyles, Nadia~Shakoor, Kelsey~J. Zielinski, Bradley~L. Rauh, William~C. Bridges, Geoffrey~P. Morris, and Stephen~Kresovich.
+\newblock A genomic resource for the development, improvement, and exploitation of sorghum for bioenergy.
+\newblock {\em Genetics}, 204(1):21--33, 2016.
+
+\bibitem[Bachlava et al.(2009)]{Bachlava2009}
+Eleni~Bachlava, Ralph~E. Dewey, Joseph~W. Burton, and Andrea~J. Cardinal.
+\newblock Mapping candidate genes for oleate biosynthesis and their association with unsaturated fatty acid seed content in soybean.
+\newblock {\em Molecular Breeding}, 23(3):337--347, 2009.
+
+\bibitem[Wang et al.(2007)]{Wang2007}
+Haihua~Wang, Junjie~Hao, Xujun~Chen, Zhongna~Hao, Xia~Wang, Yonggen~Lou, Youliang~Peng, and Zejian~Guo.
+\newblock Overexpression of rice \textit{WRKY89} enhances ultraviolet \textit{B} tolerance and disease resistance in rice plants.
+\newblock {\em Plant Molecular Biology}, 65(6):799--815, 2007.
+
+\bibitem[Moehninsi et al.(2020)]{Moehninsi2020}
+Moehninsi, Iris~Lange, B.~Markus~Lange, and Duroy~A. Navarre.
+\newblock Altering potato isoprenoid metabolism increases biomass and induces early flowering.
+\newblock {\em Journal of Experimental Botany}, 71(14):4109--4124, 2020.
+
+\bibitem[Dodd and Cann(2009)]{Dodd2009}
+Dylan~Dodd and Isaac~K.~O. Cann.
+\newblock Enzymatic deconstruction of xylan for biofuel production.
+\newblock {\em GCB Bioenergy}, 1(1):2--17, 2009.
+
+
+\bibitem[Yu et al.(2021)]{Yu2021}
+Linhui~Yu, Jilian~Fan, Chao~Zhou, and Changcheng~Xu.
+\newblock Sterols are required for the coordinated assembly of lipid droplets in developing seeds.
+\newblock {\em Nature Communications}, 12:5598, 2021.
+
+\bibitem[Basit et al.(2019)]{Basit2019}
+Abdul~Basit, Ting~Miao, Junquan~Liu, Jiaqi~Wen, Lina~Song, Fengzhen~Zheng, Huiqiang~Lou, and Wei~Jiang.
+\newblock Highly efficient degradation of xylan into xylose by a single enzyme.
+\newblock {\em ACS Sustainable Chemistry \& Engineering}, 7:11360--11368, 2019.
+
 
 \end{thebibliography}
 
