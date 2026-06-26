@@ -23,6 +23,7 @@ if (requireNamespace("TFisher", quietly = TRUE)) {
 BLOCK_A_CONFIG <- list(
   seed = 20260312L,
   m = 20L,
+  m_values = c(5L, 20L, 50L),
   rho = 0.20,
   n_reps = 500L,
   n_null_cal = 2000L,
@@ -267,34 +268,46 @@ block_a_archetypes <- list(
   list(
     code = "SDA",
     label = "Archetype I - SDA",
-    layers = list(list(n = 3L, delta = 3.0)),
+    layers = list(list(prop = 0.15, delta = 3.0)),
     description = "Few strong genes; sparse driver pattern."
   ),
   list(
     code = "CME",
     label = "Archetype II - CME",
-    layers = list(list(n = 12L, delta = 1.1)),
+    layers = list(list(prop = 0.60, delta = 1.1)),
     description = "Many moderate genes with shared direction."
   ),
   list(
     code = "DPS",
     label = "Archetype III - DPS",
-    layers = list(list(n = 18L, delta = 0.55)),
+    layers = list(list(prop = 0.90, delta = 0.55)),
     description = "Diffuse weak positive shift across most genes."
   ),
   list(
     code = "HDS",
     label = "Archetype IV - HDS",
-    layers = list(list(n = 2L, delta = 1.8), list(n = 12L, delta = 1.10)),
+    layers = list(list(prop = 0.10, delta = 1.8), list(prop = 0.60, delta = 1.10)),
     description = "Two strong drivers plus a moderate support layer."
   ),
   list(
     code = "SGP",
     label = "Archetype V - SGP",
-    layers = list(list(n = 1L, delta = 4.0)),
+    layers = list(list(prop = 0.05, delta = 4.0)),
     description = "Single-gene proxy boundary case."
   )
 )
+
+scale_archetype_to_m <- function(archetype, m) {
+  archetype$layers <- lapply(archetype$layers, function(layer) {
+    n_layer <- if (!is.null(layer$n)) {
+      as.integer(layer$n)
+    } else {
+      max(1L, as.integer(round(m * layer$prop)))
+    }
+    list(n = n_layer, delta = layer$delta)
+  })
+  archetype
+}
 
 simulate_archetype_once <- function(archetype, sigma, null_stats,
                                     tau_grid = BLOCK_A_CONFIG$tau_grid) {
@@ -347,7 +360,7 @@ simulate_archetype_once_scaled <- function(archetype, sigma, null_stats,
 summarize_archetype_results <- function(results_long,
                                         alpha = BLOCK_A_CONFIG$alpha) {
   results_long %>%
-    group_by(archetype, method) %>%
+    group_by(pathway_size, archetype, method) %>%
     summarize(
       power = mean(p_value < alpha),
       mean_rank = mean(rank),
@@ -356,10 +369,11 @@ summarize_archetype_results <- function(results_long,
       .groups = "drop"
     ) %>%
     mutate(
+      pathway_size = factor(pathway_size, levels = sort(unique(pathway_size))),
       archetype = factor(archetype, levels = block_a_archetype_order),
       method = factor(method, levels = block_a_method_order)
     ) %>%
-    arrange(archetype, method)
+    arrange(pathway_size, archetype, method)
 }
 
 plot_metric_heatmap <- function(summary_df, value_col, title, fill_limits,
@@ -382,6 +396,45 @@ plot_metric_heatmap <- function(summary_df, value_col, title, fill_limits,
       legend.position = "right",
       legend.title = element_text(face = "bold", size = 14),
       legend.text = element_text(size = 12)
+    )
+
+  if (reverse) {
+    p + scale_fill_gradient(
+      limits = fill_limits,
+      low = high_color,
+      high = low_color
+    )
+  } else {
+    p + scale_fill_gradient(
+      limits = fill_limits,
+      low = low_color,
+      high = high_color
+    )
+  }
+}
+
+plot_metric_heatmap_by_size <- function(summary_df, value_col, title, fill_limits,
+                                        low_color, high_color, reverse = FALSE,
+                                        digits = 2, legend_title = NULL) {
+  values <- summary_df[[value_col]]
+  labels <- sprintf(paste0("%.", digits, "f"), values)
+  if (is.null(legend_title)) {
+    legend_title <- title
+  }
+
+  p <- ggplot(summary_df, aes(x = archetype, y = method, fill = .data[[value_col]])) +
+    geom_tile(color = "white", linewidth = 0.35) +
+    geom_text(label = labels, size = 2.9, fontface = "bold") +
+    facet_wrap(~ pathway_size, nrow = 1, labeller = labeller(pathway_size = function(x) paste0("m = ", x))) +
+    labs(x = NULL, y = NULL, title = title, fill = legend_title) +
+    block_a_theme +
+    theme(
+      axis.text.x = element_text(angle = 20, hjust = 1, size = 12),
+      axis.text.y = element_text(size = 12),
+      legend.position = "right",
+      legend.title = element_text(face = "bold", size = 13),
+      legend.text = element_text(size = 11),
+      strip.text = element_text(face = "bold", size = 13)
     )
 
   if (reverse) {
@@ -620,46 +673,71 @@ write_block_a_by_m_tables <- function(
   ))
 }
 
+run_block_a_single_m <- function(m, config = BLOCK_A_CONFIG) {
+  sigma <- ensure_pd(make_cor_exchangeable(m, config$rho))
+
+  message(
+    sprintf(
+      "Block A: precomputing null calibration (m=%d, rho=%.2f, B=%d)",
+      m, config$rho, config$n_null_cal
+    )
+  )
+  null_stats <- precompute_null_distribution(
+    m = m,
+    sigma = sigma,
+    n_null = config$n_null_cal,
+    seed = config$seed + m,
+    tau_grid = config$tau_grid
+  )
+
+  message(sprintf("Block A: running %d replicates per archetype for m=%d", config$n_reps, m))
+  results_long <- bind_rows(lapply(block_a_archetypes, function(archetype) {
+    archetype_m <- scale_archetype_to_m(archetype, m)
+    bind_rows(lapply(seq_len(config$n_reps), function(rep_idx) {
+      simulate_archetype_once(
+        archetype = archetype_m,
+        sigma = sigma,
+        null_stats = null_stats,
+        tau_grid = config$tau_grid
+      ) %>%
+        mutate(replicate = rep_idx, pathway_size = m)
+    }))
+  })) %>%
+    mutate(
+      archetype = factor(archetype, levels = block_a_archetype_order),
+      method = factor(method, levels = block_a_method_order),
+      pathway_size = factor(pathway_size, levels = sort(unique(c(config$m_values, m))))
+    )
+
+  list(
+    m = m,
+    sigma = sigma,
+    null_stats = null_stats,
+    replicate_results = results_long,
+    summary = summarize_archetype_results(results_long, alpha = config$alpha)
+  )
+}
+
 run_block_a <- function(config = BLOCK_A_CONFIG) {
   dir.create(config$results_dir, recursive = TRUE, showWarnings = FALSE)
   if (isTRUE(config$save_to_ind_figs)) {
     dir.create(config$output_dir, recursive = TRUE, showWarnings = FALSE)
   }
 
-  sigma <- ensure_pd(make_cor_exchangeable(config$m, config$rho))
+  all_m_results <- lapply(sort(unique(config$m_values)), function(m) {
+    run_block_a_single_m(m = m, config = config)
+  })
+  names(all_m_results) <- paste0("m", sort(unique(config$m_values)))
 
-  message(
-    sprintf(
-      "Block A: precomputing null calibration (m=%d, rho=%.2f, B=%d)",
-      config$m, config$rho, config$n_null_cal
-    )
-  )
-  null_stats <- precompute_null_distribution(
-    m = config$m,
-    sigma = sigma,
-    n_null = config$n_null_cal,
-    seed = config$seed,
-    tau_grid = config$tau_grid
-  )
-
-  message(sprintf("Block A: running %d replicates per archetype", config$n_reps))
-  results_long <- bind_rows(lapply(block_a_archetypes, function(archetype) {
-    bind_rows(lapply(seq_len(config$n_reps), function(rep_idx) {
-      simulate_archetype_once(
-        archetype = archetype,
-        sigma = sigma,
-        null_stats = null_stats,
-        tau_grid = config$tau_grid
-      ) %>%
-        mutate(replicate = rep_idx)
-    }))
-  })) %>%
-    mutate(
-      archetype = factor(archetype, levels = block_a_archetype_order),
-      method = factor(method, levels = block_a_method_order)
-    )
-
-  summary_df <- summarize_archetype_results(results_long, alpha = config$alpha)
+  main_idx <- which(vapply(all_m_results, function(x) x$m, integer(1)) == config$m)
+  if (!length(main_idx)) {
+    stop("Configured main Block A m is not present in config$m_values.")
+  }
+  main_res <- all_m_results[[main_idx[1]]]
+  sigma <- main_res$sigma
+  null_stats <- main_res$null_stats
+  results_long <- main_res$replicate_results
+  summary_df <- main_res$summary
 
   power_plot <- plot_metric_heatmap(
     summary_df = summary_df,
@@ -693,13 +771,82 @@ run_block_a <- function(config = BLOCK_A_CONFIG) {
   )
 
   combined_plot <- (power_plot / rank_plot / top_plot) +
-    plot_annotation(tag_levels = "A")
+    plot_annotation(
+      title = "Block A: Archetype recovery for CATFISH component tests",
+      subtitle = sprintf(
+        "m = %d genes, exchangeable Sigma with rho = %.2f, %d replicates per archetype",
+        config$m, config$rho, config$n_reps
+      ),
+      caption = "Color scales: blue = power, green = mean rank, orange = top-method probability.",
+      theme = theme(
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 18),
+        plot.subtitle = element_text(hjust = 0.5, size = 12),
+        plot.caption = element_text(hjust = 0, size = 11)
+      ),
+      tag_levels = "A"
+    )
+
+  all_summary_df <- bind_rows(lapply(all_m_results, `[[`, "summary")) %>%
+    mutate(pathway_size = factor(pathway_size, levels = as.character(sort(unique(config$m_values)))))
+  all_results_long <- bind_rows(lapply(all_m_results, `[[`, "replicate_results")) %>%
+    mutate(pathway_size = factor(pathway_size, levels = as.character(sort(unique(config$m_values)))))
+
+  sensitivity_power_plot <- plot_metric_heatmap_by_size(
+    summary_df = all_summary_df,
+    value_col = "power",
+    title = sprintf("Power at alpha = %.2f", config$alpha),
+    fill_limits = c(0, 1),
+    low_color = "#F7FBFF",
+    high_color = "#08519C",
+    legend_title = "Power"
+  )
+
+  sensitivity_rank_plot <- plot_metric_heatmap_by_size(
+    summary_df = all_summary_df,
+    value_col = "mean_rank",
+    title = "Mean rank (lower is better)",
+    fill_limits = c(1, length(block_a_method_order)),
+    low_color = "#F7FCF5",
+    high_color = "#00441B",
+    reverse = TRUE,
+    legend_title = "Mean rank"
+  )
+
+  sensitivity_top_plot <- plot_metric_heatmap_by_size(
+    summary_df = all_summary_df,
+    value_col = "top_probability",
+    title = "Top-method probability",
+    fill_limits = c(0, 1),
+    low_color = "#FFF5EB",
+    high_color = "#A63603",
+    legend_title = "Top-method probability"
+  )
+
+  sensitivity_plot <- (sensitivity_power_plot / sensitivity_rank_plot / sensitivity_top_plot) +
+    plot_annotation(
+      title = "Block A: Archetype recovery sensitivity to pathway size",
+      subtitle = sprintf(
+        "Exchangeable Sigma with rho = %.2f, %d replicates per archetype, pathway sizes m = %s",
+        config$rho, config$n_reps, paste(sort(unique(config$m_values)), collapse = ", ")
+      ),
+      caption = "Color scales: blue = power, green = mean rank, orange = top-method probability.",
+      theme = theme(
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 18),
+        plot.subtitle = element_text(hjust = 0.5, size = 12),
+        plot.caption = element_text(hjust = 0, size = 11)
+      ),
+      tag_levels = "A"
+    )
 
   summary_path <- file.path(config$results_dir, "block_a_archetype_summary.csv")
   raw_path <- file.path(config$results_dir, "block_a_archetype_results.rds")
   figure_path_results <- file.path(config$results_dir, "block_a_archetype_recovery.png")
+  sensitivity_summary_path <- file.path(config$results_dir, "block_a_archetype_summary_by_m.csv")
+  sensitivity_raw_path <- file.path(config$results_dir, "block_a_archetype_results_by_m.rds")
+  sensitivity_figure_path_results <- file.path(config$results_dir, "block_a_archetype_recovery_by_m.png")
 
   write.csv(summary_df, summary_path, row.names = FALSE)
+  write.csv(all_summary_df, sensitivity_summary_path, row.names = FALSE)
   saveRDS(
     list(
       config = config,
@@ -710,6 +857,15 @@ run_block_a <- function(config = BLOCK_A_CONFIG) {
     ),
     raw_path
   )
+  saveRDS(
+    list(
+      config = config,
+      results_by_m = all_m_results,
+      replicate_results = all_results_long,
+      summary = all_summary_df
+    ),
+    sensitivity_raw_path
+  )
 
   ggsave(
     filename = figure_path_results,
@@ -718,13 +874,28 @@ run_block_a <- function(config = BLOCK_A_CONFIG) {
     height = 18,
     dpi = 300
   )
+  ggsave(
+    filename = sensitivity_figure_path_results,
+    plot = sensitivity_plot,
+    width = 22,
+    height = 18,
+    dpi = 300
+  )
 
   if (isTRUE(config$save_to_ind_figs)) {
     figure_path_ind_figs <- file.path(config$output_dir, "block_a_archetype_recovery.png")
+    sensitivity_figure_path_ind_figs <- file.path(config$output_dir, "block_a_archetype_recovery_by_m.png")
     ggsave(
       filename = figure_path_ind_figs,
       plot = combined_plot,
       width = 16,
+      height = 18,
+      dpi = 300
+    )
+    ggsave(
+      filename = sensitivity_figure_path_ind_figs,
+      plot = sensitivity_plot,
+      width = 22,
       height = 18,
       dpi = 300
     )
@@ -734,8 +905,12 @@ run_block_a <- function(config = BLOCK_A_CONFIG) {
   message("  - ", summary_path)
   message("  - ", raw_path)
   message("  - ", figure_path_results)
+  message("  - ", sensitivity_summary_path)
+  message("  - ", sensitivity_raw_path)
+  message("  - ", sensitivity_figure_path_results)
   if (isTRUE(config$save_to_ind_figs)) {
     message("  - ", file.path(config$output_dir, "block_a_archetype_recovery.png"))
+    message("  - ", file.path(config$output_dir, "block_a_archetype_recovery_by_m.png"))
   }
 
   invisible(
@@ -745,7 +920,12 @@ run_block_a <- function(config = BLOCK_A_CONFIG) {
       null_stats = null_stats,
       replicate_results = results_long,
       summary = summary_df,
-      plot = combined_plot
+      plot = combined_plot,
+      size_sensitivity = list(
+        replicate_results = all_results_long,
+        summary = all_summary_df,
+        plot = sensitivity_plot
+      )
     )
   )
 }
@@ -892,7 +1072,7 @@ plot_linebar_block_b <- function(results) {
 
 plot_linebar_block_c <- function(results) {
   df <- results %>%
-    dplyr::filter(method == "omnibus") %>%
+    dplyr::filter(method == "omnibus_combined") %>%
     dplyr::mutate(
       pathway_size = as.integer(pathway_size),
       facet_label = factor(paste0("m=", pathway_size),
@@ -936,7 +1116,10 @@ plot_linebar_block_c <- function(results) {
 
 prepare_block_d_plot_df <- function(results) {
   results %>%
-    dplyr::filter(method %in% c("acat", "fisher", "tfisher", "minp", "stouffer", "omnibus_mvn")) %>%
+    dplyr::filter(method %in% c(
+      "acat", "fisher", "tfisher", "minp", "stouffer",
+      "omnibus_mvn_combined", "omnibus_mvn_alone"
+    )) %>%
     dplyr::mutate(
       cor_structure = dplyr::case_when(
         rho == 0 ~ "LD_independent",
@@ -951,9 +1134,11 @@ prepare_block_d_plot_df <- function(results) {
         method == "tfisher" ~ "TFisher",
         method == "minp" ~ "minP",
         method == "stouffer" ~ "Stouffer",
-        method == "omnibus_mvn" ~ "Omnibus (MVN)",
+        method == "omnibus_mvn_combined" ~ "Omnibus Combined",
+        method == "omnibus_mvn_alone" ~ "Omnibus Alone",
         TRUE ~ method
-      ), levels = c("ACAT", "Fisher", "TFisher", "minP", "Stouffer", "Omnibus (MVN)"))
+      ), levels = c("ACAT", "Fisher", "TFisher", "minP", "Stouffer",
+                    "Omnibus Combined", "Omnibus Alone"))
     )
 }
 
@@ -982,7 +1167,8 @@ plot_block_d_bar_metric <- function(results, metric = c("lambda", "type1_05")) {
                labeller = labeller(pathway_size = function(x) paste0("m=", x))) +
     scale_fill_manual(values = c(
       "ACAT" = "#E41A1C", "Fisher" = "#377EB8", "TFisher" = "#4DAF4A",
-      "minP" = "#984EA3", "Stouffer" = "#FF7F00", "Omnibus (MVN)" = "#000000"
+      "minP" = "#984EA3", "Stouffer" = "#FF7F00",
+      "Omnibus Combined" = "#000000", "Omnibus Alone" = "#8C564B"
     )) +
     labs(x = "Number of broken components", y = y_lab, fill = "Method") +
     block_a_theme +
@@ -1125,15 +1311,23 @@ run_block_d <- function(output_dir = "simulation_results", reduced = FALSE) {
 
 plot_block_e_linebar_panel <- function(adaptive_results, leave1out_results) {
   adaptive_df <- adaptive_results %>%
-    dplyr::filter(method %in% c("omnibus_analytical", "omnibus_mvn",
-                                "omnibus_adaptive", "omnibus_adaptive_mvn")) %>%
+    dplyr::filter(method %in% c(
+      "omnibus_analytical",
+      "omnibus_mvn_combined",
+      "omnibus_mvn_alone",
+      "omnibus_adaptive",
+      "omnibus_adaptive_mvn_combined",
+      "omnibus_adaptive_mvn_alone"
+    )) %>%
     dplyr::mutate(
       source = "Adaptive omnibus",
       method_label = dplyr::case_when(
         method == "omnibus_analytical" ~ "Analytic",
-        method == "omnibus_mvn" ~ "MVN",
+        method == "omnibus_mvn_combined" ~ "MVN Combined",
+        method == "omnibus_mvn_alone" ~ "MVN Alone",
         method == "omnibus_adaptive" ~ "Adaptive+Analytic",
-        method == "omnibus_adaptive_mvn" ~ "Adaptive+MVN",
+        method == "omnibus_adaptive_mvn_combined" ~ "Adaptive+Combined",
+        method == "omnibus_adaptive_mvn_alone" ~ "Adaptive+Alone",
         TRUE ~ method
       )
     ) %>%
@@ -1142,6 +1336,15 @@ plot_block_e_linebar_panel <- function(adaptive_results, leave1out_results) {
       lambda = mean(lambda, na.rm = TRUE),
       type1_05 = mean(type1_05, na.rm = TRUE),
       .groups = "drop"
+    ) %>%
+    dplyr::mutate(
+      method_label = factor(
+        method_label,
+        levels = c(
+          "Analytic", "MVN Combined", "MVN Alone",
+          "Adaptive+Analytic", "Adaptive+Combined", "Adaptive+Alone"
+        )
+      )
     )
 
   leave1out_df <- leave1out_results %>%
@@ -1150,14 +1353,17 @@ plot_block_e_linebar_panel <- function(adaptive_results, leave1out_results) {
                                 "omnibus_minus_stouffer", "omnibus_all")) %>%
     dplyr::mutate(
       source = "Leave-one-out omnibus",
-      method_label = dplyr::case_when(
-        method == "omnibus_minus_acat" ~ "-ACAT",
-        method == "omnibus_minus_fisher" ~ "-Fisher",
-        method == "omnibus_minus_tfisher" ~ "-TFisher",
-        method == "omnibus_minus_minp" ~ "-minP",
-        method == "omnibus_minus_stouffer" ~ "-Stouffer",
-        method == "omnibus_all" ~ "All",
-        TRUE ~ method
+      method_label = paste0(
+        dplyr::case_when(
+          method == "omnibus_minus_acat" ~ "-ACAT",
+          method == "omnibus_minus_fisher" ~ "-Fisher",
+          method == "omnibus_minus_tfisher" ~ "-TFisher",
+          method == "omnibus_minus_minp" ~ "-minP",
+          method == "omnibus_minus_stouffer" ~ "-Stouffer",
+          method == "omnibus_all" ~ "All",
+          TRUE ~ method
+        ),
+        ifelse(calibration == "combined", " (Combined)", " (Alone)")
       )
     ) %>%
     dplyr::group_by(source, method_label) %>%
@@ -1165,6 +1371,25 @@ plot_block_e_linebar_panel <- function(adaptive_results, leave1out_results) {
       lambda = mean(lambda, na.rm = TRUE),
       type1_05 = mean(type1_05, na.rm = TRUE),
       .groups = "drop"
+    ) %>%
+    dplyr::mutate(
+      method_label = factor(
+        method_label,
+        levels = c(
+          "All (Combined)",
+          "-ACAT (Combined)",
+          "-Fisher (Combined)",
+          "-TFisher (Combined)",
+          "-minP (Combined)",
+          "-Stouffer (Combined)",
+          "All (Alone)",
+          "-ACAT (Alone)",
+          "-Fisher (Alone)",
+          "-TFisher (Alone)",
+          "-minP (Alone)",
+          "-Stouffer (Alone)"
+        )
+      )
     )
 
   panel_df <- dplyr::bind_rows(adaptive_df, leave1out_df)
@@ -1207,9 +1432,11 @@ plot_block_e_ab_panel <- function(adaptive_results, leave1out_results) {
       source = "Adaptive",
       method_label = dplyr::case_when(
         method == "omnibus_analytical" ~ "Analytic",
-        method == "omnibus_mvn" ~ "MVN",
+        method == "omnibus_mvn_combined" ~ "MVN Combined",
+        method == "omnibus_mvn_alone" ~ "MVN Alone",
         method == "omnibus_adaptive" ~ "Adaptive+Analytic",
-        method == "omnibus_adaptive_mvn" ~ "Adaptive+MVN",
+        method == "omnibus_adaptive_mvn_combined" ~ "Adaptive+Combined",
+        method == "omnibus_adaptive_mvn_alone" ~ "Adaptive+Alone",
         TRUE ~ method
       )
     ) %>%
@@ -1222,19 +1449,31 @@ plot_block_e_ab_panel <- function(adaptive_results, leave1out_results) {
       type1_05_se = stats::sd(type1_05, na.rm = TRUE) / sqrt(n_obs),
       .groups = "drop"
     ) %>%
-    dplyr::select(-n_obs)
+    dplyr::select(-n_obs) %>%
+    dplyr::mutate(
+      method_label = factor(
+        method_label,
+        levels = c(
+          "Analytic", "MVN Combined", "MVN Alone",
+          "Adaptive+Analytic", "Adaptive+Combined", "Adaptive+Alone"
+        )
+      )
+    )
 
   leave1_df <- leave1out_results %>%
     dplyr::mutate(
       source = "Leave-one-out",
-      method_label = dplyr::case_when(
-        method == "omnibus_minus_acat" ~ "-ACAT",
-        method == "omnibus_minus_fisher" ~ "-Fisher",
-        method == "omnibus_minus_tfisher" ~ "-TFisher",
-        method == "omnibus_minus_minp" ~ "-minP",
-        method == "omnibus_minus_stouffer" ~ "-Stouffer",
-        method == "omnibus_all" ~ "All",
-        TRUE ~ method
+      method_label = paste0(
+        dplyr::case_when(
+          method == "omnibus_minus_acat" ~ "-ACAT",
+          method == "omnibus_minus_fisher" ~ "-Fisher",
+          method == "omnibus_minus_tfisher" ~ "-TFisher",
+          method == "omnibus_minus_minp" ~ "-minP",
+          method == "omnibus_minus_stouffer" ~ "-Stouffer",
+          method == "omnibus_all" ~ "All",
+          TRUE ~ method
+        ),
+        ifelse(calibration == "combined", " (Combined)", " (Alone)")
       )
     ) %>%
     dplyr::group_by(source, method_label) %>%
@@ -1246,7 +1485,26 @@ plot_block_e_ab_panel <- function(adaptive_results, leave1out_results) {
       type1_05_se = stats::sd(type1_05, na.rm = TRUE) / sqrt(n_obs),
       .groups = "drop"
     ) %>%
-    dplyr::select(-n_obs)
+    dplyr::select(-n_obs) %>%
+    dplyr::mutate(
+      method_label = factor(
+        method_label,
+        levels = c(
+          "All (Combined)",
+          "-ACAT (Combined)",
+          "-Fisher (Combined)",
+          "-TFisher (Combined)",
+          "-minP (Combined)",
+          "-Stouffer (Combined)",
+          "All (Alone)",
+          "-ACAT (Alone)",
+          "-Fisher (Alone)",
+          "-TFisher (Alone)",
+          "-minP (Alone)",
+          "-Stouffer (Alone)"
+        )
+      )
+    )
 
   df <- dplyr::bind_rows(adaptive_df, leave1_df) %>%
     dplyr::mutate(
@@ -1268,7 +1526,7 @@ plot_block_e_ab_panel <- function(adaptive_results, leave1out_results) {
     theme(
       plot.title = element_text(size = 18, face = "bold"),
       axis.title = element_text(size = 16, face = "bold"),
-      axis.text.x = element_text(angle = 35, hjust = 1, size = 13),
+      axis.text.x = element_text(angle = 35, hjust = 1, size = 10),
       axis.text.y = element_text(size = 13),
       strip.text = element_text(size = 14, face = "bold"),
       legend.text = element_text(size = 14)
@@ -1287,7 +1545,7 @@ plot_block_e_ab_panel <- function(adaptive_results, leave1out_results) {
     theme(
       plot.title = element_text(size = 18, face = "bold"),
       axis.title = element_text(size = 16, face = "bold"),
-      axis.text.x = element_text(angle = 35, hjust = 1, size = 13),
+      axis.text.x = element_text(angle = 35, hjust = 1, size = 10),
       axis.text.y = element_text(size = 13),
       strip.text = element_text(size = 14, face = "bold"),
       legend.text = element_text(size = 14),
@@ -1448,13 +1706,14 @@ run_block_h <- function(config = BLOCK_H_CONFIG, reduced = FALSE) {
 
     for (arch in block_a_archetypes) {
       for (eff in cfg$effect_scales) {
+        arch_scaled <- scale_archetype_to_m(arch, m)
         message(sprintf(
           "Block H: %d/%d | m=%d | %s | effect_scale=%.2f",
           iter, total, m, arch$code, eff
         ))
         res <- bind_rows(lapply(seq_len(cfg$n_reps), function(rep_idx) {
           simulate_archetype_once_scaled(
-            archetype = arch,
+            archetype = arch_scaled,
             sigma = sigma,
             null_stats = null_stats,
             effect_scale = eff,

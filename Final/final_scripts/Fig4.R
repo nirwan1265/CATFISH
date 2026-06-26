@@ -1,5 +1,5 @@
 suppressPackageStartupMessages({
-  source("/Users/nirwantandukar/Documents/Github/MAGCAT/all_figs.R")
+  source("/Users/nirwantandukar/Documents/Github/MAGCAT/scripts/all_figs.R")
   library(patchwork)
 })
 

@@ -1,10 +1,10 @@
-Supplementary tables linked to final manuscript figures.
+Supplementary tables exported from final Dry tons per acre figure inputs.
 
-Figures covered:
-- Fig1: simulated archetype rank curves
-- Fig3: pathway-size sensitivity / archetype verification
-- Fig4: null calibration and missing-correlation calibration
-- Fig5: component breakage and adaptive / leave-one-out diagnostics
-- Fig6: Dry tons per acre GWAS, MAGMA, and CATFISH pathway integration
-- Fig7: Dry tons per acre CATFISH component comparison and candidate prioritization
-- Extra trait table: Lignin top 50 candidate genes
+Files:
+- SuppTable_Fig6_top50_pathways_Dry_tons_per_acre.csv
+- SuppTable_Fig6_top50_candidate_genes_Dry_tons_per_acre.csv
+- SuppTable_Fig6_all_candidate_genes_Dry_tons_per_acre.csv
+- SuppTable_Fig7_method_significance_summary_Dry_tons_per_acre.csv
+- SuppTable_Fig7_component_test_pathway_results_Dry_tons_per_acre.csv
+- SuppTable_Fig7_candidate_evidence_summary_Dry_tons_per_acre.csv
+- SuppTable_Fig7_all_candidate_genes_with_evidence_Dry_tons_per_acre.csv

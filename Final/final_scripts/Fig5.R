@@ -1,5 +1,5 @@
 suppressPackageStartupMessages({
-  source("/Users/nirwantandukar/Documents/Github/MAGCAT/all_figs.R")
+  source("/Users/nirwantandukar/Documents/Github/MAGCAT/scripts/all_figs.R")
   library(dplyr)
   library(ggplot2)
   library(patchwork)
@@ -42,10 +42,19 @@ adaptive_df <- block_e_adaptive %>%
     source = "Adaptive",
     method_label = case_when(
       method == "omnibus_analytical" ~ "Analytic",
-      method == "omnibus_mvn" ~ "MVN",
+      method == "omnibus_mvn_combined" ~ "MVN Combined",
+      method == "omnibus_mvn_alone" ~ "MVN Alone",
       method == "omnibus_adaptive" ~ "Adaptive+Analytic",
-      method == "omnibus_adaptive_mvn" ~ "Adaptive+MVN",
+      method == "omnibus_adaptive_mvn_combined" ~ "Adaptive+Combined",
+      method == "omnibus_adaptive_mvn_alone" ~ "Adaptive+Alone",
       TRUE ~ method
+    ),
+    method_label = factor(
+      method_label,
+      levels = c(
+        "Analytic", "MVN Combined", "MVN Alone",
+        "Adaptive+Analytic", "Adaptive+Combined", "Adaptive+Alone"
+      )
     )
   ) %>%
   group_by(source, method_label) %>%
@@ -62,14 +71,34 @@ adaptive_df <- block_e_adaptive %>%
 leave1_df <- block_e_leave1out %>%
   mutate(
     source = "Leave-one-out",
-    method_label = case_when(
-      method == "omnibus_minus_acat" ~ "-ACAT",
-      method == "omnibus_minus_fisher" ~ "-Fisher",
-      method == "omnibus_minus_tfisher" ~ "-TFisher",
-      method == "omnibus_minus_minp" ~ "-minP",
-      method == "omnibus_minus_stouffer" ~ "-Stouffer",
-      method == "omnibus_all" ~ "All",
-      TRUE ~ method
+    method_label = paste0(
+      case_when(
+        method == "omnibus_minus_acat" ~ "-ACAT",
+        method == "omnibus_minus_fisher" ~ "-Fisher",
+        method == "omnibus_minus_tfisher" ~ "-TFisher",
+        method == "omnibus_minus_minp" ~ "-minP",
+        method == "omnibus_minus_stouffer" ~ "-Stouffer",
+        method == "omnibus_all" ~ "All",
+        TRUE ~ method
+      ),
+      ifelse(calibration == "combined", " (Combined)", " (Alone)")
+    ),
+    method_label = factor(
+      method_label,
+      levels = c(
+        "All (Combined)",
+        "-ACAT (Combined)",
+        "-Fisher (Combined)",
+        "-TFisher (Combined)",
+        "-minP (Combined)",
+        "-Stouffer (Combined)",
+        "All (Alone)",
+        "-ACAT (Alone)",
+        "-Fisher (Alone)",
+        "-TFisher (Alone)",
+        "-minP (Alone)",
+        "-Stouffer (Alone)"
+      )
     )
   ) %>%
   group_by(source, method_label) %>%
@@ -106,7 +135,7 @@ p_adapt_lambda <-
   labs(x = NULL, y = expression(lambda), fill = "Family") +
   block_a_theme +
   theme(
-    axis.text.x = element_text(angle = 35, hjust = 1, size = 11),
+    axis.text.x = element_text(angle = 35, hjust = 1, size = 9),
     axis.text.y = element_text(size = 11),
     strip.text = element_text(size = 13, face = "bold"),
     legend.position = "top",
@@ -130,7 +159,7 @@ p_adapt_type1 <-
   labs(x = "Variant", y = "Type I error", fill = "Family") +
   block_a_theme +
   theme(
-    axis.text.x = element_text(angle = 35, hjust = 1, size = 11),
+    axis.text.x = element_text(angle = 35, hjust = 1, size = 9),
     axis.text.y = element_text(size = 11),
     strip.text = element_text(size = 13, face = "bold"),
     legend.position = "none",

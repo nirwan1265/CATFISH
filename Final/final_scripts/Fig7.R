@@ -1,5 +1,5 @@
 suppressPackageStartupMessages({
-  source("/Users/nirwantandukar/Documents/Github/MAGCAT/all_figs.R")
+  source("/Users/nirwantandukar/Documents/Github/MAGCAT/scripts/all_figs.R")
   library(data.table)
   library(dplyr)
   library(ggplot2)
@@ -25,13 +25,13 @@ dir.create(final_fig_dir, recursive = TRUE, showWarnings = FALSE)
 base_dir <- "/Users/nirwantandukar/Documents/Research/results/CATFISH/MAGMA/Dry_tons_per_acre"
 catfish_file <- file.path(
   base_dir,
-  "CATFISH_permutation_B1000000_mvn_GPD_strict_tau",
-  "Dry_tons_per_acre_CATFISH_ACAT_mvn_B1000000_GPD_strict_tau.csv"
+  "CATFISH_permutation_B10000_mvn_GPD_paper_tau_false",
+  "Dry_tons_per_acre_CATFISH_ACAT_mvn_B10000_GPD_paper_tau_false.csv"
 )
 gene_score_file <- file.path(
   base_dir,
-  "candidate_gene_scoring_B1000000_GPD_strict_tau",
-  "candidate_genes_all_Dry_tons_per_acre_B1000000_GPD_strict_tau.csv"
+  "candidate_gene_scoring_B10000_GPD_paper_tau_false",
+  "candidate_genes_all_Dry_tons_per_acre_B10000_GPD_paper_tau_false.csv"
 )
 
 if (!file.exists(catfish_file)) stop("CATFISH file not found: ", catfish_file, call. = FALSE)
@@ -235,7 +235,7 @@ panel_b_cols <- c(
   TFisher = "tfisher_p_analytic",
   minP = "minp_p_analytic",
   Stouffer = "stouffer_p_analytic",
-  Omnibus = "omni_p_analytic"
+  Omnibus = "omni_p_final"
 )
 
 missing_panel_b <- setdiff(unname(panel_b_cols), names(catfish_df))

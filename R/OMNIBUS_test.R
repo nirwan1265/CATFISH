@@ -367,6 +367,30 @@
   1 - (1 - pmin)^k
 }
 
+.catfish_tfisher_adaptive_p <- function(p, tau_grid, min_p = 1e-50, do_fix = TRUE) {
+  if (!requireNamespace("TFisher", quietly = TRUE)) return(NA_real_)
+
+  pb <- .catfish_fix_p(p, min_p = min_p, do_fix = do_fix)
+  pb <- pb[is.finite(pb) & !is.na(pb)]
+  if (length(pb) < 2L) return(NA_real_)
+
+  tg <- suppressWarnings(as.numeric(tau_grid))
+  tg <- tg[is.finite(tg) & !is.na(tg) & tg > 0 & tg < 1]
+  tg <- sort(unique(tg), decreasing = FALSE)
+  if (!length(tg)) return(NA_real_)
+
+  out <- tryCatch({
+    omni_out <- TFisher::stat.soft.omni(p = pb, TAU1 = tg, M = NULL)
+    Wo <- as.numeric(omni_out$omni)
+    as.numeric(TFisher::p.soft.omni(q = Wo, n = length(pb), TAU1 = tg, M = NULL))
+  }, error = function(e) {
+    NA_real_
+  })
+
+  if (!is.finite(out) || is.na(out)) return(NA_real_)
+  max(min(out, 1 - min_p), min_p)
+}
+
 .catfish_omni_methods <- function(p_methods, omnibus = c("ACAT", "minP"), min_p = 1e-50, do_fix = TRUE) {
   omnibus <- match.arg(omnibus)
   pv <- .catfish_fix_p(p_methods, min_p = min_p, do_fix = do_fix)
@@ -404,13 +428,12 @@
   B <- length(p2)
   if (B < 1L) return(numeric(0))
   bad <- !is.finite(p2) | is.na(p2)
-  if (any(bad)) p2[bad] <- 1
+  if (any(bad)) p2[bad] <- Inf
 
-  # leave-one-out empirical p for each null draw:
-  # allows minimum 1/(B+1), matching observed Monte Carlo support
-
+  # Leave-one-out plus-one empirical p for each null draw on the same
+  # tail-probability scale used by .emp_p_obs_lower().
   rank_max <- rank(p2, ties.method = "max")
-  as.numeric(rank_max) / (B + 1)
+  as.numeric(rank_max) / B
 }
 
 
@@ -726,15 +749,12 @@
   pT <- rep(NA_real_, B)
   if (requireNamespace("TFisher", quietly = TRUE)) {
     for (b in seq_len(B)) {
-      pb <- .catfish_fix_p(P[b, ], min_p = min_p, do_fix = do_fix)
-      if (length(pb) < 2L) next
-      best <- Inf
-      for (tau in tau_grid) {
-        st <- TFisher::stat.soft(p = pb, tau1 = tau)
-        pv <- 1 - as.numeric(TFisher::p.soft(q = st, n = length(pb), tau1 = tau, M = NULL))
-        if (is.finite(pv) && pv < best) best <- pv
-      }
-      pT[b] <- best
+      pT[b] <- .catfish_tfisher_adaptive_p(
+        P[b, ],
+        tau_grid = tau_grid,
+        min_p = min_p,
+        do_fix = do_fix
+      )
     }
   }
 
@@ -1098,6 +1118,7 @@ res$acat_p <- acat_tab$acat_p[match(res$pathway_id, acat_tab$pathway_id)]
 
   # TFisher (optional - can be disabled with use_tfisher = FALSE)
   res$tfisher_p_analytic <- NA_real_
+  res$tfisher_p_min      <- NA_real_
   res$tau_hat            <- NA_real_
   res$tfisher_stat_hat   <- NA_real_
 
@@ -1113,6 +1134,7 @@ res$acat_p <- acat_tab$acat_p[match(res$pathway_id, acat_tab$pathway_id)]
       output       = FALSE
     )
     res$tfisher_p_analytic <- tf_tab$tfisher_p_omni[match(res$pathway_id, tf_tab$pathway_id)]
+    res$tfisher_p_min      <- tf_tab$tfisher_p_min[match(res$pathway_id, tf_tab$pathway_id)]
     res$tau_hat            <- tf_tab$tau_hat[match(res$pathway_id, tf_tab$pathway_id)]
     res$tfisher_stat_hat   <- tf_tab$tfisher_stat_hat[match(res$pathway_id, tf_tab$pathway_id)]
   }
@@ -1261,17 +1283,12 @@ if (!is.null(prep$z_col)) {
       pT <- rep(NA_real_, B_global)
       if (!requireNamespace("TFisher", quietly = TRUE)) stop("TFisher required for omnibus TFisher null.", call. = FALSE)
       for (b in seq_len(B_global)) {
-        pb <- .catfish_fix_p(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix))
-        if (length(pb) < 2L) next
-
-        # compute adaptive p (min over tau) using TFisher directly
-        best <- Inf
-        for (tau in prep$tau_grid) {
-          st <- TFisher::stat.soft(p = pb, tau1 = tau)
-          pv <- 1 - as.numeric(TFisher::p.soft(q = st, n = length(pb), tau1 = tau, M = NULL))
-          if (is.finite(pv) && pv < best) best <- pv
-        }
-        pT[b] <- best
+        pT[b] <- .catfish_tfisher_adaptive_p(
+          P[b, ],
+          tau_grid = prep$tau_grid,
+          min_p = prep$min_p,
+          do_fix = isTRUE(do_fix)
+        )
       }
 
       # minP Sidak across genes
@@ -1485,15 +1502,12 @@ if (!is.null(prep$z_col)) {
         if (!requireNamespace("TFisher", quietly = TRUE)) stop("TFisher required for omnibus TFisher null.", call. = FALSE)
 
         .compute_tfisher_null_b <- function(b) {
-          pb <- .catfish_fix_p(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix))
-          if (length(pb) < 2L) return(NA_real_)
-          best <- Inf
-          for (tau in prep$tau_grid) {
-            st <- TFisher::stat.soft(p = pb, tau1 = tau)
-            pv <- 1 - as.numeric(TFisher::p.soft(q = st, n = length(pb), tau1 = tau, M = NULL))
-            if (is.finite(pv) && pv < best) best <- pv
-          }
-          best
+          .catfish_tfisher_adaptive_p(
+            P[b, ],
+            tau_grid = prep$tau_grid,
+            min_p = prep$min_p,
+            do_fix = isTRUE(do_fix)
+          )
         }
 
         if (use_parallel) {

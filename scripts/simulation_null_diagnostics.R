@@ -455,6 +455,31 @@ calibrate_with_null <- function(obs_pvals, null_pvals) {
   as.list(calibrated)
 }
 
+empirical_p_from_null <- function(obs_values, null_values) {
+  null_clean <- sort(null_values[is.finite(null_values) & !is.na(null_values)])
+  if (!length(null_clean)) {
+    return(rep(NA_real_, length(obs_values)))
+  }
+  (1 + findInterval(obs_values, null_clean, rightmost.closed = TRUE)) /
+    (length(null_clean) + 1)
+}
+
+calibrate_component_matrix <- function(obs_mat, null_mat) {
+  out <- matrix(
+    NA_real_,
+    nrow = nrow(obs_mat),
+    ncol = ncol(obs_mat),
+    dimnames = dimnames(obs_mat)
+  )
+
+  common_cols <- intersect(colnames(obs_mat), colnames(null_mat))
+  for (comp in common_cols) {
+    out[, comp] <- empirical_p_from_null(obs_mat[, comp], null_mat[, comp])
+  }
+
+  out
+}
+
 # ==============================================================================
 # HELPER FUNCTIONS: METRICS
 # ==============================================================================
@@ -682,20 +707,25 @@ run_block_a_null <- function(n_sims = 500L, b = 500L, seed = 13345L,
       cache_key <- paste(m, cor_name, sep = "_")
       null_dist <- null_cache[[cache_key]]
 
-      p_analytic <- matrix(NA, nrow = n_sims, ncol = 6)
-      p_mvn <- matrix(NA, nrow = n_sims, ncol = 6)
-      colnames(p_analytic) <- colnames(p_mvn) <-
-        c("acat", "fisher", "tfisher", "minp", "stouffer", "omnibus")
+      component_cols <- c("acat", "fisher", "tfisher", "minp", "stouffer")
+      combined_cols <- c(component_cols, "omnibus_combined")
+      p_analytic <- matrix(NA, nrow = n_sims, ncol = length(combined_cols))
+      p_mvn <- matrix(NA, nrow = n_sims, ncol = length(combined_cols))
+      p_mvn_alone <- numeric(n_sims)
+      colnames(p_analytic) <- colnames(p_mvn) <- combined_cols
 
       for (s in seq_len(n_sims)) {
         z <- simulate_gene_z(m, sigma, n_causal = 0, effect_size = 0)
         gene_res <- create_gene_results(z)
 
         res_ana <- compute_components_analytic(gene_res)
-        p_analytic[s, ] <- unlist(res_ana)
+        p_analytic[s, component_cols] <- unlist(res_ana[component_cols])
+        p_analytic[s, "omnibus_combined"] <- res_ana$omnibus
 
         res_cal <- calibrate_with_null(res_ana, null_dist)
-        p_mvn[s, ] <- unlist(res_cal)
+        p_mvn[s, component_cols] <- unlist(res_cal[component_cols])
+        p_mvn[s, "omnibus_combined"] <- compute_omnibus(unlist(res_cal[component_cols]))
+        p_mvn_alone[s] <- res_cal$omnibus
       }
 
       for (method in colnames(p_analytic)) {
@@ -733,6 +763,23 @@ run_block_a_null <- function(n_sims = 500L, b = 500L, seed = 13345L,
           stringsAsFactors = FALSE
         )
       }
+
+      results_list[[length(results_list) + 1]] <- data.frame(
+        block = "A_null",
+        pathway_size = m,
+        cor_structure = cor_name,
+        method = "omnibus_alone",
+        calibration = "mvn_alone",
+        lambda = compute_lambda(p_mvn_alone),
+        lambda_se = compute_lambda_se(p_mvn_alone),
+        type1_05 = compute_type1(p_mvn_alone, 0.05),
+        type1_05_se = compute_prop_se(p_mvn_alone, 0.05),
+        type1_01 = compute_type1(p_mvn_alone, 0.01),
+        type1_01_se = compute_prop_se(p_mvn_alone, 0.01),
+        mean_p = mean(p_mvn_alone, na.rm = TRUE),
+        median_p = median(p_mvn_alone, na.rm = TRUE),
+        stringsAsFactors = FALSE
+      )
     }
   }
 
@@ -1799,7 +1846,12 @@ run_block_b_profile <- function(n_sims = 500L, b = 500L, seed = 52345L,
 
   set.seed(seed)
   all_components <- c("acat", "fisher", "tfisher", "minp", "stouffer")
-  method_order <- c(all_components, "omnibus_analytic", "omnibus_mvn")
+  method_order <- c(
+    all_components,
+    "omnibus_analytic",
+    "omnibus_mvn_combined",
+    "omnibus_mvn_alone"
+  )
   results_list <- list()
 
   if (verbose) cat("\n=== BLOCK B PROFILE: Component-Wise Broken-Component Stress Test ===\n")
@@ -1865,11 +1917,9 @@ run_block_b_profile <- function(n_sims = 500L, b = 500L, seed = 52345L,
             broken_power = broken_power
           )
           broken_null_omni <- apply(broken_null, 1, compute_omnibus)
-          broken_null_omni_sorted <- sort(broken_null_omni)
-          omnibus_mvn <- (1 + findInterval(broken_obs_omni,
-                                           broken_null_omni_sorted,
-                                           rightmost.closed = TRUE)) /
-                         (length(broken_null_omni_sorted) + 1)
+          broken_obs_cal <- calibrate_component_matrix(broken_obs, broken_null)
+          omnibus_mvn_combined <- apply(broken_obs_cal, 1, compute_omnibus)
+          omnibus_mvn_alone <- empirical_p_from_null(broken_obs_omni, broken_null_omni)
 
           for (comp in all_components) {
             metric_lambda[combo_idx, comp] <- compute_lambda(broken_obs[, comp])
@@ -1879,8 +1929,11 @@ run_block_b_profile <- function(n_sims = 500L, b = 500L, seed = 52345L,
           metric_lambda[combo_idx, "omnibus_analytic"] <- compute_lambda(broken_obs_omni)
           metric_type1[combo_idx, "omnibus_analytic"] <- compute_type1(broken_obs_omni, 0.05)
 
-          metric_lambda[combo_idx, "omnibus_mvn"] <- compute_lambda(omnibus_mvn)
-          metric_type1[combo_idx, "omnibus_mvn"] <- compute_type1(omnibus_mvn, 0.05)
+          metric_lambda[combo_idx, "omnibus_mvn_combined"] <- compute_lambda(omnibus_mvn_combined)
+          metric_type1[combo_idx, "omnibus_mvn_combined"] <- compute_type1(omnibus_mvn_combined, 0.05)
+
+          metric_lambda[combo_idx, "omnibus_mvn_alone"] <- compute_lambda(omnibus_mvn_alone)
+          metric_type1[combo_idx, "omnibus_mvn_alone"] <- compute_type1(omnibus_mvn_alone, 0.05)
         }
 
         for (method in method_order) {
@@ -1907,10 +1960,10 @@ run_block_b_profile <- function(n_sims = 500L, b = 500L, seed = 52345L,
 
 plot_block_b_profile <- function(results, include_analytic_omnibus = FALSE) {
   method_levels <- c("acat", "fisher", "tfisher", "minp", "stouffer",
-                     "omnibus_mvn")
+                     "omnibus_mvn_combined", "omnibus_mvn_alone")
   if (include_analytic_omnibus) {
     method_levels <- c("acat", "fisher", "tfisher", "minp", "stouffer",
-                       "omnibus_analytic", "omnibus_mvn")
+                       "omnibus_analytic", "omnibus_mvn_combined", "omnibus_mvn_alone")
   }
 
   method_labels <- c(
@@ -1920,7 +1973,8 @@ plot_block_b_profile <- function(results, include_analytic_omnibus = FALSE) {
     "minp" = "minP",
     "stouffer" = "Stouffer",
     "omnibus_analytic" = "Omnibus (analytic)",
-    "omnibus_mvn" = "Omnibus (MVN)"
+    "omnibus_mvn_combined" = "Omnibus Combined",
+    "omnibus_mvn_alone" = "Omnibus Alone"
   )
 
   method_colors <- c(
@@ -1930,7 +1984,8 @@ plot_block_b_profile <- function(results, include_analytic_omnibus = FALSE) {
     "minP" = "#984EA3",
     "Stouffer" = "#FF7F00",
     "Omnibus (analytic)" = "#666666",
-    "Omnibus (MVN)" = "#000000"
+    "Omnibus Combined" = "#000000",
+    "Omnibus Alone" = "#8C564B"
   )
 
   df <- results %>%
@@ -1961,7 +2016,7 @@ plot_block_b_profile <- function(results, include_analytic_omnibus = FALSE) {
     scale_color_manual(values = method_colors) +
     scale_x_continuous(breaks = 1:4) +
     labs(title = "Block B: Component Breakage Stress Test",
-         subtitle = "Average over all combinations of k broken components; omnibus recalibrated under matching broken MVN null",
+         subtitle = "Average over all combinations of k broken components; compare component-wise MVN recombination vs direct omnibus calibration",
          x = "Number of Broken Components",
          y = expression(lambda),
          color = "Method") +
@@ -2409,24 +2464,32 @@ run_block_c <- function(n_sims = 500L, b = 500L, seed = 32345L,
       sigma_damaged <- sigma_damaged_cache[[cache_key]]
       null_damaged <- null_cache_damaged[[cache_key]]
 
-      p_analytic <- matrix(NA, nrow = n_sims, ncol = 6)
-      p_true_mvn <- matrix(NA, nrow = n_sims, ncol = 6)
-      p_imputed_mvn <- matrix(NA, nrow = n_sims, ncol = 6)
-      colnames(p_analytic) <- colnames(p_true_mvn) <- colnames(p_imputed_mvn) <-
-        c("acat", "fisher", "tfisher", "minp", "stouffer", "omnibus")
+      component_cols <- c("acat", "fisher", "tfisher", "minp", "stouffer")
+      combined_cols <- c(component_cols, "omnibus_combined")
+      p_analytic <- matrix(NA, nrow = n_sims, ncol = length(combined_cols))
+      p_true_mvn <- matrix(NA, nrow = n_sims, ncol = length(combined_cols))
+      p_imputed_mvn <- matrix(NA, nrow = n_sims, ncol = length(combined_cols))
+      p_true_mvn_alone <- numeric(n_sims)
+      p_imputed_mvn_alone <- numeric(n_sims)
+      colnames(p_analytic) <- colnames(p_true_mvn) <- colnames(p_imputed_mvn) <- combined_cols
 
       for (s in seq_len(n_sims)) {
         z <- simulate_gene_z(m, sigma_true, n_causal = 0, effect_size = 0)
         gene_res <- create_gene_results(z)
 
         res_ana <- compute_components_analytic(gene_res)
-        p_analytic[s, ] <- unlist(res_ana)
+        p_analytic[s, component_cols] <- unlist(res_ana[component_cols])
+        p_analytic[s, "omnibus_combined"] <- res_ana$omnibus
 
         res_true <- calibrate_with_null(res_ana, null_true)
-        p_true_mvn[s, ] <- unlist(res_true)
+        p_true_mvn[s, component_cols] <- unlist(res_true[component_cols])
+        p_true_mvn[s, "omnibus_combined"] <- compute_omnibus(unlist(res_true[component_cols]))
+        p_true_mvn_alone[s] <- res_true$omnibus
 
         res_imputed <- calibrate_with_null(res_ana, null_damaged)
-        p_imputed_mvn[s, ] <- unlist(res_imputed)
+        p_imputed_mvn[s, component_cols] <- unlist(res_imputed[component_cols])
+        p_imputed_mvn[s, "omnibus_combined"] <- compute_omnibus(unlist(res_imputed[component_cols]))
+        p_imputed_mvn_alone[s] <- res_imputed$omnibus
       }
 
       for (method in colnames(p_analytic)) {
@@ -2475,6 +2538,36 @@ run_block_c <- function(n_sims = 500L, b = 500L, seed = 32345L,
           stringsAsFactors = FALSE
         )
       }
+
+      results_list[[length(results_list) + 1]] <- data.frame(
+        block = "C",
+        pathway_size = m,
+        missing_frac = miss_frac,
+        method = "omnibus_alone",
+        strategy = "mvn_true_cor",
+        lambda = compute_lambda(p_true_mvn_alone),
+        lambda_se = compute_lambda_se(p_true_mvn_alone),
+        type1_05 = compute_type1(p_true_mvn_alone, 0.05),
+        type1_05_se = compute_prop_se(p_true_mvn_alone, 0.05),
+        type1_01 = compute_type1(p_true_mvn_alone, 0.01),
+        type1_01_se = compute_prop_se(p_true_mvn_alone, 0.01),
+        stringsAsFactors = FALSE
+      )
+
+      results_list[[length(results_list) + 1]] <- data.frame(
+        block = "C",
+        pathway_size = m,
+        missing_frac = miss_frac,
+        method = "omnibus_alone",
+        strategy = "mvn_imputed_cor",
+        lambda = compute_lambda(p_imputed_mvn_alone),
+        lambda_se = compute_lambda_se(p_imputed_mvn_alone),
+        type1_05 = compute_type1(p_imputed_mvn_alone, 0.05),
+        type1_05_se = compute_prop_se(p_imputed_mvn_alone, 0.05),
+        type1_01 = compute_type1(p_imputed_mvn_alone, 0.01),
+        type1_01_se = compute_prop_se(p_imputed_mvn_alone, 0.01),
+        stringsAsFactors = FALSE
+      )
     }
   }
 
@@ -2594,9 +2687,11 @@ run_block_d <- function(n_train = 200L, n_test = 300L, b = 500L, seed = 42345L,
       )
 
       p_naive_omni <- numeric(n_test)
-      p_calibrated_omni <- numeric(n_test)
+      p_calibrated_omni_combined <- numeric(n_test)
+      p_calibrated_omni_alone <- numeric(n_test)
       p_adaptive_omni <- numeric(n_test)
-      p_adaptive_mvn <- numeric(n_test)
+      p_adaptive_mvn_combined <- numeric(n_test)
+      p_adaptive_mvn_alone <- numeric(n_test)
 
       # Precompute MVN null for adaptive statistic (fixed mask)
       null_adaptive <- numeric(b)
@@ -2614,16 +2709,26 @@ run_block_d <- function(n_train = 200L, n_test = 300L, b = 500L, seed = 42345L,
         res_ana <- compute_components_analytic(gene_res)
         p_naive_omni[s] <- res_ana$omnibus
 
-        # Calibrated omnibus (MVN via precomputed null)
+        # MVN component calibration then recombination
         res_cal <- calibrate_with_null(res_ana, null_dist_correct)
-        p_calibrated_omni[s] <- res_cal$omnibus
+        cal_components <- unlist(res_cal[c("acat", "fisher", "tfisher", "minp", "stouffer")])
+        p_calibrated_omni_combined[s] <- compute_omnibus(cal_components)
+
+        # Direct MVN calibration of the omnibus statistic itself
+        p_calibrated_omni_alone[s] <- res_cal$omnibus
 
         # Adaptive omnibus (drop bad components; analytic p-value)
         p_adaptive_omni[s] <- compute_adaptive_omnibus(gene_res, keep_mask)
 
-        # Adaptive omnibus with MVN calibration
-        p_adaptive_mvn[s] <- (1 + sum(null_adaptive <= p_adaptive_omni[s], na.rm = TRUE)) /
-          (sum(!is.na(null_adaptive)) + 1)
+        keep_components <- names(keep_mask)[keep_mask]
+        if (length(keep_components) > 0) {
+          p_adaptive_mvn_combined[s] <- compute_omnibus(cal_components[keep_components])
+        } else {
+          p_adaptive_mvn_combined[s] <- 0.5
+        }
+
+        # Direct MVN calibration of the adaptive omnibus statistic
+        p_adaptive_mvn_alone[s] <- empirical_p_from_null(p_adaptive_omni[s], null_adaptive)
       }
 
       results_list[[length(results_list) + 1]] <- data.frame(
@@ -2646,15 +2751,31 @@ run_block_d <- function(n_train = 200L, n_test = 300L, b = 500L, seed = 42345L,
         block = "D",
         pathway_size = m,
         rho = rho,
-        method = "omnibus_mvn",
+        method = "omnibus_mvn_combined",
         n_components = 5,
         drop_label = drop_label,
-        lambda = compute_lambda(p_calibrated_omni),
-        lambda_se = compute_lambda_se(p_calibrated_omni),
-        type1_05 = compute_type1(p_calibrated_omni, 0.05),
-        type1_05_se = compute_prop_se(p_calibrated_omni, 0.05),
-        type1_01 = compute_type1(p_calibrated_omni, 0.01),
-        type1_01_se = compute_prop_se(p_calibrated_omni, 0.01),
+        lambda = compute_lambda(p_calibrated_omni_combined),
+        lambda_se = compute_lambda_se(p_calibrated_omni_combined),
+        type1_05 = compute_type1(p_calibrated_omni_combined, 0.05),
+        type1_05_se = compute_prop_se(p_calibrated_omni_combined, 0.05),
+        type1_01 = compute_type1(p_calibrated_omni_combined, 0.01),
+        type1_01_se = compute_prop_se(p_calibrated_omni_combined, 0.01),
+        stringsAsFactors = FALSE
+      )
+
+      results_list[[length(results_list) + 1]] <- data.frame(
+        block = "D",
+        pathway_size = m,
+        rho = rho,
+        method = "omnibus_mvn_alone",
+        n_components = 5,
+        drop_label = drop_label,
+        lambda = compute_lambda(p_calibrated_omni_alone),
+        lambda_se = compute_lambda_se(p_calibrated_omni_alone),
+        type1_05 = compute_type1(p_calibrated_omni_alone, 0.05),
+        type1_05_se = compute_prop_se(p_calibrated_omni_alone, 0.05),
+        type1_01 = compute_type1(p_calibrated_omni_alone, 0.01),
+        type1_01_se = compute_prop_se(p_calibrated_omni_alone, 0.01),
         stringsAsFactors = FALSE
       )
 
@@ -2678,15 +2799,31 @@ run_block_d <- function(n_train = 200L, n_test = 300L, b = 500L, seed = 42345L,
         block = "D",
         pathway_size = m,
         rho = rho,
-        method = "omnibus_adaptive_mvn",
+        method = "omnibus_adaptive_mvn_combined",
         n_components = sum(keep_mask),
         drop_label = drop_label,
-        lambda = compute_lambda(p_adaptive_mvn),
-        lambda_se = compute_lambda_se(p_adaptive_mvn),
-        type1_05 = compute_type1(p_adaptive_mvn, 0.05),
-        type1_05_se = compute_prop_se(p_adaptive_mvn, 0.05),
-        type1_01 = compute_type1(p_adaptive_mvn, 0.01),
-        type1_01_se = compute_prop_se(p_adaptive_mvn, 0.01),
+        lambda = compute_lambda(p_adaptive_mvn_combined),
+        lambda_se = compute_lambda_se(p_adaptive_mvn_combined),
+        type1_05 = compute_type1(p_adaptive_mvn_combined, 0.05),
+        type1_05_se = compute_prop_se(p_adaptive_mvn_combined, 0.05),
+        type1_01 = compute_type1(p_adaptive_mvn_combined, 0.01),
+        type1_01_se = compute_prop_se(p_adaptive_mvn_combined, 0.01),
+        stringsAsFactors = FALSE
+      )
+
+      results_list[[length(results_list) + 1]] <- data.frame(
+        block = "D",
+        pathway_size = m,
+        rho = rho,
+        method = "omnibus_adaptive_mvn_alone",
+        n_components = sum(keep_mask),
+        drop_label = drop_label,
+        lambda = compute_lambda(p_adaptive_mvn_alone),
+        lambda_se = compute_lambda_se(p_adaptive_mvn_alone),
+        type1_05 = compute_type1(p_adaptive_mvn_alone, 0.05),
+        type1_05_se = compute_prop_se(p_adaptive_mvn_alone, 0.05),
+        type1_01 = compute_type1(p_adaptive_mvn_alone, 0.01),
+        type1_01_se = compute_prop_se(p_adaptive_mvn_alone, 0.01),
         stringsAsFactors = FALSE
       )
     }
@@ -2707,7 +2844,7 @@ run_block_e <- function(n_sims = n_sims_null, b = b_perm, seed = 52345L,
   set.seed(seed)
 
   comp_cols <- c("acat", "fisher", "tfisher", "minp", "stouffer")
-  loo_methods <- c(
+  loo_variants <- c(
     "omnibus_minus_acat",
     "omnibus_minus_fisher",
     "omnibus_minus_tfisher",
@@ -2715,6 +2852,7 @@ run_block_e <- function(n_sims = n_sims_null, b = b_perm, seed = 52345L,
     "omnibus_minus_stouffer",
     "omnibus_all"
   )
+  mvn_modes <- c("combined", "alone")
 
   cor_types <- list(
     "LD_moderate" = function(m) make_cor_block(m, block_size = 20L, rho = 0.3),
@@ -2746,7 +2884,10 @@ run_block_e <- function(n_sims = n_sims_null, b = b_perm, seed = 52345L,
         null_loo[[paste0("omnibus_minus_", comp)]] <-
           apply(null_comps[, keep_comps, drop = FALSE], 1, compute_omnibus)
       }
-      null_cache[[cache_key]] <- null_loo
+      null_cache[[cache_key]] <- list(
+        null_stats = null_stats,
+        null_loo = null_loo
+      )
     }
   }
 
@@ -2756,10 +2897,13 @@ run_block_e <- function(n_sims = n_sims_null, b = b_perm, seed = 52345L,
 
       sigma <- cor_types[[cor_name]](m)
       cache_key <- paste(m, cor_name, sep = "_")
-      null_loo <- null_cache[[cache_key]]
+      null_bundle <- null_cache[[cache_key]]
+      null_stats <- null_bundle$null_stats
+      null_loo <- null_bundle$null_loo
 
-      p_mvn <- matrix(NA, nrow = n_sims, ncol = length(loo_methods))
-      colnames(p_mvn) <- loo_methods
+      p_combined <- matrix(NA, nrow = n_sims, ncol = length(loo_variants))
+      p_alone <- matrix(NA, nrow = n_sims, ncol = length(loo_variants))
+      colnames(p_combined) <- colnames(p_alone) <- loo_variants
 
       for (s in seq_len(n_sims)) {
         z <- simulate_gene_z(m, sigma, n_causal = 0, effect_size = 0)
@@ -2767,6 +2911,8 @@ run_block_e <- function(n_sims = n_sims_null, b = b_perm, seed = 52345L,
 
         res_ana <- compute_components_analytic(gene_res)
         comp_vals <- unlist(res_ana[comp_cols])
+        res_cal <- calibrate_with_null(res_ana, null_stats)
+        comp_cal <- unlist(res_cal[comp_cols])
 
         obs_loo <- list(
           omnibus_all = res_ana$omnibus,
@@ -2777,27 +2923,51 @@ run_block_e <- function(n_sims = n_sims_null, b = b_perm, seed = 52345L,
           omnibus_minus_stouffer = compute_omnibus(comp_vals[comp_cols != "stouffer"])
         )
 
-        for (method in loo_methods) {
+        obs_loo_combined <- list(
+          omnibus_all = compute_omnibus(comp_cal),
+          omnibus_minus_acat = compute_omnibus(comp_cal[comp_cols != "acat"]),
+          omnibus_minus_fisher = compute_omnibus(comp_cal[comp_cols != "fisher"]),
+          omnibus_minus_tfisher = compute_omnibus(comp_cal[comp_cols != "tfisher"]),
+          omnibus_minus_minp = compute_omnibus(comp_cal[comp_cols != "minp"]),
+          omnibus_minus_stouffer = compute_omnibus(comp_cal[comp_cols != "stouffer"])
+        )
+
+        for (method in loo_variants) {
           obs_val <- obs_loo[[method]]
           null_vals <- null_loo[[method]]
-          p_mvn[s, method] <- (1 + sum(null_vals <= obs_val, na.rm = TRUE)) /
-            (sum(!is.na(null_vals)) + 1)
+          p_alone[s, method] <- empirical_p_from_null(obs_val, null_vals)
+          p_combined[s, method] <- obs_loo_combined[[method]]
         }
       }
 
-      for (method in loo_methods) {
+      for (method in loo_variants) {
         results_list[[length(results_list) + 1]] <- data.frame(
           block = "E",
           pathway_size = m,
           cor_structure = cor_name,
           method = method,
-          calibration = "mvn",
-          lambda = compute_lambda(p_mvn[, method]),
-          lambda_se = compute_lambda_se(p_mvn[, method]),
-          type1_05 = compute_type1(p_mvn[, method], 0.05),
-          type1_05_se = compute_prop_se(p_mvn[, method], 0.05),
-          type1_01 = compute_type1(p_mvn[, method], 0.01),
-          type1_01_se = compute_prop_se(p_mvn[, method], 0.01),
+          calibration = "combined",
+          lambda = compute_lambda(p_combined[, method]),
+          lambda_se = compute_lambda_se(p_combined[, method]),
+          type1_05 = compute_type1(p_combined[, method], 0.05),
+          type1_05_se = compute_prop_se(p_combined[, method], 0.05),
+          type1_01 = compute_type1(p_combined[, method], 0.01),
+          type1_01_se = compute_prop_se(p_combined[, method], 0.01),
+          stringsAsFactors = FALSE
+        )
+
+        results_list[[length(results_list) + 1]] <- data.frame(
+          block = "E",
+          pathway_size = m,
+          cor_structure = cor_name,
+          method = method,
+          calibration = "alone",
+          lambda = compute_lambda(p_alone[, method]),
+          lambda_se = compute_lambda_se(p_alone[, method]),
+          type1_05 = compute_type1(p_alone[, method], 0.05),
+          type1_05_se = compute_prop_se(p_alone[, method], 0.05),
+          type1_01 = compute_type1(p_alone[, method], 0.01),
+          type1_01_se = compute_prop_se(p_alone[, method], 0.01),
           stringsAsFactors = FALSE
         )
       }
@@ -2813,14 +2983,27 @@ run_block_e <- function(n_sims = n_sims_null, b = b_perm, seed = 52345L,
 # ==============================================================================
 
 plot_block_a_null <- function(results) {
-  method_order <- c("ACAT", "FISHER", "MINP", "STOUFFER", "TFISHER", "OMNIBUS")
+  method_order <- c(
+    "ACAT", "FISHER", "MINP", "STOUFFER", "TFISHER",
+    "OMNIBUS\nCombined", "OMNIBUS\nAlone"
+  )
   cor_order <- c("LD_moderate", "LD_strong", "LD_independent")
   df <- results %>%
     filter(block == "A_null") %>%
     mutate(
       lambda_plot = pmin(lambda, lambda_cap),
       cor_structure = factor(cor_structure, levels = cor_order),
-      method_label = factor(toupper(method), levels = method_order),
+      method_label = factor(dplyr::case_when(
+        method == "acat" ~ "ACAT",
+        method == "fisher" ~ "FISHER",
+        method == "minp" ~ "MINP",
+        method == "stouffer" ~ "STOUFFER",
+        method == "tfisher" ~ "TFISHER",
+        method == "omnibus_combined" ~ "OMNIBUS\nCombined",
+        method == "omnibus_alone" ~ "OMNIBUS\nAlone",
+        TRUE ~ toupper(method)
+      ), levels = method_order),
+      fill_calibration = dplyr::if_else(calibration == "analytic", "analytic", "mvn"),
       label_lambda = ifelse(lambda > lambda_cap,
                             paste0(">", lambda_cap),
                             sprintf("%.2f", lambda_plot)),
@@ -2831,13 +3014,14 @@ plot_block_a_null <- function(results) {
       type1_upper = pmin(type1_05 + type1_05_se, 1)
     )
 
-  p_lambda <- ggplot(df, aes(x = method_label, y = lambda_plot, fill = calibration)) +
+  p_lambda <- ggplot(df, aes(x = method_label, y = lambda_plot, fill = fill_calibration)) +
     geom_col(position = position_dodge(0.8), width = 0.7, alpha = 0.8) +
     geom_errorbar(aes(ymin = lambda_lower, ymax = lambda_upper),
                   position = position_dodge(0.8), width = 0.2) +
     geom_text(aes(label = label_lambda),
               position = position_dodge(0.8),
               angle = 90, vjust = -0.2, size = 2.3) +
+    geom_vline(xintercept = 6.5, linetype = "dotted", color = "grey40", linewidth = 0.5) +
     geom_hline(yintercept = 1, linetype = "dashed", color = "red", linewidth = 0.7) +
     facet_grid(pathway_size ~ cor_structure,
                labeller = labeller(pathway_size = function(x) paste0("m=", x))) +
@@ -2848,13 +3032,14 @@ plot_block_a_null <- function(results) {
     sim_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
 
-  p_type1 <- ggplot(df, aes(x = method_label, y = type1_05, fill = calibration)) +
+  p_type1 <- ggplot(df, aes(x = method_label, y = type1_05, fill = fill_calibration)) +
     geom_col(position = position_dodge(0.8), width = 0.7, alpha = 0.8) +
     geom_errorbar(aes(ymin = type1_lower, ymax = type1_upper),
                   position = position_dodge(0.8), width = 0.2) +
     geom_text(aes(label = label_type1),
               position = position_dodge(0.8),
               angle = 90, vjust = -0.2, size = 2.3) +
+    geom_vline(xintercept = 6.5, linetype = "dotted", color = "grey40", linewidth = 0.5) +
     geom_hline(yintercept = 0.05, linetype = "dashed", color = "red", linewidth = 0.7) +
     facet_grid(pathway_size ~ cor_structure,
                labeller = labeller(pathway_size = function(x) paste0("m=", x))) +
@@ -3120,14 +3305,18 @@ plot_block_c <- function(results) {
     filter(block == "C") %>%
     mutate(
       lambda_plot = pmin(lambda, lambda_cap),
-      method_label = toupper(method),
+      omni_variant = factor(dplyr::case_when(
+        method == "omnibus_combined" ~ "Combined",
+        method == "omnibus_alone" ~ "Alone",
+        TRUE ~ NA_character_
+      ), levels = c("Combined", "Alone")),
       pathway_size = as.integer(pathway_size),
       facet_label = factor(paste0("m=", pathway_size),
                            levels = paste0("m=", sort(unique(pathway_size))))
     )
 
   df_omni <- df %>%
-    filter(method == "omnibus") %>%
+    filter(method %in% c("omnibus_combined", "omnibus_alone")) %>%
     mutate(
       lambda_lower = pmax(lambda_plot - lambda_se, 0),
       lambda_upper = pmin(lambda_plot + lambda_se, lambda_cap),
@@ -3135,10 +3324,11 @@ plot_block_c <- function(results) {
       type1_upper = pmin(type1_05 + type1_05_se, 1)
     )
 
-  p_lambda <- ggplot(df_omni, aes(x = missing_frac, y = lambda_plot, color = strategy)) +
+  p_lambda <- ggplot(df_omni, aes(x = missing_frac, y = lambda_plot, color = strategy,
+                                  linetype = omni_variant, shape = omni_variant)) +
     geom_ribbon(aes(ymin = lambda_lower, ymax = lambda_upper, fill = strategy),
                 alpha = 0.15, show.legend = FALSE) +
-    geom_point(size = 3) +
+    geom_point(size = 2.8) +
     geom_line(linewidth = 1) +
     geom_hline(yintercept = 1, linetype = "dashed", color = "black", linewidth = 0.5) +
     geom_ribbon(aes(ymin = 0.95, ymax = 1.05), alpha = 0.1, fill = "gray", color = NA) +
@@ -3149,15 +3339,18 @@ plot_block_c <- function(results) {
                  "mvn_imputed_cor" = "#4DAF4A"),
       labels = c("Analytic Fallback", "MVN True Cor", "MVN Imputed (0)")
     ) +
+    scale_linetype_manual(values = c("Combined" = "solid", "Alone" = "dashed")) +
+    scale_shape_manual(values = c("Combined" = 16, "Alone" = 17)) +
     labs(title = "Block C: Omnibus Lambda vs Missing Correlations",
          x = "Fraction Missing", y = expression(lambda),
-         color = "Strategy") +
+         color = "Strategy", linetype = "Omnibus", shape = "Omnibus") +
     sim_theme
 
-  p_type1 <- ggplot(df_omni, aes(x = missing_frac, y = type1_05, color = strategy)) +
+  p_type1 <- ggplot(df_omni, aes(x = missing_frac, y = type1_05, color = strategy,
+                                 linetype = omni_variant, shape = omni_variant)) +
     geom_ribbon(aes(ymin = type1_lower, ymax = type1_upper, fill = strategy),
                 alpha = 0.15, show.legend = FALSE) +
-    geom_point(size = 3) +
+    geom_point(size = 2.8) +
     geom_line(linewidth = 1) +
     geom_hline(yintercept = 0.05, linetype = "dashed", color = "black", linewidth = 0.5) +
     facet_wrap(~ facet_label, ncol = 3) +
@@ -3167,9 +3360,11 @@ plot_block_c <- function(results) {
                  "mvn_imputed_cor" = "#4DAF4A"),
       labels = c("Analytic Fallback", "MVN True Cor", "MVN Imputed (0)")
     ) +
+    scale_linetype_manual(values = c("Combined" = "solid", "Alone" = "dashed")) +
+    scale_shape_manual(values = c("Combined" = 16, "Alone" = 17)) +
     labs(title = "Block C: Omnibus Type I Error vs Missing Correlations",
          x = "Fraction Missing", y = "Type I Error Rate",
-         color = "Strategy") +
+         color = "Strategy", linetype = "Omnibus", shape = "Omnibus") +
     sim_theme
 
   list(lambda = p_lambda, type1 = p_type1)
@@ -3188,14 +3383,17 @@ plot_block_d <- function(results) {
       rho_label = factor(rho_label, levels = c("LD_moderate", "LD_strong", "LD_independent")),
       method_label = dplyr::case_when(
         method == "omnibus_analytical"    ~ "Analytical",
-        method == "omnibus_mvn"           ~ "MVN",
+        method == "omnibus_mvn_combined"  ~ "MVN Combined",
+        method == "omnibus_mvn_alone"     ~ "MVN Alone",
         method == "omnibus_adaptive"      ~ "Adaptive+Analytical",
-        method == "omnibus_adaptive_mvn"  ~ "Adaptive+MVN",
+        method == "omnibus_adaptive_mvn_combined" ~ "Adaptive+Combined",
+        method == "omnibus_adaptive_mvn_alone"    ~ "Adaptive+Alone",
         TRUE                              ~ method
       ),
       method_label = factor(method_label,
-                            levels = c("Analytical", "MVN",
-                                       "Adaptive+Analytical", "Adaptive+MVN")),
+                            levels = c("Analytical", "MVN Combined", "MVN Alone",
+                                       "Adaptive+Analytical", "Adaptive+Combined",
+                                       "Adaptive+Alone")),
       lambda_plot = pmin(lambda, lambda_cap),
       label_lambda = ifelse(lambda > lambda_cap,
                             paste0(">", lambda_cap),
@@ -3228,9 +3426,11 @@ plot_block_d <- function(results) {
                labeller = labeller(pathway_size = function(x) paste0("m=", x))) +
     scale_fill_manual(
       values = c("Analytical" = "#E41A1C",
-                 "MVN" = "#377EB8",
+                 "MVN Combined" = "#377EB8",
+                 "MVN Alone" = "#1F78B4",
                  "Adaptive+Analytical" = "#4DAF4A",
-                 "Adaptive+MVN" = "#984EA3")
+                 "Adaptive+Combined" = "#984EA3",
+                 "Adaptive+Alone" = "#A65628")
     ) +
     labs(title = "Block D: Adaptive Omnibus Comparison",
          x = "Method", y = expression(lambda)) +
@@ -3252,9 +3452,11 @@ plot_block_d <- function(results) {
                labeller = labeller(pathway_size = function(x) paste0("m=", x))) +
     scale_fill_manual(
       values = c("Analytical" = "#E41A1C",
-                 "MVN" = "#377EB8",
+                 "MVN Combined" = "#377EB8",
+                 "MVN Alone" = "#1F78B4",
                  "Adaptive+Analytical" = "#4DAF4A",
-                 "Adaptive+MVN" = "#984EA3")
+                 "Adaptive+Combined" = "#984EA3",
+                 "Adaptive+Alone" = "#A65628")
     ) +
     labs(title = "Block D: Type I Error Comparison",
          x = "Method", y = "Type I Error Rate") +
@@ -3289,8 +3491,17 @@ plot_block_e <- function(results) {
     mutate(
       cor_structure = factor(cor_structure, levels = cor_order),
       method = factor(method, levels = method_order),
-      method_label = factor(method_labels[match(as.character(method), method_order)],
-                            levels = method_labels),
+      method_label = paste0(
+        method_labels[match(as.character(method), method_order)],
+        ifelse(calibration == "combined", " (Combined)", " (Alone)")
+      ),
+      method_label = factor(
+        method_label,
+        levels = c(
+          paste0(method_labels, " (Combined)"),
+          paste0(method_labels, " (Alone)")
+        )
+      ),
       lambda_plot = pmin(lambda, lambda_cap),
       label_lambda = ifelse(lambda > lambda_cap,
                             paste0(">", lambda_cap),
@@ -3302,29 +3513,31 @@ plot_block_e <- function(results) {
       type1_upper = pmin(type1_05 + type1_05_se, 1)
     )
 
-  p_lambda <- ggplot(df, aes(x = method_label, y = lambda_plot)) +
-    geom_col(width = 0.7, alpha = 0.85, fill = "#377EB8") +
+  p_lambda <- ggplot(df, aes(x = method_label, y = lambda_plot, fill = calibration)) +
+    geom_col(width = 0.7, alpha = 0.85) +
     geom_errorbar(aes(ymin = lambda_lower, ymax = lambda_upper), width = 0.2) +
     geom_text(aes(label = label_lambda),
               angle = 90, vjust = -0.2, size = 2.3) +
     geom_hline(yintercept = 1, linetype = "dashed", color = "red", linewidth = 0.7) +
     facet_grid(pathway_size ~ cor_structure,
                labeller = labeller(pathway_size = function(x) paste0("m=", x))) +
+    scale_fill_manual(values = c("combined" = "#377EB8", "alone" = "#8C564B")) +
     labs(title = "Block E: Leave-one-out Omnibus Lambda (MVN)",
-         x = "Omnibus Variant", y = expression(lambda)) +
+         x = "Omnibus Variant", y = expression(lambda), fill = "MVN mode") +
     sim_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
 
-  p_type1 <- ggplot(df, aes(x = method_label, y = type1_05)) +
-    geom_col(width = 0.7, alpha = 0.85, fill = "#4DAF4A") +
+  p_type1 <- ggplot(df, aes(x = method_label, y = type1_05, fill = calibration)) +
+    geom_col(width = 0.7, alpha = 0.85) +
     geom_errorbar(aes(ymin = type1_lower, ymax = type1_upper), width = 0.2) +
     geom_text(aes(label = label_type1),
               angle = 90, vjust = -0.2, size = 2.3) +
     geom_hline(yintercept = 0.05, linetype = "dashed", color = "red", linewidth = 0.7) +
     facet_grid(pathway_size ~ cor_structure,
                labeller = labeller(pathway_size = function(x) paste0("m=", x))) +
+    scale_fill_manual(values = c("combined" = "#4DAF4A", "alone" = "#A65628")) +
     labs(title = "Block E: Leave-one-out Omnibus Type I Error (MVN)",
-         x = "Omnibus Variant", y = "Type I Error Rate") +
+         x = "Omnibus Variant", y = "Type I Error Rate", fill = "MVN mode") +
     sim_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
 

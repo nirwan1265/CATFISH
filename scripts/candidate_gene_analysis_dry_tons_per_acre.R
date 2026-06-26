@@ -24,7 +24,12 @@ BASE_DIR <- "/Users/nirwantandukar/Documents/Research/results/CATFISH/MAGMA/Dry_
 GWAS_DIR <- "/Users/nirwantandukar/Documents/Research/results/GWAS/MLM/BAP/Dry_tons_per_acre"
 GENE_LOC_FILE <- "/Users/nirwantandukar/Documents/Github/MAGCAT/inst/extdata/sorghum.genes.loc"
 
-OUT_DIR <- file.path(BASE_DIR, "candidate_gene_scoring_B1000000_GPD_strict_tau")
+CATFISH_SUBDIR_OVERRIDE <- Sys.getenv("CATFISH_SUBDIR", "")
+CATFISH_CSV_OVERRIDE <- Sys.getenv("CATFISH_CSV", "")
+MAGMA_GENE_FILE_OVERRIDE <- Sys.getenv("MAGMA_GENE_FILE", "")
+OUT_LABEL <- Sys.getenv("OUT_LABEL", "B1000000_GPD_strict_tau")
+
+OUT_DIR <- file.path(BASE_DIR, paste0("candidate_gene_scoring_", OUT_LABEL))
 dir.create(OUT_DIR, recursive = TRUE, showWarnings = FALSE)
 
 ## -----------------------------------------------------------------------------
@@ -32,6 +37,23 @@ dir.create(OUT_DIR, recursive = TRUE, showWarnings = FALSE)
 ## -----------------------------------------------------------------------------
 
 pick_completed_catfish_csv <- function(base_dir) {
+  if (nzchar(CATFISH_CSV_OVERRIDE)) {
+    if (!file.exists(CATFISH_CSV_OVERRIDE)) {
+      stop("CATFISH_CSV override not found: ", CATFISH_CSV_OVERRIDE, call. = FALSE)
+    }
+    return(CATFISH_CSV_OVERRIDE)
+  }
+  if (nzchar(CATFISH_SUBDIR_OVERRIDE)) {
+    hits <- list.files(
+      file.path(base_dir, CATFISH_SUBDIR_OVERRIDE),
+      pattern = "^Dry_tons_per_acre_CATFISH_.*\\.csv$",
+      full.names = TRUE
+    )
+    if (!length(hits)) {
+      stop("No CATFISH CSV found in subdir override: ", CATFISH_SUBDIR_OVERRIDE, call. = FALSE)
+    }
+    return(hits[[1]])
+  }
   csvs <- c(
     file.path(base_dir, "CATFISH_permutation_B1000000_mvn_GPD_strict_tau", "Dry_tons_per_acre_CATFISH_ACAT_mvn_B1000000_GPD_strict_tau.csv"),
     file.path(base_dir, "CATFISH_permutation_B1000000_mvn_GPD", "Dry_tons_per_acre_CATFISH_ACAT_mvn_B1000000_GPD.csv"),
@@ -46,6 +68,19 @@ pick_completed_catfish_csv <- function(base_dir) {
 }
 
 pick_completed_gene_table <- function(base_dir) {
+  if (nzchar(MAGMA_GENE_FILE_OVERRIDE)) {
+    if (!file.exists(MAGMA_GENE_FILE_OVERRIDE)) {
+      stop("MAGMA_GENE_FILE override not found: ", MAGMA_GENE_FILE_OVERRIDE, call. = FALSE)
+    }
+    return(MAGMA_GENE_FILE_OVERRIDE)
+  }
+  if (nzchar(CATFISH_SUBDIR_OVERRIDE)) {
+    hit <- file.path(base_dir, CATFISH_SUBDIR_OVERRIDE, "Dry_tons_per_acre_combined_genes.tsv")
+    if (!file.exists(hit)) {
+      stop("Combined gene table not found in subdir override: ", CATFISH_SUBDIR_OVERRIDE, call. = FALSE)
+    }
+    return(hit)
+  }
   tsvs <- c(
     file.path(base_dir, "CATFISH_permutation_B1000000_mvn_GPD_strict_tau", "Dry_tons_per_acre_combined_genes.tsv"),
     file.path(base_dir, "CATFISH_permutation_B1000000_mvn_GPD", "Dry_tons_per_acre_combined_genes.tsv"),
@@ -310,9 +345,9 @@ top200 <- gene_evidence %>%
   ) %>%
   slice_head(n = 200)
 
-all_file <- file.path(OUT_DIR, "candidate_genes_all_Dry_tons_per_acre_B1000000_GPD_strict_tau.csv")
-top50_file <- file.path(OUT_DIR, "candidate_genes_top50_Dry_tons_per_acre_B1000000_GPD_strict_tau.csv")
-top200_file <- file.path(OUT_DIR, "candidate_genes_top200_Dry_tons_per_acre_B1000000_GPD_strict_tau.csv")
+all_file <- file.path(OUT_DIR, paste0("candidate_genes_all_Dry_tons_per_acre_", OUT_LABEL, ".csv"))
+top50_file <- file.path(OUT_DIR, paste0("candidate_genes_top50_Dry_tons_per_acre_", OUT_LABEL, ".csv"))
+top200_file <- file.path(OUT_DIR, paste0("candidate_genes_top200_Dry_tons_per_acre_", OUT_LABEL, ".csv"))
 
 write.csv(gene_evidence, all_file, row.names = FALSE)
 write.csv(top50, top50_file, row.names = FALSE)

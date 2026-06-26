@@ -1,0 +1,15 @@
+method,lambda
+omni_p_final,30.4026470691835
+omni_p_mvn,30.4026470691835
+omni_p_analytic,3.03525242168793
+acat_p,3.50965297935439
+fisher_p,3.71703388076472
+minp_p_analytic,2.50262871484995
+stouffer_p_analytic,3.80248185807737
+tfisher_p_analytic,0.261312692503613
+acat_p_mvn_cal,3.52822391255836
+fisher_p_mvn_cal,3.55483003164597
+tfisher_p_mvn_cal,30.4026470691835
+minp_p_mvn_cal,2.67261195286651
+stouffer_p_mvn_cal,3.37387900920872
+omni_p_mvn_compcal,24.1634760464764

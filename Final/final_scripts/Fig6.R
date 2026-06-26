@@ -1,5 +1,5 @@
 suppressPackageStartupMessages({
-  source("/Users/nirwantandukar/Documents/Github/MAGCAT/all_figs.R")
+  source("/Users/nirwantandukar/Documents/Github/MAGCAT/scripts/all_figs.R")
   library(data.table)
   library(dplyr)
   library(ggplot2)
@@ -22,9 +22,9 @@ final_fig_dir <- "/Users/nirwantandukar/Documents/Github/MAGCAT/Final/final_main
 dir.create(final_fig_dir, recursive = TRUE, showWarnings = FALSE)
 
 gwas_dir <- "/Users/nirwantandukar/Documents/Research/results/GWAS/MLM/BAP/Dry_tons_per_acre"
-magma_dir <- "/Users/nirwantandukar/Documents/Research/results/CATFISH/MAGMA/Dry_tons_per_acre/CATFISH_permutation_B1000000_mvn_GPD_strict_tau"
+magma_dir <- "/Users/nirwantandukar/Documents/Research/results/CATFISH/MAGMA/Dry_tons_per_acre/CATFISH_permutation_B10000_mvn_GPD_paper_tau_false"
 magma_file <- file.path(magma_dir, "Dry_tons_per_acre_combined_genes.tsv")
-pathway_file <- file.path(magma_dir, "Dry_tons_per_acre_CATFISH_ACAT_mvn_B1000000_GPD_strict_tau.csv")
+pathway_file <- file.path(magma_dir, "Dry_tons_per_acre_CATFISH_ACAT_mvn_B10000_GPD_paper_tau_false.csv")
 
 if (!dir.exists(gwas_dir)) stop("GWAS dir not found: ", gwas_dir, call. = FALSE)
 if (!file.exists(magma_file)) stop("MAGMA file not found: ", magma_file, call. = FALSE)

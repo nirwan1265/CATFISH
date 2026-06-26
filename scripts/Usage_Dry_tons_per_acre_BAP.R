@@ -9,39 +9,64 @@ load_all(".")
 ## Configuration
 ## -----------------------------------------------------------------------------
 
+get_env_int <- function(name, default) {
+  x <- suppressWarnings(as.integer(Sys.getenv(name, "")))
+  if (!is.finite(x) || is.na(x)) default else x
+}
+
+get_env_flag <- function(name, default = FALSE) {
+  raw <- Sys.getenv(name, "")
+  if (!nzchar(raw)) return(default)
+  tolower(trimws(raw)) %in% c("1", "true", "yes", "y")
+}
+
+parse_num_grid <- function(x, default) {
+  if (!nzchar(x)) return(default)
+  parts <- unlist(strsplit(gsub("[,;]", " ", x), "\\s+"))
+  vals <- suppressWarnings(as.numeric(parts))
+  vals <- vals[is.finite(vals) & !is.na(vals)]
+  if (!length(vals)) default else vals
+}
+
 MAGMA_DIR <- "/Users/nirwantandukar/Documents/Research/results/CATFISH/MAGMA/Dry_tons_per_acre"
 PATHWAY_FILE <- "/Users/nirwantandukar/Documents/Github/MAGCAT/inst/extdata/pathway/sorghumbicolorcyc_pathways.20230103.SORBI"
 
 OUT_PREFIX <- "Dry_tons_per_acre"
 SPECIES    <- NULL
 GENE_REGEX <- "^SORBI"
-TAU_OPTION <- "strict"
+TAU_OPTION <- Sys.getenv("TAU_OPTION", "strict")
 
-B_PERM      <- 1000000L
-PERM_MODE   <- "mvn"
-OMNIBUS     <- "ACAT"
-SEED        <- 123L
-N_THREADS   <- min(12L, max(1L, parallel::detectCores() - 1L))
-MIN_GENES   <- 2L
+B_PERM      <- get_env_int("B_PERM", 1000000L)
+PERM_MODE   <- Sys.getenv("PERM_MODE", "mvn")
+OMNIBUS     <- Sys.getenv("OMNIBUS", "ACAT")
+SEED        <- get_env_int("SEED", 123L)
+N_THREADS   <- get_env_int("N_THREADS", min(12L, max(1L, parallel::detectCores() - 1L)))
+MIN_GENES   <- get_env_int("MIN_GENES", 2L)
 
-TAU_GRID <- switch(
+tau_grid_default <- switch(
   TAU_OPTION,
   strict  = c(1e-5, 1e-6, 1e-7),
   default = c(0.1, 0.05, 0.02, 0.01, 0.005, 0.001),
   c(0.1, 0.05, 0.02, 0.01, 0.005, 0.001)
 )
-OUT_SUFFIX <- if (identical(TAU_OPTION, "strict")) "_strict_tau" else ""
+TAU_GRID <- parse_num_grid(Sys.getenv("TAU_GRID", ""), tau_grid_default)
+TAU_LABEL <- Sys.getenv(
+  "TAU_LABEL",
+  if (identical(TAU_OPTION, "strict")) "strict_tau" else "default_tau"
+)
+OUT_SUFFIX <- if (nzchar(TAU_LABEL)) paste0("_", TAU_LABEL) else ""
 
-OUT_DIR <- file.path(MAGMA_DIR, paste0("CATFISH_permutation_B", B_PERM, "_", PERM_MODE, "_GPD", OUT_SUFFIX))
+MVN_MARGINAL             <- Sys.getenv("MVN_MARGINAL", "uniform")
+MVN_CALIBRATE_COMPONENTS <- get_env_flag("MVN_CALIBRATE_COMPONENTS", TRUE)
+MAKE_PD                  <- get_env_flag("MAKE_PD", TRUE)
+TAIL_MODE                <- Sys.getenv("TAIL_MODE", "hybrid_gpd")
+TAIL_SWITCH_EXCEED       <- get_env_int("TAIL_SWITCH_EXCEED", 10L)
+TAIL_GPD_K               <- get_env_int("TAIL_GPD_K", 250L)
+TAIL_MIN_B               <- get_env_int("TAIL_MIN_B", 10000L)
+TAIL_MIN_TAIL            <- get_env_int("TAIL_MIN_TAIL", 50L)
 
-MVN_MARGINAL              <- "uniform"
-MVN_CALIBRATE_COMPONENTS  <- TRUE
-MAKE_PD                   <- TRUE
-TAIL_MODE                 <- "hybrid_gpd"
-TAIL_SWITCH_EXCEED        <- 10L
-TAIL_GPD_K                <- 250L
-TAIL_MIN_B                <- 10000L
-TAIL_MIN_TAIL             <- 50L
+tail_label <- if (identical(TAIL_MODE, "hybrid_gpd")) "GPD" else "empirical"
+OUT_DIR <- file.path(MAGMA_DIR, paste0("CATFISH_permutation_B", B_PERM, "_", PERM_MODE, "_", tail_label, OUT_SUFFIX))
 
 USE_ADJUSTED_GENE_P <- FALSE
 GENE_LENGTH_FILE    <- NA_character_
@@ -294,11 +319,11 @@ omni_results <- omni_results[order(omni_results[[final_p_col]], omni_results$FDR
 
 results_csv <- file.path(
   OUT_DIR,
-  paste0(OUT_PREFIX, "_CATFISH_", OMNIBUS, "_", PERM_MODE, "_B", B_PERM, "_GPD", OUT_SUFFIX, ".csv")
+  paste0(OUT_PREFIX, "_CATFISH_", OMNIBUS, "_", PERM_MODE, "_B", B_PERM, "_", tail_label, OUT_SUFFIX, ".csv")
 )
 results_rds <- file.path(
   OUT_DIR,
-  paste0(OUT_PREFIX, "_CATFISH_", OMNIBUS, "_", PERM_MODE, "_B", B_PERM, "_GPD", OUT_SUFFIX, ".rds")
+  paste0(OUT_PREFIX, "_CATFISH_", OMNIBUS, "_", PERM_MODE, "_B", B_PERM, "_", tail_label, OUT_SUFFIX, ".rds")
 )
 
 utils::write.csv(omni_results, results_csv, row.names = FALSE)

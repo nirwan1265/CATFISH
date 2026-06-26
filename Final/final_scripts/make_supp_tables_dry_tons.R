@@ -8,14 +8,14 @@ out_dir <- "/Users/nirwantandukar/Documents/Github/MAGCAT/Final/final_supp_table
 
 catfish_file <- file.path(
   base_dir,
-  "CATFISH_permutation_B1000000_mvn_GPD_strict_tau",
-  "Dry_tons_per_acre_CATFISH_ACAT_mvn_B1000000_GPD_strict_tau.csv"
+  "CATFISH_permutation_B10000_mvn_GPD_paper_tau_false",
+  "Dry_tons_per_acre_CATFISH_ACAT_mvn_B10000_GPD_paper_tau_false.csv"
 )
 
 candidate_file <- file.path(
   base_dir,
-  "candidate_gene_scoring_B1000000_GPD_strict_tau",
-  "candidate_genes_all_Dry_tons_per_acre_B1000000_GPD_strict_tau.csv"
+  "candidate_gene_scoring_B10000_GPD_paper_tau_false",
+  "candidate_genes_all_Dry_tons_per_acre_B10000_GPD_paper_tau_false.csv"
 )
 
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
