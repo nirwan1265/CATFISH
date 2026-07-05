@@ -1,4 +1,6 @@
 #' @keywords internal
+#' @importFrom stats setNames
+#' @importFrom utils tail
 "_PACKAGE"
 
 #' CATFISH: MAGMA-Based Gene and Pathway Analysis with ACAT Aggregation
@@ -17,11 +19,7 @@
 #'   \item \code{\link{catfish_fisher_pathways}} - Fisher's method
 #'   \item \code{\link{catfish_minp_pathways}} - Minimum p-value (Tippett/Wilkinson)
 #'   \item \code{\link{catfish_stoufferZ_pathways}} - Stouffer's Z-score method
-#'   \item \code{\link{catfish_tfisher_pathways}} - Truncated Fisher (TPM)
-#'   \item \code{\link{catfish_soft_tfisher_pathways}} - Soft-thresholding TFisher
 #'   \item \code{\link{catfish_soft_tfisher_adaptive_pathways}} - Adaptive soft TFisher
-#'   \item \code{\link{catfish_wfisher_pathways}} - Weighted Fisher with effect directions
-#'   \item \code{\link{catfish_ordmeta_pathways}} - Order-statistics meta-analysis
 #' }
 #'
 #' \strong{Omnibus Testing:}

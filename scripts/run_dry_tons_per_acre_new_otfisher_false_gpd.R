@@ -1,5 +1,15 @@
 #!/usr/bin/env Rscript
 
+args_all <- commandArgs(trailingOnly = FALSE)
+file_arg <- grep("^--file=", args_all, value = TRUE)
+this_file <- if (length(file_arg)) sub("^--file=", "", file_arg[[1]]) else "scripts/run_dry_tons_per_acre_new_otfisher_false_gpd.R"
+script_dir <- dirname(normalizePath(this_file, mustWork = FALSE))
+repo_dir <- normalizePath(file.path(script_dir, ".."), mustWork = FALSE)
+
+if (!nzchar(Sys.getenv("CATFISH_REPO"))) {
+  Sys.setenv(CATFISH_REPO = repo_dir)
+}
+
 Sys.setenv(
   OMP_NUM_THREADS = "1",
   OPENBLAS_NUM_THREADS = "1",
@@ -13,7 +23,7 @@ Sys.setenv(
   N_THREADS = "8",
   MIN_GENES = "2",
   TAU_OPTION = "paper",
-  TAU_GRID = "0.01,0.05,0.5,1",
+  TAU_GRID = "0.1,0.05,0.01",
   TAU_LABEL = "paper_tau_false",
   MVN_MARGINAL = "uniform",
   MVN_CALIBRATE_COMPONENTS = "false",
@@ -26,6 +36,6 @@ Sys.setenv(
 )
 
 sys.source(
-  "/Users/nirwantandukar/Documents/Github/MAGCAT/scripts/Usage_Dry_tons_per_acre_BAP.R",
+  file.path(script_dir, "Usage_Dry_tons_per_acre_BAP.R"),
   envir = globalenv()
 )

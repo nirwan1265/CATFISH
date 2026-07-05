@@ -14,10 +14,11 @@ catfish_omni2_pathways(
   p_adj_col = NULL,
   z_col = NULL,
   weight_col = NULL,
-  tau_grid = c(0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001),
+  tau_grid = "auto",
   tau_cap = 1,
-  min_p = 1e-15,
+  min_p = 1e-50,
   min_genes = 2L,
+  use_tfisher = TRUE,
   do_fix = TRUE,
   stouffer_min_abs_w = 1e-08,
   stouffer_alternative = c("greater", "two.sided", "less"),
@@ -28,9 +29,15 @@ catfish_omni2_pathways(
   B_perm = NULL,
   perm_mode = c("none", "global", "mvn", "mvn_global", "both"),
   mvn_marginal = c("uniform", "empirical"),
+  mvn_sided = c("one", "two"),
   mvn_pool = c("use", "raw"),
   pool_p = NULL,
   mvn_calibrate_components = FALSE,
+  tail_mode = c("empirical", "hybrid_gpd"),
+  tail_switch_exceed = 10L,
+  tail_gpd_k = 250L,
+  tail_min_B = 10000L,
+  tail_min_tail = 50L,
   B_global = 0L,
   B_mvn = 0L,
   perm_pool = c("raw", "obs"),
@@ -38,6 +45,7 @@ catfish_omni2_pathways(
   magma_cor_pairs = NULL,
   make_PD = TRUE,
   seed = NULL,
+  n_threads = NULL,
   output = FALSE,
   out_dir = "catfish_omni2"
 )
@@ -70,13 +78,21 @@ for ACAT/Fisher/TFisher/minP. Default NULL.}
 
 \item{weight_col}{Character or NULL. Optional weights for Stouffer. Default NULL (equal weights).}
 
-\item{tau_grid}{Numeric vector of \eqn{\tau} values for adaptive soft TFisher. Default is a typical grid.}
+\item{tau_grid}{Adaptive soft-TFisher thresholds. Either a numeric vector of
+\eqn{\tau} values, or \code{"auto"} (default) to select the grid from the
+empirical quantiles of the pooled gene-level p-values. Under a uniform null
+this matches the classic grid \code{c(0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001)};
+under strong signal it shrinks toward the extreme tail automatically, removing
+the need for a manual strict-vs-default choice. The grid is estimated once
+globally and held fixed across the observed statistics and the MVN null.}
 
 \item{tau_cap}{Numeric. Upper bound for \code{tau_grid} (sanity bound). Default 1.}
 
 \item{min_p}{Numeric. P-values are clipped to \code{[min_p, 1-min_p]} to avoid numeric issues. Default 1e-15.}
 
 \item{min_genes}{Integer. Minimum genes required per pathway. Default 2.}
+
+\item{use_tfisher}{Logical. Include the adaptive soft-TFisher component. Default TRUE.}
 
 \item{do_fix}{Logical. If TRUE, uses your \code{fix_p_for_acat()} if available (else clips). Default TRUE.}
 
@@ -100,6 +116,10 @@ it overrides \code{B_global}/\code{B_mvn} according to \code{perm_mode}.}
 
 \item{mvn_marginal}{Character. Only for MVN mode: \code{"uniform"} or \code{"empirical"}.}
 
+\item{mvn_sided}{Character. Only for MVN mode: \code{"one"} (one-sided upper-tail
+\eqn{p = 1 - \Phi(Z)}, matching MAGMA gene-level p-values; default) or
+\code{"two"} (two-sided \eqn{p = 2\min(\Phi(Z), 1 - \Phi(Z))}).}
+
 \item{mvn_pool}{Character. Only for MVN + empirical mode when \code{pool_p} is NULL.
 \code{"use"} uses the same p-values used for observed p-based methods; \code{"raw"} prefers \code{p_raw_col}.
 (If raw p-values are unavailable, falls back to \code{"use"}.)}
@@ -109,6 +129,20 @@ If supplied, it is used directly (no per-pathway exclusion).}
 
 \item{mvn_calibrate_components}{Logical. If TRUE, MVN-calibrates each component first, then builds the omnibus
 (and calibrates that omnibus). Default FALSE.}
+
+\item{tail_mode}{Character. \code{"empirical"} or \code{"hybrid_gpd"} (GPD tail
+extrapolation for p-values below the Monte Carlo floor). Default \code{"empirical"}.}
+
+\item{tail_switch_exceed}{Integer. Switch to GPD extrapolation when the number of null
+exceedances falls below this. Default 10.}
+
+\item{tail_gpd_k}{Integer. Number of extreme null draws used to fit the GPD. Default 250.}
+
+\item{tail_min_B}{Integer. Minimum number of null draws required before GPD is attempted.
+Default 10000.}
+
+\item{tail_min_tail}{Integer. Minimum tail observations required for a stable GPD fit.
+Default 50.}
 
 \item{B_global}{Integer. Number of global-resampling iterations (used when \code{B_perm} is NULL).}
 
@@ -124,6 +158,10 @@ Required for MVN unless \code{magma_cor_pairs} is provided.}
 \item{make_PD}{Logical. If TRUE, forces correlation matrices to be positive definite before Cholesky. Default TRUE.}
 
 \item{seed}{Integer or NULL. Random seed.}
+
+\item{n_threads}{Integer or NULL. Number of worker threads for MVN inner null computations.
+If NULL, defaults to \code{max(1, detectCores()-1)}. Parallel execution is used only when
+\code{B_mvn >= 1000} and supported by the platform.}
 
 \item{output}{Logical. If TRUE, writes CSV to \code{out_dir} and attaches \code{"file"} attribute. Default FALSE.}
 
@@ -174,8 +212,10 @@ otherwise they use \code{p_raw_col}.
 
 \strong{MVN marginal mapping (only when \code{perm_mode} includes \code{"mvn"})}
 \itemize{
-\item \code{mvn_marginal="uniform"} (recommended): Gaussian-copula mapping
-\eqn{U=\Phi(Z)}, \eqn{p=2\min(U,1-U)} so each marginal is Uniform(0,1).
+\item \code{mvn_marginal="uniform"} (recommended): Gaussian-copula mapping of the
+simulated Z's to null gene-level p-values. With \code{mvn_sided="one"} (default),
+\eqn{p = 1 - \Phi(Z)} (one-sided upper tail, matching MAGMA gene-level p-values);
+with \code{mvn_sided="two"}, \eqn{p = 2\min(\Phi(Z), 1 - \Phi(Z))}.
 \item \code{mvn_marginal="empirical"}: maps copula uniforms to an empirical null p distribution
 derived internally from gene-level p-values (excluding the pathway's own genes to reduce leakage),
 unless you supply \code{pool_p}.

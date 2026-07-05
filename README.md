@@ -33,8 +33,11 @@ Download MAGMA from the official site: https://ctg.cncr.nl/software/magma
 
 ### 2) Install CATFISH
 
+CATFISH depends on the ACAT package, which is only available on GitHub (not CRAN), so install it first. `remotes` will pick up the remaining dependencies automatically.
+
 ```r
 # install.packages("remotes")
+remotes::install_github("yaowuliu/ACAT")
 remotes::install_github("nirwantandukar/CATFISH")
 ```
 

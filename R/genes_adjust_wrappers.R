@@ -4,6 +4,11 @@
 #' gene-level Z-statistics. This can reduce bias from longer genes having
 #' more SNPs and therefore more significant p-values.
 #'
+#' This adjustment is \strong{optional and exploratory}. MAGMA already conditions
+#' on gene size and SNP count internally, so in most analyses the unadjusted
+#' MAGMA p-values can be used directly; enable this only if you have a specific
+#' reason to further residualize gene-level statistics.
+#'
 #' @param gene_results data.frame. Gene-level results from MAGMA (typically
 #'   from reading a `.genes.out` file). Must contain gene ID, p-value, and
 #'   NSNPS columns.
@@ -132,8 +137,15 @@ catfish_adjust_gene_p <- function(gene_results,
 
   fit <- stats::lm(y ~ nsnps + len, data = df)
 
+  # Standardize residuals to an approximately N(0, 1) scale before converting to
+  # p-values; raw OLS residuals have variance = residual MSE (not 1), so treating
+  # them directly as z-scores would give poorly calibrated p_adj.
+  resid_raw <- stats::residuals(fit)
+  resid_sd  <- stats::sd(resid_raw)
+  if (!is.finite(resid_sd) || resid_sd <= 0) resid_sd <- 1
+
   z_adj <- rep(NA_real_, nrow(m))
-  z_adj[ok] <- stats::residuals(fit)
+  z_adj[ok] <- resid_raw / resid_sd
 
   p_adj <- rep(NA_real_, nrow(m))
   p_adj[ok] <- 2 * stats::pnorm(-abs(z_adj[ok]))

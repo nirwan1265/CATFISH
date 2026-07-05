@@ -28,8 +28,12 @@
 #'   when \code{species} is used. If NULL, the PMN loader prefers "Gene-name" then "Gene-id".
 #' @param gene_col Column name in \code{gene_results} containing gene IDs (default "GENE").
 #' @param p_col Column name in \code{gene_results} containing gene-level p-values (default "P").
-#' @param tau_grid Numeric vector of \code{tau} values to scan. Internally sorted increasing,
-#'   as required by \code{TFisher::stat.soft.omni()}.
+#' @param tau_grid Adaptive soft-TFisher thresholds: either a numeric vector of \code{tau}
+#'   values (internally sorted increasing, as required by \code{TFisher::stat.soft.omni()}),
+#'   or \code{"auto"} (default) to choose the grid from the empirical quantiles of the
+#'   pooled gene-level p-values. Values must satisfy \eqn{0 < \tau < 1}; the
+#'   \eqn{\tau = 1} Fisher corner is excluded here because CATFISH already carries
+#'   Fisher as a separate component test.
 #' @param min_p Lower cap for extremely small p-values before TFisher math (default 1e-15).
 #' @param do_fix If TRUE (default), clean/cap p-values using \code{fix_p_for_acat()}
 #'   to ensure values lie strictly in (0,1).
@@ -76,8 +80,7 @@
 #' )
 #' }
 #'
-#' @seealso \code{\link{catfish_tfisher_pathways}},
-#'   \code{\link{catfish_soft_tfisher_pathways}}
+#' @seealso \code{\link{catfish_acat_pathways}}, \code{\link{catfish_omni2_pathways}}
 #' @export
 catfish_soft_tfisher_adaptive_pathways <- function(gene_results,
                                                  pathways     = NULL,
@@ -85,7 +88,7 @@ catfish_soft_tfisher_adaptive_pathways <- function(gene_results,
                                                  pmn_gene_col = NULL,
                                                  gene_col     = "GENE",
                                                  p_col        = "P",
-                                                 tau_grid     = c(0.20, 0.10, 0.05, 0.02, 0.01, 0.005, 0.001),
+                                                 tau_grid     = "auto",
                                                  min_p        = 1e-15,
                                                  do_fix       = TRUE,
                                                  output       = FALSE,
@@ -163,11 +166,16 @@ catfish_soft_tfisher_adaptive_pathways <- function(gene_results,
   p_list <- lapply(p_list, function(g) tolower(as.character(g)))
 
   ## -------- tau grid checks (TFisher requires non-descending TAU1) ----------
-  tau_grid <- unique(as.numeric(tau_grid))
-  tau_grid <- tau_grid[is.finite(tau_grid) & !is.na(tau_grid)]
-  if (!length(tau_grid)) stop("tau_grid has no valid numeric values.", call. = FALSE)
-  if (any(tau_grid <= 0)) stop("All tau values must be > 0.", call. = FALSE)
-  tau_grid <- sort(tau_grid, decreasing = FALSE)
+  tau_grid <- .catfish_sanitize_tau_grid(
+    tau_grid = tau_grid,
+    p_pool = gene_p_vec,
+    tau_cap = 1,
+    allow_tau_one = FALSE,
+    sort_decreasing = FALSE
+  )
+  if (!length(tau_grid)) {
+    stop("tau_grid must contain at least one valid value with 0 < tau < 1.", call. = FALSE)
+  }
 
   ## -------- result container ----------
   pw_ids <- names(p_list)

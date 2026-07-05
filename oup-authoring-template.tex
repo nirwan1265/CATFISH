@@ -372,13 +372,11 @@ For a pathway $S$, CATFISH generates replicate null gene-level score vectors as
 \mathbf{Z}^{(b)} \sim \mathcal{N}(0,R_S),
 \qquad b=1,\dots,B.
 \]
-For $p$-based component statistics, null gene-level $p$-values are obtained from the same latent MVN draw using a Gaussian-copula mapping. Under the default two-sided convention,
+For $p$-based component statistics, null gene-level $p$-values are obtained from the same latent MVN draw using a Gaussian-copula mapping. Because MAGMA gene-level $p$-values are one-sided upper-tail association statistics, CATFISH uses a one-sided mapping by default,
 \[
-U_g^{(b)}=\Phi\!\left(Z_g^{(b)}\right),
-\qquad
-p_g^{(b)} = 2\min\left\{U_g^{(b)},\,1-U_g^{(b)}\right\},
+p_g^{(b)} = 1-\Phi\!\left(Z_g^{(b)}\right),
 \]
-where $\Phi(\cdot)$ denotes the standard normal cumulative distribution function. This ensures that both $Z$-based and $p$-based component tests are recomputed from a common dependence-preserving null realization.
+where $\Phi(\cdot)$ denotes the standard normal cumulative distribution function, so that large simulated $Z_g^{(b)}$ map to small null $p$-values in the same direction as the observed MAGMA gene statistics. A two-sided mapping $p_g^{(b)}=2\min\{\Phi(Z_g^{(b)}),\,1-\Phi(Z_g^{(b)})\}$ is also available. Either convention ensures that both $Z$-based and $p$-based component tests are recomputed from a common dependence-preserving null realization.
 
 For each replicate, CATFISH recomputes all component pathway tests from the same simulated pathway and forms the replicate component vector
 \[
@@ -1589,23 +1587,19 @@ R_S.
 Thus, the simulated null scores are random but not independent. Genes with high pairwise correlation in $R_S$ tend to co-vary across null replicates, whereas genes with near-zero correlation vary more independently. This preserves pathway-specific gene-level dependence in the null model.
 
 \paragraph{Gaussian-copula mapping to gene-level $p$-values.}
-For $p$-based component tests, null gene-level $p$-values are derived from the same latent MVN draw using a Gaussian-copula mapping:
-\[
-U_g^{(b)}
-=
-\Phi\!\left(Z_g^{(b)}\right),
-\qquad
-p_g^{(b)}
-=
-2\min\left\{U_g^{(b)},1-U_g^{(b)}\right\}.
-\]
-This preserves dependence across genes while ensuring coherent null inputs across both $Z$-based and $p$-based component statistics. If a one-sided gene-level convention is used instead, the mapping may be written as
+For $p$-based component tests, null gene-level $p$-values are derived from the same latent MVN draw using a Gaussian-copula mapping. Consistent with the one-sided upper-tail convention of MAGMA gene-level $p$-values, the default mapping is
 \[
 p_g^{(b)}
 =
 1-\Phi\!\left(Z_g^{(b)}\right),
 \]
-with the direction chosen consistently with the observed gene-level statistic.
+chosen so that null $p$-values run in the same direction as the observed gene-level statistics. A two-sided alternative,
+\[
+p_g^{(b)}
+=
+2\min\left\{\Phi(Z_g^{(b)}),\,1-\Phi(Z_g^{(b)})\right\},
+\]
+is also available. Either choice preserves dependence across genes while ensuring coherent null inputs across both $Z$-based and $p$-based component statistics.
 
 \paragraph{Component recomputation and omnibus calibration.}
 For each replicate, CATFISH computes the replicate component vector
@@ -1705,7 +1699,7 @@ After calibration, CATFISH reports one final omnibus $p$-value for each pathway.
 
 \subsection{A3.12 Default implementation choices and reporting framework}
 
-Unless otherwise stated, CATFISH uses equal weights within ACAT and ACAT-O, an adaptive soft-TFisher threshold grid $\mathcal{T}$, one-sided Stouffer aggregation when MAGMA association-strength $Z$-scores are available, clipping of gene-level $p$-values at $p_{\min}=10^{-15}$, and LD-aware MVN calibration as the primary inferential mode. Missing pairwise gene correlations are set to 0 when constructing pathway-specific correlation matrices, with numerical stabilization applied as needed to permit MVN simulation.
+Unless otherwise stated, CATFISH uses equal weights within ACAT and ACAT-O, an adaptive soft-TFisher threshold grid $\mathcal{T}$, one-sided Stouffer aggregation when MAGMA association-strength $Z$-scores are available, a one-sided Gaussian-copula mapping of MVN null draws to gene-level $p$-values, clipping of gene-level $p$-values at $p_{\min}=10^{-15}$, and LD-aware MVN calibration as the primary inferential mode. Missing pairwise gene correlations are set to 0 when constructing pathway-specific correlation matrices, with numerical stabilization applied as needed to permit MVN simulation.
 
 When gene-level test statistics are approximately independent, analytic approximations may be adequate for component-level summaries. In settings with correlated GWAS statistics or non-negligible within-pathway LD, MVN calibration is recommended and used by default for final inference.
 

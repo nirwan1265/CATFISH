@@ -116,6 +116,40 @@ catfish_apply_chr_map <- function(chr_vec, chr_map, strict = TRUE) {
   y
 }
 
+#' Run MAGMA SNP-to-gene annotation
+#'
+#' Wrapper around MAGMA's \code{--annotate} step. Maps SNPs from a GWAS summary
+#' statistics file to genes using a MAGMA gene-location file, producing the
+#' \code{.genes.annot} file consumed by \code{\link{magma_gene}}.
+#'
+#' @param stats_file Path to the GWAS summary statistics file.
+#' @param rename_columns Named character vector mapping required MAGMA columns to
+#'   the column names in \code{stats_file}; must contain at least
+#'   \code{CHR}, \code{SNP}, and \code{POS} (e.g.
+#'   \code{c(CHR = "chr", SNP = "rs", POS = "ps", PVALUE = "p")}).
+#' @param gene_loc Path to a MAGMA gene-location file (e.g. from
+#'   \code{\link{gff3_to_geneloc}}).
+#' @param out_prefix Output file prefix.
+#' @param out_dir Optional output directory. Created if it does not exist.
+#' @param window Optional numeric vector \code{c(up, down)} giving the
+#'   upstream/downstream window in kb around each gene.
+#' @param species Optional species tag (used to pick a built-in gene-location
+#'   file when \code{gene_loc} is not supplied).
+#' @param sep Field separator for \code{stats_file}. If \code{NULL}, inferred
+#'   from the file extension.
+#' @param nonhuman Logical or \code{NULL}; set \code{TRUE} for non-human data so
+#'   MAGMA does not assume human chromosome coding.
+#' @param filter_snps Optional vector or file of SNPs to restrict the analysis to.
+#' @param chr_map_path Optional path to a two-column chromosome-renaming map.
+#' @param strict_chr Logical; if \code{TRUE}, error when the chromosome map is
+#'   missing an entry rather than passing the value through unchanged.
+#' @param verbose Logical; print progress messages.
+#'
+#' @return A list describing the annotation outputs, including the path to the
+#'   generated \code{.genes.annot} file (passed to \code{\link{magma_gene}}).
+#'
+#' @seealso \code{\link{magma_gene}}, \code{\link{gff3_to_geneloc}}
+#' @export
 magma_annotate <- function(stats_file,
                            rename_columns,
                            gene_loc    = NULL,
@@ -537,8 +571,14 @@ magma_annotate <- function(stats_file,
 #'   `n_threads > 1`, analysis is run in parallel, one job per chromosome.
 #' @param n_threads Number of parallel workers to use when `chroms`
 #'   is provided. Defaults to 1 (no parallelism). Will be clamped to
-#' @param sep Separation = "," or " " or "\t"
 #'   `min(length(chroms), detectCores() - 1)`.
+#' @param sep Field separator for `stats_file`: \code{","}, \code{" "}, or a tab.
+#'   If \code{NULL}, inferred from the file extension.
+#' @param chr_keep Internal. Optional subset of chromosomes to retain.
+#' @param chr_map_path Optional path to a two-column chromosome-renaming map.
+#' @param strict_chr Logical; if \code{TRUE}, error when the chromosome map is
+#'   missing an entry rather than passing the value through unchanged.
+#' @param verbose Logical; print progress messages.
 #'
 #' @return Invisibly returns a list containing information about each gene model
 #'   run, including output prefix and paths to generated files.

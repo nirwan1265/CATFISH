@@ -100,10 +100,11 @@
 #' @param weight_col Character or \code{NULL}. Optional column name in \code{gene_results} containing weights
 #'   for Stouffer (e.g., gene size or other reliability weights). If \code{NULL}, equal weights are used.
 #'
-#' @param tau_grid Numeric vector of \eqn{\tau} values for adaptive soft TFisher. The method computes analytic
-#'   p-values for each \eqn{\tau} and selects the minimum. Default is a typical decreasing grid.
+#' @param tau_grid Numeric vector of \eqn{\tau} values for adaptive soft TFisher, or \code{"auto"}.
+#'   Values are sanitized to satisfy \eqn{0 < \tau < 1}; the \eqn{\tau = 1} Fisher corner is
+#'   excluded because CATFISH already includes Fisher as a separate component test.
 #'
-#' @param tau_cap Numeric. Maximum allowed \eqn{\tau} value (sanity bound). Default \code{1}.
+#' @param tau_cap Numeric. Upper sanity bound used before enforcing \eqn{\tau < 1}. Default \code{1}.
 #'
 #' @param min_p Numeric. Lower bound for p-value clipping to avoid numerical issues (e.g., \code{log(0)} in Fisher,
 #'   \code{tan()} blowups in ACAT). P-values are clipped to \code{[min_p, 1-min_p]}. Default \code{1e-15}.
@@ -188,6 +189,8 @@
 #'         (\code{"mvn"} or \code{"global"} fallback)
 #' }
 #'
+#' @keywords internal
+#' @noRd
 # ============================================================
 # CATFISH omnibus (fast, 6-method; global + MVN calibration for OMNIBUS only)
 #   - Component methods are computed by YOUR CATFISH wrappers (analytic only)
@@ -211,9 +214,15 @@
 # ----------------------------
 # MVN: Z -> p helpers (uniform vs empirical marginals)
 # ----------------------------
-.mvn_z_to_p <- function(Z, min_p = 1e-15) {
-  U <- stats::pnorm(Z)
-  P <- 2 * pmin(U, 1 - U)
+.mvn_z_to_p <- function(Z, min_p = 1e-15, sided = c("one", "two")) {
+  sided <- match.arg(sided)
+  if (sided == "two") {
+    U <- stats::pnorm(Z)
+    P <- 2 * pmin(U, 1 - U)
+  } else {
+    # one-sided upper tail: matches MAGMA gene-level p-values (large Z = strong signal)
+    P <- stats::pnorm(Z, lower.tail = FALSE)
+  }
   P <- pmax(pmin(P, 1 - min_p), min_p)
   P
 }
@@ -234,9 +243,12 @@
   )
 }
 
-.mvn_z_to_empirical_p <- function(Z, pool_p, min_p = 1e-15) {
+.mvn_z_to_empirical_p <- function(Z, pool_p, min_p = 1e-15, sided = c("one", "two")) {
+  sided <- match.arg(sided)
   q0 <- .empirical_qfun(pool_p)
-  U  <- stats::pnorm(Z)
+  # one-sided upper tail so large Z maps to small p (consistent with MAGMA);
+  # two-sided folds the copula uniform as before.
+  U  <- if (sided == "two") stats::pnorm(Z) else stats::pnorm(Z, lower.tail = FALSE)
   P  <- matrix(q0(as.vector(U)), nrow = nrow(Z), ncol = ncol(Z))
   P  <- pmax(pmin(P, 1 - min_p), min_p)
   P
@@ -367,6 +379,43 @@
   1 - (1 - pmin)^k
 }
 
+.catfish_sanitize_tau_grid <- function(tau_grid,
+                                       p_pool = NULL,
+                                       tau_cap = 1,
+                                       allow_tau_one = FALSE,
+                                       fallback = NULL,
+                                       sort_decreasing = FALSE) {
+  if (is.character(tau_grid) && length(tau_grid) == 1L && tolower(tau_grid) == "auto") {
+    tau_grid <- .catfish_auto_tau_grid(
+      p_pool = p_pool,
+      tau_cap = tau_cap,
+      allow_tau_one = allow_tau_one
+    )
+  }
+
+  tg <- suppressWarnings(as.numeric(tau_grid))
+  tg <- tg[is.finite(tg) & !is.na(tg)]
+  if (isTRUE(allow_tau_one)) {
+    tg <- tg[tg > 0 & tg <= tau_cap]
+  } else {
+    tg <- tg[tg > 0 & tg < 1 & tg <= tau_cap]
+  }
+  tg <- sort(unique(tg), decreasing = sort_decreasing)
+
+  if (!length(tg) && !is.null(fallback)) {
+    fb <- suppressWarnings(as.numeric(fallback))
+    fb <- fb[is.finite(fb) & !is.na(fb)]
+    if (isTRUE(allow_tau_one)) {
+      fb <- fb[fb > 0 & fb <= tau_cap]
+    } else {
+      fb <- fb[fb > 0 & fb < 1 & fb <= tau_cap]
+    }
+    tg <- sort(unique(fb), decreasing = sort_decreasing)
+  }
+
+  tg
+}
+
 .catfish_tfisher_adaptive_p <- function(p, tau_grid, min_p = 1e-50, do_fix = TRUE) {
   if (!requireNamespace("TFisher", quietly = TRUE)) return(NA_real_)
 
@@ -374,9 +423,13 @@
   pb <- pb[is.finite(pb) & !is.na(pb)]
   if (length(pb) < 2L) return(NA_real_)
 
-  tg <- suppressWarnings(as.numeric(tau_grid))
-  tg <- tg[is.finite(tg) & !is.na(tg) & tg > 0 & tg < 1]
-  tg <- sort(unique(tg), decreasing = FALSE)
+  tg <- .catfish_sanitize_tau_grid(
+    tau_grid = tau_grid,
+    p_pool = pb,
+    tau_cap = 1,
+    allow_tau_one = FALSE,
+    sort_decreasing = FALSE
+  )
   if (!length(tg)) return(NA_real_)
 
   out <- tryCatch({
@@ -795,6 +848,46 @@
 }
 
 # ----------------------------
+# Data-driven (auto) tau grid for adaptive soft TFisher
+# ----------------------------
+# Picks soft-TFisher thresholds from the empirical quantiles of the pooled
+# gene-level p-values. Under a uniform (null) p distribution this reproduces the
+# classic c(0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001) grid; under strong signal
+# the quantiles shrink toward the extreme tail, giving a strict-like grid with no
+# manual toggle. The grid is estimated ONCE from the global pool and then held
+# fixed, so it acts as a fixed transform for the MVN null calibration.
+.catfish_auto_tau_grid <- function(p_pool,
+                                   probs = c(0.20, 0.10, 0.05, 0.02, 0.01, 0.005, 0.001),
+                                   tau_floor = 1e-8,
+                                   tau_cap = 0.5,
+                                   allow_tau_one = FALSE,
+                                   min_n = 50L) {
+  p <- suppressWarnings(as.numeric(p_pool))
+  p <- p[is.finite(p) & !is.na(p) & p > 0 & p < 1]
+  tau_upper <- if (isTRUE(allow_tau_one)) tau_cap else min(tau_cap, 1 - sqrt(.Machine$double.eps))
+
+  # too few genes to estimate quantiles: fall back to the classic fixed grid
+  if (length(p) < min_n) {
+    g <- c(0.20, 0.10, 0.05, 0.02, 0.01, 0.005, 0.001)
+    g <- g[g > 0 & g <= tau_upper]
+    return(sort(unique(g), decreasing = FALSE))
+  }
+
+  q <- as.numeric(stats::quantile(p, probs = probs, na.rm = TRUE, names = FALSE))
+  q <- q[is.finite(q)]
+  q <- pmin(pmax(q, tau_floor), tau_upper)   # keep numerically safe + valid
+  q <- sort(unique(q), decreasing = FALSE)
+
+  # guarantee at least two distinct thresholds
+  if (length(q) < 2L) {
+    hi <- min(tau_upper, max(q, 0.05))
+    lo <- max(tau_floor, hi / 100)
+    q  <- sort(unique(c(hi, lo)), decreasing = FALSE)
+  }
+  q
+}
+
+# ----------------------------
 # prepare (fast reuse)
 # ----------------------------
 catfish_omni2_prepare <- function(gene_results,
@@ -806,7 +899,7 @@ catfish_omni2_prepare <- function(gene_results,
                                 p_adj_col = NULL,
                                 z_col = NULL,
                                 weight_col = NULL,
-                                tau_grid = c(0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001),
+                                tau_grid = "auto",
                                 tau_cap = 1,
                                 min_p = 1e-50,
                                 min_genes = 2L,
@@ -928,11 +1021,16 @@ catfish_omni2_prepare <- function(gene_results,
   g_list_raw <- lapply(g_list_norm, function(g) unname(gene_map[g]))
   names(g_list_raw) <- names(g_list_norm)  
 
-  # tau sanitize
-  tau_grid <- suppressWarnings(as.numeric(tau_grid))
-  tau_grid <- tau_grid[is.finite(tau_grid) & !is.na(tau_grid) & tau_grid > 0 & tau_grid <= tau_cap]
-  tau_grid <- sort(unique(tau_grid), decreasing = TRUE)
-  if (!length(tau_grid)) tau_grid <- 0.05
+  # Adaptive TFisher excludes tau = 1 because Fisher is already a separate
+  # CATFISH component; keeping both duplicates the untruncated Fisher corner.
+  tau_grid <- .catfish_sanitize_tau_grid(
+    tau_grid = tau_grid,
+    p_pool = p_use,
+    tau_cap = tau_cap,
+    allow_tau_one = FALSE,
+    fallback = 0.05,
+    sort_decreasing = FALSE
+  )
 
   # minimal gene_results to feed your wrapper functions (already deduped/cleaned)
   n <- length(g_raw)
@@ -1008,6 +1106,7 @@ catfish_omni2_run <- function(prep,
                             perm_mode = c("none","global","mvn","mvn_global","both"),
                             perm_pool = c("raw","obs"),
                             mvn_marginal = c("uniform","empirical"),
+                            mvn_sided    = c("one","two"),
                             mvn_pool     = c("use","raw"),
                             pool_p       = NULL,
                             magma_cor_file = NULL,
@@ -1030,6 +1129,7 @@ catfish_omni2_run <- function(prep,
   perm_mode <- match.arg(perm_mode)
   perm_pool <- match.arg(perm_pool)
   mvn_marginal <- match.arg(mvn_marginal)
+  mvn_sided    <- match.arg(mvn_sided)
   mvn_pool     <- match.arg(mvn_pool)
   stouffer_alternative <- match.arg(stouffer_alternative)
   tail_mode <- match.arg(tail_mode)
@@ -1458,7 +1558,7 @@ if (!is.null(prep$z_col)) {
 
       # map MVN Z -> p matrix for p-based methods
       if (mvn_marginal == "uniform") {
-        P <- .mvn_z_to_p(Z, min_p = prep$min_p)
+        P <- .mvn_z_to_p(Z, min_p = prep$min_p, sided = mvn_sided)
       } else {
 
         if (!is.null(pool_p)) {
@@ -1478,7 +1578,7 @@ if (!is.null(prep$z_col)) {
           }
         }
 
-        P <- .mvn_z_to_empirical_p(Z, pool_p = pool_this, min_p = prep$min_p)
+        P <- .mvn_z_to_empirical_p(Z, pool_p = pool_this, min_p = prep$min_p, sided = mvn_sided)
       }
 
 
@@ -1814,8 +1914,10 @@ if (!is.null(prep$z_col)) {
 #'
 #' \strong{MVN marginal mapping (only when \code{perm_mode} includes \code{"mvn"})}
 #' \itemize{
-#'   \item \code{mvn_marginal="uniform"} (recommended): Gaussian-copula mapping
-#'         \eqn{U=\Phi(Z)}, \eqn{p=2\min(U,1-U)} so each marginal is Uniform(0,1).
+#'   \item \code{mvn_marginal="uniform"} (recommended): Gaussian-copula mapping of the
+#'         simulated Z's to null gene-level p-values. With \code{mvn_sided="one"} (default),
+#'         \eqn{p = 1 - \Phi(Z)} (one-sided upper tail, matching MAGMA gene-level p-values);
+#'         with \code{mvn_sided="two"}, \eqn{p = 2\min(\Phi(Z), 1 - \Phi(Z))}.
 #'   \item \code{mvn_marginal="empirical"}: maps copula uniforms to an empirical null p distribution
 #'         derived internally from gene-level p-values (excluding the pathway's own genes to reduce leakage),
 #'         unless you supply \code{pool_p}.
@@ -1844,7 +1946,13 @@ if (!is.null(prep$z_col)) {
 #' @param z_col Character or NULL. Gene Z column for Stouffer. If NULL, Stouffer is skipped. Default NULL.
 #' @param weight_col Character or NULL. Optional weights for Stouffer. Default NULL (equal weights).
 #'
-#' @param tau_grid Numeric vector of \eqn{\tau} values for adaptive soft TFisher. Default is a typical grid.
+#' @param tau_grid Adaptive soft-TFisher thresholds. Either a numeric vector of
+#'   \eqn{\tau} values, or \code{"auto"} (default) to select the grid from the
+#'   empirical quantiles of the pooled gene-level p-values. Under a uniform null
+#'   this matches the classic grid \code{c(0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001)};
+#'   under strong signal it shrinks toward the extreme tail automatically, removing
+#'   the need for a manual strict-vs-default choice. The grid is estimated once
+#'   globally and held fixed across the observed statistics and the MVN null.
 #' @param tau_cap Numeric. Upper bound for \code{tau_grid} (sanity bound). Default 1.
 #' @param min_p Numeric. P-values are clipped to \code{[min_p, 1-min_p]} to avoid numeric issues. Default 1e-15.
 #' @param min_genes Integer. Minimum genes required per pathway. Default 2.
@@ -1865,6 +1973,9 @@ if (!is.null(prep$z_col)) {
 #' @param perm_mode Character. One of \code{"none"}, \code{"global"}, \code{"mvn"}, \code{"both"}.
 #'
 #' @param mvn_marginal Character. Only for MVN mode: \code{"uniform"} or \code{"empirical"}.
+#' @param mvn_sided Character. Only for MVN mode: \code{"one"} (one-sided upper-tail
+#'   \eqn{p = 1 - \Phi(Z)}, matching MAGMA gene-level p-values; default) or
+#'   \code{"two"} (two-sided \eqn{p = 2\min(\Phi(Z), 1 - \Phi(Z))}).
 #' @param mvn_pool Character. Only for MVN + empirical mode when \code{pool_p} is NULL.
 #'   \code{"use"} uses the same p-values used for observed p-based methods; \code{"raw"} prefers \code{p_raw_col}.
 #'   (If raw p-values are unavailable, falls back to \code{"use"}.)
@@ -1888,6 +1999,16 @@ if (!is.null(prep$z_col)) {
 #' @param seed Integer or NULL. Random seed.
 #' @param output Logical. If TRUE, writes CSV to \code{out_dir} and attaches \code{"file"} attribute. Default FALSE.
 #' @param out_dir Character. Output directory. Default \code{"catfish_omni2"}.
+#' @param use_tfisher Logical. Include the adaptive soft-TFisher component. Default TRUE.
+#' @param tail_mode Character. \code{"empirical"} or \code{"hybrid_gpd"} (GPD tail
+#'   extrapolation for p-values below the Monte Carlo floor). Default \code{"empirical"}.
+#' @param tail_switch_exceed Integer. Switch to GPD extrapolation when the number of null
+#'   exceedances falls below this. Default 10.
+#' @param tail_gpd_k Integer. Number of extreme null draws used to fit the GPD. Default 250.
+#' @param tail_min_B Integer. Minimum number of null draws required before GPD is attempted.
+#'   Default 10000.
+#' @param tail_min_tail Integer. Minimum tail observations required for a stable GPD fit.
+#'   Default 50.
 #'
 #' @return data.frame with one row per pathway, including:
 #' \itemize{
@@ -1942,7 +2063,7 @@ catfish_omni2_pathways <- function(gene_results,
                                  p_adj_col = NULL,
                                  z_col = NULL,
                                  weight_col = NULL,
-                                 tau_grid = c(0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001),
+                                 tau_grid = "auto",
                                  tau_cap = 1,
                                  min_p = 1e-50,
                                  min_genes = 2L,
@@ -1961,6 +2082,7 @@ catfish_omni2_pathways <- function(gene_results,
                                  B_perm = NULL,
                                  perm_mode = c("none","global","mvn","mvn_global","both"),
                                  mvn_marginal = c("uniform","empirical"),
+                                 mvn_sided    = c("one","two"),
                                  mvn_pool     = c("use","raw"),
                                  pool_p       = NULL,
                                  mvn_calibrate_components = FALSE,
@@ -1988,6 +2110,7 @@ catfish_omni2_pathways <- function(gene_results,
   perm_mode <- match.arg(perm_mode)
   perm_pool <- match.arg(perm_pool)
   mvn_marginal <- match.arg(mvn_marginal)
+  mvn_sided    <- match.arg(mvn_sided)
   mvn_pool     <- match.arg(mvn_pool)
   stouffer_alternative <- match.arg(stouffer_alternative)
   tail_mode <- match.arg(tail_mode)
@@ -2110,6 +2233,7 @@ catfish_omni2_pathways <- function(gene_results,
     perm_mode = perm_mode,
     perm_pool = perm_pool,
     mvn_marginal = mvn_marginal,
+    mvn_sided = mvn_sided,
     mvn_pool = mvn_pool,
     pool_p = pool_p,
     mvn_calibrate_components = mvn_calibrate_components,

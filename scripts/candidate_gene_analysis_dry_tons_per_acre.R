@@ -20,9 +20,18 @@ MAGMA_TOP_PCT       <- 5
 
 WINDOW_SIZE <- 25000
 
-BASE_DIR <- "/Users/nirwantandukar/Documents/Research/results/CATFISH/MAGMA/Dry_tons_per_acre"
-GWAS_DIR <- "/Users/nirwantandukar/Documents/Research/results/GWAS/MLM/BAP/Dry_tons_per_acre"
-GENE_LOC_FILE <- "/Users/nirwantandukar/Documents/Github/MAGCAT/inst/extdata/sorghum.genes.loc"
+BASE_DIR <- Sys.getenv(
+  "CATFISH_BASE_DIR",
+  "/Users/nirwantandukar/Documents/Research/results/CATFISH/MAGMA/Dry_tons_per_acre"
+)
+GWAS_DIR <- Sys.getenv(
+  "GWAS_DIR",
+  "/Users/nirwantandukar/Documents/Research/results/GWAS/MLM/BAP/Dry_tons_per_acre"
+)
+GENE_LOC_FILE <- Sys.getenv(
+  "GENE_LOC_FILE",
+  "/Users/nirwantandukar/Documents/Github/MAGCAT/inst/extdata/sorghum.genes.loc"
+)
 
 CATFISH_SUBDIR_OVERRIDE <- Sys.getenv("CATFISH_SUBDIR", "")
 CATFISH_CSV_OVERRIDE <- Sys.getenv("CATFISH_CSV", "")

@@ -2,3 +2,21 @@
 ^\.Rproj\.user$
 ^doc$
 ^Meta$
+^\.claude$
+^Figures$
+^Final$
+^Tables$
+^annot$
+^fig$
+^scripts$
+^simulation_results$
+^null_diagnostics$
+^README_old\.md$
+^CLAUDE\.md$
+^workflow_code\.md$
+^manifest\.txt$
+^SoLD\.bib$
+^oup-.*$
+^drosophila_starvation_results\.tex$
+^.*\.log$
+^1\. Omnibus P-Value Combination Strategy\.pdf$

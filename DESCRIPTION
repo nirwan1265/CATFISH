@@ -19,20 +19,28 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports:
     stats,
-    utils
-Suggests:
+    utils,
+    Matrix,
     ACAT,
-    TFisher,
+    TFisher
+Suggests:
+    GenomicRanges,
+    MASS,
+    S4Vectors,
+    pkgload,
     metap,
     metapro,
-    Matrix,
     data.table,
+    evir,
     qvalue,
     IHW,
+    mvtnorm,
     rtracklayer,
     ggplot2,
     testthat (>= 3.0.0),
     knitr,
     rmarkdown
+Remotes:
+    github::yaowuliu/ACAT
 VignetteBuilder: knitr
 Config/testthat/edition: 3

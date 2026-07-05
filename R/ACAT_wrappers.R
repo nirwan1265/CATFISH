@@ -185,7 +185,7 @@ catfish_acat_pathways <- function(gene_results,
   if (!requireNamespace("ACAT", quietly = TRUE)) {
     stop(
       "Package 'ACAT' is required for catfish_acat_pathways(). ",
-      "Please install it with install.packages('ACAT').",
+      "Install it from GitHub with remotes::install_github('yaowuliu/ACAT').",
       call. = FALSE
     )
   }

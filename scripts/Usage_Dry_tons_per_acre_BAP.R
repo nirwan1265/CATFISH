@@ -5,6 +5,8 @@ suppressPackageStartupMessages({
 })
 load_all(".")
 
+default_repo <- Sys.getenv("CATFISH_REPO", "/Users/nirwantandukar/Documents/Github/MAGCAT")
+
 ## -----------------------------------------------------------------------------
 ## Configuration
 ## -----------------------------------------------------------------------------
@@ -28,13 +30,19 @@ parse_num_grid <- function(x, default) {
   if (!length(vals)) default else vals
 }
 
-MAGMA_DIR <- "/Users/nirwantandukar/Documents/Research/results/CATFISH/MAGMA/Dry_tons_per_acre"
-PATHWAY_FILE <- "/Users/nirwantandukar/Documents/Github/MAGCAT/inst/extdata/pathway/sorghumbicolorcyc_pathways.20230103.SORBI"
+MAGMA_DIR <- Sys.getenv(
+  "MAGMA_DIR",
+  "/Users/nirwantandukar/Documents/Research/results/CATFISH/MAGMA/Dry_tons_per_acre"
+)
+PATHWAY_FILE <- Sys.getenv(
+  "PATHWAY_FILE",
+  file.path(default_repo, "inst/extdata/pathway/sorghumbicolorcyc_pathways.20230103.SORBI")
+)
 
 OUT_PREFIX <- "Dry_tons_per_acre"
 SPECIES    <- NULL
 GENE_REGEX <- "^SORBI"
-TAU_OPTION <- Sys.getenv("TAU_OPTION", "strict")
+TAU_OPTION <- Sys.getenv("TAU_OPTION", "paper")
 
 B_PERM      <- get_env_int("B_PERM", 1000000L)
 PERM_MODE   <- Sys.getenv("PERM_MODE", "mvn")
@@ -46,13 +54,14 @@ MIN_GENES   <- get_env_int("MIN_GENES", 2L)
 tau_grid_default <- switch(
   TAU_OPTION,
   strict  = c(1e-5, 1e-6, 1e-7),
+  paper   = c(0.1, 0.05, 0.01),
   default = c(0.1, 0.05, 0.02, 0.01, 0.005, 0.001),
   c(0.1, 0.05, 0.02, 0.01, 0.005, 0.001)
 )
 TAU_GRID <- parse_num_grid(Sys.getenv("TAU_GRID", ""), tau_grid_default)
 TAU_LABEL <- Sys.getenv(
   "TAU_LABEL",
-  if (identical(TAU_OPTION, "strict")) "strict_tau" else "default_tau"
+  if (identical(TAU_OPTION, "strict")) "strict_tau" else if (identical(TAU_OPTION, "paper")) "paper_tau" else "default_tau"
 )
 OUT_SUFFIX <- if (nzchar(TAU_LABEL)) paste0("_", TAU_LABEL) else ""
 

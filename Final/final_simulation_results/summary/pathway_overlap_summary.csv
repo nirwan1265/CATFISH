@@ -1,0 +1,4 @@
+null_set,n_pathways_kept,n_rows_kept
+naive_all_other,408,28560
+nonoverlap_spiked_pathway,403,28210
+nonoverlap_causal_genes,403,28210

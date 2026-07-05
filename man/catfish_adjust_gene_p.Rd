@@ -61,6 +61,12 @@ Regresses out the effect of gene length and number of SNPs (NSNPS) from
 gene-level Z-statistics. This can reduce bias from longer genes having
 more SNPs and therefore more significant p-values.
 }
+\details{
+This adjustment is \strong{optional and exploratory}. MAGMA already conditions
+on gene size and SNP count internally, so in most analyses the unadjusted
+MAGMA p-values can be used directly; enable this only if you have a specific
+reason to further residualize gene-level statistics.
+}
 \examples{
 \dontrun{
 # Load gene results from MAGMA

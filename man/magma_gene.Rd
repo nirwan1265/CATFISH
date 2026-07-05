@@ -67,10 +67,20 @@ e.g. "snp-wise=top", "snp-wise=mean", "multi".}
 \code{n_threads > 1}, analysis is run in parallel, one job per chromosome.}
 
 \item{n_threads}{Number of parallel workers to use when \code{chroms}
-is provided. Defaults to 1 (no parallelism). Will be clamped to}
-
-\item{sep}{Separation = "," or " " or "\t"
+is provided. Defaults to 1 (no parallelism). Will be clamped to
 \code{min(length(chroms), detectCores() - 1)}.}
+
+\item{chr_keep}{Internal. Optional subset of chromosomes to retain.}
+
+\item{sep}{Field separator for \code{stats_file}: \code{","}, \code{" "}, or a tab.
+If \code{NULL}, inferred from the file extension.}
+
+\item{chr_map_path}{Optional path to a two-column chromosome-renaming map.}
+
+\item{strict_chr}{Logical; if \code{TRUE}, error when the chromosome map is
+missing an entry rather than passing the value through unchanged.}
+
+\item{verbose}{Logical; print progress messages.}
 }
 \value{
 Invisibly returns a list containing information about each gene model

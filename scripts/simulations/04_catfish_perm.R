@@ -24,11 +24,11 @@ GENE_MODEL   <- getcfg("GENE_MODEL")
 CHROMS       <- strsplit(trimws(getcfg("CHROMS")), "\\s+")[[1]]
 SEED         <- as.integer(getcfg("MASTER_SEED")) + B
 
-# Production defaults mirror the final phenotype-permutation and Dry tons runs:
+# Production defaults mirror the cleaned adaptive-TFisher runs:
 # direct omnibus MVN calibration, paper TFisher tau grid, and hybrid GPD tails.
 MVN_CALIBRATE_COMPONENTS <- tolower(Sys.getenv("MVN_CALIBRATE_COMPONENTS", "false")) %in% c("1","true","yes")
 PATCH_EMP_NULL_LOWER <- tolower(Sys.getenv("PATCH_EMP_NULL_LOWER", "false")) %in% c("1","true","yes")
-TAU_GRID <- parse_num_grid(Sys.getenv("TAU_GRID", ""), c(0.01, 0.05, 0.5, 1))
+TAU_GRID <- parse_num_grid(Sys.getenv("TAU_GRID", ""), c(0.1, 0.05, 0.01))
 B_PERM <- suppressWarnings(as.integer(Sys.getenv("CATFISH_B_PERM", "10000")))
 if (!is.finite(B_PERM) || is.na(B_PERM) || B_PERM < 1L) B_PERM <- 10000L
 TAIL_MODE <- trimws(Sys.getenv("TAIL_MODE", "hybrid_gpd"))
@@ -104,7 +104,7 @@ pathways <- unique(data.frame(
 # =============================================================================
 # Settings mirror the final Dry tons / phenotype-permutation production run:
 #   - MVN omnibus alone (mvn_calibrate_components = FALSE by default)
-#   - TFisher kept with tau grid c(0.01, 0.05, 0.5, 1)
+#   - adaptive TFisher uses the paper grid c(0.1, 0.05, 0.01)
 #   - hybrid GPD tails with B_perm = 10000 by default
 # =============================================================================
 omni <- catfish_omni2_pathways(

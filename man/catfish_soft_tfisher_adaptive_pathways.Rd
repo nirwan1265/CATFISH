@@ -11,7 +11,7 @@ catfish_soft_tfisher_adaptive_pathways(
   pmn_gene_col = NULL,
   gene_col = "GENE",
   p_col = "P",
-  tau_grid = c(0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001),
+  tau_grid = "auto",
   min_p = 1e-15,
   do_fix = TRUE,
   output = FALSE,
@@ -39,8 +39,12 @@ when \code{species} is used. If NULL, the PMN loader prefers "Gene-name" then "G
 
 \item{p_col}{Column name in \code{gene_results} containing gene-level p-values (default "P").}
 
-\item{tau_grid}{Numeric vector of \code{tau} values to scan. Internally sorted increasing,
-as required by \code{TFisher::stat.soft.omni()}.}
+\item{tau_grid}{Adaptive soft-TFisher thresholds: either a numeric vector of \code{tau}
+values (internally sorted increasing, as required by \code{TFisher::stat.soft.omni()}),
+or \code{"auto"} (default) to choose the grid from the empirical quantiles of the
+pooled gene-level p-values. Values must satisfy \eqn{0 < \tau < 1}; the
+\eqn{\tau = 1} Fisher corner is excluded here because CATFISH already carries
+Fisher as a separate component test.}
 
 \item{min_p}{Lower cap for extremely small p-values before TFisher math (default 1e-15).}
 
@@ -110,6 +114,5 @@ tfisher_custom <- catfish_soft_tfisher_adaptive_pathways(
 
 }
 \seealso{
-\code{\link{catfish_tfisher_pathways}},
-\code{\link{catfish_soft_tfisher_pathways}}
+\code{\link{catfish_acat_pathways}}, \code{\link{catfish_omni2_pathways}}
 }

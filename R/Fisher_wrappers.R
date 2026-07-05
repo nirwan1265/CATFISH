@@ -55,8 +55,7 @@
 #' head(fisher_res)
 #' }
 #'
-#' @seealso \code{\link{catfish_acat_pathways}}, \code{\link{catfish_minp_pathways}},
-#'   \code{\link{catfish_wfisher_pathways}}
+#' @seealso \code{\link{catfish_acat_pathways}}, \code{\link{catfish_minp_pathways}}
 #' @export
 catfish_fisher_pathways <- function(gene_results,
                                    pathways     = NULL,
