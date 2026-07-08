@@ -29,8 +29,8 @@ PATCH_EMP_NULL_LOWER <- tolower(Sys.getenv("PATCH_EMP_NULL_LOWER", "false")) %in
 TAU_GRID <- parse_num_grid(Sys.getenv("TAU_GRID", ""), c(0.1, 0.05, 0.01))
 B_PERM <- suppressWarnings(as.integer(Sys.getenv("CATFISH_B_PERM", "10000")))
 if (!is.finite(B_PERM) || is.na(B_PERM) || B_PERM < 1L) B_PERM <- 10000L
-TAIL_MODE <- trimws(Sys.getenv("TAIL_MODE", "hybrid_gpd"))
-if (!nzchar(TAIL_MODE)) TAIL_MODE <- "hybrid_gpd"
+TAIL_MODE <- trimws(Sys.getenv("TAIL_MODE", "empirical"))
+if (!nzchar(TAIL_MODE)) TAIL_MODE <- "empirical"
 TAIL_SWITCH_EXCEED <- suppressWarnings(as.integer(Sys.getenv("TAIL_SWITCH_EXCEED", "10")))
 if (!is.finite(TAIL_SWITCH_EXCEED) || is.na(TAIL_SWITCH_EXCEED) || TAIL_SWITCH_EXCEED < 1L) TAIL_SWITCH_EXCEED <- 10L
 TAIL_GPD_K <- suppressWarnings(as.integer(Sys.getenv("TAIL_GPD_K", "250")))

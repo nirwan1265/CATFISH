@@ -556,42 +556,42 @@ LOO diagnostics reached the same conclusion. Under direct omnibus calibration, e
 \end{figure*}
 
 
-\subsection{3.4 Integrated GWAS, MAGMA, and CATFISH analyses identify metabolic pathways associated with dry tons per acre in sorghum}
+\subsection{3.4 Integrated GWAS, MAGMA, and CATFISH analyses identify pathways associated with stem volume in sorghum}
 % \subsection{3.3 From SNP associations to pathway-level aggregation}
 
-We characterized the genetic architecture of dry tons per acre in bioenergy association panel (BAP) using GWAS (Supplementary Table~7) , followed by gene-based aggregation with MAGMA (Supplementary Table~8) (ref, BAP paper). The GWAS identified several strong association peaks, with the most significant SNPs on chromosome 4 at 40,965,614 bp ($p = 3.98 \times 10^{-15}$), chromosome 7 at 14,664,850 bp ($p = 4.08 \times 10^{-15}$), chromosome 6 at 11,249,320 bp ($p = 4.58 \times 10^{-14}$), chromosome 9 at 17,713,323 bp ($p = 1.45 \times 10^{-13}$), and chromosome 8 at 2,608,927 bp ($p = 3.11 \times 10^{-13}$) (Fig. \ref{fig:dry_tons_sorghum_integrated}A).
+We characterized the genetic architecture of stem volume in the sorghum association panel (SAP) using GWAS (Supplementary Table~7), followed by LD-aware gene-level aggregation with MAGMA (Supplementary Table~8). The strongest SNP-level associations were concentrated in a narrow chromosome 9 interval, with leading variants at 56,971,892 bp ($p = 3.26 \times 10^{-15}$), 57,127,820 bp ($p = 4.82 \times 10^{-15}$), 56,809,602 bp ($p = 5.87 \times 10^{-15}$), 56,811,454 bp ($p = 1.43 \times 10^{-14}$), and 56,790,816 bp ($p = 1.85 \times 10^{-14}$) (Fig.~\ref{fig:dry_tons_sorghum_integrated}A). Rather than showing many dispersed moderate peaks, the GWAS signal was dominated by this chromosome 9 block.
 
-MAGMA gene-based testing consolidated dense local SNP signals into interpretable loci and identified strong associations for \textit{SORBI\_3004G140501} ($p = 2.95 \times 10^{-11}$), \textit{SORBI\_3008G028800} ($p = 3.71 \times 10^{-11}$), \textit{SORBI\_3004G140800} ($p = 4.10 \times 10^{-11}$), \textit{SORBI\_3008G028850} ($p = 1.52 \times 10^{-10}$), and \textit{SORBI\_3009G083900} ($p = 2.69 \times 10^{-10}$) (Fig. \ref{fig:dry_tons_sorghum_integrated}B). These top MAGMA signals overlapped major GWAS peaks on chromosomes 4, 8, and 9, indicating broad concordance between SNP- and gene-level analyses and a shared set of underlying loci.
+MAGMA gene-based testing consolidated these local SNP signals into interpretable loci and likewise highlighted the same chromosome 9 region. The top MAGMA genes were \textit{SORBI\_3009G231300} ($p = 4.82 \times 10^{-15}$), \textit{SORBI\_3009G231200} ($p = 5.14 \times 10^{-15}$), \textit{SORBI\_3009G231400} ($p = 1.71 \times 10^{-14}$), \textit{SORBI\_3009G226250} ($p = 1.85 \times 10^{-14}$), and \textit{SORBI\_3009G229400} ($p = 1.98 \times 10^{-14}$) (Fig.~\ref{fig:dry_tons_sorghum_integrated}B). Thus, the SNP- and gene-level analyses were highly concordant and pointed to a compact shared interval rather than independent signals spread across the genome.
 
 \begin{table*}[htbp]
 \centering
-\caption{\textbf{Top five candidate genes for dry tons per acre based on the integrated scoring system.} Candidates were prioritized by combining SNP-level GWAS, MAGMA gene-level association, and CATFISH pathway support. Pathway statistics correspond to the best supporting pathway assigned to each gene.}
+\caption{\textbf{Top five candidate genes for sorghum stem volume based on the integrated scoring system.} Candidates were prioritized by combining SNP-level GWAS, MAGMA gene-level association, and CATFISH pathway support. Pathway statistics correspond to the best supporting pathway assigned to each gene.}
 \label{tab:drytons_top5_candidates}
 \small
 \begin{tabular}{llllllll}
 \hline
 Gene & GWAS $p$-value & GWAS rank & MAGMA $p$-value & MAGMA rank & Pathway $p$-value & Pathway rank & Pathway name \\
 \hline
-\textit{SORBI\_3008G029200} & $3.11 \times 10^{-13}$ & 7  & $1.02 \times 10^{-9}$  & 10 & $2.89 \times 10^{-7}$ & 61   & oleate biosynthesis I (plants) \\
-\textit{SORBI\_3004G014400} & $4.80 \times 10^{-11}$ & 76 & $4.73 \times 10^{-8}$  & 35 & $3.76 \times 10^{-7}$ & 101  & plant sterol biosynthesis II \\
-\textit{SORBI\_3006G032800} & $4.81 \times 10^{-12}$ & 24 & $9.47 \times 10^{-8}$  & 46 & $2.00 \times 10^{-6}$ & 1153 & (1,4)-$\beta$-D-xylan degradation \\
-\textit{SORBI\_3006G032700} & $4.81 \times 10^{-12}$ & 23 & $2.48 \times 10^{-7}$  & 68 & $8.07 \times 10^{-6}$ & 1417 & thiosulfate disproportionation IV (rhodanese) \\
-\textit{SORBI\_3009G066100} & $1.32 \times 10^{-12}$ & 16 & $3.61 \times 10^{-7}$  & 81 & $1.73 \times 10^{-5}$ & 1604 & crocetin esters biosynthesis \\
+\textit{SORBI\_3009G231100} & $4.82 \times 10^{-15}$ & 8  & $8.99 \times 10^{-14}$ & 15 & $9.999 \times 10^{-5}$ & 1 & CMP-3-deoxy-D-manno-octulosonate biosynthesis \\
+\textit{SORBI\_3009G229300} & $1.98 \times 10^{-14}$ & 29 & $4.86 \times 10^{-13}$ & 23 & $9.999 \times 10^{-5}$ & 1 & xylan biosynthesis \\
+\textit{SORBI\_3009G226600} & $5.87 \times 10^{-15}$ & 16 & $1.02 \times 10^{-12}$ & 30 & $9.999 \times 10^{-5}$ & 1 & triacylglycerol biosynthesis (Chlamydomonas) \\
+\textit{SORBI\_3009G225700} & $1.85 \times 10^{-14}$ & 26 & $1.04 \times 10^{-12}$ & 31 & $9.999 \times 10^{-5}$ & 1 & L-glutamate biosynthesis IV \\
+\textit{SORBI\_3009G230400} & $3.12 \times 10^{-14}$ & 35 & $3.17 \times 10^{-12}$ & 49 & $9.999 \times 10^{-5}$ & 1 & DIBOA-glucoside biosynthesis \\
 \hline
 \end{tabular}
 \end{table*}
 
-To extend locus-level signals to pathways, we applied CATFISH to MAGMA gene statistics using the direct MVN-calibrated omnibus (\emph{Omnibus Alone}) with generalized Pareto tail correction and \(B = 10^{4}\) null draws. CATFISH identified strong pathway-level enrichment spanning lipid metabolism, redox biology, and carbon--nitrogen metabolism (Fig.~\ref{fig:dry_tons_sorghum_integrated}C; Supplementary Table~9). The strongest omnibus associations were diacylglycerol and triacylglycerol biosynthesis (\(p = 1.65 \times 10^{-8}\)), thioredoxin pathway (\(p = 2.29 \times 10^{-7}\)), L-glutamine biosynthesis III (\(p = 4.42 \times 10^{-7}\)), cutin biosynthesis (\(p = 5.03 \times 10^{-7}\)), 3-phosphoinositide biosynthesis (\(p = 5.15 \times 10^{-7}\)), and pyrimidine ribonucleosides salvage I (\(p = 6.23 \times 10^{-7}\)). Additional highly ranked pathways included L-valine biosynthesis, gluconeogenesis I, phospholipases, NAD/NADH phosphorylation and dephosphorylation, octanoyl-[acyl-carrier protein] biosynthesis, tetrahydrofolate biosynthesis II, organic nitrogen assimilation, sporopollenin precursor biosynthesis, triacylglycerol degradation, photosynthesis light reactions, aerobic respiration I, and the Rubisco shunt.
+To extend locus-level signals to pathways, we applied CATFISH to MAGMA gene statistics using the direct MVN-calibrated omnibus (\emph{Omnibus Alone}) with hybrid generalized Pareto tail correction, \(B = 10^{4}\) null draws, and the paper oTFisher \(\tau\) grid (\(0.1, 0.05, 0.01\)). CATFISH identified 73 Bonferroni-significant pathways and 102 pathways with BH-adjusted \(q < 0.05\) (Fig.~\ref{fig:dry_tons_sorghum_integrated}C; Supplementary Table~9). Because many top pathways reached the Monte Carlo floor under \(B = 10^{4}\), the leading omnibus results formed a tied high-significance set rather than a sharply separated rank list. This top set included L-glutamine degradation I, aerobic respiration I (cytochrome c), glutaminyl-tRNA\textsuperscript{gln} biosynthesis via transamidation, triacylglycerol biosynthesis, diacylglycerol and triacylglycerol biosynthesis, L-glutamate biosynthesis IV, L-threonine biosynthesis, phospholipases, and the superpathway of phospholipid biosynthesis II.
 
-These results indicate that dry tons per acre is shaped by coordinated genetic variation across SNPs, gene-level clusters, and higher-order metabolic pathways. The convergence of GWAS, MAGMA, and CATFISH implicates lipid remodeling, redox and energy metabolism, and carbon--nitrogen assimilation as key processes underlying biomass productivity variation in BAP.
+These results indicate that stem volume in SAP is shaped by coordinated variation across a major chromosome 9 locus, tightly linked gene-level associations, and pathway-level signals involving respiration, nitrogen assimilation, and lipid metabolism. The convergence of GWAS, MAGMA, and CATFISH therefore supports a model in which both concentrated local genetic effects and broader metabolic coordination contribute to stem-volume variation in sorghum.
 
 \begin{figure*}[!t]
     \centering
     \includegraphics[width=\textwidth,height=0.9\textheight,keepaspectratio]{Final/final_main_fig/Fig6.png}
-    \caption{\textbf{Integrated SNP-, gene-, and pathway-level association analyses for dry tons per acre in sorghum.}
+    \caption{\textbf{Integrated SNP-, gene-, and pathway-level association analyses for sorghum stem volume.}
     \textbf{A.} Manhattan plot of SNP-level GWAS results across the 10 sorghum chromosomes. Horizontal dashed lines indicate $-\log_{10}(p)=5$ and $-\log_{10}(p)=7$.
     \textbf{B.} Manhattan plot of MAGMA gene-level association statistics across the genome. The red dashed line denotes the nominal significance guide, and the blue dashed line marks the more stringent significance threshold used for visual reference.
-    \textbf{C.} CATFISH pathway enrichment heat map showing the top enriched pathways across component tests (ACAT, Fisher, Stouffer, minP, and TFisher) and the omnibus test. Colors represent $-\log_{10}(p)$ values, with warmer colors indicating stronger pathway-level association. Numbers in brackets indicate the number of genes assigned to each pathway. CATFISH was run using MAGMA gene statistics with multivariate normal calibration, generalized Pareto tail correction, $10^{6}$ permutations, and the strict TFisher $\tau$ grid ($10^{-5}$, $10^{-6}$, $10^{-7}$).}
+    \textbf{C.} CATFISH pathway enrichment heat map showing the top enriched pathways across component tests (ACAT, Fisher, Stouffer, minP, and TFisher) and the direct MVN-calibrated omnibus test. Colors represent $-\log_{10}(p)$ values, with warmer colors indicating stronger pathway-level association. Numbers in brackets indicate the number of genes assigned to each pathway. CATFISH was run using MAGMA gene statistics with hybrid generalized Pareto tail correction, $10^{4}$ null draws, and the paper oTFisher $\tau$ grid ($0.1$, $0.05$, $0.01$).}
     \label{fig:dry_tons_sorghum_integrated}
 \end{figure*}
 

@@ -1,0 +1,3 @@
+gene_col,n_spiked_genes,n_spiked_overlap,n_causal_genes,n_causal_overlap
+Gene-name,60,6,60,6
+Gene-id,60,6,60,0

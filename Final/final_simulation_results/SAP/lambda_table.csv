@@ -1,0 +1,9 @@
+method,lambda
+omni_p_final,1.22335348980516
+omni_p_mvn,1.22335348980516
+omni_p_analytic,0.808337851181291
+acat_p,1.34280022123367
+fisher_p,1.08494402872214
+minp_p_analytic,0.986661168039691
+stouffer_p_analytic,1.26866434843986
+tfisher_p_analytic,0.242743719788488

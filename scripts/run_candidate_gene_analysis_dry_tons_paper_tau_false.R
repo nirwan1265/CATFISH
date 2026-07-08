@@ -6,8 +6,8 @@ this_file <- if (length(file_arg)) sub("^--file=", "", file_arg[[1]]) else "scri
 script_dir <- dirname(normalizePath(this_file, mustWork = FALSE))
 
 Sys.setenv(
-  CATFISH_SUBDIR = "CATFISH_permutation_B10000_mvn_GPD_paper_tau_false",
-  OUT_LABEL = "B10000_GPD_paper_tau_false"
+  CATFISH_SUBDIR = "CATFISH_permutation_B1000000_mvn_GPD_paper_tau_false",
+  OUT_LABEL = "B1000000_GPD_paper_tau_false"
 )
 
 sys.source(

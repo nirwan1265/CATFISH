@@ -16,7 +16,7 @@ Sys.setenv(
   MKL_NUM_THREADS = "1",
   VECLIB_MAXIMUM_THREADS = "1",
   R_DISABLE_OPENMP = "1",
-  B_PERM = "10000",
+  B_PERM = "1000000",
   PERM_MODE = "mvn",
   OMNIBUS = "ACAT",
   SEED = "123",

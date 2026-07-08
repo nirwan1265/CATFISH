@@ -3,9 +3,8 @@
 suppressPackageStartupMessages({
   library(devtools)
 })
-load_all(".")
-
 default_repo <- Sys.getenv("CATFISH_REPO", "/Users/nirwantandukar/Documents/Github/MAGCAT")
+load_all(default_repo)
 
 ## -----------------------------------------------------------------------------
 ## Configuration
