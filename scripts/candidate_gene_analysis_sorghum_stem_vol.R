@@ -46,7 +46,10 @@ PATHWAY_FDR_THRESHOLD <- 0.05      # FDR cutoff (PATHWAY_MODE="fdr")
 
 # ---------- General ----------
 WINDOW_SIZE         <- 25000       # SNP-to-gene mapping window (bp)
-OUT_DIR             <- "sorghum_catfish_results"
+OUT_DIR             <- Sys.getenv(
+  "STEM_VOL_OUT_DIR",
+  "sorghum_catfish_results"
+)
 
 # ==============================================================================
 # 0. Plot Theme
