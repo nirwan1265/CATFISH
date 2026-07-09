@@ -1,0 +1,11 @@
+composite_rank,composite_gene,composite_score,composite_best_pathway,composite_gwas_rank,composite_magma_rank
+1,SORBI_3008G029200,8.081,palmitate biosynthesis II (bacteria and plants),7,10
+2,SORBI_3006G032800,6.385,"(1,4)-&beta;-D-xylan degradation",24,46
+3,SORBI_3006G032700,6.346,thiosulfate disproportionation IV (rhodanese),23,68
+4,SORBI_3009G066100,6.248,crocetin esters biosynthesis,16,81
+5,SORBI_3004G014400,6.237,cycloartenol biosynthesis,76,35
+6,SORBI_3008G001400,6.131,tetrahydrofolate biosynthesis II,49,141
+7,SORBI_3008G009300,5.939,aerobic respiration I (cytochrome c),163,49
+8,SORBI_3004G210000,5.769,L-valine biosynthesis,61,302
+9,SORBI_3008G009000,5.674,aerobic respiration I (cytochrome c),160,92
+10,SORBI_3006G037700,5.568,pyrimidine ribonucleosides salvage I,236,134

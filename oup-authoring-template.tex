@@ -559,14 +559,14 @@ LOO diagnostics reached the same conclusion. Under direct omnibus calibration, e
 \subsection{3.4 Integrated GWAS, MAGMA, and CATFISH analyses identify pathways associated with stem volume in sorghum}
 % \subsection{3.3 From SNP associations to pathway-level aggregation}
 
-We characterized the genetic architecture of stem volume in the sorghum association panel (SAP) using GWAS (Supplementary Table~7), followed by LD-aware gene-level aggregation with MAGMA (Supplementary Table~8). The strongest SNP-level associations were concentrated in a narrow chromosome 9 interval, with leading variants at 56,971,892 bp ($p = 3.26 \times 10^{-15}$), 57,127,820 bp ($p = 4.82 \times 10^{-15}$), 56,809,602 bp ($p = 5.87 \times 10^{-15}$), 56,811,454 bp ($p = 1.43 \times 10^{-14}$), and 56,790,816 bp ($p = 1.85 \times 10^{-14}$) (Fig.~\ref{fig:dry_tons_sorghum_integrated}A). Rather than showing many dispersed moderate peaks, the GWAS signal was dominated by this chromosome 9 block.
+We characterized the genetic architecture of stem volume in the sorghum association panel (SAP) using GWAS (Supplementary Table~7), followed by LD-aware gene-level aggregation with MAGMA (Supplementary Table~8). The strongest SNP-level associations were concentrated in a narrow chromosome 9 interval, with leading variants at 56,971,892 bp ($p = 3.26 \times 10^{-15}$), 57,127,820 bp ($p = 4.82 \times 10^{-15}$), 56,809,602 bp ($p = 5.87 \times 10^{-15}$), 56,811,454 bp ($p = 1.43 \times 10^{-14}$), and 56,790,816 bp ($p = 1.85 \times 10^{-14}$) (Fig.~\ref{fig:sap_stem_volume_integrated}A). Rather than showing many dispersed moderate peaks, the GWAS signal was dominated by this chromosome 9 block.
 
-MAGMA gene-based testing consolidated these local SNP signals into interpretable loci and likewise highlighted the same chromosome 9 region. The top MAGMA genes were \textit{SORBI\_3009G231300} ($p = 4.82 \times 10^{-15}$), \textit{SORBI\_3009G231200} ($p = 5.14 \times 10^{-15}$), \textit{SORBI\_3009G231400} ($p = 1.71 \times 10^{-14}$), \textit{SORBI\_3009G226250} ($p = 1.85 \times 10^{-14}$), and \textit{SORBI\_3009G229400} ($p = 1.98 \times 10^{-14}$) (Fig.~\ref{fig:dry_tons_sorghum_integrated}B). Thus, the SNP- and gene-level analyses were highly concordant and pointed to a compact shared interval rather than independent signals spread across the genome.
+MAGMA gene-based testing consolidated these local SNP signals into interpretable loci and likewise highlighted the same chromosome 9 region. The top MAGMA genes were \textit{SORBI\_3009G231300} ($p = 4.82 \times 10^{-15}$), \textit{SORBI\_3009G231200} ($p = 5.14 \times 10^{-15}$), \textit{SORBI\_3009G231400} ($p = 1.71 \times 10^{-14}$), \textit{SORBI\_3009G226250} ($p = 1.85 \times 10^{-14}$), and \textit{SORBI\_3009G229400} ($p = 1.98 \times 10^{-14}$) (Fig.~\ref{fig:sap_stem_volume_integrated}B). Thus, the SNP- and gene-level analyses were highly concordant and pointed to a compact shared interval rather than independent signals spread across the genome.
 
 \begin{table*}[htbp]
 \centering
 \caption{\textbf{Top five candidate genes for sorghum stem volume based on the integrated scoring system.} Candidates were prioritized by combining SNP-level GWAS, MAGMA gene-level association, and CATFISH pathway support. Pathway statistics correspond to the best supporting pathway assigned to each gene.}
-\label{tab:drytons_top5_candidates}
+\label{tab:sap_stem_volume_top5_candidates}
 \small
 \begin{tabular}{llllllll}
 \hline
@@ -581,7 +581,7 @@ Gene & GWAS $p$-value & GWAS rank & MAGMA $p$-value & MAGMA rank & Pathway $p$-v
 \end{tabular}
 \end{table*}
 
-To extend locus-level signals to pathways, we applied CATFISH to MAGMA gene statistics using the direct MVN-calibrated omnibus (\emph{Omnibus Alone}) with hybrid generalized Pareto tail correction, \(B = 10^{4}\) null draws, and the paper oTFisher \(\tau\) grid (\(0.1, 0.05, 0.01\)). CATFISH identified 73 Bonferroni-significant pathways and 102 pathways with BH-adjusted \(q < 0.05\) (Fig.~\ref{fig:dry_tons_sorghum_integrated}C; Supplementary Table~9). Because many top pathways reached the Monte Carlo floor under \(B = 10^{4}\), the leading omnibus results formed a tied high-significance set rather than a sharply separated rank list. This top set included L-glutamine degradation I, aerobic respiration I (cytochrome c), glutaminyl-tRNA\textsuperscript{gln} biosynthesis via transamidation, triacylglycerol biosynthesis, diacylglycerol and triacylglycerol biosynthesis, L-glutamate biosynthesis IV, L-threonine biosynthesis, phospholipases, and the superpathway of phospholipid biosynthesis II.
+To extend locus-level signals to pathways, we applied CATFISH to MAGMA gene statistics using the direct MVN-calibrated omnibus (\emph{Omnibus Alone}) with hybrid generalized Pareto tail correction, \(B = 10^{4}\) null draws, and the paper oTFisher \(\tau\) grid (\(0.1, 0.05, 0.01\)). CATFISH identified 73 Bonferroni-significant pathways and 102 pathways with BH-adjusted \(q < 0.05\) (Fig.~\ref{fig:sap_stem_volume_integrated}C; Supplementary Table~9). Because many top pathways reached the Monte Carlo floor under \(B = 10^{4}\), the leading omnibus results formed a tied high-significance set rather than a sharply separated rank list. This top set included L-glutamine degradation I, aerobic respiration I (cytochrome c), glutaminyl-tRNA\textsuperscript{gln} biosynthesis via transamidation, triacylglycerol biosynthesis, diacylglycerol and triacylglycerol biosynthesis, L-glutamate biosynthesis IV, L-threonine biosynthesis, phospholipases, and the superpathway of phospholipid biosynthesis II.
 
 These results indicate that stem volume in SAP is shaped by coordinated variation across a major chromosome 9 locus, tightly linked gene-level associations, and pathway-level signals involving respiration, nitrogen assimilation, and lipid metabolism. The convergence of GWAS, MAGMA, and CATFISH therefore supports a model in which both concentrated local genetic effects and broader metabolic coordination contribute to stem-volume variation in sorghum.
 
@@ -592,28 +592,30 @@ These results indicate that stem volume in SAP is shaped by coordinated variatio
     \textbf{A.} Manhattan plot of SNP-level GWAS results across the 10 sorghum chromosomes. Horizontal dashed lines indicate $-\log_{10}(p)=5$ and $-\log_{10}(p)=7$.
     \textbf{B.} Manhattan plot of MAGMA gene-level association statistics across the genome. The red dashed line denotes the nominal significance guide, and the blue dashed line marks the more stringent significance threshold used for visual reference.
     \textbf{C.} CATFISH pathway enrichment heat map showing the top enriched pathways across component tests (ACAT, Fisher, Stouffer, minP, and TFisher) and the direct MVN-calibrated omnibus test. Colors represent $-\log_{10}(p)$ values, with warmer colors indicating stronger pathway-level association. Numbers in brackets indicate the number of genes assigned to each pathway. CATFISH was run using MAGMA gene statistics with hybrid generalized Pareto tail correction, $10^{4}$ null draws, and the paper oTFisher $\tau$ grid ($0.1$, $0.05$, $0.01$).}
-    \label{fig:dry_tons_sorghum_integrated}
+    \label{fig:sap_stem_volume_integrated}
 \end{figure*}
 
 
 
-\subsection{3.5 CATFISH component tests reveal complementary pathway signals and refine candidate-gene prioritization for dry tons per acre}
+\subsection{3.5 CATFISH component tests reveal complementary pathway signals and refine candidate-gene prioritization for sorghum stem volume}
 
-To evaluate CATFISH component tests for dry tons per acre, we compared pathway-level results from ACAT, Fisher, TFisher, minP, Stouffer, and the final MVN-calibrated omnibus (Fig.~\ref{fig:catfish_components_candidates}). Bonferroni-significant pathway counts differed across methods, showing that component tests prioritized different aspects of pathway-level signal. TFisher detected the most significant pathways (\(n=222\)), followed by Fisher (\(n=150\)) and Stouffer (\(n=146\)), while ACAT and minP were more selective (\(n=29\) each). The omnibus identified 79 significant pathways, an intermediate number consistent with its role as a calibrated integrator rather than a proxy for the most aggressive component (Fig.~\ref{fig:catfish_components_candidates}A; Supplementary Table~11).
+To assess consistency in pathway enrichment across CATFISH component tests, we compared pathway-level results from ACAT, Fisher, TFisher, minP, Stouffer, and the direct MVN-calibrated omnibus for the SAP stem-volume dataset (Fig.~\ref{fig:catfish_components_candidates}; Supplementary Table~11). Bonferroni-significant pathway counts differed substantially across methods, indicating that each component emphasized a different part of the pathway signal distribution. TFisher detected the most significant pathways (\(n=84\)), followed by the omnibus (\(n=73\)), Fisher (\(n=48\)), ACAT (\(n=47\)), minP (\(n=47\)), and Stouffer (\(n=24\)). Nineteen pathways were significant in all six methods, indicating a core set of highly robust enrichments, while ACAT and minP produced identical Bonferroni-significant pathway sets, consistent with their shared sensitivity to sparse, driver-like signals.
 
-Ranked pathway-level signals also differed across CATFISH methods (Fig.~\ref{fig:catfish_components_candidates}B). Fisher, TFisher, Stouffer, and the omnibus retained strong signal across many pathway ranks, whereas ACAT and minP declined more steeply after the top pathways. Component tests clustered by expected signal sensitivity: Fisher and TFisher were highly concordant (Spearman \(\rho = 0.98\)), Fisher and Stouffer were also strongly correlated (\(\rho = 0.97\)), and ACAT tracked minP most closely (\(\rho = 0.97\)) (Fig.~\ref{fig:catfish_components_candidates}C). The omnibus most closely resembled Fisher (\(\rho = 0.96\)), TFisher (\(\rho = 0.96\)), and Stouffer (\(\rho = 0.92\)), but its top-ranked pathways were not identical to any single component, indicating that the final ranking reflected shared support across methods rather than any one component.
+Pairwise comparisons showed high rank-based concordance but incomplete agreement in thresholded discoveries (Fig.~\ref{fig:catfish_components_candidates}B--C). Spearman correlations of pathway \(-\log_{10}(p)\) ranged from \(0.71\) to \(0.97\), with the strongest agreement between ACAT and minP (\(\rho = 0.97\)) and between the omnibus and ACAT, Fisher, or TFisher (\(\rho = 0.96\) to \(0.97\)). In contrast, Jaccard overlap among Bonferroni-significant pathway sets ranged from \(0.29\) (Stouffer vs.\ TFisher) to \(1.00\) (ACAT vs.\ minP). The omnibus overlapped most strongly with TFisher (Jaccard \(= 0.87\)), indicating that TFisher often contributed substantially to the strongest omnibus discoveries, whereas Stouffer captured a more distinct subset of coordinated, diffuse signals.
 
-Top omnibus-ranked pathways included diacylglycerol and triacylglycerol biosynthesis, the thioredoxin pathway, L-glutamine biosynthesis III, cutin biosynthesis, 3-phosphoinositide biosynthesis, pyrimidine ribonucleosides salvage I, L-valine biosynthesis, gluconeogenesis I, phospholipases, and NAD/NADH phosphorylation and dephosphorylation. These highlight lipid biosynthesis and remodeling, redox regulation, respiratory and carbon metabolism, and nitrogen assimilation as key pathway-level correlates of biomass productivity. Although TFisher often contributed very small \(p\)-values to top omnibus pathways, the omnibus ranking did not simply mirror TFisher, indicating that CATFISH integrates complementary pathway evidence across sparse, dense, and mixed signal regimes rather than reducing to a single dominant component.
+The top omnibus-ranked pathways included gluconeogenesis I, L-glutamate biosynthesis IV, L-glutamine degradation I, the glyoxylate cycle, L-threonine biosynthesis, phospholipases, the superpathway of phospholipid biosynthesis II, and aerobic respiration I. Together, these enrichments point to a coherent biological theme centered on carbon flux, respiratory metabolism, nitrogen assimilation, and lipid or membrane-associated processes. Thus, although the individual CATFISH components are not redundant, their combined behavior supports a consistent interpretation of stem-volume variation while still revealing the method-dependent structure of pathway enrichment.
+
+To prioritize genes supported across analytical layers, we next integrated GWAS, MAGMA, and pathway evidence (Fig.~\ref{fig:catfish_components_candidates}D; Table~\ref{tab:sap_stem_volume_top10_layers}). Under the stem-volume thresholds used here, 3,286 genes were supported by at least one layer, 438 by at least two layers, and 30 by all three. The highest-ranked all-three-layer candidates were \textit{SORBI\_3009G231100}, \textit{SORBI\_3009G229300}, \textit{SORBI\_3009G226600}, \textit{SORBI\_3009G225700}, and \textit{SORBI\_3009G230400}. Most top integrated candidates fell within the same chromosome 9 association block identified by GWAS and MAGMA, but pathway support further stratified that dense interval into biologically distinct hypotheses, including xylan biosynthesis, triacylglycerol metabolism, glutamate- and nitrogen-related metabolism, respiration, phospholipid biosynthesis, and sucrose biosynthesis. In this way, CATFISH candidate prioritization adds functional structure to a locus that would otherwise remain a large cluster of similarly ranked neighboring genes.
 
 
 \begin{figure*}[!t]
     \centering
     \includegraphics[width=\textwidth,height=0.9\textheight,keepaspectratio]{Final/final_main_fig/Fig7.png}
-    \caption{\textbf{Comparison of CATFISH component tests and integrated candidate-gene prioritization for dry tons per acre in sorghum.}
-    \textbf{A.} Overlap among Bonferroni-significant pathways detected by ACAT, Fisher, TFisher, minP, Stouffer, and the omnibus test. Bar heights indicate intersection sizes, and horizontal bars indicate the total number of significant pathways identified by each method.
+    \caption{\textbf{Comparison of CATFISH component tests and integrated candidate-gene prioritization for sorghum stem volume.}
+    \textbf{A.} Overlap among Bonferroni-significant pathways detected by ACAT, Fisher, TFisher, minP, Stouffer, and the direct MVN-calibrated omnibus test. Bar heights indicate intersection sizes, and horizontal bars indicate the total number of significant pathways identified by each method.
     \textbf{B.} Ranked pathway-level signal across CATFISH methods, shown as ordered $-\log_{10}(p)$ values for ACAT, Fisher, TFisher, minP, Stouffer, and the omnibus statistic.
     \textbf{C.} Pairwise comparison of CATFISH methods. The upper triangle shows Spearman correlation of pathway $-\log_{10}(p)$ values, and the lower triangle shows Jaccard similarity of Bonferroni-significant pathway sets.
-    \textbf{D.} Integrated candidate-gene prioritization across GWAS, MAGMA, and pathway evidence. Genes are plotted by SNP-level GWAS significance and MAGMA gene-level significance and colored by evidence category. Dashed lines indicate the GWAS and MAGMA significance thresholds used for candidate classification.}
+    \textbf{D.} Integrated candidate-gene prioritization across GWAS, MAGMA, and pathway evidence for sorghum stem volume. Genes are plotted by SNP-level GWAS significance and MAGMA gene-level significance and colored by evidence category. Dashed lines indicate the GWAS and MAGMA thresholds used in the candidate-scoring analysis.}
     \label{fig:catfish_components_candidates}
 \end{figure*}
 
@@ -621,8 +623,8 @@ Top omnibus-ranked pathways included diacylglycerol and triacylglycerol biosynth
 
 \begin{table*}[ht]
 \centering
-\caption{Top dry tons per acre signals under three prioritization strategies. The left panel shows the top 10 GWAS SNPs with nearby genes assigned using the same $\pm 25$ kb gene-extension rule used in the candidate-scoring pipeline. The center panel shows the top 10 MAGMA genes. The right panel shows the top 10 genes supported by all three evidence layers (GWAS + MAGMA + pathway) under the composite CATFISH scoring framework.}
-\label{tab:dry_tons_top10_layers}
+\caption{Top sorghum stem-volume signals under three prioritization strategies. The left panel shows the top 10 GWAS SNPs with nearby genes assigned using the same $\pm 25$ kb gene-extension rule used in the candidate-scoring pipeline. The center panel shows the top 10 MAGMA genes. The right panel shows the top 10 genes supported by all three evidence layers (GWAS + MAGMA + pathway) under the composite CATFISH scoring framework.}
+\label{tab:sap_stem_volume_top10_layers}
 \scriptsize
 \begin{tabular}{p{0.14\textwidth} p{0.17\textwidth} p{0.08\textwidth} p{0.14\textwidth} p{0.08\textwidth} p{0.14\textwidth} p{0.06\textwidth} p{0.17\textwidth} rr}
 \hline
@@ -633,36 +635,36 @@ SNP & Nearby gene(s) & $p$ &
 Gene & $p$ &
 Gene & Score & Best pathway & GWAS rank & MAGMA rank \\
 \hline
-Chr04pos40965614.1 & SORBI\_3004G140501, SORBI\_3004G140600, SORBI\_3004G140800 & $3.98\times10^{-15}$ &
-SORBI\_3004G140501 & $2.95\times10^{-11}$ &
-SORBI\_3008G029200 & 8.081 & palmitate biosynthesis II (bacteria and plants) & 7 & 10 \\
-Chr07pos14664850.1 & --- & $4.08\times10^{-15}$ &
-SORBI\_3008G028800 & $3.71\times10^{-11}$ &
-SORBI\_3006G032800 & 6.385 & (1,4)-$\beta$-D-xylan degradation & 24 & 46 \\
-Chr06pos11249320.1 & --- & $4.58\times10^{-14}$ &
-SORBI\_3004G140800 & $4.10\times10^{-11}$ &
-SORBI\_3006G032700 & 6.346 & thiosulfate disproportionation IV (rhodanese) & 23 & 68 \\
-Chr09pos17713323.1 & SORBI\_3009G090500 & $1.45\times10^{-13}$ &
-SORBI\_3008G028850 & $1.52\times10^{-10}$ &
-SORBI\_3009G066100 & 6.248 & crocetin esters biosynthesis & 16 & 81 \\
-Chr04pos40965691.1 & SORBI\_3004G140501, SORBI\_3004G140600, SORBI\_3004G140800 & $2.37\times10^{-13}$ &
-SORBI\_3009G083900 & $2.69\times10^{-10}$ &
-SORBI\_3004G014400 & 6.237 & cycloartenol biosynthesis & 76 & 35 \\
-Chr04pos40965707.1 & SORBI\_3004G140501, SORBI\_3004G140600, SORBI\_3004G140800 & $2.37\times10^{-13}$ &
-SORBI\_3004G102200 & $2.77\times10^{-10}$ &
-SORBI\_3008G001400 & 6.131 & tetrahydrofolate biosynthesis II & 49 & 141 \\
-Chr04pos40965581.1 & SORBI\_3004G140501, SORBI\_3004G140600, SORBI\_3004G140800 & $3.03\times10^{-13}$ &
-SORBI\_3008G028900 & $3.02\times10^{-10}$ &
-SORBI\_3008G009300 & 5.939 & aerobic respiration I (cytochrome c) & 163 & 49 \\
-Chr04pos40965626.1 & SORBI\_3004G140501, SORBI\_3004G140600, SORBI\_3004G140800 & $3.03\times10^{-13}$ &
-SORBI\_3009G090500 & $6.53\times10^{-10}$ &
-SORBI\_3004G210000 & 5.769 & L-valine biosynthesis & 61 & 302 \\
-Chr08pos2608927.1 & SORBI\_3008G028900, SORBI\_3008G029000, SORBI\_3008G029200, SORBI\_3008G029300, SORBI\_3008G029400 & $3.11\times10^{-13}$ &
-SORBI\_3008G029300 & $7.77\times10^{-10}$ &
-SORBI\_3008G009000 & 5.674 & aerobic respiration I (cytochrome c) & 160 & 92 \\
-Chr04pos44230531.1 & --- & $5.99\times10^{-13}$ &
-SORBI\_3008G029200 & $1.02\times10^{-9}$ &
-SORBI\_3006G037700 & 5.568 & pyrimidine ribonucleosides salvage I & 236 & 134 \\
+SNP\_56971892 & SORBI\_3009G228600--SORBI\_3009G229200 & $3.26\times10^{-15}$ &
+SORBI\_3009G231300 & $4.82\times10^{-15}$ &
+SORBI\_3009G231100 & 7.441 & CMP-3-deoxy-D-manno-octulosonate biosynthesis & 8 & 15 \\
+SNP\_57127820 & SORBI\_3009G230900--SORBI\_3009G231600 & $4.82\times10^{-15}$ &
+SORBI\_3009G231200 & $5.14\times10^{-15}$ &
+SORBI\_3009G229300 & 7.233 & xylan biosynthesis & 29 & 23 \\
+SNP\_56809602 & SORBI\_3009G226000--SORBI\_3009G226900 & $5.87\times10^{-15}$ &
+SORBI\_3009G231400 & $1.71\times10^{-14}$ &
+SORBI\_3009G226600 & 7.221 & triacylglycerol biosynthesis (Chlamydomonas) & 16 & 30 \\
+SNP\_56811454 & SORBI\_3009G226100--SORBI\_3009G226900 & $1.43\times10^{-14}$ &
+SORBI\_3009G226250 & $1.85\times10^{-14}$ &
+SORBI\_3009G225700 & 7.170 & L-glutamate biosynthesis IV & 26 & 31 \\
+SNP\_56790816 & SORBI\_3009G225700--SORBI\_3009G226600 & $1.85\times10^{-14}$ &
+SORBI\_3009G229400 & $1.98\times10^{-14}$ &
+SORBI\_3009G230400 & 7.050 & DIBOA-glucoside biosynthesis & 35 & 49 \\
+SNP\_56791116 & SORBI\_3009G225700--SORBI\_3009G226600 & $1.90\times10^{-14}$ &
+SORBI\_3009G229600 & $3.30\times10^{-14}$ &
+SORBI\_3009G238700 & 6.951 & aerobic respiration I (cytochrome c) & 90 & 39 \\
+SNP\_57009769 & SORBI\_3009G229100--SORBI\_3009G229700 & $1.98\times10^{-14}$ &
+SORBI\_3009G227700 & $3.54\times10^{-14}$ &
+SORBI\_3009G225100 & 6.875 & superpathway of phospholipid biosynthesis II (plants) & 99 & 50 \\
+SNP\_57010296 & SORBI\_3009G229100--SORBI\_3009G229700 & $1.98\times10^{-14}$ &
+SORBI\_3009G227800 & $3.54\times10^{-14}$ &
+SORBI\_3009G233200 & 6.339 & sucrose biosynthesis I (from photosynthesis) & 167 & 89 \\
+SNP\_56813195 & SORBI\_3009G226200--SORBI\_3009G227000 & $2.02\times10^{-14}$ &
+SORBI\_3009G227900 & $3.54\times10^{-14}$ &
+SORBI\_3009G239500 & 6.172 & L-glutamine degradation I & 120 & 126 \\
+SNP\_56788897 & SORBI\_3009G225700--SORBI\_3009G226600 & $2.87\times10^{-14}$ &
+SORBI\_3009G229900 & $5.43\times10^{-14}$ &
+SORBI\_3009G224100 & 6.157 & cinnamate esters biosynthesis & 82 & 172 \\
 \hline
 \end{tabular}
 \end{table*}
@@ -699,7 +701,7 @@ Thus, these findings define CATFISH’s calibration rationale. Component tests p
 
 The stem-volume analysis illustrates how pathway-aware prioritization can refine candidate-gene interpretation even when SNP- and gene-level signals are dominated by a strong local locus. In SAP, both GWAS and MAGMA were heavily concentrated in a chromosome 9 interval, so ranking genes only by marginal significance would mostly return neighboring genes with very similar evidence profiles. By integrating GWAS locus support, MAGMA gene-level evidence, and CATFISH pathway support, the three-layer prioritization asked a more specific question: which genes are not only statistically compelling, but also embedded in pathway contexts plausibly related to stem growth, carbon use, and biomass-associated metabolism.
 
-This integrated analysis identified 438 genes supported by at least two evidence layers and 30 genes supported by all three. The highest-ranked all-three-layer candidates were \textit{SORBI\_3009G231100}, \textit{SORBI\_3009G229300}, \textit{SORBI\_3009G226600}, \textit{SORBI\_3009G225700}, and \textit{SORBI\_3009G230400} (Table~\ref{tab:drytons_top5_candidates}). Each combined strong local association with pathway support from biologically interpretable processes, including carbohydrate-linked biosynthesis, xylan biosynthesis, triacylglycerol metabolism, glutamate-related nitrogen metabolism, and specialized metabolite biosynthesis. Thus, the integrated score did not simply reshuffle the top chromosome 9 locus by $p$-value; it stratified that locus according to broader pathway context.
+This integrated analysis identified 438 genes supported by at least two evidence layers and 30 genes supported by all three. The highest-ranked all-three-layer candidates were \textit{SORBI\_3009G231100}, \textit{SORBI\_3009G229300}, \textit{SORBI\_3009G226600}, \textit{SORBI\_3009G225700}, and \textit{SORBI\_3009G230400} (Table~\ref{tab:sap_stem_volume_top5_candidates}). Each combined strong local association with pathway support from biologically interpretable processes, including carbohydrate-linked biosynthesis, xylan biosynthesis, triacylglycerol metabolism, glutamate-related nitrogen metabolism, and specialized metabolite biosynthesis. Thus, the integrated score did not simply reshuffle the top chromosome 9 locus by $p$-value; it stratified that locus according to broader pathway context.
 
 Several of the top supporting pathways are especially relevant for a stem-volume phenotype. Xylan biosynthesis is directly connected to grass cell-wall assembly and structural biomass, because xylan is a major hemicellulosic component of lignocellulosic tissue \citep{Dodd2009,Basit2019}. Likewise, lipid- and triacylglycerol-related pathways can plausibly contribute to growth and structural development through membrane dynamics, carbon allocation, and surface-associated metabolism. Nitrogen- and glutamate-related pathways are also notable because stem growth depends on coordinated carbon--nitrogen metabolism rather than only structural polysaccharide deposition. Together, these pathway assignments provide a mechanistic lens that is absent from marginal GWAS or MAGMA ranking alone.
 

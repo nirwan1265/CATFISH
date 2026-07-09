@@ -1,4 +1,8 @@
-Supplementary tables exported from final Dry tons per acre figure inputs.
+Supplementary tables exported from the final manuscript figure inputs.
+
+This folder currently contains a mix of:
+- legacy Dry tons per acre supplementary tables kept for reference
+- current SAP stem-volume supplementary tables used in the updated manuscript set
 
 Files:
 - SuppTable_Fig6_top50_pathways_Dry_tons_per_acre.csv
@@ -8,3 +12,9 @@ Files:
 - SuppTable_Fig7_component_test_pathway_results_Dry_tons_per_acre.csv
 - SuppTable_Fig7_candidate_evidence_summary_Dry_tons_per_acre.csv
 - SuppTable_Fig7_all_candidate_genes_with_evidence_Dry_tons_per_acre.csv
+- SuppTable_7_top50_GWAS_SNPs_SAP_Stem_volume.csv
+- SuppTable_8_top50_MAGMA_genes_SAP_Stem_volume.csv
+- SuppTable_9_top50_pathways_SAP_Stem_volume.csv
+- SuppTable_10_all_candidate_genes_with_evidence_SAP_Stem_volume.csv
+- SuppTable_11_component_test_pathway_results_SAP_Stem_volume.csv
+- SuppTable_SAPStemVolume_top200_candidate_genes.csv
