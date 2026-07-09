@@ -669,6 +669,29 @@ SORBI\_3009G224100 & 6.157 & cinnamate esters biosynthesis & 82 & 172 \\
 \end{tabular}
 \end{table*}
 
+
+\subsection{3.6 Phenotype-permutation null calibration of CATFISH in SAP stem volume}
+
+We next evaluated CATFISH calibration under an empirical phenotype-permutation null built from the same SAP genotype data used for the real stem-volume analysis (Fig.~\ref{fig:sap_stem_volume_null_diagnostics}). Stem-volume phenotypes were permuted across individuals, and each permuted phenotype was passed through the full GWAS--MAGMA--CATFISH pipeline, preserving the observed SNP density, gene size distribution, pathway membership, and LD structure while removing true genotype--phenotype association. Across 71 completed phenotype permutations, this yielded 29{,}110 pooled null pathway $p$-values for calibration assessment.
+
+Under this empirical null, the direct MVN-calibrated omnibus (\emph{Omnibus Alone}) showed mild but not catastrophic inflation. The pooled null histogram was broadly close to Uniform$(0,1)$ with a modest excess of small $p$-values, and the QQ plot tracked the null expectation well through most of the distribution before deviating upward in the lower tail (Fig.~\ref{fig:sap_stem_volume_null_diagnostics}A--B). The omnibus genomic-control inflation factor was \(\lambda = 1.22\), with empirical type~I error of 0.0775 at \(\alpha=0.05\) and 0.0217 at \(\alpha=0.01\). Thus, calibration was not perfectly nominal, but it remained substantially closer to the target null than the analytical fallback.
+
+The analytical omnibus was more distorted under the same phenotype-permutation null. Although its genomic-control summary was \(\lambda = 0.81\), this masked clear tail miscalibration: empirical type~I error was 0.0984 at \(\alpha=0.05\) and 0.0548 at \(\alpha=0.01\), both markedly larger than the nominal levels. This contrast highlights that \(\lambda\) alone can be misleading for pathway-level calibration, because a method may appear conservative in the center of the distribution while remaining anti-conservative in the extreme tail. By comparison, the MVN-calibrated omnibus reduced the type~I error excess at both thresholds and produced visibly improved QQ behavior.
+
+Component-level summaries showed a similar pattern. Fisher and Stouffer were more inflated than the MVN omnibus at \(\alpha=0.05\) (0.0923 and 0.0985, respectively), whereas minP was somewhat closer to nominal (0.0655) and ACAT was mildly inflated (0.0738). TFisher was difficult to summarize by \(\lambda\) alone because its null distribution was highly non-uniform in shape, but its type~I error was still inflated at \(\alpha=0.01\) (0.0587). Overall, these phenotype-permutation results support the same conclusion as the simulation studies: dependence-aware MVN calibration improves CATFISH null behavior relative to analytical calibration, but empirical genotype architectures can still leave residual inflation that is not fully removed by the current pathway-correlation model.
+
+
+\begin{figure*}[!t]
+    \centering
+    \includegraphics[width=\textwidth,height=0.9\textheight,keepaspectratio]{Final/final_main_fig/Fig8.png}
+    \caption{\textbf{Phenotype-permutation null calibration of the CATFISH omnibus for sorghum stem volume.}
+    \textbf{A.} Histogram of pooled omnibus pathway $p$-values obtained from 71 phenotype permutations of the SAP stem-volume trait. The red dashed line indicates the expected bin count under a Uniform$(0,1)$ null.
+    \textbf{B.} Quantile--quantile plot of the same pooled omnibus null $p$-values against the expected uniform distribution, with the gray band showing the pointwise null envelope.
+    \textbf{C.} Genomic-control inflation factor \(\lambda\) across CATFISH component tests and omnibus variants under the phenotype-permutation null.
+    \textbf{D.} Empirical type~I error at \(\alpha=0.05\) and \(\alpha=0.01\) for the same methods. Together, these diagnostics show that the direct MVN-calibrated omnibus is not perfectly nominal in SAP stem volume but is materially better calibrated than the analytical omnibus under the same empirical null.}
+    \label{fig:sap_stem_volume_null_diagnostics}
+\end{figure*}
+
 \section{4 Discussion}
 
 \subsection*{4.1 Interpretation of archetype-specific response profiles}
