@@ -60,6 +60,52 @@ add_thresholds <- function(g, x = 0.02, size = 3) {
              hjust = 0, vjust = -0.3, size = size)
 }
 
+crossing_quantiles <- function(dat, thresholds = c(5e-2, 1e-3, 2.5e-6)) {
+  dat <- dat %>% arrange(rank)
+  out <- lapply(thresholds, function(thr) {
+    idx <- which(dat$p <= thr)
+    q <- if (length(idx) == 0) 0 else max(dat$rank[idx])
+    tibble(
+      threshold = thr,
+      q = q,
+      y = -log10(thr),
+      label = paste0("q=", sprintf("%.2f", q))
+    )
+  })
+  bind_rows(out)
+}
+
+add_crossing_quantiles <- function(g, dat, point_size = 1.4) {
+  cross <- crossing_quantiles(dat)
+  g +
+    geom_point(
+      data = cross,
+      inherit.aes = FALSE,
+      aes(x = q, y = y),
+      size = point_size,
+      color = "black"
+    ) +
+    NULL
+}
+
+add_crossing_box <- function(g, dat, x = 0.72, y = NULL, digits = 2, size = 3.0) {
+  cross <- crossing_quantiles(dat)
+  labs <- paste0(
+    c("q(0.05)", "q(1e-3)", "q(2.5e-6)"),
+    " = ",
+    sprintf(paste0("%.", digits, "f"), cross$q)
+  )
+  if (is.null(y)) {
+    y <- max(dat$mlog10p, na.rm = TRUE) * 0.92
+  }
+  g + anno_box(
+    x = x,
+    y = y,
+    label = paste(labs, collapse = "\n"),
+    size = size
+  )
+}
+
 # ---------------- simulate archetype patterns from MVN ----------------
 make_exchangeable_sigma <- function(m, rho) {
   matrix(rho, nrow = m, ncol = m) + diag(1 - rho, m)
@@ -143,7 +189,10 @@ p1 <- ggplot(sda_dat, aes(rank, mlog10p)) +
     y = expression(-log[10](p))
   ) +
   theme_natureish()
-p1 <- add_thresholds(p1) +
+p1 <- add_thresholds(p1)
+p1 <- add_crossing_quantiles(p1, sda_dat)
+p1 <- add_crossing_box(p1, sda_dat, x = 0.70, y = 11.6, size = 3.0)
+p1 <- p1 +
   anno_box(0.12, 12.35,
            paste0("highlighted top ", topM, " genes\n",
                   "K(p<1e-3)=", k_1e3_sda, "   K(p<2.5e-6)=", k_gw_sda))
@@ -163,6 +212,8 @@ p2 <- ggplot(cme_dat, aes(rank, mlog10p)) +
   ) +
   theme_natureish()
 p2 <- add_thresholds(p2)
+p2 <- add_crossing_quantiles(p2, cme_dat)
+p2 <- add_crossing_box(p2, cme_dat, x = 0.68, y = 5.5, size = 3.0)
 
 # ---------------- III — DPS ----------------
 dps_dat <- df %>% filter(archetype == "Archetype III — DPS") %>% arrange(rank)
@@ -179,6 +230,8 @@ p3 <- ggplot(dps_dat, aes(rank, mlog10p)) +
   ) +
   theme_natureish()
 p3 <- add_thresholds(p3)
+p3 <- add_crossing_quantiles(p3, dps_dat)
+p3 <- add_crossing_box(p3, dps_dat, x = 0.68, y = 5.5, size = 3.0)
 
 # ---------------- IV — HDS ----------------
 hds_dat <- df %>% filter(archetype == "Archetype IV — HDS") %>% arrange(rank)
@@ -195,6 +248,8 @@ p4 <- ggplot(hds_dat, aes(rank, mlog10p)) +
   ) +
   theme_natureish()
 p4 <- add_thresholds(p4)
+p4 <- add_crossing_quantiles(p4, hds_dat)
+p4 <- add_crossing_box(p4, hds_dat, x = 0.68, y = 5.75, size = 3.0)
 
 # ---------------- V — SGP ----------------
 sgp_dat <- df %>% filter(archetype == "Archetype V — SGP") %>% arrange(rank)
@@ -217,19 +272,18 @@ p5 <- ggplot() +
     y = expression(-log[10](p))
   ) +
   theme_natureish()
-p5 <- add_thresholds(p5) +
+p5 <- add_thresholds(p5)
+p5 <- add_crossing_quantiles(p5, sgp_dat)
+p5 <- add_crossing_box(p5, sgp_dat, x = 0.62, y = 7.85, size = 3.0)
+p5 <- p5 +
   anno_box(0.12, 8.35,
            paste0("K(p<1e-3)=", k_1e3_sgp, "   K(p<2.5e-6)=", k_gw_sgp))
 
 # ---------------- compose 2x3 layout for five archetypes ----------------
-layout_design <- "
-AABBCC
-#DDEE#
-"
-
-fig <- wrap_plots(
-  A = p1, B = p2, C = p3, D = p4, E = p5,
-  design = layout_design
+fig <- (
+  p1 | p2 | p3
+) / (
+  plot_spacer() | p4 | p5 | plot_spacer()
 ) +
   plot_annotation(
     title = "Figure 1 Ranked gene-level association profiles for five pathway signal archetypes",
@@ -245,6 +299,8 @@ fig
 #ggsave("Fig_archetypesIV.png", p4, width = 7.2, height = 4.6, units = "in", dpi = 600)
 #ggsave("Fig_archetypesV.png", p5, width = 7.2, height = 4.6, units = "in", dpi = 600)
 ggsave("/Users/nirwantandukar/Documents/Github/MAGCAT/Figures/Fig1.Archetypes/Fig_archetypes_layout.png",
+       fig, width = 13.5, height = 9.0, units = "in", dpi = 600, bg = "white")
+ggsave("/Users/nirwantandukar/Documents/Github/Thesis_NirwanTandukar_GeneticsGenomics/ncsuthesis-0.6/Figures/Chapter5/main/Fig1.png",
        fig, width = 13.5, height = 9.0, units = "in", dpi = 600, bg = "white")
 
 # ggsave("Fig_archetypes_rankcurves.pdf", fig, width = 7.2, height = 4.6, units = "in", device = cairo_pdf)

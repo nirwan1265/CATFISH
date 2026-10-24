@@ -67,3 +67,16 @@ catfish_omnibus_results_*/
 vignettes/*.html
 /doc/
 /Meta/
+
+# ---------------------------------------------------------------
+# Files larger than 25 MB (added 2026-10-24)
+# NOTE: the five annot/ files below are already TRACKED by git.
+# Listing them here does NOT untrack them -- run `git rm --cached <file>`
+# for each one, or they will keep being committed.
+# ---------------------------------------------------------------
+annot/AT_cold.snp.loc.txt
+annot/AT_cold2.snp.loc.txt
+annot/Female_starvation_fly.snp.loc.txt
+annot/Male_starvation_fly.snp.loc.txt
+annot/N_maize_GLM.genes.annot
+scripts/simulations/sap_stem_volume_permutation/stem_volume_real_gwas.assoc.txt
