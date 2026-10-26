@@ -19,6 +19,7 @@
 #'   \item{"arabidopsis"}{AraCyc pathways (aracyc_pathways.20230103)}
 #'   \item{"plant"}{PlantCyc general plant pathways (plantcyc_pathways.20230103)}
 #'   \item{"fly"}{FlyCyc Drosophila pathways (Fly_Cyc.tsv)}
+#'   \item{"human"}{HumanCyc pathways (humancyc_pathways.20261024)}
 #' }
 #'
 #' @return Character. File path to the selected pathway file in the CATFISH
@@ -37,7 +38,7 @@
 #'   data.frame
 #' @export
 catfish_pmn_file <- function(
-    species = c("maize", "sorghum", "arabidopsis", "plant", "fly")
+    species = c("maize", "sorghum", "arabidopsis", "plant", "fly", "human")
 ) {
 
   species <- match.arg(species)
@@ -48,7 +49,8 @@ catfish_pmn_file <- function(
     sorghum     = "sorghumbicolorcyc_pathways.20230103",
     arabidopsis = "aracyc_pathways.20230103",
     plant       = "plantcyc_pathways.20230103",
-    fly         = "Fly_Cyc.tsv"
+    fly         = "Fly_Cyc.tsv",
+    human       = "humancyc_pathways.20261024"
   )
 
   path <- system.file("extdata/pathway", fname, package = "CATFISH")
@@ -125,11 +127,14 @@ catfish_pmn_file <- function(
 #' \code{\link{catfish_minp_pathways}} for pathway enrichment tests
 #' @export
 catfish_load_pathways <- function(
-    species      = c("maize", "sorghum", "arabidopsis", "plant", "fly"),
+    species      = c("maize", "sorghum", "arabidopsis", "plant", "fly", "human"),
     gene_col     = NULL,
     drop_unknown = TRUE
 ) {
   species <- match.arg(species)
+  # HumanCyc ships both symbols (Gene-name) and Entrez (Gene-id). MAGMA human
+  # gene location files are Entrez-keyed, so default to Gene-id there.
+  if (identical(species, "human") && is.null(gene_col)) gene_col <- "Gene-id"
   fpath <- catfish_pmn_file(species)
 
   x <- suppressWarnings(

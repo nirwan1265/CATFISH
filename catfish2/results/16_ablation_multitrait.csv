@@ -1,0 +1,3 @@
+"trait","n_genes","n_controls","median_genes_only","median_full","mean_genes_only","mean_full","top1pct_genes_only","top1pct_full","improved","worsened","median_change"
+"ldl",18563,13,29,20,73,48.0769230769231,12,12,10,2,5
+"hdl",18563,12,298.5,128.5,612.5,243.416666666667,5,7,10,0,170

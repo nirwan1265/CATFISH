@@ -1,0 +1,22 @@
+\begin{table*}[!t]
+\centering
+\caption{Empirical type~I error and genomic-control inflation for the CATFISH omnibus under the global null, by within-pathway LD level and pathway size. Analytic: independence-based omnibus. MVN: calibrated against a pathway-specific correlated null. Bonferroni and Westfall--Young (WY) columns are family-wise error rates across the pathway family. Nominal level $\alpha=0.05$.}
+\label{tab:null_calibration}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llrrrrrrr}
+\hline
+\textbf{LD} & $\rho$ & $m$ & \textbf{Analytic} & \textbf{MVN} & \textbf{Bonferroni} & \textbf{WY} & $\lambda_{\mathrm{an}}$ & $\lambda_{\mathrm{mvn}}$ \\
+\hline
+independent & 0.0 & 5 & 0.0362 & 0.0472 & 0.0400 & 0.0500 & 0.843 & 0.934 \\
+independent & 0.0 & 20 & 0.0383 & 0.0474 & 0.0360 & 0.0500 & 0.965 & 0.993 \\
+independent & 0.0 & 50 & 0.0392 & 0.0556 & 0.0240 & 0.0500 & 1.065 & 0.925 \\
+moderate & 0.3 & 5 & 0.0847 & 0.0523 & 1.0140 & 0.0500 & 0.730 & 1.002 \\
+moderate & 0.3 & 20 & 0.2031 & 0.0568 & 13.7300 & 0.0500 & 0.712 & 1.060 \\
+moderate & 0.3 & 50 & 0.2857 & 0.0400 & 32.5300 & 0.0500 & 0.862 & 0.998 \\
+strong & 0.6 & 5 & 0.1238 & 0.0542 & 3.7500 & 0.0500 & 0.550 & 1.181 \\
+strong & 0.6 & 20 & 0.2599 & 0.0473 & 26.9300 & 0.0500 & 0.115 & 1.031 \\
+strong & 0.6 & 50 & 0.3386 & 0.0425 & 47.8840 & 0.0500 & 0.120 & 1.002 \\
+\hline
+\end{tabular}}
+\end{table*}

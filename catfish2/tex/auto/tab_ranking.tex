@@ -1,0 +1,19 @@
+\begin{table*}[!t]
+\centering
+\caption{Ranking of truly enriched pathways and family-wise significance thresholds. Each replicate contains $N_{\mathrm{P}}$ pathways of which $N_{\mathrm{true}}$ carry a latent mean shift $\mu$. Median rank is the median within-replicate rank of the enriched pathways (1 = best); random expectation is $N_{\mathrm{P}}/2$. The WY threshold is the $5$th percentile of the minimum null omnibus $p$-value across the family; the ratio column is Bonferroni/WY.}
+\label{tab:ranking}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llrrrrrr}
+\hline
+\textbf{LD} & $\rho$ & $m$ & \textbf{Rank (analytic)} & \textbf{Rank (MVN)} & \textbf{Random} & \textbf{WY thresh.} & \textbf{Bonf./WY} \\
+\hline
+independent & 0.0 & 20 & 8.0 & 7.9 & 150 & \ensuremath{1.97\times10^{-4}} & 0.84 \\
+independent & 0.0 & 50 & 8.0 & 8.0 & 150 & \ensuremath{3.00\times10^{-4}} & 0.56 \\
+moderate & 0.3 & 20 & 10.0 & 10.0 & 150 & \ensuremath{3.50\times10^{-4}} & 0.48 \\
+moderate & 0.3 & 50 & 9.7 & 9.7 & 150 & \ensuremath{3.50\times10^{-4}} & 0.48 \\
+strong & 0.6 & 20 & 17.7 & 17.7 & 150 & \ensuremath{1.47\times10^{-4}} & 1.13 \\
+strong & 0.6 & 50 & 17.6 & 17.6 & 150 & \ensuremath{3.00\times10^{-4}} & 0.56 \\
+\hline
+\end{tabular}}
+\end{table*}

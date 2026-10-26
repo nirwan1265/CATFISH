@@ -80,3 +80,18 @@ annot/Female_starvation_fly.snp.loc.txt
 annot/Male_starvation_fly.snp.loc.txt
 annot/N_maize_GLM.genes.annot
 scripts/simulations/sap_stem_volume_permutation/stem_volume_real_gwas.assoc.txt
+
+# ---------------------------------------------------------------
+# catfish2: LaTeX build artifacts and editing backups (added 2026-10-26)
+# The PDF is kept deliberately so the compiled paper travels with the repo.
+# ---------------------------------------------------------------
+catfish2/tex/*.aux
+catfish2/tex/*.log
+catfish2/tex/*.out
+catfish2/tex/*.blg
+catfish2/tex/*.bbl
+catfish2/tex/*.synctex.gz
+*.bak
+*.bak[0-9]
+*.tex.bak*
+*.R.bak

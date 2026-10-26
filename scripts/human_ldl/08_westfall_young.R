@@ -1,0 +1,388 @@
+#!/usr/bin/env Rscript
+# =============================================================================
+# 08_westfall_young.R -- genome-wide max-statistic (Westfall-Young) null
+#                        for CATFISH pathway testing.
+#
+# WHY
+#   The per-pathway MVN null draws from R_S (that pathway's genes only), so
+#   pathways never see each other. But pathways share genes heavily -- in this
+#   universe the average gene sits in 6.1 pathways -- so their p-values are
+#   correlated, and Bonferroni/BH then treat non-independent tests as
+#   independent.
+#
+# HOW
+#   Per replicate:
+#     1. draw ONE correlated null gene-score vector genome-wide (per chromosome,
+#        from the banded MAGMA gene-gene correlations)
+#     2. compute the omnibus statistic for ALL pathways on that same draw
+#     3. keep only the MINIMUM p across pathways
+#   The distribution of those minima gives exact FWER, and between-pathway
+#   correlation is inherited automatically -- never modelled.
+#
+#   This replaces per-pathway MVN calibration: the test statistic is the
+#   ANALYTIC omnibus (ACAT over component p-values), and WY supplies its null.
+#
+# USAGE
+#   Rscript 08_westfall_young.R [B] [use_tfisher]
+#     B            number of replicates   (default 1000; use 10000 for final)
+#     use_tfisher  TRUE/FALSE             (default FALSE -- TFisher's analytic
+#                                          null is the slow component)
+# =============================================================================
+suppressPackageStartupMessages({ library(CATFISH) })
+
+args <- commandArgs(trailingOnly = TRUE)
+B           <- if (length(args) >= 1) as.integer(args[[1]]) else 1000L
+USE_TFISHER <- if (length(args) >= 2) as.logical(args[[2]]) else FALSE
+SPECIES     <- if (length(args) >= 3) args[[3]] else "human"
+SEED        <- 20260706
+MAX_GENES   <- 200L
+
+BASE   <- path.expand("~/Documents/Github/MAGCAT")
+DATA_D <- path.expand("~/Documents/Github/MAGCAT_data")
+RES    <- path.expand("~/Documents/Research/results/MAGMA/MAGCAT")
+
+if (SPECIES == "human") {
+  GENES_FILES <- file.path(BASE, "results/human_LDL/magma/ldl_eur.genes.out")
+  P_COL     <- "P"
+  CORPAIRS  <- file.path(BASE, "results/human_LDL/catfish/ldl_eur.cor_pairs.txt")
+  SETS      <- file.path(DATA_D, "c2.cp.reactome.v2026.2.Hs.entrez.sets.annot")
+  OUT_D     <- file.path(BASE, "results/human_LDL/catfish")
+  TAG       <- "ldl_eur_reactome"
+  MIN_GENES <- 10L
+} else if (SPECIES == "maize") {
+  # nitrogen GWAS (GLM), multi=snp-wise gene model -> P_MULTI
+  GENES_FILES <- sprintf(file.path(RES, "magma_genes_by_chr",
+                    "N_maize_GLM_chr%d.multi_snp_wise.genes.out"), 1:10)
+  P_COL     <- "P_MULTI"
+  CORPAIRS  <- file.path(RES, "magma_genes_by_chr", "magma_gene_cor_pairs_GLM.txt")
+  SETS      <- file.path(BASE, "inst/extdata/MAGMA_pathway",
+                         "maize_pathway.sets.annot.WIDE.txt")
+  OUT_D     <- file.path(BASE, "results/maize_N/catfish")
+  TAG       <- "maize_N_corncyc"
+  MIN_GENES <- 5L     # CornCyc sets are smaller; 10 leaves only 105 pathways
+} else if (SPECIES == "maize_mlm") {
+  # nitrogen GWAS, MLM (kinship/PC corrected -- median gene p 0.468 vs the
+  # GLM's 0.185, i.e. properly calibrated rather than inflated)
+  MD <- file.path(RES, "magma_multi_snp_wise_genes_by_chr_N_maize")
+  GENES_FILES <- file.path(MD, "N_maize_MLM_ALLCHR.multi_snp_wise.genes.out")
+  P_COL     <- "P_MULTI"
+  CORPAIRS  <- file.path(MD, "magma_gene_cor_pairs_MLM_ALLCHR.txt")
+  SETS      <- file.path(BASE, "inst/extdata/MAGMA_pathway",
+                         "maize_pathway.sets.annot.WIDE.txt")
+  OUT_D     <- file.path(BASE, "results/maize_N/catfish")
+  TAG       <- "maize_N_MLM_corncyc"
+  MIN_GENES <- 5L
+} else {
+  stop("SPECIES must be 'human', 'maize' or 'maize_mlm'", call. = FALSE)
+}
+# pathway id -> readable name (PlantCyc IDs like LIPAS-PWY are opaque)
+PW_NAMES <- NULL
+if (grepl("^maize", SPECIES)) {
+  nmf <- file.path(BASE, "inst/extdata/pathway", "corncyc_pathways.20230103.maizeIDs")
+  if (file.exists(nmf)) {
+    nm <- utils::read.delim(nmf, stringsAsFactors = FALSE, check.names = FALSE)
+    nm <- unique(nm[, c("Pathway-id", "Pathway-name")])
+    PW_NAMES <- stats::setNames(nm[["Pathway-name"]], nm[["Pathway-id"]])
+  }
+}
+.label <- function(ids, width = 58) {
+  out <- if (is.null(PW_NAMES)) ids else {
+    n <- PW_NAMES[ids]; ifelse(is.na(n), ids, paste0(ids, " | ", n))
+  }
+  substr(out, 1, width)
+}
+dir.create(OUT_D, recursive = TRUE, showWarnings = FALSE)
+stopifnot(all(file.exists(GENES_FILES)), file.exists(CORPAIRS), file.exists(SETS))
+cat(sprintf("SPECIES = %s   (%d gene file(s), P column '%s')\n",
+            SPECIES, length(GENES_FILES), P_COL))
+
+set.seed(SEED)
+t0 <- Sys.time()
+
+## ---------------------------------------------------------------- statistics
+# Everything is computed as log(p). On pathways of 100-200 genes with dense
+# signal, Fisher and Stouffer p-values fall below ~1e-308 and underflow to 0 in
+# linear space, which ties hundreds of pathways at the floor. R's *_log.p
+# arguments give exact logs instead.
+
+.logsumexp <- function(lx) {
+  m <- max(lx)
+  if (!is.finite(m)) return(-Inf)
+  m + log(sum(exp(lx - m)))
+}
+
+# ACAT on log p-values, returning log(p_ACAT).
+#   T = mean_i tan((0.5 - p_i) * pi);  for small p, tan(.) -> 1/(p*pi)
+#   large T  =>  p_ACAT -> 1/(T*pi)
+.acat_log <- function(lp) {
+  lp <- pmin(lp, -1e-300)
+  m  <- length(lp)
+  small <- lp < log(1e-15)
+  logS_small <- if (any(small)) .logsumexp(-lp[small] - log(pi)) else -Inf
+  S_big <- if (any(!small)) sum(tan((0.5 - exp(lp[!small])) * pi)) else 0
+  if (is.finite(logS_small)) {
+    logS <- if (logS_small > log(abs(S_big) + 1e-300) + 50) logS_small
+            else log(max(exp(logS_small) + S_big, 1e-300))
+  } else {
+    logS <- log(max(S_big, 1e-300))
+  }
+  logT <- logS - log(m)
+  if (logT > log(1e15)) return(-logT - log(pi))
+  Tv <- exp(logT)
+  pv <- 0.5 - atan(Tv) / pi
+  if (pv <= 0) -745 else log(pv)
+}
+
+.fisher_log <- function(lp) {
+  stats::pchisq(-2 * sum(lp), df = 2 * length(lp),
+                lower.tail = FALSE, log.p = TRUE)
+}
+.stouffer_log <- function(lp) {
+  z <- stats::qnorm(lp, lower.tail = FALSE, log.p = TRUE)
+  z[!is.finite(z)] <- 0
+  stats::pnorm(sum(z) / sqrt(length(z)), lower.tail = FALSE, log.p = TRUE)
+}
+.minp_log <- function(lp) {
+  m <- length(lp); lmin <- min(lp)
+  v <- m * log1p(-exp(lmin))
+  if (!is.finite(v)) return(lmin + log(m))
+  log1p(-exp(v))
+}
+TAU_GRID <- c(0.1, 0.05, 0.01, 0.005, 0.001)
+.tfisher_log <- function(lp) {
+  if (!USE_TFISHER) return(NA_real_)
+  p <- exp(pmax(lp, -700)); m <- length(p); best <- 0
+  for (tau in TAU_GRID) {
+    st <- TFisher::stat.soft(p = p, tau1 = tau)
+    pv <- TFisher::p.soft(q = st, n = m, tau1 = tau, M = NULL)
+    if (is.finite(pv) && pv > 0 && log(pv) < best) best <- log(pv)
+  }
+  if (best == 0) NA_real_ else best
+}
+
+# omnibus = ACAT across component log-p values; returns log(p_omnibus)
+.omni_log <- function(lp) {
+  comps <- c(.acat_log(lp), .fisher_log(lp), .stouffer_log(lp), .minp_log(lp))
+  if (USE_TFISHER) comps <- c(comps, .tfisher_log(lp))
+  comps <- comps[is.finite(comps)]
+  if (!length(comps)) return(0)
+  .acat_log(comps)
+}
+
+## ---------------------------------------------------------------- gene input
+cat("[1] reading gene results\n")
+g <- do.call(rbind, lapply(GENES_FILES, function(f)
+       read.table(f, header = TRUE, comment.char = "#", stringsAsFactors = FALSE)))
+g$GENE <- as.character(g$GENE)
+if (!P_COL %in% names(g)) stop("column ", P_COL, " not found", call. = FALSE)
+g$P <- g[[P_COL]]
+g <- g[is.finite(g$P) & is.finite(g$ZSTAT), ]
+g <- g[!duplicated(g$GENE), ]
+gene_id  <- g$GENE
+gene_chr <- as.character(g$CHR)
+gene_lp  <- log(pmin(pmax(g$P, 1e-320), 1))
+names(gene_lp) <- gene_id
+idx_of <- setNames(seq_along(gene_id), gene_id)
+cat(sprintf("    genes: %d across %d chromosomes\n",
+            length(gene_id), length(unique(gene_chr))))
+
+## ---------------------------------------------------------------- pathways
+cat("[2] reading pathways\n")
+lines <- readLines(SETS, warn = FALSE)
+paths <- list()
+for (ln in lines) {
+  f <- strsplit(ln, "\t", fixed = TRUE)[[1]]
+  if (length(f) < 2) next
+  gs <- unique(f[-1]); gs <- gs[nzchar(gs)]
+  ii <- idx_of[gs]; ii <- ii[!is.na(ii)]
+  if (length(ii) >= MIN_GENES && length(ii) <= MAX_GENES) paths[[f[1]]] <- as.integer(ii)
+}
+P_NAMES <- names(paths)
+NP <- length(paths)
+cat(sprintf("    pathways kept (%d-%d genes mapped): %d\n", MIN_GENES, MAX_GENES, NP))
+
+## ---------------------------------------------------- per-chromosome Cholesky
+cat("[3] building per-chromosome correlation and Cholesky factors\n")
+if (requireNamespace("data.table", quietly = TRUE)) {
+  cp <- as.data.frame(data.table::fread(CORPAIRS, showProgress = FALSE))
+} else {
+  cp <- utils::read.delim(CORPAIRS, header = TRUE, stringsAsFactors = FALSE,
+                          colClasses = c("character", "character", "numeric"))
+}
+names(cp)[1:3] <- c("g1", "g2", "r")
+cp$g1 <- as.character(cp$g1); cp$g2 <- as.character(cp$g2)
+cat(sprintf("    correlation pairs: %d\n", nrow(cp)))
+
+# split pairs by chromosome ONCE (both genes are always on the same chromosome
+# because MAGMA computes correlations within a chromosome batch)
+chr_of <- setNames(gene_chr, gene_id)
+cp$chr <- chr_of[cp$g1]
+cp <- cp[!is.na(cp$chr) & !is.na(chr_of[cp$g2]), ]
+cp_by_chr <- split(cp[, c("g1","g2","r")], cp$chr)
+rm(cp); invisible(gc())
+
+chroms <- unique(gene_chr)
+chol_list <- list(); chr_idx <- list()
+for (cc in chroms) {
+  ii <- which(gene_chr == cc)
+  ids <- gene_id[ii]
+  loc <- setNames(seq_along(ids), ids)
+  m <- length(ids)
+  R <- diag(1, m)
+  sub <- cp_by_chr[[cc]]
+  npair <- if (is.null(sub)) 0L else nrow(sub)
+  if (npair) {
+    a <- loc[sub$g1]; b <- loc[sub$g2]; rr <- as.numeric(sub$r)
+    ok <- !is.na(a) & !is.na(b) & is.finite(rr)
+    R[cbind(a[ok], b[ok])] <- rr[ok]
+    R[cbind(b[ok], a[ok])] <- rr[ok]
+  }
+  # try Cholesky first; only pay for an eigendecomposition if R is not PD
+  U <- tryCatch(chol(R), error = function(e) NULL)
+  if (is.null(U)) {
+    ev <- eigen(R, symmetric = TRUE)
+    ev$values[ev$values < 1e-6] <- 1e-6
+    R <- ev$vectors %*% diag(ev$values) %*% t(ev$vectors)
+    d <- sqrt(diag(R)); R <- R / outer(d, d)
+    U <- chol(R)
+    cat(sprintf("    chr %-3s genes=%-5d pairs=%-7d (eigen-repaired)\n", cc, m, npair))
+  } else {
+    cat(sprintf("    chr %-3s genes=%-5d pairs=%-7d\n", cc, m, npair))
+  }
+  chol_list[[cc]] <- U   # upper triangular, R = t(U) %*% U ; draw via t(U) %*% z
+  chr_idx[[cc]]   <- ii
+}
+rm(cp_by_chr); invisible(gc())
+
+# A correlation file that covers only some chromosomes silently turns the rest
+# into an independence null. Warn loudly -- this exact thing happened with the
+# maize GLM file (chr1 only).
+npair_by_chr <- vapply(chroms, function(cc) {
+  ii <- chr_idx[[cc]]; sum(!is.na(ii))
+}, numeric(1))
+covered <- names(which(vapply(chroms, function(cc)
+             any(chol_list[[cc]][upper.tri(chol_list[[cc]])] != 0), logical(1))))
+if (length(covered) < length(chroms)) {
+  warning(sprintf(
+    "correlations cover only %d of %d chromosomes (%s). Genes on the rest are\n  being treated as INDEPENDENT -- the LD-aware null is incomplete.",
+    length(covered), length(chroms), paste(covered, collapse = ",")), call. = FALSE)
+  cat(sprintf("\n*** WARNING: LD modelled on %d/%d chromosomes only ***\n\n",
+              length(covered), length(chroms)))
+}
+
+## ---------------------------------------------------------------- observed
+cat("[4] observed statistics\n")
+obs_log <- vapply(paths, function(ii) .omni_log(gene_lp[ii]), numeric(1))
+
+## ---------------------------------------------------------------- WY null
+cat(sprintf("[5] Westfall-Young null: B=%d replicates, TFisher=%s\n", B, USE_TFISHER))
+NG <- length(gene_id)
+minp_null <- numeric(B)
+null_mat <- matrix(NA_real_, nrow = B, ncol = NP)   # B x NP, needed for
+                                                   # per-pathway standardisation
+pb_at <- max(1L, B %/% 20L)
+for (b in seq_len(B)) {
+  znull <- numeric(NG)
+  for (cc in chroms) {
+    U <- chol_list[[cc]]
+    z <- stats::rnorm(ncol(U))
+    znull[chr_idx[[cc]]] <- as.vector(t(U) %*% z)
+  }
+  # one-sided, matching mvn_sided = "one"
+  lpnull <- stats::pnorm(znull, lower.tail = FALSE, log.p = TRUE)
+  st <- vapply(paths, function(ii) .omni_log(lpnull[ii]), numeric(1))
+  minp_null[b] <- min(st, na.rm = TRUE)
+  null_mat[b, ] <- st
+  if (b %% pb_at == 0) cat(sprintf("    %d/%d  (%.0f%%)  elapsed %s\n", b, B,
+      100*b/B, format(round(difftime(Sys.time(), t0, units="mins"), 1))))
+}
+
+## ------------------------------------------------- stage 1: standardisation
+# Westfall-Young needs the per-test statistics on a COMMON scale. The raw
+# analytic omnibus is not: its null depends strongly on pathway size (Fisher's
+# statistic grows with m), so the cross-pathway minimum is dominated by the
+# largest sets. Standardise each pathway against its OWN null first -- this is
+# the role the per-pathway MVN calibration plays, computed here from the same
+# genome-wide draws.
+cat("[6] standardising each pathway against its own null\n")
+mu <- colMeans(null_mat)
+sdv <- apply(null_mat, 2, stats::sd)
+sdv[!is.finite(sdv) | sdv <= 0] <- NA_real_
+z_obs  <- (obs_log - mu) / sdv                       # negative = more extreme
+z_null <- sweep(sweep(null_mat, 2, mu, "-"), 2, sdv, "/")
+ok <- is.finite(z_obs)
+cat(sprintf("    pathways with usable null sd: %d of %d\n", sum(ok), NP))
+
+## ---------------------------------------------------------------- adjust
+cat("[7] FWER-adjusted p-values (standardised scale)\n")
+minz_null <- apply(z_null[, ok, drop = FALSE], 1, min, na.rm = TRUE)
+p_fwer_std <- rep(NA_real_, NP)
+p_fwer_std[ok] <- vapply(z_obs[ok],
+                         function(o) (1 + sum(minz_null <= o)) / (B + 1), numeric(1))
+p_fwer <- vapply(obs_log, function(o) (1 + sum(minp_null <= o)) / (B + 1), numeric(1))
+thresh05_log <- stats::quantile(minp_null, 0.05, names = FALSE)
+thresh05 <- exp(thresh05_log)
+
+# Separate the two effects. If the single-pathway statistic were uniform under
+# the null, the 5th percentile of its own null would be 0.05. It is not, so
+# report both pieces rather than one misleading "effective tests" number.
+single_null <- as.vector(null_mat)
+single_null <- single_null[is.finite(single_null)]
+calib_q05   <- exp(stats::quantile(single_null, 0.05, names = FALSE))
+calib_factor <- 0.05 / calib_q05                    # >1 => anti-conservative
+eff_tests    <- calib_q05 / thresh05                # multiplicity only
+
+res <- data.frame(
+  pathway_id   = P_NAMES,
+  z_std        = z_obs,
+  p_fwer_std   = p_fwer_std,
+  n_genes      = vapply(paths, length, integer(1)),
+  log10_p_omnibus = obs_log / log(10),
+  p_omnibus    = exp(obs_log),
+  p_fwer_wy    = p_fwer,
+  p_bonferroni = pmin(exp(obs_log) * NP, 1),
+  stringsAsFactors = FALSE
+)
+res <- res[order(res$z_std), ]
+write.csv(res, file.path(OUT_D, paste0(TAG, "_westfall_young.csv")), row.names = FALSE)
+
+cat(sprintf("\npathways tested              : %d\n", NP))
+cat(sprintf("WY 5%% FWER threshold         : %.4g\n", thresh05))
+cat(sprintf("Bonferroni 5%% threshold      : %.4g\n", 0.05 / NP))
+cat(sprintf("\n-- decomposition --\n"))
+cat(sprintf("single-pathway null 5%% point : %.4g   (would be 0.05 if calibrated)\n", calib_q05))
+cat(sprintf("  calibration factor          : %.1fx anti-conservative\n", calib_factor))
+cat(sprintf("WY threshold is %.0fx stricter than Bonferroni\n", (0.05/NP)/thresh05))
+cat("  (the analytic omnibus has a heavy lower tail under LD, so Bonferroni\n")
+cat("   on it is anti-conservative -- 'effective number of tests' is not a\n")
+cat("   meaningful summary when the per-test null is this non-uniform)\n")
+cat(sprintf("\nsignificant at FWER 5%%  (WY standardised): %d\n", sum(res$p_fwer_std <= 0.05, na.rm = TRUE)))
+cat(sprintf("significant at FWER 5%%  (Bonferroni): %d\n", sum(res$p_bonferroni <= 0.05)))
+
+cat("\n--- top 15 by WY-adjusted p ---\n")
+t15 <- res[order(res$z_std), ][1:15, ]
+print(data.frame(pathway = .label(t15$pathway_id),
+                 n = t15$n_genes,
+                 z_std = round(t15$z_std, 1),
+                 log10p = round(t15$log10_p_omnibus, 1),
+                 p_WY = signif(t15$p_fwer_std, 3)), row.names = FALSE)
+
+cat(sprintf("\n--- positive controls (%s) ---\n", SPECIES))
+CTRL_RX <- if (SPECIES == "human")
+  "LIPID|LIPOPROTEIN|CHOLESTEROL|STEROL|BILE|LDL|SREBP|PPARA" else
+  "NITRATE|NITRITE|AMMONI|GLUTAMIN|GLUTAMATE|ASPARAGIN|UREA|NITROGEN|AMINO_ACID|ARGININE"
+lip <- grep(CTRL_RX, res$pathway_id, ignore.case = TRUE)
+lp <- res[lip, ]; lp <- lp[order(lp$z_std), ]
+print(data.frame(pathway = .label(lp$pathway_id),
+                 rank = match(lp$pathway_id, res$pathway_id),
+                 n = lp$n_genes,
+                 z_std = round(lp$z_std, 1),
+                 p_WY = signif(lp$p_fwer_std, 3))[1:min(12, nrow(lp)), ], row.names = FALSE)
+
+cat("\n--- size bias check: corr(log10 size, statistic) ---\n")
+cat(sprintf("  raw analytic omnibus : %.3f\n",
+            stats::cor(log10(res$n_genes), res$log10_p_omnibus, use = "complete.obs")))
+cat(sprintf("  standardised z       : %.3f   <- should be near 0\n",
+            stats::cor(log10(res$n_genes), res$z_std, use = "complete.obs")))
+
+cat(sprintf("\ntotal runtime: %s\n", format(round(difftime(Sys.time(), t0, units = "mins"), 1))))
