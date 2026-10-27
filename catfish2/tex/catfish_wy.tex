@@ -370,18 +370,37 @@ ACAT-type cross-method operator $\mathcal{O}(\cdot)$. The omnibus is not an
 additional gene-level test but a pathway-level summary of the evidence produced
 by the component tests for the same pathway.
 
-The soft TFisher component is adaptive over a grid of truncation thresholds
-$\tau$. In this work we use
-$\tau\in\{10^{-1},5\times10^{-2},10^{-2},5\times10^{-3},10^{-3}\}$ and take the
-minimum calibrated TFisher $p$-value across the grid. This grid is deliberately
-coarser and shifted upward relative to the original CATFISH defaults. A
-threshold far into the tail, such as $\tau=10^{-5}$, is degenerate for pathways
-of realistic size: the expected number of genes surviving truncation is
-$m\tau$, so for $m=50$ fewer than one null draw in a thousand contributes any
-non-zero term at all and the statistic is identically zero for the rest, which
-makes the empirical null a point mass and the calibrated $p$-value
-uninformative. The grid above keeps the expected number of surviving genes above
-one across the pathway sizes we consider.
+Four of the five components---ACAT, Fisher, minP and Stouffer---are fully
+determined by the gene-level $p$-values and have no tuning parameters. The soft
+TFisher component is the exception: it is adaptive over a grid of truncation
+thresholds $\tau$, and $\tau$ governs which genes enter the statistic at all.
+It is therefore the only place in CATFISH where a choice has to be defended,
+and we set it out here.
+
+We use $\tau\in\{10^{-1},5\times10^{-2},10^{-2},5\times10^{-3},10^{-3}\}$ and
+take the minimum calibrated TFisher $p$-value across the grid. This grid is
+deliberately coarser and shifted upward relative to the original CATFISH
+defaults. A threshold far into the tail is degenerate for pathways of realistic
+size: the number of genes surviving truncation is $\mathrm{Binomial}(m,\tau)$,
+so at $\tau=10^{-5}$ and $m=50$ only about one null draw in two thousand
+contributes a non-zero term, and the statistic is identically zero for the
+rest. The empirical null is then almost a point mass at zero and the calibrated
+$p$-value carries no information.
+
+The grid spans this trade-off rather than resolving it with a single value. The
+number of genes surviving truncation is $\mathrm{Binomial}(m,\tau)$, so a
+threshold is informative for a pathway only when $m\tau$ is not far below one,
+and whether a given grid point is live therefore depends on the set size. At
+$\tau=10^{-1}$ the expected count reaches one at $m=10$; at $\tau=10^{-3}$ it
+does so only at $m=1000$. For the set sizes typical of curated pathway
+databases, the upper end of the grid does most of the work, while the lower
+thresholds fire rarely and only when a pathway contains genuinely extreme
+genes---which is precisely when they are worth having, and why the component is
+adaptive across the grid rather than fixed at one value. For very small sets no
+grid point is informative, the TFisher component contributes little, and the
+omnibus rests on the remaining four. Users applying CATFISH to a database with
+a different size distribution can read off which grid points will be active for
+their sets from $m\tau$ directly, and adjust the grid if none are.
 
 \begin{table*}[!t]
 \centering
@@ -424,63 +443,84 @@ Single strongest gene or highly sparse signals. \\
 
 \subsection*{2.2 Two sources of dependence}
 
-CATFISH statistics are correlated at two levels, and the two require different
-treatments.
+CATFISH statistics are correlated at two levels. The two arise from different
+causes, and both have to be addressed before any pathway $p$-value means what
+it claims to.
 
 \emph{Within a pathway}, the component tests are not independent of one another
 for two reasons. Each is a deterministic function of the same vector
 $\mathbf{p}_S$, which induces cross-method dependence even if genes were
 independent; and the gene-level evidence is itself correlated through LD,
-overlapping SNP-to-gene assignments, and shared local genomic architecture.
-Both are handled by the correlated-null calibration of Section~2.3, which recomputes every
-component from a common dependence-preserving null draw.
+overlapping SNP-to-gene assignments, and shared local genomic architecture. The
+consequence is that an analytic reference distribution derived under
+independence is wrong for every component, and wrong in the anti-conservative
+direction, because correlated genes carry less information than the same number
+of independent ones.
 
 \emph{Between pathways}, the pathway-level $p$-values are correlated because
-pathways share genes. In CornCyc, a maize metabolic database, a gene assigned to
-a branch point of amino-acid metabolism is a member of several biosynthetic
-pathways at once; in Reactome, parent and child pathways are nested by
-construction. A gene whose null draw happens to be extreme therefore pushes
-every pathway containing it in the same direction simultaneously. A calibration
-that evaluates each pathway against its own null in isolation cannot see this.
-Scoring the whole family on one shared draw, as Section~2.3 describes, does.
+pathway databases assign genes to more than one set. Any gene belonging to
+several pathways transmits its evidence to all of them simultaneously, so a
+gene whose null draw happens to be extreme pushes every pathway containing it
+in the same direction at once. How much of this a database carries varies
+widely and is not predictable from the number of pathways alone: a hierarchy
+with nested parent and child sets produces dependence that is pervasive but
+individually weak, whereas a curated collection of largely disjoint processes
+produces dependence that is rare but locally strong between the few sets that
+do overlap. The consequence is that a multiple-testing correction derived under
+independence---Bonferroni, or Benjamini--Hochberg under its positive-dependence
+conditions---does not deliver its nominal family-wise rate, and the size of the
+discrepancy is a property of the database in use rather than of the method
+applied to it.
 
-The validity of the correlated-null calibration rests on three assumptions.
-(i) \emph{Approximate normality}: under the null the pathway-level vector of
-gene statistics is approximately $\mathbf{Z}_S\sim\mathcal{N}(0,R_S)$. (ii)
-\emph{Correlation-matrix adequacy}: the correlation matrices built from MAGMA's
-reported gene pairs are an LD-informed working approximation to the true
-gene-level covariance, which is not directly observed, and unreported pairs are
-set to zero; practical adequacy is assessed indirectly through the calibration
-and robustness analyses below. (iii) \emph{No residual structural confounding}: gene-level inputs have
-been adjusted so that pathway signals are not driven primarily by gene size or
-SNP density.
+These are usually treated as separate problems requiring separate machinery. In
+CATFISH they are not. Both follow from the same underlying object---one vector
+of correlated gene-level statistics---and both are handled by the same
+construction: a single genome-wide null draw, carrying the estimated LD, scored
+through every pathway in the family at once. Read down a pathway, that
+construction supplies a null for the components of that pathway and absorbs the
+within-pathway dependence; read across the family, it supplies a null for the
+family minimum and absorbs the between-pathway dependence. Nothing about either
+correlation structure is estimated or modelled; both are inherited. Section~2.3
+develops this.
 
-\subsection*{2.3 Calibration against a correlated null: one draw, two readings}
+The validity of the construction rests on three assumptions. (i) \emph{Approximate
+normality}: under the null the pathway-level vector of gene statistics is
+approximately $\mathbf{Z}_S\sim\mathcal{N}(0,R_S)$. (ii) \emph{Correlation-matrix
+adequacy}: the correlation matrices built from MAGMA's reported gene pairs are
+an LD-informed working approximation to the true gene-level covariance, which is
+not directly observed, and unreported pairs are set to zero; practical adequacy
+is assessed indirectly through the calibration and robustness analyses below.
+(iii) \emph{No residual structural confounding}: gene-level inputs have been
+adjusted so that pathway signals are not driven primarily by gene size or SNP
+density.
 
-CATFISH calibrates every pathway against an empirical null built from a single
-correlated draw of gene-level statistics, and both the per-pathway and the
-family-wise statements are read off that same null. There is no separate
-correction step applied afterwards.
+\subsection*{2.3 Calibration and family-wise control from a shared correlated null}
 
-\paragraph{Building the null.} Gene--gene correlations are read from MAGMA's
-\texttt{.genes.raw} output as a list of gene pairs and their correlations. For
-each chromosome $c$ containing $m_c$ genes we form an $m_c\times m_c$
-correlation matrix $R_c$ by starting from the identity and filling in the
-reported pairs,
+CATFISH obtains two different $p$-values for every pathway: a marginal one,
+which asks whether that pathway is enriched, and a family-wise one, which asks
+whether evidence this strong would appear anywhere among the $K$ pathways
+tested by chance. Both are read from a single set of resampled null draws. The
+procedure has four steps.
+
+\paragraph{Step 1: generate the null.}
+Gene--gene correlations are read from MAGMA's \texttt{.genes.raw} output as a
+list of gene pairs and their correlations. For each chromosome $c$ containing
+$m_c$ genes we form an $m_c\times m_c$ correlation matrix $R_c$ by starting
+from the identity and filling in the reported pairs,
 \[
-R_c = I_{m_c} + \sum_{(i,j)\in\mathcal{P}_c} r_{ij}\left(e_ie_j^{\top}+e_je_i^{\top}\right),
+R_c = I_{m_c} + \sum_{(i,j)\in\mathcal{P}_c}
+      r_{ij}\left(e_ie_j^{\top}+e_je_i^{\top}\right),
 \]
-where $\mathcal{P}_c$ is the set of pairs MAGMA reports for that chromosome.
-Pairs absent from $\mathcal{P}_c$ are left at zero. MAGMA computes correlations
-only for gene pairs close enough to share LD, so $R_c$ is banded by
-construction and a zero between two distant genes on the same chromosome is a
-good approximation rather than an imputation; a zero arising because a nearby
-pair was not reported is a genuine approximation error, and we return to it in
-Section~5. Genes on different chromosomes are treated as independent, which is
-structurally correct rather than imputed. If $R_c$ is not positive definite we
-repair it by flooring its eigenvalues at $10^{-6}$, reconstructing, and
-renormalising the diagonal; the implementation reports which chromosomes
-required this.
+where $\mathcal{P}_c$ is the set of pairs reported for that chromosome. Pairs
+absent from $\mathcal{P}_c$ are left at zero. Correlations are computed only for
+gene pairs close enough to share LD, so $R_c$ is banded by construction and a
+zero between two distant genes on the same chromosome is a good approximation
+rather than an imputation; a zero arising because a nearby pair went unreported
+is a genuine approximation error, and we return to it in Section~5. Genes on
+different chromosomes are treated as independent, which is structurally correct
+rather than imputed. If $R_c$ is not positive definite we repair it by flooring
+its eigenvalues at $10^{-6}$, reconstructing, and renormalising the diagonal;
+the implementation reports which chromosomes required this.
 
 Writing $R_c=U_c^{\top}U_c$ for the Cholesky factor, replicate $b$ draws
 \[
@@ -490,18 +530,25 @@ Writing $R_c=U_c^{\top}U_c$ for the Cholesky factor, replicate $b$ draws
 independently per chromosome, and the concatenation $\mathbf{Z}^{(b)}$ is one
 genome-wide null realisation carrying the estimated LD structure. Gene-level
 null $p$-values follow by the Gaussian copula
-$p_g^{(b)}=1-\Phi(Z_g^{(b)})$, matching MAGMA's one-sided sign convention.
+$p_g^{(b)}=1-\Phi(Z_g^{(b)})$, matching MAGMA's one-sided sign convention. This
+is repeated for $b=1,\dots,B$.
 
-\paragraph{Scoring every pathway on every draw.} For each replicate we
-recompute all five component statistics and the omnibus operator
-$\mathcal{O}(\cdot)$ for \emph{every} pathway in the family
+The draw is genome-wide rather than pathway-by-pathway, and that choice is
+forced by Step~4: the family-wise null requires all $K$ pathways to be scored on
+the \emph{same} realisation, so that a gene shared between pathways perturbs
+them together. Drawing each pathway from its own correlation submatrix would be
+correct marginally but would destroy exactly the structure Step~4 needs.
+
+\paragraph{Step 2: score every pathway on every replicate.}
+For each replicate we recompute all five component statistics and the omnibus
+operator $\mathcal{O}(\cdot)$ for every pathway in the family
 $\mathcal{F}=\{S_1,\dots,S_K\}$, giving a $B\times K$ matrix of null omnibus
 values
 \[
 Q^{(b)}_k = \mathcal{O}\!\left(\mathbf{p}^{(b)}(S_k)\right),
 \qquad b=1,\dots,B,\quad k=1,\dots,K .
 \]
-Because every component is recomputed from the same draw, the matrix preserves
+Because every component is recomputed from the same draw, $Q$ preserves
 within-pathway gene dependence, cross-method dependence, and---because all $K$
 pathways share the draw---between-pathway dependence as well. The observed
 values $q^{\mathrm{obs}}_k=\mathcal{O}(\mathbf{p}^{\mathrm{obs}}(S_k))$ are
@@ -510,55 +557,65 @@ components with no resampling defines the uncalibrated analytic omnibus
 $\mathrm{Omnibus}_{\mathrm{An}}(S_k)=q^{\mathrm{obs}}_k$, which assumes gene
 independence and serves as the baseline throughout.
 
-\paragraph{Reading~1 (down a column): the marginal $p$-value.} Column $k$ of
-$Q$ is the null distribution of pathway $S_k$ under its own LD. The
-LD-aware marginal $p$-value is the Monte Carlo tail probability
+\paragraph{Step 3: the marginal \texorpdfstring{$p$}{p}-value.}
+Compare each pathway's observed statistic with its own null values across the
+$B$ replicates. The LD-aware marginal $p$-value is the Monte Carlo tail
+probability
 \[
-\tilde p_k \;=\; \frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(Q^{(b)}_k\le q^{\mathrm{obs}}_k\right)}{B+1}.
+\tilde p_k \;=\;
+\frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(Q^{(b)}_k\le q^{\mathrm{obs}}_k\right)}{B+1}.
 \]
 This is the quantity a per-pathway multivariate normal calibration produces,
 obtained here from the genome-wide draw rather than from a pathway-specific
-submatrix $R_{S_k}$; the two use identical correlation information, since
+submatrix $R_{S_k}$. The two use identical correlation information, since
 $R_{S_k}$ is the submatrix of the $R_c$ above restricted to that pathway's
-genes. We refer to $\tilde p_k$ as the MVN-calibrated $p$-value throughout,
-and it is what pathways are ranked on.
+genes, so nothing is lost relative to per-pathway calibration. We refer to
+$\tilde p_k$ as the MVN-calibrated $p$-value throughout, and it is what
+pathways are ranked on.
 
-\paragraph{Reading~2 (across a row): the family-wise $p$-value.} Row $b$ of $Q$
-is a null realisation of the entire family. Recording its minimum,
+\paragraph{Step 4: the family-wise \texorpdfstring{$p$}{p}-value.}
+Within each replicate, record the smallest statistic across the whole family,
 \[
 M^{(b)} = \min_{1\le k\le K} Q^{(b)}_k ,
 \]
-and comparing each observed value against the resulting distribution gives the
-Westfall--Young adjusted $p$-value \citep{Westfall1993}
+and compare each observed statistic with the resulting distribution. This gives
+the Westfall--Young adjusted $p$-value \citep{Westfall1993}
 \[
 \tilde p^{\mathrm{WY}}_k \;=\;
 \frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(M^{(b)}\le q^{\mathrm{obs}}_k\right)}{B+1},
 \]
 and rejecting every pathway with $\tilde p^{\mathrm{WY}}_k\le\alpha$ controls
-the family-wise error rate at level $\alpha$. The between-pathway correlation is
-never estimated or modelled: because all $K$ pathways are evaluated on the same
-draw, a gene shared by several pathways perturbs all of them together, exactly
-as it does in the observed data, and that dependence is inherited by the
-distribution of $M$. The quantity
+the family-wise error rate at level $\alpha$. The argument is immediate:
+rejecting at least one true null in the family is the event that the smallest
+null statistic crosses the threshold, so setting the threshold at the
+$\alpha$-quantile of $M$ bounds that event at $\alpha$ by construction,
+whatever the dependence among the tests.
+
+The between-pathway correlation is never estimated or modelled. Because all $K$
+pathways are evaluated on the same draw in Step~2, a gene shared by several
+pathways perturbs all of them together, exactly as it does in the observed data,
+and that dependence is inherited by the distribution of $M$. The quantity
 $\hat t_\alpha=\mathrm{quantile}_\alpha(M)$ is the family-wise significance
 threshold implied by the pathway database actually in use; its ratio to the
-Bonferroni threshold $\alpha/K$ is a direct, interpretable measure of how far
-from independent that database is, and it costs nothing beyond the draws
-already taken.
+Bonferroni threshold $\alpha/K$ measures how far from independent that database
+is, and costs nothing beyond the draws already taken.
 
-The relationship between the two readings is the ordinary one between a raw and
-an adjusted $p$-value. The marginal $\tilde p_k$ answers ``is this pathway
-enriched?''; the adjusted $\tilde p^{\mathrm{WY}}_k$ answers ``would evidence
-this strong appear anywhere among $K$ pathways by chance?''. Both are
-per-pathway quantities and both are reported.
+\medskip
+Steps~3 and~4 read the same matrix $Q$ and require no second resampling. The
+relationship between their outputs is the ordinary one between a raw and an
+adjusted $p$-value: $\tilde p_k$ is the evidence for pathway $S_k$ considered
+alone, $\tilde p^{\mathrm{WY}}_k$ the evidence after accounting for having
+looked at $K$ pathways. Both are per-pathway quantities and both are reported;
+neither replaces the other.
 
-\paragraph{Size standardisation.} A minimum taken across tests is only
-meaningful if those tests share a scale. The raw omnibus does not: Fisher's
-statistic grows with $m$, so the family minimum would be dominated by the
-largest sets for a purely mechanical reason. We therefore also report a variant
-in which each observed value is expressed as a $z$-score against its own column,
+\paragraph{Size standardisation.}
+A minimum taken across tests is only meaningful if those tests share a scale.
+The raw omnibus does not: Fisher's statistic grows with $m$, so the family
+minimum in Step~4 would be dominated by the largest sets for a purely
+mechanical reason. We therefore also report a variant in which each observed
+value is expressed as a $z$-score against its own column of $Q$,
 $z_k=(q^{\mathrm{obs}}_k-\mu_k)/\sigma_k$ with $\mu_k,\sigma_k$ the mean and
-standard deviation of column $k$, before the row minimum is taken. This is a
+standard deviation of that column, before the row minimum is taken. This is a
 scale correction required by the minimum operation; it is not a correction for
 pathway-size bias, and in Section~4.1 we show that it does not act as one.
 
@@ -581,101 +638,65 @@ entire analysis exists to produce is destroyed without any warning being
 emitted. In our first implementation this manifested as a top-ranked pathway
 list that was, on inspection, alphabetical.
 
-Three changes are required. (i) All component statistics are computed on
+Five changes are required. (i) All component statistics are computed on
 $\ell_g=\log p_g$ and return log $p$-values, using
 \texttt{stats::pchisq(\dots,\,log.p=TRUE)} and
 \texttt{stats::qnorm(\dots,\,log.p=TRUE)} rather than their probability-scale
-equivalents. (ii) The ACAT sum is evaluated with the small-$p$ asymptote. For
+equivalents. (ii) The ACAT sum is evaluated with the small-$p$ asymptote: for
 $p<10^{-15}$, $\tan\{\pi(\tfrac12-p)\}\to 1/(p\pi)$, so the contribution of
-those genes is accumulated as a log-sum-exp of $-\ell_g-\log\pi$ and only the
-remaining genes use the trigonometric form directly; symmetrically, for a large
-combined statistic $T$ the inversion $p=\tfrac12-\arctan(T)/\pi$ is replaced by
-$p\to 1/(T\pi)$. (iii) Minimum-$p$ and omnibus inversions use
-\texttt{log1p(-exp(\textperiodcentered))} in place of $1-x$ wherever the
-argument is close to one. With these changes the pipeline represents pathway
-$p$-values down to $e^{-745}\approx10^{-324}$ and, more importantly, preserves
-their \emph{ordering} far below the point at which the probability-scale
-computation collapses. The reference implementation is
-\texttt{catfish2/scripts/00\_lib.R}.
+those genes is accumulated as a log-sum-exp of $-\ell_g-\log\pi$ while the
+remaining genes use the trigonometric form directly. (iii) The inversion
+$p=\tfrac12-\arctan(T)/\pi$ is replaced by $p\to1/(T\pi)$ for $T>10^{6}$;
+beyond $T\approx10^{5}$ that form loses more to cancellation near $\tfrac12$
+than the asymptote loses to truncation. (iv) The ACAT statistic is legitimately
+negative when the inputs are mostly above $0.5$, which the log-space branch
+cannot represent; a separate branch evaluates $\tfrac12-\arctan(T)/\pi$
+directly in that case. Clamping instead---as an earlier implementation
+did---assigns $p=0.5$ exactly to every such pathway and destroys the ordering
+over the upper half of the distribution. (v) The minimum-$p$ inversion
+$1-(1-q)^m$ underflows once $q\lesssim10^{-16}/m$: $\exp\{m\log(1-q)\}$ rounds
+to one, its complement to $-\infty$, and the non-finite component is then
+dropped from the omnibus---so minP silently disappears exactly when a pathway
+contains a very strong gene, which is the configuration it exists to detect.
+The $m q$ asymptote is used instead whenever $\log m+\ell_{\min}<\log 10^{-8}$.
+
+With these changes the pipeline represents pathway $p$-values down to
+$e^{-745}\approx10^{-324}$ and, more importantly, preserves their \emph{ordering}
+far below the point at which the probability-scale computation collapses. The
+reference implementation is \texttt{catfish2/scripts/00\_lib.R}.
 
 \subsection*{2.5 Candidate-gene prioritization}
 
-Pathway inference is a means to an end: the output a biologist acts on is a
-short list of genes. CATFISH produces one by combining three evidence layers
-into a single composite score. The score is a heuristic ranking device, not a
-formal inferential model, and we are explicit about that: it has no null
-distribution and no $p$-value, and its purpose is to order genes for follow-up.
-
-\subsubsection*{2.5.1 Rank normalization}
-
-Each layer is placed on a common scale by rank rather than by its raw
-statistic, so that layers with very different distributions can be added.
-For gene $g$ let $r_{\mathrm{GWAS}}(g)$ be its rank by minimum SNP-level
-$p$-value among genes with at least one assigned variant,
-$r_{\mathrm{MAGMA}}(g)$ its rank by MAGMA gene-level $p$-value among all genes
-with a result, and $r_{\mathrm{PATH}}(g)$ the rank of $g$'s best pathway among
-the $N_{\mathrm{path}}$ tested. Rank one denotes the strongest evidence. The
-rank scores are
-\[
-\begin{aligned}
-S_{\mathrm{GWAS}}(g)&=-\log_{10}\!\left(r_{\mathrm{GWAS}}(g)/N_{\mathrm{gene}}\right),\\
-S_{\mathrm{MAGMA}}(g)&=-\log_{10}\!\left(r_{\mathrm{MAGMA}}(g)/N_{\mathrm{gene}}\right),\\
-S_{\mathrm{PATH}}(g)&=-\log_{10}\!\left(r_{\mathrm{PATH}}(g)/N_{\mathrm{path}}\right),
-\end{aligned}
-\]
-each lying in $[0,\log_{10}N]$. Genes with no assigned variant receive
-$S_{\mathrm{GWAS}}=0$ and genes in no annotated pathway receive
-$S_{\mathrm{PATH}}=0$, so an absent layer neither helps nor penalises beyond
-contributing nothing.
-
-A rank scale is used rather than $-\log_{10}p$ directly for two reasons. It is
-invariant to the very different tail behaviour of the three layers, and it is
-immune to the floors that arise when $p$-values underflow, provided the
-underlying quantity still orders correctly---a condition that requires care in
-practice, as Section~3.9 shows.
-
-\subsubsection*{2.5.2 Multi-pathway hub bonus}
-
-Genes annotated to several pathways receive
-\[
-B_{\mathrm{hub}}(g)=\log_{10}\!\left(n_{\mathrm{path}}(g)+1\right),
-\]
-where $n_{\mathrm{path}}(g)$ counts distinct pathways containing $g$. The
-logarithm keeps connectivity from dominating: a gene in five pathways gains
-roughly $0.23$ score units at the weight below, enough to move it within a tier
-but not to lift a gene lacking primary genetic support.
-
-\subsubsection*{2.5.3 Composite score and weights}
+The output a biologist acts on is a short list of genes, so CATFISH ranks genes
+by a composite score over three evidence layers:
 \[
 \mathrm{Score}(g)=S_{\mathrm{GWAS}}(g)+S_{\mathrm{MAGMA}}(g)
 +0.5\,S_{\mathrm{PATH}}(g)+0.3\,B_{\mathrm{hub}}(g).
 \]
-Because all terms share the $-\log_{10}(\mathrm{rank}/N)$ scale, the
-coefficients act as relative importance multipliers. Pathway evidence is
-halved because a pathway $p$-value is a \emph{set-level} statistic shared by
-every member gene: at full weight it would impose the same bonus on all genes
-in a set and exaggerate gene-level resolution. GWAS and MAGMA receive equal
-weight as complementary measures of direct genetic evidence; MAGMA's advantage
-in aggregating multi-variant signal is already expressed in its typically
-smaller $p$-values and hence its rank. The hub coefficient $0.3$ is deliberately
-secondary.
+Each layer enters by rank rather than by its raw statistic,
+$S_\bullet(g)=-\log_{10}\!\left(r_\bullet(g)/N_\bullet\right)$, where
+$r_{\mathrm{GWAS}}$ is the gene's rank by minimum SNP-level $p$-value,
+$r_{\mathrm{MAGMA}}$ its rank by gene-level $p$-value, and $r_{\mathrm{PATH}}$
+the rank of its best pathway; rank one is the strongest evidence. The hub term
+$B_{\mathrm{hub}}(g)=\log_{10}(n_{\mathrm{path}}(g)+1)$ rewards membership in
+several pathways. Genes missing a layer score zero for it, so an absent layer
+neither helps nor penalises.
 
-One caveat applies whenever both genetic layers derive from the same variants
-through the same window, which is the usual case. They are then not independent
-sources of evidence, and a gene supported by ``all three layers'' has really
-been supported by two. We report the per-layer ranks alongside the composite
-score throughout so that this is visible rather than hidden.
+Ranks are used in place of $-\log_{10}p$ so that layers with very different tail
+behaviour are comparable, and so that the score is immune to the $p$-value
+floors of Section~2.4. Pathway evidence is halved because a pathway $p$-value is
+a set-level statistic shared by every member gene, and the hub term is
+deliberately secondary. The weights are fixed \emph{a priori}; a
+simulation-based sensitivity analysis found rankings stable across
+$w_{\mathrm{path}}\in[0,1]$ and $w_{\mathrm{hub}}\in[0,0.5]$, with the defaults
+inside a broad plateau rather than at a fragile optimum
+\citep{Tandukar2025Thesis}. They are not re-tuned on the validation genes of
+Section~3.9.4, which would be circular.
 
-\subsubsection*{2.5.4 Rank-based support under non-significance}
-
-For polygenic traits few genes or pathways clear a family-wise threshold, and a
-score defined only over significant layers would be empty. We therefore define
-layer support by rank: GWAS support is the top $1\%$ of genes by minimum locus
-$p$-value, MAGMA support the top $5\%$ by gene-level $p$-value, and pathway
-support membership in any annotated pathway. When significant pathways exist we
-use only those; otherwise we retain the top twenty pathways or the top $10\%$ by
-omnibus $p$-value. These fallbacks keep the layer annotation informative in the
-regime where the method is most needed.
+The score is a heuristic ranking device, not an inferential model: it has no
+null distribution and no $p$-value. Per-layer ranks are reported alongside it,
+since the GWAS and MAGMA layers derive from the same variants and are not
+independent evidence.
 
 \subsection*{2.6 Simulation design}
 
