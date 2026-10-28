@@ -30,21 +30,29 @@ for (rn in names(RHO)) {
   for (m in SIZE) {
     U <- safe_chol(R_exch(m, RHO[[rn]]))
     ## shared per-size null bank for MVN calibration
-    bank <- vapply(seq_len(B), function(i) omnibus_log(draw_lp(U)), numeric(1))
+    bank <- components_from_zmat(draw_zmat(U, B))[, "Omnibus"]
 
     p_analytic <- numeric(NREP * NP)
     p_mvn      <- numeric(NREP * NP)
     minp_wy    <- numeric(NREP)
     k <- 0L
     for (r in seq_len(NREP)) {
-      st <- vapply(seq_len(NP), function(j) omnibus_log(draw_lp(U)), numeric(1))
+      st <- components_from_zmat(draw_zmat(U, NP))[, "Omnibus"]
       idx <- (k + 1L):(k + NP); k <- k + NP
       p_analytic[idx] <- exp(st)
       p_mvn[idx] <- vapply(st, function(s) mvn_calibrate(s, bank), numeric(1))
       minp_wy[r] <- min(st)               # max-statistic across the family
     }
-    ## WY: family-wise threshold from the distribution of the minimum
-    wy_thresh <- stats::quantile(minp_wy, ALPHA, names = FALSE)
+    ## WY: the threshold is fitted on one half of the datasets and the
+    ## family-wise rate measured on the OTHER half. Fitting and evaluating on
+    ## the same sample returns alpha by construction and measures nothing.
+    half    <- seq_len(floor(NREP / 2L))
+    cal_min <- minp_wy[half]
+    ev_min  <- minp_wy[-half]
+    wy_thresh <- stats::quantile(cal_min, ALPHA, names = FALSE)
+    ## how much of the family minimum is pinned at the package p-value floor:
+    ## if this is large the quantile lands on a tied value and the rate jumps.
+    floor_frac <- mean(minp_wy <= log(MIN_P_DEFAULT) + 1e-9)
 
     for (ai in seq_along(ALPHA)) {
       a <- ALPHA[ai]
@@ -52,8 +60,10 @@ for (rn in names(RHO)) {
         rho = RHO[[rn]], ld = rn, m = m, alpha = a,
         t1_analytic   = type1(p_analytic, a),
         t1_mvn        = type1(p_mvn, a),
-        t1_bonferroni = type1(p_analytic, a / NP) * NP,  # family-wise, rescaled
-        t1_wy         = mean(minp_wy <= wy_thresh[ai]),
+        t1_bonferroni = type1(p_analytic, a / NP) * NP,  # inflation factor, NOT a rate
+        t1_wy         = mean(ev_min <= wy_thresh[ai]),
+        wy_tie_frac   = mean(ev_min == wy_thresh[ai]),
+        wy_floor_frac = floor_frac,
         lambda_analytic = lambda_gc(p_analytic),
         lambda_mvn      = lambda_gc(p_mvn),
         stringsAsFactors = FALSE)

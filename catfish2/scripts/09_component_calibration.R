@@ -45,7 +45,7 @@ for (rn in names(RHO)) {
     arr_ev  <- components_array(uni, paths, B_EVAL)
 
     comps <- dimnames(arr_cal)[[3]]
-    for (cmp in c(comps, "Omnibus")) {
+    for (cmp in unique(c(comps, "Omnibus"))) {
       if (identical(cmp, "Omnibus")) {
         cal <- omnibus_from_components(arr_cal)
         ev  <- omnibus_from_components(arr_ev)

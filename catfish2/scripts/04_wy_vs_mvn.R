@@ -40,23 +40,18 @@ RHO  <- c(independent = 0.0, moderate = 0.3, strong = 0.6)
 SIZE <- c(20L, 50L)
 OUT <- "../results"; dir.create(OUT, showWarnings = FALSE, recursive = TRUE)
 
-draw_lp_shift <- function(U, mu) {
-  z <- as.vector(t(U) %*% stats::rnorm(ncol(U))) + mu
-  stats::pnorm(z, lower.tail = FALSE, log.p = TRUE)
-}
-
 res <- list()
 for (rn in names(RHO)) for (m in SIZE) {
   U <- safe_chol(R_exch(m, RHO[[rn]]))
-  bank <- vapply(seq_len(B), function(i) omnibus_log(draw_lp(U)), numeric(1))
+  bank <- components_from_zmat(draw_zmat(U, B))[, "Omnibus"]
 
   rk_mvn <- c(); rk_an <- c(); fwer_wy <- c(); fwer_bf <- c()
   minnull <- numeric(NREP); minnull_mvn <- numeric(NREP)
   for (r in seq_len(NREP)) {
     is_true <- c(rep(TRUE, N_TRUE), rep(FALSE, NP - N_TRUE))
-    st <- vapply(seq_len(NP), function(j) {
-      if (is_true[j]) omnibus_log(draw_lp_shift(U, MU)) else omnibus_log(draw_lp(U))
-    }, numeric(1))
+    zz <- draw_zmat(U, NP)
+    zz[is_true, ] <- zz[is_true, , drop = FALSE] + MU
+    st <- components_from_zmat(zz)[, "Omnibus"]
     pm <- vapply(st, function(s) mvn_calibrate(s, bank), numeric(1))
     ## median rank of the true pathways under each ordering
     rk_an  <- c(rk_an,  stats::median(rank(st, ties.method = "average")[is_true]))

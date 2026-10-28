@@ -1,114 +1,191 @@
 ## =============================================================================
-## 00_lib.R -- shared statistics for the CATFISH-WY paper
+## 00_lib.R -- simulation infrastructure for the CATFISH-WY paper.
 ##
-## Everything is computed as log(p). On pathways of 100-200 genes with dense
-## signal the Fisher and Stouffer p-values fall below ~1e-308 and underflow to
-## zero in linear space, which ties large blocks of pathways at the floor and
-## destroys any ranking. R's *_log.p arguments give exact logs instead.
+## The component tests and the omnibus are NOT implemented here. They are taken
+## from the CATFISH package, so these simulations exercise the same code the
+## real-data analyses run. What remains in this file is the simulation scaffold
+## only: the correlated gene universe, the pathway sampler, the per-pathway
+## (marginal) calibration, the Westfall-Young family-wise threshold, and the
+## error-rate summaries.
+##
+## Statistics are carried as log(p) inside the scaffold because the family
+## minimum and the calibration comparisons are done on that scale; the package
+## returns linear p-values floored at min_p and they are logged on arrival.
 ## =============================================================================
 
+## -----------------------------------------------------------------------------
+## Component tests -- ALL of these come from the CATFISH package.
+##
+## Nothing in this file reimplements a component test any more. Every component
+## p-value and the ACAT-O omnibus are produced by
+## CATFISH::catfish_omni2_pathways(), which is the same code path the real-data
+## analyses use, so the simulations in this paper validate the shipped package
+## rather than a parallel implementation of it.
+##
+## Columns returned by the package and the names used here:
+##   acat_p               -> ACAT
+##   fisher_p             -> Fisher
+##   stouffer_p_analytic  -> Stouffer
+##   minp_p_analytic      -> minP
+##   tfisher_p_analytic   -> TFisher
+##   omni_p_analytic      -> Omnibus
+##
+## The package floors p-values at min_p (1e-50 in omni2). Every threshold used
+## in this paper -- alpha = 0.05, alpha/K = 3.3e-4, and the Westfall-Young
+## family-wise threshold near 1e-3 -- is many orders of magnitude above that
+## floor, so the cap never binds in these simulations.
+## -----------------------------------------------------------------------------
+
 TAU_GRID_DEFAULT <- c(0.1, 0.05, 0.01, 0.005, 0.001)
+MIN_P_DEFAULT    <- 1e-50
 
-.logsumexp <- function(lx) {
-  m <- max(lx)
-  if (!is.finite(m)) return(-Inf)
-  m + log(sum(exp(lx - m)))
+## Component p-value column returned by each CATFISH wrapper.
+COMPONENT_FUN <- list(
+  ACAT     = list(fn = "catfish_acat_pathways",                   col = "acat_p"),
+  Fisher   = list(fn = "catfish_fisher_pathways",                 col = "fisher_p"),
+  Stouffer = list(fn = "catfish_stoufferZ_pathways",              col = "stouffer_p"),
+  minP     = list(fn = "catfish_minp_pathways",                   col = "minp_p"),
+  ## TFisher contributes Wo = min over the tau grid of the single-tau right-tail
+  ## p (the package column tfisher_p_min), NOT the adaptive p-value
+  ## tfisher_p_omni. TFisher::p.soft.omni, which converts Wo into a p-value, is
+  ## miscalibrated in both directions: lambda ~ 0.12 in the bulk, and it
+  ## underflows in the tail so that strongly enriched pathways clamp to min_p
+  ## and tie. Wo is a perfectly good monotone statistic (smaller = more
+  ## extreme) and the resampled null bank calibrates it, which is what every
+  ## other component here gets anyway.
+  ##
+  ## CONSEQUENCE: Wo is not a p-value -- under the null it is the minimum of
+  ## five right-tail p-values and so is stochastically smaller than uniform.
+  ## Any column that treats a component value AS a p-value is therefore not
+  ## interpretable for TFisher: t1_analytic, fwer_bonferroni and
+  ## lambda_analytic. Judge TFisher on the calibrated and family-wise columns.
+  TFisher  = list(fn = "catfish_soft_tfisher_adaptive_pathways",  col = "tfisher_p_min")
+)
+STAT_NAMES <- c(names(COMPONENT_FUN), "Omnibus")
+
+.require_catfish <- function() {
+  if (!requireNamespace("CATFISH", quietly = TRUE))
+    stop("the CATFISH package is required; install/load it first", call. = FALSE)
 }
 
-## ACAT on log p-values, returning log(p_ACAT).
-##   T = mean_i tan((0.5 - p_i) * pi);  tan(.) -> 1/(p*pi) as p -> 0
-##   large T  =>  p_ACAT -> 1/(T*pi)
-acat_log <- function(lp) {
-  lp <- pmin(lp, -1e-300)
-  m  <- length(lp)
-  small <- lp < log(1e-15)
-  S_big <- if (any(!small)) sum(tan((0.5 - exp(lp[!small])) * pi)) else 0
+## Gene identifiers for a simulated universe of G genes.
+universe_gene_ids <- function(G) sprintf("g%05d", seq_len(G))
 
-  ## No extreme p-value: T = S_big/m is finite and may be of EITHER sign. The
-  ## log-space branch below cannot represent a negative T, and clamping it (as
-  ## an earlier version did) pins every such pathway at p = 0.5 exactly, which
-  ## destroys the ordering over the whole upper half of the distribution.
-  if (!any(small)) {
-    pv <- 0.5 - atan(S_big / m) / pi
-    return(log(max(pv, 1e-323)))
+## Convert integer-index pathways (what make_pathways returns) to the character
+## gene-id lists the package expects.
+paths_to_chr <- function(paths, G) {
+  ids <- universe_gene_ids(G)
+  lapply(paths, function(ix) ids[ix])
+}
+
+## One draw -> a K x 6 matrix of log p (5 components + Omnibus), pathway order
+## preserved.
+##
+## The five components come from the CATFISH wrappers and the omnibus from
+## CATFISH::catfish_acat_pathways applied to those five. The wrappers are used
+## rather than catfish_omni2_pathways because omni2 additionally runs IHW,
+## qvalue, BKY and BH on every call; that multiple-testing layer is what the
+## real-data report needs and is dead weight inside a resampling loop. The
+## component math is identical either way.
+##
+## Only genes that appear in at least one pathway are passed in: a gene in no
+## pathway cannot affect any component, and dropping them keeps the per-call
+## gene table small.
+components_from_draw <- function(lp, z, paths_chr, G,
+                                 tau_grid = TAU_GRID_DEFAULT,
+                                 min_p = MIN_P_DEFAULT) {
+  .require_catfish()
+  ids  <- universe_gene_ids(G)
+  used <- sort(unique(unlist(paths_chr, use.names = FALSE)))
+  ix   <- match(used, ids)
+  gr <- data.frame(GENE  = used,
+                   P     = pmin(pmax(exp(lp[ix]), min_p), 1 - 1e-15),
+                   ZSTAT = z[ix],
+                   stringsAsFactors = FALSE)
+  K  <- length(paths_chr)
+  pm <- matrix(NA_real_, K, length(COMPONENT_FUN),
+               dimnames = list(names(paths_chr), names(COMPONENT_FUN)))
+  for (nm in names(COMPONENT_FUN)) {
+    spec <- COMPONENT_FUN[[nm]]
+    fn   <- getExportedValue("CATFISH", spec$fn)
+    args <- list(gene_results = gr, pathways = paths_chr,
+                 gene_col = "GENE", min_p = min_p, output = FALSE)
+    if (nm == "Stouffer")      args$z_col    <- "ZSTAT"
+    else                       args$p_col    <- "P"
+    if (nm == "TFisher") { args$p_col <- "P"; args$tau_grid <- tau_grid }
+    out <- do.call(fn, args)
+    pm[, nm] <- as.numeric(out[[spec$col]])[match(names(paths_chr), out$pathway_id)]
   }
+  cbind(log(pmax(pm, min_p)),
+        Omnibus = acat_combine_log(log(pmax(pm, min_p)), min_p))
+}
 
-  ## At least one extreme p: S is dominated by the 1/(p*pi) terms, so work in
-  ## logs to avoid overflow.
-  logS_small <- .logsumexp(-lp[small] - log(pi))
-  logS <- if (logS_small > log(abs(S_big) + 1e-300) + 50) {
-    logS_small
-  } else {
-    log(max(exp(logS_small) + S_big, 1e-300))
+## Many INDEPENDENT pathways scored in one go. `zmat` is n x m: one row per
+## pathway, each row an independent draw of m gene-level z values. Each pathway
+## is given its own private genes, so the pathways stay independent -- this is
+## purely a batching device for scripts 01 and 04, which otherwise call the
+## package once per pathway and pay its per-call setup tens of thousands of
+## times. Processed in chunks to keep the gene table a sane size.
+components_from_zmat <- function(zmat, tau_grid = TAU_GRID_DEFAULT,
+                                 min_p = MIN_P_DEFAULT, chunk = 2000L) {
+  if (is.null(dim(zmat))) zmat <- matrix(zmat, nrow = 1L)
+  n <- nrow(zmat); m <- ncol(zmat)
+  out <- matrix(NA_real_, n, length(STAT_NAMES),
+                dimnames = list(NULL, STAT_NAMES))
+  for (lo in seq(1L, n, by = chunk)) {
+    hi  <- min(lo + chunk - 1L, n)
+    nn  <- hi - lo + 1L
+    G   <- nn * m
+    ids <- universe_gene_ids(G)
+    pw  <- split(ids, rep(seq_len(nn), each = m))
+    names(pw) <- sprintf("PW%06d", seq_len(nn))
+    z   <- as.vector(t(zmat[lo:hi, , drop = FALSE]))
+    lp  <- stats::pnorm(z, lower.tail = FALSE, log.p = TRUE)
+    out[lo:hi, ] <- components_from_draw(lp, z, pw, G, tau_grid, min_p)
   }
-  logT <- logS - log(m)
-  ## switch to the 1/(T*pi) asymptote well before 1e15: beyond T ~ 1e5 the
-  ## 0.5 - atan(T)/pi form loses more to cancellation than the asymptote loses
-  ## to truncation.
-  if (logT > log(1e6)) return(-logT - log(pi))
-  pv <- 0.5 - atan(exp(logT)) / pi
-  if (pv <= 0) -745 else log(pv)
+  out
 }
 
-fisher_log <- function(lp) {
-  stats::pchisq(-2 * sum(lp), df = 2 * length(lp), lower.tail = FALSE, log.p = TRUE)
+## n independent pathway draws of m genes from a Cholesky factor, as a matrix.
+draw_zmat <- function(U, n, mu = 0) {
+  m <- ncol(U)
+  t(matrix(as.vector(t(U) %*% matrix(stats::rnorm(m * n), m, n)), m, n)) + mu
 }
 
-stouffer_log <- function(lp) {
-  z <- stats::qnorm(lp, lower.tail = FALSE, log.p = TRUE)
-  z[!is.finite(z)] <- 0
-  stats::pnorm(sum(z) / sqrt(length(z)), lower.tail = FALSE, log.p = TRUE)
+## Single pathway of m genes scored through the package. Used by the scripts
+## that test one pathway at a time (01, 04) rather than a whole family.
+## `z` is the gene-level z vector; one-sided p-values are taken from it.
+components_single <- function(z, tau_grid = TAU_GRID_DEFAULT,
+                              min_p = MIN_P_DEFAULT) {
+  m  <- length(z)
+  lp <- stats::pnorm(z, lower.tail = FALSE, log.p = TRUE)
+  pw <- list(PW0001 = universe_gene_ids(m))
+  components_from_draw(lp, z, pw, m, tau_grid, min_p)[1, ]
 }
 
-## p_minP = 1 - (1 - q)^m with q = exp(lmin).
-## For small m*q this equals m*q to full precision, and the 1-(1-q)^m form
-## CANNOT be used there: once q < ~1e-16/m, exp(m*log1p(-q)) rounds to exactly
-## 1, log1p(-1) is -Inf, and the component is silently dropped from the omnibus
-## by the is.finite() filter -- i.e. minP disappears exactly when a pathway has
-## a very strong gene, which is the case it exists to detect.
-minp_log <- function(lp) {
-  m <- length(lp); lmin <- min(lp)
-  approx <- lmin + log(m)
-  if (approx < log(1e-8)) return(approx)
-  v <- m * log1p(-exp(lmin))
-  if (!is.finite(v)) return(approx)
-  r <- log1p(-exp(v))
-  if (!is.finite(r)) approx else r
-}
+## Omnibus log p for a single pathway, from the package.
+omnibus_log_z <- function(z, ...) unname(components_single(z, ...)[["Omnibus"]])
 
-tfisher_log <- function(lp, tau_grid = TAU_GRID_DEFAULT) {
-  if (!requireNamespace("TFisher", quietly = TRUE)) return(NA_real_)
-  p <- exp(pmax(lp, -700)); m <- length(p); best <- 0
-  for (tau in tau_grid) {
-    st <- TFisher::stat.soft(p = p, tau1 = tau)
-    pv <- TFisher::p.soft(q = st, n = m, tau1 = tau, M = NULL)
-    if (is.finite(pv) && pv > 0 && log(pv) < best) best <- log(pv)
-  }
-  if (best == 0) NA_real_ else best
-}
+## One correlated draw of m gene-level z values from a Cholesky factor.
+draw_z <- function(U, mu = 0) as.vector(t(U) %*% stats::rnorm(ncol(U))) + mu
 
-## Component vector (log scale). `drop` lets the breakage tests remove or
-## corrupt individual components.
-components_log <- function(lp, use_tfisher = TRUE, tau_grid = TAU_GRID_DEFAULT,
-                           drop = character(0)) {
-  out <- c(ACAT = acat_log(lp), Fisher = fisher_log(lp),
-           Stouffer = stouffer_log(lp), minP = minp_log(lp))
-  if (isTRUE(use_tfisher)) out <- c(out, TFisher = tfisher_log(lp, tau_grid))
-  out[setdiff(names(out), drop)]
-}
-
-## Omnibus = ACAT across component log-p values.
-omnibus_log <- function(lp, use_tfisher = TRUE, tau_grid = TAU_GRID_DEFAULT,
-                        drop = character(0), gamma = NULL) {
-  comps <- components_log(lp, use_tfisher, tau_grid, drop)
-  ## gamma: multiply selected component log-p by gamma < 1 to make them
-  ## anti-conservative (p^gamma). Used by the breakage stress test.
-  if (!is.null(gamma)) {
-    for (nm in names(gamma)) if (nm %in% names(comps)) comps[nm] <- comps[nm] * gamma[[nm]]
-  }
-  comps <- comps[is.finite(comps)]
-  if (!length(comps)) return(0)
-  acat_log(comps)
+acat_combine_log <- function(log_comp_mat, min_p = MIN_P_DEFAULT) {
+  .require_catfish()
+  if (is.null(dim(log_comp_mat)))
+    log_comp_mat <- matrix(log_comp_mat, nrow = 1L,
+                           dimnames = list(NULL, names(log_comp_mat)))
+  K  <- nrow(log_comp_mat); cn <- colnames(log_comp_mat)
+  gid <- as.vector(outer(cn, seq_len(K), function(a, b) sprintf("%s_%04d", a, b)))
+  gr  <- data.frame(GENE = gid,
+                    P    = pmin(pmax(as.vector(exp(t(log_comp_mat))), min_p), 1 - 1e-15),
+                    stringsAsFactors = FALSE)
+  pw  <- lapply(seq_len(K), function(k) sprintf("%s_%04d", cn, k))
+  names(pw) <- sprintf("PW%04d", seq_len(K))
+  out <- CATFISH::catfish_acat_pathways(gene_results = gr, pathways = pw,
+                                        gene_col = "GENE", p_col = "P",
+                                        min_p = min_p, output = FALSE)
+  out <- out[match(names(pw), out$pathway_id), , drop = FALSE]
+  log(pmax(as.numeric(out$acat_p), min_p))
 }
 
 ## -----------------------------------------------------------------------------
@@ -182,12 +259,17 @@ make_universe <- function(G = 3000L, block = 50L, rho = 0.3) {
        G = G, block = block, rho = rho)
 }
 
+## One genome-wide draw on the z scale, so a mean shift can be added before the
+## one-sided p-values are taken.
+draw_universe_z <- function(uni) {
+  as.vector(vapply(seq_len(uni$nblock),
+    function(i) as.vector(t(uni$U) %*% stats::rnorm(uni$block)),
+    numeric(uni$block)))
+}
+
 ## One genome-wide draw -> vector of G log p-values.
 draw_universe_lp <- function(uni) {
-  z <- as.vector(vapply(seq_len(uni$nblock),
-         function(i) as.vector(t(uni$U) %*% stats::rnorm(uni$block)),
-         numeric(uni$block)))
-  stats::pnorm(z, lower.tail = FALSE, log.p = TRUE)
+  stats::pnorm(draw_universe_z(uni), lower.tail = FALSE, log.p = TRUE)
 }
 
 ## K pathways of m genes each, drawn from the first `pool` genes of the
@@ -211,38 +293,35 @@ mean_memberships <- function(paths, G) {
 ## ONE set of component evaluations instead of recomputing them per variant.
 components_array <- function(uni, paths, B, use_tfisher = TRUE,
                              tau_grid = TAU_GRID_DEFAULT, verbose = TRUE) {
-  K  <- length(paths)
-  cn <- names(components_log(rep(-1, 5), use_tfisher, tau_grid))
-  out <- array(NA_real_, c(B, K, length(cn)),
+  paths_chr <- paths_to_chr(paths, uni$G)
+  cn  <- STAT_NAMES
+  out <- array(NA_real_, c(B, length(paths), length(cn)),
                dimnames = list(NULL, names(paths), cn))
-  at <- max(1L, B %/% 10L)
+  at  <- max(1L, B %/% 10L)
   for (b in seq_len(B)) {
-    lp <- draw_universe_lp(uni)
-    for (k in seq_len(K)) out[b, k, ] <- components_log(lp[paths[[k]]],
-                                                        use_tfisher, tau_grid)
+    z  <- draw_universe_z(uni)
+    lp <- stats::pnorm(z, lower.tail = FALSE, log.p = TRUE)
+    out[b, , ] <- components_from_draw(lp, z, paths_chr, uni$G, tau_grid)
     if (verbose && b %% at == 0L) cat(sprintf("      draws %d/%d\n", b, B))
   }
+  if (!isTRUE(use_tfisher)) out <- out[, , setdiff(cn, "TFisher"), drop = FALSE]
   out
 }
 
 ## Omnibus from a precomputed component array. `gamma` corrupts components
 ## (log p * gamma, i.e. p^gamma); `drop` removes them entirely.
 omnibus_from_components <- function(arr, gamma = NULL, drop = character(0)) {
-  keep <- setdiff(dimnames(arr)[[3]], drop)
-  sub  <- arr[, , keep, drop = FALSE]
+  comps <- setdiff(dimnames(arr)[[3]], c("Omnibus", drop))
+  ## untouched: the package already returned its own ACAT-O omnibus
+  if (is.null(gamma) && !length(drop) && "Omnibus" %in% dimnames(arr)[[3]])
+    return(arr[, , "Omnibus"])
+  sub <- arr[, , comps, drop = FALSE]
   if (!is.null(gamma)) {
-    for (nm in names(gamma)) {
-      if (nm %in% keep) sub[, , nm] <- sub[, , nm] * gamma[[nm]]
-    }
+    for (nm in names(gamma)) if (nm %in% comps) sub[, , nm] <- sub[, , nm] * gamma[[nm]]
   }
-  B <- dim(sub)[1]; K <- dim(sub)[2]
-  out <- matrix(NA_real_, B, K)
-  for (b in seq_len(B)) {
-    for (k in seq_len(K)) {
-      v <- sub[b, k, ]; v <- v[is.finite(v)]
-      out[b, k] <- if (length(v)) acat_log(v) else 0
-    }
-  }
+  B <- dim(sub)[1]
+  out <- matrix(NA_real_, B, dim(sub)[2])
+  for (b in seq_len(B)) out[b, ] <- acat_combine_log(sub[b, , , drop = TRUE])
   out
 }
 
