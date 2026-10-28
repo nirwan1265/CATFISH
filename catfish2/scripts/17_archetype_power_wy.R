@@ -52,6 +52,16 @@ EFFECTS <- if (length(args) >= 3) as.numeric(strsplit(args[[3]], ",")[[1]]) else
            c(0.5, 1.0, 1.5, 2.0, 2.5, 3.0)
 SIZES  <- if (length(args) >= 4) as.integer(strsplit(args[[4]], ",")[[1]]) else
           c(5L, 20L, 50L)
+## FALSE drops TFisher from the component set and from the omnibus, so the two
+## runs differ only in whether that component is present.
+USE_TF <- if (length(args) >= 5) as.logical(args[[5]]) else TRUE
+## 6th arg: comma-separated tau grid, overriding 00_lib.R's TAU_GRID_DEFAULT.
+## The TFisher authors (Zhang, Tong, Landers & Wu 2020) use TAU1 =
+## c(0.01, 0.05, 0.5, 1) and recommend spanning small, medium and large tau;
+## the tau=1 corner is dropped here because Fisher is already a component.
+if (length(args) >= 6) TAU_GRID_DEFAULT <- as.numeric(strsplit(args[[6]], ",")[[1]])
+TAG <- paste0(if (isTRUE(USE_TF)) "" else "_noTF",
+              if (length(args) >= 6) sprintf("_tau%s", gsub("[.,]", "", args[[6]])) else "")
 set.seed(20260706)
 
 G     <- 3000L     # genes in the universe
@@ -93,8 +103,8 @@ make_mu <- function(m, layers, effect_scale) {
   mu
 }
 
-cat(sprintf("archetype power under WY: K=%d pool=%d G=%d B_cal=%d B_eval=%d\n",
-            K, POOL, G, B_CAL, B_EVAL))
+cat(sprintf("archetype power under WY: K=%d pool=%d G=%d B_cal=%d B_eval=%d TFisher=%s\n",
+            K, POOL, G, B_CAL, B_EVAL, USE_TF))
 cat(sprintf("  sizes   : %s\n", paste(SIZES, collapse = ", ")))
 cat(sprintf("  effects : %s\n", paste(EFFECTS, collapse = ", ")))
 
@@ -105,7 +115,7 @@ for (m in SIZES) {
   sig   <- paths[[1]]                       # the pathway that carries signal
   cat(sprintf("\n  m=%d : calibration bank (%d draws x %d pathways)\n", m, B_CAL, K))
 
-  arr_cal <- components_array(uni, paths, B_CAL)
+  arr_cal <- components_array(uni, paths, B_CAL, use_tfisher = USE_TF)
   om_cal  <- omnibus_from_components(arr_cal)            # B_CAL x K, log p
   STATS   <- dimnames(arr_cal)[[3]]                      # 5 components + Omnibus
   paths1  <- paths_to_chr(paths, G)[1]                   # the signal pathway
@@ -151,7 +161,7 @@ for (m in SIZES) {
 }
 
 out <- do.call(rbind, res)
-write.csv(out, file.path(OUT, "17_archetype_power_wy.csv"), row.names = FALSE)
+write.csv(out, file.path(OUT, sprintf("17_archetype_power_wy%s.csv", TAG)), row.names = FALSE)
 
 ## omnibus regret: how much family-wise power the omnibus gives up against the
 ## best single component in the same (m, archetype, effect) cell.
@@ -167,7 +177,7 @@ reg <- do.call(rbind, lapply(split(om, om$archetype), function(d) data.frame(
   max_regret = max(d$regret_wy),
   within_0.05 = mean(d$regret_wy <= 0.05), within_0.10 = mean(d$regret_wy <= 0.10),
   stringsAsFactors = FALSE)))
-write.csv(reg, file.path(OUT, "17_archetype_regret_wy.csv"), row.names = FALSE)
+write.csv(reg, file.path(OUT, sprintf("17_archetype_regret_wy%s.csv", TAG)), row.names = FALSE)
 
 cat("\nwrote results/17_archetype_power_wy.csv and 17_archetype_regret_wy.csv\n\n")
 print(reg, row.names = FALSE)

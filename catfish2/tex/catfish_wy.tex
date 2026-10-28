@@ -361,9 +361,11 @@ Each pathway is assessed using five complementary component tests (Table~\ref{ta
 
 Four components (ACAT, Fisher, minP, Stouffer) are fully determined by gene-level $p$-values and require no tuning. Soft TFisher is the exception: it adapts over a grid of truncation thresholds $\tau$, which determines which genes contribute. This is the only tunable choice in CATFISH, and we justify it below.
 
-We use \(\tau\in\{10^{-1},5\times10^{-2},10^{-2},5\times10^{-3},10^{-3}\}\) and take the minimum calibrated TFisher \(p\)-value over the grid. This grid is intentionally coarser and higher than the original CATFISH defaults because very small \(\tau\) is degenerate for realistic pathway sizes. Since the number of genes surviving truncation is \(\mathrm{Binomial}(m,\tau)\), when \(m\tau\ll 1\) the statistic is usually zero; e.g., \(\tau=10^{-5}, m=50\) yields a nonzero term only about 1 in 2000 null draws, making the empirical null nearly a point mass at zero and the calibrated \(p\)-value uninformative.
+Following \citet{Zhang2020TFisher}, the grid spans small, intermediate and large thresholds rather than concentrating at one end: we use \(\tau\in\{10^{-2},\,5\times10^{-2},\,5\times10^{-1}\}\) and take the minimum calibrated TFisher \(p\)-value over the grid. The original authors' grid also includes \(\tau=1\), which we omit because \(\tau=1\) is Fisher's method and Fisher is already carried as a separate component. Spanning the range matters because the number of genes surviving truncation is \(\mathrm{Binomial}(m,\tau)\): a grid confined to small \(\tau\) leaves \(m\tau\ll1\) at realistic set sizes, the statistic is then zero on a large fraction of pathways, and the component is degenerate precisely where it is most often applied.
 
-The grid is meant to span this trade-off. A threshold is informative mainly when \(m\tau\) is not far below one, so which \(\tau\) values are active depends on set size: \(\tau=10^{-1}\) becomes informative around \(m\approx 10\), whereas \(\tau=10^{-3}\) requires \(m\approx 1000\). For typical curated pathway sizes, larger \(\tau\) drives most results; smaller \(\tau\) activates rarely and mainly when genes are extremely significant, which motivates adapting across \(\tau\) rather than fixing a single value. For very small sets, no grid point is informative, TFisher contributes little, and the omnibus relies on the other four components. Users can assess and adjust the grid for their database using \(m\tau\).
+A threshold is informative mainly when \(m\tau\) is not far below one, so which \(\tau\) values are active depends on set size: \(\tau=5\times10^{-1}\) is informative from the smallest sets upward, whereas \(\tau=10^{-2}\) requires \(m\approx100\). Adapting across \(\tau\) rather than fixing a single value is what allows one component to serve both sparse and diffuse architectures, and users can assess the grid for their own database using \(m\tau\).
+
+\smallskip\noindent\textit{Undefined components.} When no gene in a pathway falls below any threshold in the grid, the soft TFisher statistic is zero at every \(\tau\) and its one-sided \(p\)-value is exactly one. We treat this as \emph{undefined} rather than as evidence against enrichment, and the omnibus for that pathway is formed from the components that are defined. The distinction is not cosmetic. The ACAT operator maps each component \(p\)-value through \(\tan\{(1/2-p)\pi\}\), so a value at the upper boundary contributes a large negative term; a component that could not be computed would otherwise vote against the pathway and bias the omnibus toward the null. The rule is applied per pathway rather than by set size, because a large pathway in which no gene is individually strong is equally uncomputable. It does condition the component on having at least one gene below a threshold, so where TFisher does contribute its \(p\)-values are stochastically small; because the resampling null is generated under the identical rule, that conditioning appears in the null distribution and is absorbed by the calibration. An analytic omnibus \(p\)-value under this rule would be anti-conservative, whereas the resampled one is not.
 
 \begin{table*}[!t]
 \centering
@@ -846,12 +848,19 @@ look arbitrary: removing Fisher or Stouffer lowered the Bonferroni family-wise
 rate noticeably while removing ACAT, minP or TFisher did not. Those are the
 components that were inflated in the first place.
 
-One implementation note belongs here. The adaptive soft TFisher statistic is
-undefined on draws where no gene falls below the smallest truncation threshold,
-which happened on up to $\nCmpTFisherNA\%$ of draws at strong LD. A single such
-draw in a calibration bank is enough to make the entire calibrated $p$-value
-undefined unless non-finite draws are filtered before the tail count, which the
-implementation now does.
+Two implementation notes belong here. First, the adaptive soft TFisher statistic
+is undefined on draws where no gene falls below any truncation threshold, which
+happened on up to $\nCmpTFisherNA\%$ of draws at strong LD. A single such draw in
+a calibration bank is enough to make the entire calibrated $p$-value undefined
+unless non-finite draws are filtered before the tail count, which the
+implementation now does. Second, and more consequentially, an undefined
+component must be excluded from the omnibus rather than entered at $p=1$
+(Section~2.1): because ACAT weights by $\tan\{(1/2-p)\pi\}$, entering the
+boundary value makes an uncomputable test act as evidence against the pathway.
+With the boundary value entered, the median omnibus $p$-value under the null
+drifts above $1/2$ and the genomic inflation factor falls well below one even
+though the tail rate is simultaneously inflated---a signature of a heavy-tailed
+null rather than a shifted one. Excluding undefined components restores both.
 
 \maybeinput{auto/tab_components_cal.tex}
 

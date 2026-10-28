@@ -114,7 +114,22 @@ components_from_draw <- function(lp, z, paths_chr, G,
     else                       args$p_col    <- "P"
     if (nm == "TFisher") { args$p_col <- "P"; args$tau_grid <- tau_grid }
     out <- do.call(fn, args)
-    pm[, nm] <- as.numeric(out[[spec$col]])[match(names(paths_chr), out$pathway_id)]
+    v <- as.numeric(out[[spec$col]])[match(names(paths_chr), out$pathway_id)]
+    ## Soft TFisher is UNDEFINED, not non-significant, when no gene in the
+    ## pathway beats any tau: stat.soft is 0 at every tau and the right-tail p
+    ## returns exactly 1. Handing that 1 to ACAT contributes tan(-0.3*pi) ~
+    ## -1.38, so a test that could not be computed votes AGAINST the pathway.
+    ## NA instead, and the pathway is combined from whichever components ARE
+    ## defined. This is decided per pathway, not per size: a large pathway in
+    ## which every gene is weak is empty too.
+    ##
+    ## This conditions TFisher on having at least one gene below tau, so where
+    ## it does contribute its p-values are stochastically small. The null bank
+    ## is built under the same rule, so the calibration and the WY threshold
+    ## absorb that bias -- an ANALYTIC omnibus p under this rule would be
+    ## anti-conservative.
+    if (nm == "TFisher") v[is.finite(v) & v >= 1 - 1e-12] <- NA_real_
+    pm[, nm] <- v
   }
   cbind(log(pmax(pm, min_p)),
         Omnibus = acat_combine_log(log(pmax(pm, min_p)), min_p))
@@ -175,17 +190,25 @@ acat_combine_log <- function(log_comp_mat, min_p = MIN_P_DEFAULT) {
     log_comp_mat <- matrix(log_comp_mat, nrow = 1L,
                            dimnames = list(NULL, names(log_comp_mat)))
   K  <- nrow(log_comp_mat); cn <- colnames(log_comp_mat)
-  gid <- as.vector(outer(cn, seq_len(K), function(a, b) sprintf("%s_%04d", a, b)))
-  gr  <- data.frame(GENE = gid,
-                    P    = pmin(pmax(as.vector(exp(t(log_comp_mat))), min_p), 1 - 1e-15),
-                    stringsAsFactors = FALSE)
-  pw  <- lapply(seq_len(K), function(k) sprintf("%s_%04d", cn, k))
-  names(pw) <- sprintf("PW%04d", seq_len(K))
-  out <- CATFISH::catfish_acat_pathways(gene_results = gr, pathways = pw,
+  gid <- character(0); pv <- numeric(0)
+  pw  <- vector("list", K); names(pw) <- sprintf("PW%06d", seq_len(K))
+  for (k in seq_len(K)) {
+    ok  <- which(is.finite(log_comp_mat[k, ]))   ## undefined components drop out
+    ids <- sprintf("%s_%06d", cn[ok], k)
+    gid <- c(gid, ids); pv <- c(pv, exp(log_comp_mat[k, ok]))
+    pw[[k]] <- ids
+  }
+  res  <- rep(NA_real_, K)
+  keep <- lengths(pw) > 0L
+  if (!any(keep)) return(res)
+  gr <- data.frame(GENE = gid, P = pmin(pmax(pv, min_p), 1 - 1e-15),
+                   stringsAsFactors = FALSE)
+  out <- CATFISH::catfish_acat_pathways(gene_results = gr, pathways = pw[keep],
                                         gene_col = "GENE", p_col = "P",
                                         min_p = min_p, output = FALSE)
-  out <- out[match(names(pw), out$pathway_id), , drop = FALSE]
-  log(pmax(as.numeric(out$acat_p), min_p))
+  out <- out[match(names(pw)[keep], out$pathway_id), , drop = FALSE]
+  res[keep] <- log(pmax(as.numeric(out$acat_p), min_p))
+  res
 }
 
 ## -----------------------------------------------------------------------------

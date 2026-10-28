@@ -372,3 +372,108 @@ component calibration: K=150 pathways, B_cal=500 B_eval=500
       draws 100/500
       draws 150/500
       draws 200/500
+      draws 250/500
+      draws 300/500
+      draws 350/500
+      draws 400/500
+      draws 450/500
+      draws 500/500
+    evaluation draws
+      draws 50/500
+      draws 100/500
+      draws 150/500
+      draws 200/500
+      draws 250/500
+      draws 300/500
+      draws 350/500
+      draws 400/500
+      draws 450/500
+      draws 500/500
+    ACAT      analytic=0.0551 (lambda 1.00)  calibrated=0.0502  wy=0.062
+    Fisher    analytic=0.1122 (lambda 0.87)  calibrated=0.0539  wy=0.070
+    Stouffer  analytic=0.1229 (lambda 0.95)  calibrated=0.0541  wy=0.060
+    minP      analytic=0.0488 (lambda 0.88)  calibrated=0.0496  wy=0.060
+    TFisher   analytic=0.1037 (lambda 1.27)  calibrated=0.0508  wy=0.054
+    Omnibus   analytic=0.1159 (lambda 0.83)  calibrated=0.0541  wy=0.074
+
+  LD=strong m=20
+    calibration draws
+      draws 50/500
+      draws 100/500
+      draws 150/500
+      draws 200/500
+      draws 250/500
+      draws 300/500
+      draws 350/500
+      draws 400/500
+      draws 450/500
+      draws 500/500
+    evaluation draws
+      draws 50/500
+      draws 100/500
+      draws 150/500
+      draws 200/500
+      draws 250/500
+      draws 300/500
+      draws 350/500
+      draws 400/500
+      draws 450/500
+      draws 500/500
+    ACAT      analytic=0.0593 (lambda 1.14)  calibrated=0.0476  wy=0.042
+    Fisher    analytic=0.1174 (lambda 0.97)  calibrated=0.0493  wy=0.054
+    Stouffer  analytic=0.1343 (lambda 1.17)  calibrated=0.0528  wy=0.056
+    minP      analytic=0.0499 (lambda 0.75)  calibrated=0.0483  wy=0.042
+    TFisher   analytic=0.0946 (lambda 0.93)  calibrated=0.0464  wy=0.040
+    Omnibus   analytic=0.1183 (lambda 0.85)  calibrated=0.0504  wy=0.062
+
+  LD=strong m=50
+    calibration draws
+      draws 50/500
+      draws 100/500
+      draws 150/500
+      draws 200/500
+      draws 250/500
+      draws 300/500
+      draws 350/500
+      draws 400/500
+      draws 450/500
+      draws 500/500
+    evaluation draws
+      draws 50/500
+      draws 100/500
+      draws 150/500
+      draws 200/500
+      draws 250/500
+      draws 300/500
+      draws 350/500
+      draws 400/500
+      draws 450/500
+      draws 500/500
+    ACAT      analytic=0.0649 (lambda 1.02)  calibrated=0.0694  wy=0.068
+    Fisher    analytic=0.1703 (lambda 0.80)  calibrated=0.0659  wy=0.082
+    Stouffer  analytic=0.1951 (lambda 0.99)  calibrated=0.0623  wy=0.082
+    minP      analytic=0.0485 (lambda 0.58)  calibrated=0.0649  wy=0.080
+    TFisher   analytic=0.1337 (lambda 0.77)  calibrated=0.0673  wy=0.076
+    Omnibus   analytic=0.1801 (lambda 0.62)  calibrated=0.0671  wy=0.080
+
+wrote results/09_component_calibration.csv
+          ld component t1_analytic t1_calibrated lambda_analytic fwer_wy
+ independent      ACAT  0.04972000    0.05017333       1.0011851   0.048
+ independent    Fisher  0.05046667    0.04966667       1.0488905   0.024
+ independent  Stouffer  0.05164000    0.05373333       1.0416935   0.026
+ independent      minP  0.05058667    0.05232000       1.0168674   0.054
+ independent   TFisher  0.08418667    0.04658667       1.5661171   0.058
+ independent   Omnibus  0.06213333    0.04721333       0.9794015   0.044
+    moderate      ACAT  0.05508000    0.05022667       0.9969877   0.062
+    moderate    Fisher  0.11217333    0.05392000       0.8685731   0.070
+    moderate  Stouffer  0.12285333    0.05413333       0.9463491   0.060
+    moderate      minP  0.04884000    0.04957333       0.8797920   0.060
+    moderate   TFisher  0.10369333    0.05084000       1.2699825   0.054
+    moderate   Omnibus  0.11588000    0.05408000       0.8311480   0.074
+      strong      ACAT  0.06493333    0.06940000       1.0181084   0.068
+      strong    Fisher  0.17034667    0.06586667       0.7979443   0.082
+      strong  Stouffer  0.19512000    0.06234667       0.9903630   0.082
+      strong      minP  0.04852000    0.06486667       0.5807907   0.080
+      strong   TFisher  0.13368000    0.06734667       0.7655028   0.076
+      strong   Omnibus  0.18009333    0.06714667       0.6186082   0.080
+[1m[7m%[27m[1m[0m                                                                                                ]7;file://Nirwans-MBP.lan/Users/nirwantandukar/Documents/Github/MAGCAT/catfish2/scripts[0m[27m[24m[J(base) nirwantandukar@Nirwans-MBP scripts % [K[?2004hRscript 09_component_calibration.R
