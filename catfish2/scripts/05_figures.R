@@ -26,7 +26,7 @@ if (has("01_null_calibration.csv")) {
     lines(s$rho, s$t1_wy,  type = "b", pch = 15, col = PAL["wy"])
     abline(h = 0.05, lty = 2, col = "grey40")
     legend("topleft", bty = "n", cex = 0.85,
-           legend = c("analytic", "MVN", "Westfall-Young", "nominal"),
+           legend = c("analytic", "per-pathway calibrated", "Westfall-Young", "nominal"),
            col = c(PAL[["analytic"]], PAL[["mvn"]], PAL[["wy"]], "grey40"),
            pch = c(19, 17, 15, NA), lty = c(1, 1, 1, 2))
   }
@@ -41,7 +41,7 @@ if (has("01_null_calibration.csv")) {
           ylab = expression(lambda[GC]), las = 2, cex.names = 0.6,
           ylim = c(0, max(2, max(bp, na.rm = TRUE) * 1.1)))
   abline(h = 1, lty = 2, col = "grey30")
-  legend("topleft", c("analytic", "MVN"), fill = c(PAL[["analytic"]], PAL[["mvn"]]), bty = "n")
+  legend("topleft", c("analytic", "per-pathway calibrated"), fill = c(PAL[["analytic"]], PAL[["mvn"]]), bty = "n")
   par(op); dev.off(); cat("Fig2_lambda.png\n")
 }
 
@@ -111,7 +111,7 @@ if (has("02_breakage_stress.csv")) {
       }
       abline(h = 1, lty = 3, col = "grey30")
       if (f) {
-        legend("topright", bty="n", cex=0.78, c("analytic","MVN"),
+        legend("topright", bty="n", cex=0.78, c("analytic","per-pathway calibrated"),
                col=PAL[c("analytic","mvn")], pch=c(19,17), lwd=1.6)
         legend("bottomleft", bty="n", cex=0.78, sprintf("m = %d", ms),
                lty=seq_along(ms)); f <- FALSE
@@ -139,7 +139,7 @@ if (has("03_adaptive_loo.csv")) {
       main = "family-wise: Westfall-Young"),
     c(col = "fwer_bonferroni", lab = "Bonferroni FWER at 0.05",
       main = "family-wise: Bonferroni"),
-    c(col = "lambda_mvn",      lab = "genomic-control lambda (MVN)",
+    c(col = "lambda_mvn",      lab = "genomic-control lambda (calibrated)",
       main = "inflation of the marginal null"))
   png(file.path(FIG, "Fig4_leave_one_out.png"), width = 3100, height = 760, res = 170)
   op <- par(mfrow = c(1, length(panels)), mar = c(6.5, 4.4, 3, 1))
@@ -169,7 +169,7 @@ if (has("04_wy_vs_mvn.csv")) {
   barplot(bp, beside = TRUE, col = c(PAL[["analytic"]], PAL[["mvn"]]), las = 2,
           cex.names = 0.7, ylab = "median rank of true pathways (lower is better)")
   abline(h = d$random_expectation[1], lty = 2, col = "grey30")
-  legend("topright", c("analytic", "MVN", "random"), bty = "n",
+  legend("topright", c("analytic", "per-pathway calibrated", "random"), bty = "n",
          fill = c(PAL[["analytic"]], PAL[["mvn"]], NA), border = c(1, 1, NA))
   par(op); dev.off(); cat("Fig5_ranking.png\n")
 }
@@ -428,4 +428,70 @@ if (all(file.exists(c(f_ldl, f_hdl, f_wl, f_wh, f_sets, f_loc)))) {
          col = c("grey80", "#C44E52"),
          legend = c("all pathways", "lipid / lipoprotein / sterol"))
   par(op); dev.off(); cat("Fig10_ldl_hdl_convergence.png\n")
+}
+
+## --- Fig 11: archetype power under the Westfall-Young decision rule ----------
+ARCHF <- c("17_archetype_power_wy_tau00100505.csv", "17_archetype_power_wy.csv")
+ARCHF <- ARCHF[vapply(ARCHF, has, logical(1))]
+if (length(ARCHF)) {
+  d <- read.csv(file.path(RES, ARCHF[1]), stringsAsFactors = FALSE)
+  ## Okabe-Ito palette (colour-blind safe) plus a distinct point shape per
+  ## component, so the lines separate even in greyscale.
+  MPAL <- c(ACAT = "#D55E00", Fisher = "#0072B2", Stouffer = "#009E73",
+            minP = "#CC79A7", TFisher = "#E69F00", Omnibus = "#000000")
+  MPCH <- c(ACAT = 15, Fisher = 16, Stouffer = 17, minP = 18, TFisher = 8,
+            Omnibus = 1)
+  MLTY <- c(ACAT = 1, Fisher = 1, Stouffer = 1, minP = 1, TFisher = 1, Omnibus = 2)
+  ARCH <- c("SSS", "MDS", "WDE", "MSA", "SGP")
+  ARCH <- ARCH[ARCH %in% d$archetype]
+  SZ   <- sort(unique(d$m))
+  meth <- intersect(names(MPAL), unique(d$method))
+
+  png(file.path(FIG, "Fig11_archetype_power.png"),
+      width = 420 * length(ARCH), height = 360 * length(SZ) + 90, res = 170)
+  op <- par(mfrow = c(length(SZ), length(ARCH)), mar = c(3.6, 3.6, 2.2, 0.6),
+            mgp = c(2.2, 0.7, 0), oma = c(0, 0, 2.2, 0))
+  for (mm in SZ) for (aa in ARCH) {
+    s <- d[d$m == mm & d$archetype == aa, ]
+    plot(NA, xlim = range(s$effect_scale), ylim = c(0, 1),
+         xlab = "effect scale", ylab = "power (family-wise)",
+         main = sprintf("%s   m = %d", aa, mm), cex.main = 0.95)
+    for (mt in meth) {
+      t <- s[s$method == mt, ]; t <- t[order(t$effect_scale), ]
+      lines(t$effect_scale, t$power_wy, type = "b", pch = MPCH[[mt]], cex = 0.65,
+            col = MPAL[[mt]], lty = MLTY[[mt]], lwd = if (mt == "Omnibus") 2 else 1)
+    }
+    if (aa == ARCH[1] && mm == SZ[1])
+      legend("topleft", bty = "n", cex = 0.68, legend = meth,
+             col = unname(MPAL[meth]), lty = unname(MLTY[meth]), lwd = 1.4,
+             pch = unname(MPCH[meth]))
+  }
+  mtext("Power to detect the signal pathway at family-wise alpha = 0.05",
+        outer = TRUE, cex = 0.8)
+  par(op); dev.off(); cat("Fig11_archetype_power.png\n")
+
+  ## --- Fig 12: omnibus regret against the best single component -------------
+  REGF <- c("17_archetype_regret_wy_tau00100505.csv", "17_archetype_regret_wy.csv")
+  REGF <- REGF[vapply(REGF, has, logical(1))]
+  if (length(REGF)) {
+    r <- read.csv(file.path(RES, REGF[1]), stringsAsFactors = FALSE)
+    r <- r[match(ARCH, r$archetype), ]
+    png(file.path(FIG, "Fig12_archetype_regret.png"),
+        width = 1250, height = 620, res = 170)
+    op <- par(mar = c(4.0, 4.4, 2.4, 1))
+    bp <- barplot(r$mean_regret, names.arg = r$archetype, col = "#4C72B0",
+                  ylab = "omnibus power regret", las = 1,
+                  ylim = c(0, max(0.12, max(r$max_regret, na.rm = TRUE) * 1.05)))
+    arrows(bp, r$mean_regret, bp, r$max_regret, angle = 90, length = 0.04,
+           col = "grey40")
+    points(bp, r$max_regret, pch = 4, cex = 0.8, col = "grey30")
+    abline(h = 0.05, lty = 2, col = "#C44E52")
+    legend("top", bty = "n", cex = 0.8, horiz = TRUE,
+           legend = c("mean regret", "worst cell", "0.05"),
+           pch = c(15, 4, NA), lty = c(NA, NA, 2),
+           col = c("#4C72B0", "grey30", "#C44E52"))
+    mtext("power given up by the omnibus vs the best component in each cell",
+          3, line = 0.4, adj = 0, cex = 0.72, col = "grey35")
+    par(op); dev.off(); cat("Fig12_archetype_regret.png\n")
+  }
 }

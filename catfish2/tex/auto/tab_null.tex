@@ -1,22 +1,22 @@
 \begin{table*}[!t]
 \centering
-\caption{Empirical type~I error and genomic-control inflation for the CATFISH omnibus under the global null, by within-pathway LD level and pathway size. Analytic: independence-based omnibus. MVN: calibrated against a pathway-specific correlated null. Bonferroni and Westfall--Young (WY) columns are family-wise error rates across the pathway family. Nominal level $\alpha=0.05$.}
+\caption{Empirical type~I error and genomic-control inflation for the CATFISH omnibus under the global null, by within-pathway LD level and pathway size. Analytic: independence-based omnibus. Calibrated: per-pathway calibration against the correlated null. Bonferroni and Westfall--Young (WY): family-wise error rates, the probability of at least one rejection among the pathways of one simulated family. Nominal level $\alpha=0.05$.}
 \label{tab:null_calibration}
 \small
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{llrrrrrrr}
 \hline
-\textbf{LD} & $\rho$ & $m$ & \textbf{Analytic} & \textbf{MVN} & \textbf{Bonferroni} & \textbf{WY} & $\lambda_{\mathrm{an}}$ & $\lambda_{\mathrm{mvn}}$ \\
+\textbf{LD} & $\rho$ & $m$ & \textbf{Analytic} & \textbf{Calibrated} & \textbf{Bonferroni} & \textbf{WY} & $\lambda_{\mathrm{an}}$ & $\lambda_{\mathrm{cal}}$ \\
 \hline
-independent & 0.0 & 5 & 0.0562 & 0.0424 & 0.0480 & 0.0280 & 0.000 & 0.000 \\
-independent & 0.0 & 20 & 0.0609 & 0.0441 & 0.0480 & 0.0160 & 0.910 & 1.016 \\
-independent & 0.0 & 50 & 0.0641 & 0.0519 & 0.0640 & 0.0320 & 0.970 & 1.016 \\
-moderate & 0.3 & 5 & 0.0985 & 0.0447 & 1.0260 & 0.0520 & 0.000 & 0.000 \\
-moderate & 0.3 & 20 & 0.2049 & 0.0573 & 13.5860 & 0.0600 & 0.365 & 1.012 \\
-moderate & 0.3 & 50 & 0.2893 & 0.0431 & 32.9180 & 0.0640 & 0.223 & 0.938 \\
-strong & 0.6 & 5 & 0.1281 & 0.0459 & 3.7660 & 0.0840 & 0.000 & 0.000 \\
-strong & 0.6 & 20 & 0.2571 & 0.0524 & 26.8340 & 0.2760 & 0.000 & 0.003 \\
-strong & 0.6 & 50 & 0.3318 & 0.0505 & 47.9820 & 0.2360 & 0.002 & 0.993 \\
+independent & 0.0 & 5 & 0.0571 & 0.0396 & 0.0526 & 0.0320 & 0.909 & 0.947 \\
+independent & 0.0 & 20 & 0.0626 & 0.0534 & 0.0620 & 0.0400 & 0.992 & 0.943 \\
+independent & 0.0 & 50 & 0.0651 & 0.0481 & 0.0658 & 0.0120 & 1.046 & 0.961 \\
+moderate & 0.3 & 5 & 0.1026 & 0.0653 & 0.6806 & 0.0360 & 0.701 & 1.055 \\
+moderate & 0.3 & 20 & 0.2115 & 0.0569 & 1.0000 & 0.0320 & 0.477 & 1.031 \\
+moderate & 0.3 & 50 & 0.2895 & 0.0469 & 1.0000 & 0.0640 & 0.261 & 0.970 \\
+strong & 0.6 & 5 & 0.1354 & 0.0403 & 0.9806 & 0.0600 & 0.486 & 1.124 \\
+strong & 0.6 & 20 & 0.2622 & 0.0386 & 1.0000 & 0.0440 & 0.068 & 1.031 \\
+strong & 0.6 & 50 & 0.3332 & 0.0484 & 1.0000 & 0.0680 & 0.002 & 1.016 \\
 \hline
 \end{tabular}}
 \end{table*}

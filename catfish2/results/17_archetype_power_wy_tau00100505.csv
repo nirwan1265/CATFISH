@@ -1,0 +1,541 @@
+"m","archetype","archetype_label","effect_scale","method","power_marginal","power_wy","power_bonf"
+5,"SSS","Strong Sparse Signal",0.5,"ACAT",0.241,0.015,0.01
+5,"SSS","Strong Sparse Signal",0.5,"Fisher",0.2,0.003,0.005
+5,"SSS","Strong Sparse Signal",0.5,"Stouffer",0.152,0.001,0.002
+5,"SSS","Strong Sparse Signal",0.5,"minP",0.248,0.015,0.01
+5,"SSS","Strong Sparse Signal",0.5,"TFisher",0.244712990936556,0.00503524672708963,0.013091641490433
+5,"SSS","Strong Sparse Signal",0.5,"Omnibus",0.233,0.006,0.009
+5,"SSS","Strong Sparse Signal",1,"ACAT",0.752,0.268,0.225
+5,"SSS","Strong Sparse Signal",1,"Fisher",0.65,0.096,0.11
+5,"SSS","Strong Sparse Signal",1,"Stouffer",0.359,0.017,0.023
+5,"SSS","Strong Sparse Signal",1,"minP",0.764,0.269,0.225
+5,"SSS","Strong Sparse Signal",1,"TFisher",0.73,0.181,0.233
+5,"SSS","Strong Sparse Signal",1,"Omnibus",0.711,0.185,0.207
+5,"SSS","Strong Sparse Signal",1.5,"ACAT",0.986,0.79,0.74
+5,"SSS","Strong Sparse Signal",1.5,"Fisher",0.947,0.467,0.502
+5,"SSS","Strong Sparse Signal",1.5,"Stouffer",0.59,0.079,0.09
+5,"SSS","Strong Sparse Signal",1.5,"minP",0.991,0.79,0.74
+5,"SSS","Strong Sparse Signal",1.5,"TFisher",0.987,0.678,0.745
+5,"SSS","Strong Sparse Signal",1.5,"Omnibus",0.982,0.682,0.709
+5,"SSS","Strong Sparse Signal",2,"ACAT",1,0.989,0.982
+5,"SSS","Strong Sparse Signal",2,"Fisher",0.996,0.9,0.914
+5,"SSS","Strong Sparse Signal",2,"Stouffer",0.809,0.207,0.25
+5,"SSS","Strong Sparse Signal",2,"minP",1,0.989,0.982
+5,"SSS","Strong Sparse Signal",2,"TFisher",1,0.972,0.984
+5,"SSS","Strong Sparse Signal",2,"Omnibus",1,0.971,0.977
+5,"SSS","Strong Sparse Signal",2.5,"ACAT",1,1,1
+5,"SSS","Strong Sparse Signal",2.5,"Fisher",1,0.995,0.995
+5,"SSS","Strong Sparse Signal",2.5,"Stouffer",0.949,0.454,0.509
+5,"SSS","Strong Sparse Signal",2.5,"minP",1,1,1
+5,"SSS","Strong Sparse Signal",2.5,"TFisher",1,1,1
+5,"SSS","Strong Sparse Signal",2.5,"Omnibus",1,1,1
+5,"SSS","Strong Sparse Signal",3,"ACAT",1,1,1
+5,"SSS","Strong Sparse Signal",3,"Fisher",1,1,1
+5,"SSS","Strong Sparse Signal",3,"Stouffer",0.986,0.647,0.698
+5,"SSS","Strong Sparse Signal",3,"minP",1,1,1
+5,"SSS","Strong Sparse Signal",3,"TFisher",1,1,1
+5,"SSS","Strong Sparse Signal",3,"Omnibus",1,1,1
+5,"MDS","Moderate Dense Signal",0.5,"ACAT",0.152,0.001,0
+5,"MDS","Moderate Dense Signal",0.5,"Fisher",0.177,0.002,0.002
+5,"MDS","Moderate Dense Signal",0.5,"Stouffer",0.179,0.002,0.003
+5,"MDS","Moderate Dense Signal",0.5,"minP",0.131,0.001,0
+5,"MDS","Moderate Dense Signal",0.5,"TFisher",0.161585365853659,0.00203252032520325,0.00304878048780488
+5,"MDS","Moderate Dense Signal",0.5,"Omnibus",0.164,0.002,0.002
+5,"MDS","Moderate Dense Signal",1,"ACAT",0.37,0.018,0.013
+5,"MDS","Moderate Dense Signal",1,"Fisher",0.456,0.035,0.046
+5,"MDS","Moderate Dense Signal",1,"Stouffer",0.43,0.024,0.035
+5,"MDS","Moderate Dense Signal",1,"minP",0.331,0.018,0.013
+5,"MDS","Moderate Dense Signal",1,"TFisher",0.411411411411411,0.031031031031031,0.051051051051051
+5,"MDS","Moderate Dense Signal",1,"Omnibus",0.428,0.031,0.035
+5,"MDS","Moderate Dense Signal",1.5,"ACAT",0.662,0.067,0.045
+5,"MDS","Moderate Dense Signal",1.5,"Fisher",0.758,0.162,0.178
+5,"MDS","Moderate Dense Signal",1.5,"Stouffer",0.683,0.116,0.141
+5,"MDS","Moderate Dense Signal",1.5,"minP",0.623,0.064,0.043
+5,"MDS","Moderate Dense Signal",1.5,"TFisher",0.721,0.145,0.19
+5,"MDS","Moderate Dense Signal",1.5,"Omnibus",0.724,0.145,0.166
+5,"MDS","Moderate Dense Signal",2,"ACAT",0.878,0.2,0.153
+5,"MDS","Moderate Dense Signal",2,"Fisher",0.929,0.403,0.442
+5,"MDS","Moderate Dense Signal",2,"Stouffer",0.87,0.276,0.322
+5,"MDS","Moderate Dense Signal",2,"minP",0.84,0.191,0.142
+5,"MDS","Moderate Dense Signal",2,"TFisher",0.915,0.383,0.45
+5,"MDS","Moderate Dense Signal",2,"Omnibus",0.912,0.365,0.402
+5,"MDS","Moderate Dense Signal",2.5,"ACAT",0.962,0.446,0.38
+5,"MDS","Moderate Dense Signal",2.5,"Fisher",0.984,0.741,0.767
+5,"MDS","Moderate Dense Signal",2.5,"Stouffer",0.969,0.559,0.607
+5,"MDS","Moderate Dense Signal",2.5,"minP",0.948,0.422,0.362
+5,"MDS","Moderate Dense Signal",2.5,"TFisher",0.98,0.72,0.772
+5,"MDS","Moderate Dense Signal",2.5,"Omnibus",0.978,0.691,0.721
+5,"MDS","Moderate Dense Signal",3,"ACAT",1,0.767,0.674
+5,"MDS","Moderate Dense Signal",3,"Fisher",1,0.946,0.955
+5,"MDS","Moderate Dense Signal",3,"Stouffer",0.997,0.802,0.841
+5,"MDS","Moderate Dense Signal",3,"minP",0.995,0.732,0.649
+5,"MDS","Moderate Dense Signal",3,"TFisher",1,0.939,0.959
+5,"MDS","Moderate Dense Signal",3,"Omnibus",1,0.935,0.943
+5,"WDE","Weak Diffuse Enrichment",0.5,"ACAT",0.111,0.002,0.001
+5,"WDE","Weak Diffuse Enrichment",0.5,"Fisher",0.119,0.003,0.003
+5,"WDE","Weak Diffuse Enrichment",0.5,"Stouffer",0.131,0.002,0.003
+5,"WDE","Weak Diffuse Enrichment",0.5,"minP",0.102,0.002,0.001
+5,"WDE","Weak Diffuse Enrichment",0.5,"TFisher",0.112919633774161,0.00305188199389624,0.00305188199389624
+5,"WDE","Weak Diffuse Enrichment",0.5,"Omnibus",0.12,0.003,0.003
+5,"WDE","Weak Diffuse Enrichment",1,"ACAT",0.188,0.003,0
+5,"WDE","Weak Diffuse Enrichment",1,"Fisher",0.235,0.007,0.01
+5,"WDE","Weak Diffuse Enrichment",1,"Stouffer",0.247,0.008,0.016
+5,"WDE","Weak Diffuse Enrichment",1,"minP",0.168,0.003,0
+5,"WDE","Weak Diffuse Enrichment",1,"TFisher",0.205025125628141,0.0050251256281407,0.0100502512562814
+5,"WDE","Weak Diffuse Enrichment",1,"Omnibus",0.213,0.005,0.007
+5,"WDE","Weak Diffuse Enrichment",1.5,"ACAT",0.303,0.01,0.002
+5,"WDE","Weak Diffuse Enrichment",1.5,"Fisher",0.403,0.024,0.03
+5,"WDE","Weak Diffuse Enrichment",1.5,"Stouffer",0.409,0.031,0.043
+5,"WDE","Weak Diffuse Enrichment",1.5,"minP",0.262,0.01,0.002
+5,"WDE","Weak Diffuse Enrichment",1.5,"TFisher",0.355711422845691,0.0190380761523046,0.0280561122244489
+5,"WDE","Weak Diffuse Enrichment",1.5,"Omnibus",0.378,0.021,0.027
+5,"WDE","Weak Diffuse Enrichment",2,"ACAT",0.465,0.019,0.015
+5,"WDE","Weak Diffuse Enrichment",2,"Fisher",0.568,0.07,0.077
+5,"WDE","Weak Diffuse Enrichment",2,"Stouffer",0.582,0.064,0.089
+5,"WDE","Weak Diffuse Enrichment",2,"minP",0.4,0.017,0.015
+5,"WDE","Weak Diffuse Enrichment",2,"TFisher",0.526,0.055,0.082
+5,"WDE","Weak Diffuse Enrichment",2,"Omnibus",0.547,0.06,0.073
+5,"WDE","Weak Diffuse Enrichment",2.5,"ACAT",0.628,0.049,0.035
+5,"WDE","Weak Diffuse Enrichment",2.5,"Fisher",0.758,0.151,0.172
+5,"WDE","Weak Diffuse Enrichment",2.5,"Stouffer",0.753,0.138,0.173
+5,"WDE","Weak Diffuse Enrichment",2.5,"minP",0.547,0.049,0.034
+5,"WDE","Weak Diffuse Enrichment",2.5,"TFisher",0.700700700700701,0.124124124124124,0.171171171171171
+5,"WDE","Weak Diffuse Enrichment",2.5,"Omnibus",0.723,0.131,0.154
+5,"WDE","Weak Diffuse Enrichment",3,"ACAT",0.76,0.083,0.053
+5,"WDE","Weak Diffuse Enrichment",3,"Fisher",0.888,0.268,0.297
+5,"WDE","Weak Diffuse Enrichment",3,"Stouffer",0.875,0.253,0.296
+5,"WDE","Weak Diffuse Enrichment",3,"minP",0.67,0.077,0.051
+5,"WDE","Weak Diffuse Enrichment",3,"TFisher",0.852,0.23,0.3
+5,"WDE","Weak Diffuse Enrichment",3,"Omnibus",0.858,0.236,0.27
+5,"MSA","Mixed Signal Architecture",0.5,"ACAT",0.236,0.006,0.004
+5,"MSA","Mixed Signal Architecture",0.5,"Fisher",0.29,0.014,0.017
+5,"MSA","Mixed Signal Architecture",0.5,"Stouffer",0.306,0.016,0.019
+5,"MSA","Mixed Signal Architecture",0.5,"minP",0.217,0.006,0.004
+5,"MSA","Mixed Signal Architecture",0.5,"TFisher",0.257286432160804,0.0110552763819095,0.0160804020100503
+5,"MSA","Mixed Signal Architecture",0.5,"Omnibus",0.276,0.015,0.017
+5,"MSA","Mixed Signal Architecture",1,"ACAT",0.586,0.042,0.031
+5,"MSA","Mixed Signal Architecture",1,"Fisher",0.723,0.108,0.127
+5,"MSA","Mixed Signal Architecture",1,"Stouffer",0.716,0.09,0.119
+5,"MSA","Mixed Signal Architecture",1,"minP",0.51,0.042,0.03
+5,"MSA","Mixed Signal Architecture",1,"TFisher",0.681,0.086,0.123
+5,"MSA","Mixed Signal Architecture",1,"Omnibus",0.698,0.093,0.112
+5,"MSA","Mixed Signal Architecture",1.5,"ACAT",0.91,0.225,0.173
+5,"MSA","Mixed Signal Architecture",1.5,"Fisher",0.953,0.532,0.559
+5,"MSA","Mixed Signal Architecture",1.5,"Stouffer",0.954,0.455,0.506
+5,"MSA","Mixed Signal Architecture",1.5,"minP",0.862,0.213,0.167
+5,"MSA","Mixed Signal Architecture",1.5,"TFisher",0.948,0.488,0.561
+5,"MSA","Mixed Signal Architecture",1.5,"Omnibus",0.949,0.49,0.522
+5,"MSA","Mixed Signal Architecture",2,"ACAT",0.993,0.611,0.523
+5,"MSA","Mixed Signal Architecture",2,"Fisher",0.999,0.902,0.916
+5,"MSA","Mixed Signal Architecture",2,"Stouffer",0.996,0.846,0.871
+5,"MSA","Mixed Signal Architecture",2,"minP",0.981,0.579,0.506
+5,"MSA","Mixed Signal Architecture",2,"TFisher",0.998,0.886,0.913
+5,"MSA","Mixed Signal Architecture",2,"Omnibus",0.999,0.889,0.902
+5,"MSA","Mixed Signal Architecture",2.5,"ACAT",1,0.905,0.86
+5,"MSA","Mixed Signal Architecture",2.5,"Fisher",1,0.994,0.995
+5,"MSA","Mixed Signal Architecture",2.5,"Stouffer",1,0.983,0.987
+5,"MSA","Mixed Signal Architecture",2.5,"minP",0.999,0.888,0.841
+5,"MSA","Mixed Signal Architecture",2.5,"TFisher",1,0.993,0.996
+5,"MSA","Mixed Signal Architecture",2.5,"Omnibus",1,0.992,0.993
+5,"MSA","Mixed Signal Architecture",3,"ACAT",1,0.989,0.981
+5,"MSA","Mixed Signal Architecture",3,"Fisher",1,1,1
+5,"MSA","Mixed Signal Architecture",3,"Stouffer",1,1,1
+5,"MSA","Mixed Signal Architecture",3,"minP",1,0.985,0.977
+5,"MSA","Mixed Signal Architecture",3,"TFisher",1,1,1
+5,"MSA","Mixed Signal Architecture",3,"Omnibus",1,1,1
+5,"SGP","Single-Gene Proxy",0.5,"ACAT",0.393,0.052,0.035
+5,"SGP","Single-Gene Proxy",0.5,"Fisher",0.332,0.015,0.021
+5,"SGP","Single-Gene Proxy",0.5,"Stouffer",0.21,0.005,0.008
+5,"SGP","Single-Gene Proxy",0.5,"minP",0.405,0.052,0.035
+5,"SGP","Single-Gene Proxy",0.5,"TFisher",0.382382382382382,0.032032032032032,0.043043043043043
+5,"SGP","Single-Gene Proxy",0.5,"Omnibus",0.364,0.032,0.034
+5,"SGP","Single-Gene Proxy",1,"ACAT",0.955,0.618,0.552
+5,"SGP","Single-Gene Proxy",1,"Fisher",0.883,0.299,0.33
+5,"SGP","Single-Gene Proxy",1,"Stouffer",0.515,0.043,0.053
+5,"SGP","Single-Gene Proxy",1,"minP",0.957,0.618,0.552
+5,"SGP","Single-Gene Proxy",1,"TFisher",0.945,0.485,0.564
+5,"SGP","Single-Gene Proxy",1,"Omnibus",0.94,0.481,0.523
+5,"SGP","Single-Gene Proxy",1.5,"ACAT",1,0.989,0.986
+5,"SGP","Single-Gene Proxy",1.5,"Fisher",1,0.91,0.924
+5,"SGP","Single-Gene Proxy",1.5,"Stouffer",0.815,0.201,0.233
+5,"SGP","Single-Gene Proxy",1.5,"minP",1,0.989,0.986
+5,"SGP","Single-Gene Proxy",1.5,"TFisher",1,0.98,0.988
+5,"SGP","Single-Gene Proxy",1.5,"Omnibus",1,0.98,0.984
+5,"SGP","Single-Gene Proxy",2,"ACAT",1,1,1
+5,"SGP","Single-Gene Proxy",2,"Fisher",1,0.999,0.999
+5,"SGP","Single-Gene Proxy",2,"Stouffer",0.96,0.503,0.545
+5,"SGP","Single-Gene Proxy",2,"minP",1,1,1
+5,"SGP","Single-Gene Proxy",2,"TFisher",1,1,1
+5,"SGP","Single-Gene Proxy",2,"Omnibus",1,1,1
+5,"SGP","Single-Gene Proxy",2.5,"ACAT",1,1,1
+5,"SGP","Single-Gene Proxy",2.5,"Fisher",1,1,1
+5,"SGP","Single-Gene Proxy",2.5,"Stouffer",0.996,0.807,0.842
+5,"SGP","Single-Gene Proxy",2.5,"minP",1,1,1
+5,"SGP","Single-Gene Proxy",2.5,"TFisher",1,1,1
+5,"SGP","Single-Gene Proxy",2.5,"Omnibus",1,1,1
+5,"SGP","Single-Gene Proxy",3,"ACAT",1,1,1
+5,"SGP","Single-Gene Proxy",3,"Fisher",1,1,1
+5,"SGP","Single-Gene Proxy",3,"Stouffer",1,0.962,0.967
+5,"SGP","Single-Gene Proxy",3,"minP",1,1,1
+5,"SGP","Single-Gene Proxy",3,"TFisher",1,1,1
+5,"SGP","Single-Gene Proxy",3,"Omnibus",1,1,1
+20,"SSS","Strong Sparse Signal",0.5,"ACAT",0.33,0.036,0.008
+20,"SSS","Strong Sparse Signal",0.5,"Fisher",0.328,0.018,0.044
+20,"SSS","Strong Sparse Signal",0.5,"Stouffer",0.232,0.014,0.028
+20,"SSS","Strong Sparse Signal",0.5,"minP",0.323,0.035,0.008
+20,"SSS","Strong Sparse Signal",0.5,"TFisher",0.353,0.017,0.054
+20,"SSS","Strong Sparse Signal",0.5,"Omnibus",0.342,0.016,0.039
+20,"SSS","Strong Sparse Signal",1,"ACAT",0.934,0.55,0.334
+20,"SSS","Strong Sparse Signal",1,"Fisher",0.875,0.296,0.445
+20,"SSS","Strong Sparse Signal",1,"Stouffer",0.535,0.06,0.135
+20,"SSS","Strong Sparse Signal",1,"minP",0.93,0.522,0.315
+20,"SSS","Strong Sparse Signal",1,"TFisher",0.939,0.49,0.662
+20,"SSS","Strong Sparse Signal",1,"Omnibus",0.93,0.419,0.561
+20,"SSS","Strong Sparse Signal",1.5,"ACAT",1,0.994,0.953
+20,"SSS","Strong Sparse Signal",1.5,"Fisher",1,0.917,0.963
+20,"SSS","Strong Sparse Signal",1.5,"Stouffer",0.819,0.209,0.372
+20,"SSS","Strong Sparse Signal",1.5,"minP",1,0.986,0.944
+20,"SSS","Strong Sparse Signal",1.5,"TFisher",1,0.993,0.999
+20,"SSS","Strong Sparse Signal",1.5,"Omnibus",1,0.989,0.996
+20,"SSS","Strong Sparse Signal",2,"ACAT",1,1,1
+20,"SSS","Strong Sparse Signal",2,"Fisher",1,1,1
+20,"SSS","Strong Sparse Signal",2,"Stouffer",0.952,0.544,0.707
+20,"SSS","Strong Sparse Signal",2,"minP",1,1,1
+20,"SSS","Strong Sparse Signal",2,"TFisher",1,1,1
+20,"SSS","Strong Sparse Signal",2,"Omnibus",1,1,1
+20,"SSS","Strong Sparse Signal",2.5,"ACAT",1,1,1
+20,"SSS","Strong Sparse Signal",2.5,"Fisher",1,1,1
+20,"SSS","Strong Sparse Signal",2.5,"Stouffer",0.998,0.844,0.923
+20,"SSS","Strong Sparse Signal",2.5,"minP",1,1,1
+20,"SSS","Strong Sparse Signal",2.5,"TFisher",1,1,1
+20,"SSS","Strong Sparse Signal",2.5,"Omnibus",1,1,1
+20,"SSS","Strong Sparse Signal",3,"ACAT",1,1,1
+20,"SSS","Strong Sparse Signal",3,"Fisher",1,1,1
+20,"SSS","Strong Sparse Signal",3,"Stouffer",1,0.952,0.982
+20,"SSS","Strong Sparse Signal",3,"minP",1,1,1
+20,"SSS","Strong Sparse Signal",3,"TFisher",1,1,1
+20,"SSS","Strong Sparse Signal",3,"Omnibus",1,1,1
+20,"MDS","Moderate Dense Signal",0.5,"ACAT",0.209,0.013,0.004
+20,"MDS","Moderate Dense Signal",0.5,"Fisher",0.362,0.016,0.039
+20,"MDS","Moderate Dense Signal",0.5,"Stouffer",0.37,0.014,0.043
+20,"MDS","Moderate Dense Signal",0.5,"minP",0.178,0.012,0.004
+20,"MDS","Moderate Dense Signal",0.5,"TFisher",0.316,0.015,0.046
+20,"MDS","Moderate Dense Signal",0.5,"Omnibus",0.349,0.013,0.039
+20,"MDS","Moderate Dense Signal",1,"ACAT",0.571,0.056,0.017
+20,"MDS","Moderate Dense Signal",1,"Fisher",0.831,0.236,0.382
+20,"MDS","Moderate Dense Signal",1,"Stouffer",0.807,0.203,0.346
+20,"MDS","Moderate Dense Signal",1,"minP",0.464,0.053,0.017
+20,"MDS","Moderate Dense Signal",1,"TFisher",0.787,0.222,0.374
+20,"MDS","Moderate Dense Signal",1,"Omnibus",0.803,0.224,0.354
+20,"MDS","Moderate Dense Signal",1.5,"ACAT",0.904,0.235,0.076
+20,"MDS","Moderate Dense Signal",1.5,"Fisher",0.994,0.738,0.855
+20,"MDS","Moderate Dense Signal",1.5,"Stouffer",0.982,0.656,0.8
+20,"MDS","Moderate Dense Signal",1.5,"minP",0.787,0.211,0.07
+20,"MDS","Moderate Dense Signal",1.5,"TFisher",0.985,0.724,0.85
+20,"MDS","Moderate Dense Signal",1.5,"Omnibus",0.988,0.727,0.836
+20,"MDS","Moderate Dense Signal",2,"ACAT",0.993,0.618,0.302
+20,"MDS","Moderate Dense Signal",2,"Fisher",1,0.984,0.997
+20,"MDS","Moderate Dense Signal",2,"Stouffer",1,0.949,0.976
+20,"MDS","Moderate Dense Signal",2,"minP",0.974,0.531,0.265
+20,"MDS","Moderate Dense Signal",2,"TFisher",1,0.981,0.997
+20,"MDS","Moderate Dense Signal",2,"Omnibus",1,0.982,0.997
+20,"MDS","Moderate Dense Signal",2.5,"ACAT",1,0.935,0.71
+20,"MDS","Moderate Dense Signal",2.5,"Fisher",1,0.999,1
+20,"MDS","Moderate Dense Signal",2.5,"Stouffer",1,0.996,0.999
+20,"MDS","Moderate Dense Signal",2.5,"minP",0.999,0.876,0.623
+20,"MDS","Moderate Dense Signal",2.5,"TFisher",1,0.998,1
+20,"MDS","Moderate Dense Signal",2.5,"Omnibus",1,0.998,1
+20,"MDS","Moderate Dense Signal",3,"ACAT",1,0.998,0.954
+20,"MDS","Moderate Dense Signal",3,"Fisher",1,1,1
+20,"MDS","Moderate Dense Signal",3,"Stouffer",1,1,1
+20,"MDS","Moderate Dense Signal",3,"minP",1,0.988,0.902
+20,"MDS","Moderate Dense Signal",3,"TFisher",1,1,1
+20,"MDS","Moderate Dense Signal",3,"Omnibus",1,1,1
+20,"WDE","Weak Diffuse Enrichment",0.5,"ACAT",0.122,0.008,0.002
+20,"WDE","Weak Diffuse Enrichment",0.5,"Fisher",0.232,0.004,0.016
+20,"WDE","Weak Diffuse Enrichment",0.5,"Stouffer",0.27,0.007,0.03
+20,"WDE","Weak Diffuse Enrichment",0.5,"minP",0.107,0.008,0.002
+20,"WDE","Weak Diffuse Enrichment",0.5,"TFisher",0.198,0.004,0.018
+20,"WDE","Weak Diffuse Enrichment",0.5,"Omnibus",0.236,0.007,0.016
+20,"WDE","Weak Diffuse Enrichment",1,"ACAT",0.29,0.015,0.006
+20,"WDE","Weak Diffuse Enrichment",1,"Fisher",0.589,0.069,0.143
+20,"WDE","Weak Diffuse Enrichment",1,"Stouffer",0.622,0.09,0.184
+20,"WDE","Weak Diffuse Enrichment",1,"minP",0.221,0.015,0.006
+20,"WDE","Weak Diffuse Enrichment",1,"TFisher",0.505,0.053,0.125
+20,"WDE","Weak Diffuse Enrichment",1,"Omnibus",0.576,0.076,0.142
+20,"WDE","Weak Diffuse Enrichment",1.5,"ACAT",0.535,0.042,0.008
+20,"WDE","Weak Diffuse Enrichment",1.5,"Fisher",0.872,0.258,0.413
+20,"WDE","Weak Diffuse Enrichment",1.5,"Stouffer",0.886,0.294,0.49
+20,"WDE","Weak Diffuse Enrichment",1.5,"minP",0.406,0.041,0.008
+20,"WDE","Weak Diffuse Enrichment",1.5,"TFisher",0.808,0.215,0.366
+20,"WDE","Weak Diffuse Enrichment",1.5,"Omnibus",0.869,0.276,0.407
+20,"WDE","Weak Diffuse Enrichment",2,"ACAT",0.766,0.088,0.025
+20,"WDE","Weak Diffuse Enrichment",2,"Fisher",0.983,0.615,0.742
+20,"WDE","Weak Diffuse Enrichment",2,"Stouffer",0.989,0.642,0.802
+20,"WDE","Weak Diffuse Enrichment",2,"minP",0.604,0.083,0.024
+20,"WDE","Weak Diffuse Enrichment",2,"TFisher",0.955,0.559,0.702
+20,"WDE","Weak Diffuse Enrichment",2,"Omnibus",0.977,0.622,0.747
+20,"WDE","Weak Diffuse Enrichment",2.5,"ACAT",0.914,0.173,0.059
+20,"WDE","Weak Diffuse Enrichment",2.5,"Fisher",0.998,0.88,0.939
+20,"WDE","Weak Diffuse Enrichment",2.5,"Stouffer",0.999,0.905,0.965
+20,"WDE","Weak Diffuse Enrichment",2.5,"minP",0.769,0.151,0.054
+20,"WDE","Weak Diffuse Enrichment",2.5,"TFisher",0.993,0.847,0.921
+20,"WDE","Weak Diffuse Enrichment",2.5,"Omnibus",0.999,0.894,0.943
+20,"WDE","Weak Diffuse Enrichment",3,"ACAT",0.986,0.335,0.116
+20,"WDE","Weak Diffuse Enrichment",3,"Fisher",1,0.984,0.99
+20,"WDE","Weak Diffuse Enrichment",3,"Stouffer",1,0.986,0.996
+20,"WDE","Weak Diffuse Enrichment",3,"minP",0.904,0.28,0.106
+20,"WDE","Weak Diffuse Enrichment",3,"TFisher",1,0.978,0.989
+20,"WDE","Weak Diffuse Enrichment",3,"Omnibus",1,0.986,0.992
+20,"MSA","Mixed Signal Architecture",0.5,"ACAT",0.238,0.012,0.002
+20,"MSA","Mixed Signal Architecture",0.5,"Fisher",0.483,0.033,0.086
+20,"MSA","Mixed Signal Architecture",0.5,"Stouffer",0.486,0.042,0.095
+20,"MSA","Mixed Signal Architecture",0.5,"minP",0.194,0.01,0.002
+20,"MSA","Mixed Signal Architecture",0.5,"TFisher",0.409,0.027,0.076
+20,"MSA","Mixed Signal Architecture",0.5,"Omnibus",0.451,0.036,0.078
+20,"MSA","Mixed Signal Architecture",1,"ACAT",0.749,0.114,0.034
+20,"MSA","Mixed Signal Architecture",1,"Fisher",0.958,0.452,0.635
+20,"MSA","Mixed Signal Architecture",1,"Stouffer",0.938,0.43,0.627
+20,"MSA","Mixed Signal Architecture",1,"minP",0.602,0.107,0.03
+20,"MSA","Mixed Signal Architecture",1,"TFisher",0.939,0.413,0.605
+20,"MSA","Mixed Signal Architecture",1,"Omnibus",0.952,0.443,0.605
+20,"MSA","Mixed Signal Architecture",1.5,"ACAT",0.987,0.469,0.209
+20,"MSA","Mixed Signal Architecture",1.5,"Fisher",0.999,0.963,0.989
+20,"MSA","Mixed Signal Architecture",1.5,"Stouffer",0.999,0.926,0.968
+20,"MSA","Mixed Signal Architecture",1.5,"minP",0.945,0.405,0.186
+20,"MSA","Mixed Signal Architecture",1.5,"TFisher",0.999,0.958,0.987
+20,"MSA","Mixed Signal Architecture",1.5,"Omnibus",0.999,0.957,0.981
+20,"MSA","Mixed Signal Architecture",2,"ACAT",1,0.925,0.7
+20,"MSA","Mixed Signal Architecture",2,"Fisher",1,0.999,1
+20,"MSA","Mixed Signal Architecture",2,"Stouffer",1,0.999,1
+20,"MSA","Mixed Signal Architecture",2,"minP",0.999,0.861,0.647
+20,"MSA","Mixed Signal Architecture",2,"TFisher",1,0.998,1
+20,"MSA","Mixed Signal Architecture",2,"Omnibus",1,0.999,1
+20,"MSA","Mixed Signal Architecture",2.5,"ACAT",1,0.999,0.958
+20,"MSA","Mixed Signal Architecture",2.5,"Fisher",1,1,1
+20,"MSA","Mixed Signal Architecture",2.5,"Stouffer",1,1,1
+20,"MSA","Mixed Signal Architecture",2.5,"minP",1,0.99,0.935
+20,"MSA","Mixed Signal Architecture",2.5,"TFisher",1,1,1
+20,"MSA","Mixed Signal Architecture",2.5,"Omnibus",1,1,1
+20,"MSA","Mixed Signal Architecture",3,"ACAT",1,1,0.999
+20,"MSA","Mixed Signal Architecture",3,"Fisher",1,1,1
+20,"MSA","Mixed Signal Architecture",3,"Stouffer",1,1,1
+20,"MSA","Mixed Signal Architecture",3,"minP",1,1,0.999
+20,"MSA","Mixed Signal Architecture",3,"TFisher",1,1,1
+20,"MSA","Mixed Signal Architecture",3,"Omnibus",1,1,1
+20,"SGP","Single-Gene Proxy",0.5,"ACAT",0.248,0.049,0.019
+20,"SGP","Single-Gene Proxy",0.5,"Fisher",0.157,0.003,0.007
+20,"SGP","Single-Gene Proxy",0.5,"Stouffer",0.11,0.001,0.007
+20,"SGP","Single-Gene Proxy",0.5,"minP",0.257,0.051,0.019
+20,"SGP","Single-Gene Proxy",0.5,"TFisher",0.238,0.007,0.024
+20,"SGP","Single-Gene Proxy",0.5,"Omnibus",0.234,0.005,0.017
+20,"SGP","Single-Gene Proxy",1,"ACAT",0.885,0.613,0.448
+20,"SGP","Single-Gene Proxy",1,"Fisher",0.517,0.049,0.107
+20,"SGP","Single-Gene Proxy",1,"Stouffer",0.195,0.002,0.013
+20,"SGP","Single-Gene Proxy",1,"minP",0.898,0.62,0.449
+20,"SGP","Single-Gene Proxy",1,"TFisher",0.853,0.256,0.435
+20,"SGP","Single-Gene Proxy",1,"Omnibus",0.847,0.265,0.413
+20,"SGP","Single-Gene Proxy",1.5,"ACAT",1,0.992,0.967
+20,"SGP","Single-Gene Proxy",1.5,"Fisher",0.92,0.347,0.539
+20,"SGP","Single-Gene Proxy",1.5,"Stouffer",0.323,0.011,0.04
+20,"SGP","Single-Gene Proxy",1.5,"minP",1,0.992,0.967
+20,"SGP","Single-Gene Proxy",1.5,"TFisher",1,0.912,0.961
+20,"SGP","Single-Gene Proxy",1.5,"Omnibus",1,0.922,0.957
+20,"SGP","Single-Gene Proxy",2,"ACAT",1,1,1
+20,"SGP","Single-Gene Proxy",2,"Fisher",1,0.894,0.955
+20,"SGP","Single-Gene Proxy",2,"Stouffer",0.471,0.037,0.087
+20,"SGP","Single-Gene Proxy",2,"minP",1,1,1
+20,"SGP","Single-Gene Proxy",2,"TFisher",1,0.999,1
+20,"SGP","Single-Gene Proxy",2,"Omnibus",1,0.999,1
+20,"SGP","Single-Gene Proxy",2.5,"ACAT",1,1,1
+20,"SGP","Single-Gene Proxy",2.5,"Fisher",1,0.999,1
+20,"SGP","Single-Gene Proxy",2.5,"Stouffer",0.606,0.076,0.163
+20,"SGP","Single-Gene Proxy",2.5,"minP",1,1,1
+20,"SGP","Single-Gene Proxy",2.5,"TFisher",1,1,1
+20,"SGP","Single-Gene Proxy",2.5,"Omnibus",1,1,1
+20,"SGP","Single-Gene Proxy",3,"ACAT",1,1,1
+20,"SGP","Single-Gene Proxy",3,"Fisher",1,1,1
+20,"SGP","Single-Gene Proxy",3,"Stouffer",0.764,0.174,0.313
+20,"SGP","Single-Gene Proxy",3,"minP",1,1,1
+20,"SGP","Single-Gene Proxy",3,"TFisher",1,1,1
+20,"SGP","Single-Gene Proxy",3,"Omnibus",1,1,1
+50,"SSS","Strong Sparse Signal",0.5,"ACAT",0.428,0.088,0.01
+50,"SSS","Strong Sparse Signal",0.5,"Fisher",0.451,0.065,0.189
+50,"SSS","Strong Sparse Signal",0.5,"Stouffer",0.301,0.034,0.126
+50,"SSS","Strong Sparse Signal",0.5,"minP",0.396,0.091,0.008
+50,"SSS","Strong Sparse Signal",0.5,"TFisher",0.518,0.07,0.211
+50,"SSS","Strong Sparse Signal",0.5,"Omnibus",0.461,0.056,0.178
+50,"SSS","Strong Sparse Signal",1,"ACAT",0.996,0.893,0.558
+50,"SSS","Strong Sparse Signal",1,"Fisher",0.983,0.785,0.936
+50,"SSS","Strong Sparse Signal",1,"Stouffer",0.74,0.247,0.51
+50,"SSS","Strong Sparse Signal",1,"minP",0.991,0.858,0.507
+50,"SSS","Strong Sparse Signal",1,"TFisher",1,0.952,0.99
+50,"SSS","Strong Sparse Signal",1,"Omnibus",0.995,0.913,0.978
+50,"SSS","Strong Sparse Signal",1.5,"ACAT",1,1,0.998
+50,"SSS","Strong Sparse Signal",1.5,"Fisher",1,1,1
+50,"SSS","Strong Sparse Signal",1.5,"Stouffer",0.962,0.632,0.859
+50,"SSS","Strong Sparse Signal",1.5,"minP",1,1,0.997
+50,"SSS","Strong Sparse Signal",1.5,"TFisher",1,1,1
+50,"SSS","Strong Sparse Signal",1.5,"Omnibus",1,1,1
+50,"SSS","Strong Sparse Signal",2,"ACAT",1,1,1
+50,"SSS","Strong Sparse Signal",2,"Fisher",1,1,1
+50,"SSS","Strong Sparse Signal",2,"Stouffer",0.998,0.934,0.986
+50,"SSS","Strong Sparse Signal",2,"minP",1,1,1
+50,"SSS","Strong Sparse Signal",2,"TFisher",1,1,1
+50,"SSS","Strong Sparse Signal",2,"Omnibus",1,1,1
+50,"SSS","Strong Sparse Signal",2.5,"ACAT",1,1,1
+50,"SSS","Strong Sparse Signal",2.5,"Fisher",1,1,1
+50,"SSS","Strong Sparse Signal",2.5,"Stouffer",1,0.995,0.999
+50,"SSS","Strong Sparse Signal",2.5,"minP",1,1,1
+50,"SSS","Strong Sparse Signal",2.5,"TFisher",1,1,1
+50,"SSS","Strong Sparse Signal",2.5,"Omnibus",1,1,1
+50,"SSS","Strong Sparse Signal",3,"ACAT",1,1,1
+50,"SSS","Strong Sparse Signal",3,"Fisher",1,1,1
+50,"SSS","Strong Sparse Signal",3,"Stouffer",1,1,1
+50,"SSS","Strong Sparse Signal",3,"minP",1,1,1
+50,"SSS","Strong Sparse Signal",3,"TFisher",1,1,1
+50,"SSS","Strong Sparse Signal",3,"Omnibus",1,1,1
+50,"MDS","Moderate Dense Signal",0.5,"ACAT",0.208,0.018,0
+50,"MDS","Moderate Dense Signal",0.5,"Fisher",0.473,0.063,0.216
+50,"MDS","Moderate Dense Signal",0.5,"Stouffer",0.455,0.061,0.234
+50,"MDS","Moderate Dense Signal",0.5,"minP",0.167,0.02,0
+50,"MDS","Moderate Dense Signal",0.5,"TFisher",0.443,0.055,0.182
+50,"MDS","Moderate Dense Signal",0.5,"Omnibus",0.458,0.067,0.214
+50,"MDS","Moderate Dense Signal",1,"ACAT",0.667,0.105,0.022
+50,"MDS","Moderate Dense Signal",1,"Fisher",0.953,0.607,0.815
+50,"MDS","Moderate Dense Signal",1,"Stouffer",0.919,0.529,0.789
+50,"MDS","Moderate Dense Signal",1,"minP",0.493,0.103,0.021
+50,"MDS","Moderate Dense Signal",1,"TFisher",0.946,0.583,0.799
+50,"MDS","Moderate Dense Signal",1,"Omnibus",0.94,0.578,0.802
+50,"MDS","Moderate Dense Signal",1.5,"ACAT",0.974,0.497,0.117
+50,"MDS","Moderate Dense Signal",1.5,"Fisher",0.999,0.985,0.997
+50,"MDS","Moderate Dense Signal",1.5,"Stouffer",0.999,0.949,0.989
+50,"MDS","Moderate Dense Signal",1.5,"minP",0.898,0.43,0.102
+50,"MDS","Moderate Dense Signal",1.5,"TFisher",0.999,0.983,0.998
+50,"MDS","Moderate Dense Signal",1.5,"Omnibus",0.999,0.983,0.996
+50,"MDS","Moderate Dense Signal",2,"ACAT",0.999,0.907,0.414
+50,"MDS","Moderate Dense Signal",2,"Fisher",1,1,1
+50,"MDS","Moderate Dense Signal",2,"Stouffer",1,1,1
+50,"MDS","Moderate Dense Signal",2,"minP",0.995,0.813,0.35
+50,"MDS","Moderate Dense Signal",2,"TFisher",1,1,1
+50,"MDS","Moderate Dense Signal",2,"Omnibus",1,1,1
+50,"MDS","Moderate Dense Signal",2.5,"ACAT",0.999,0.998,0.88
+50,"MDS","Moderate Dense Signal",2.5,"Fisher",1,1,1
+50,"MDS","Moderate Dense Signal",2.5,"Stouffer",1,1,1
+50,"MDS","Moderate Dense Signal",2.5,"minP",1,0.988,0.787
+50,"MDS","Moderate Dense Signal",2.5,"TFisher",1,1,1
+50,"MDS","Moderate Dense Signal",2.5,"Omnibus",1,1,1
+50,"MDS","Moderate Dense Signal",3,"ACAT",1,1,0.999
+50,"MDS","Moderate Dense Signal",3,"Fisher",1,1,1
+50,"MDS","Moderate Dense Signal",3,"Stouffer",1,1,1
+50,"MDS","Moderate Dense Signal",3,"minP",1,0.999,0.993
+50,"MDS","Moderate Dense Signal",3,"TFisher",1,1,1
+50,"MDS","Moderate Dense Signal",3,"Omnibus",1,1,1
+50,"WDE","Weak Diffuse Enrichment",0.5,"ACAT",0.112,0.014,0.001
+50,"WDE","Weak Diffuse Enrichment",0.5,"Fisher",0.278,0.024,0.097
+50,"WDE","Weak Diffuse Enrichment",0.5,"Stouffer",0.293,0.031,0.116
+50,"WDE","Weak Diffuse Enrichment",0.5,"minP",0.092,0.013,0.001
+50,"WDE","Weak Diffuse Enrichment",0.5,"TFisher",0.254,0.019,0.082
+50,"WDE","Weak Diffuse Enrichment",0.5,"Omnibus",0.28,0.026,0.099
+50,"WDE","Weak Diffuse Enrichment",1,"ACAT",0.304,0.02,0.002
+50,"WDE","Weak Diffuse Enrichment",1,"Fisher",0.714,0.204,0.44
+50,"WDE","Weak Diffuse Enrichment",1,"Stouffer",0.74,0.241,0.527
+50,"WDE","Weak Diffuse Enrichment",1,"minP",0.219,0.026,0.002
+50,"WDE","Weak Diffuse Enrichment",1,"TFisher",0.672,0.157,0.385
+50,"WDE","Weak Diffuse Enrichment",1,"Omnibus",0.72,0.22,0.455
+50,"WDE","Weak Diffuse Enrichment",1.5,"ACAT",0.584,0.076,0.004
+50,"WDE","Weak Diffuse Enrichment",1.5,"Fisher",0.961,0.658,0.848
+50,"WDE","Weak Diffuse Enrichment",1.5,"Stouffer",0.966,0.696,0.902
+50,"WDE","Weak Diffuse Enrichment",1.5,"minP",0.406,0.074,0.004
+50,"WDE","Weak Diffuse Enrichment",1.5,"TFisher",0.947,0.593,0.792
+50,"WDE","Weak Diffuse Enrichment",1.5,"Omnibus",0.962,0.683,0.866
+50,"WDE","Weak Diffuse Enrichment",2,"ACAT",0.856,0.174,0.031
+50,"WDE","Weak Diffuse Enrichment",2,"Fisher",0.999,0.945,0.991
+50,"WDE","Weak Diffuse Enrichment",2,"Stouffer",0.999,0.955,0.995
+50,"WDE","Weak Diffuse Enrichment",2,"minP",0.621,0.152,0.028
+50,"WDE","Weak Diffuse Enrichment",2,"TFisher",0.998,0.921,0.981
+50,"WDE","Weak Diffuse Enrichment",2,"Omnibus",0.998,0.953,0.992
+50,"WDE","Weak Diffuse Enrichment",2.5,"ACAT",0.974,0.356,0.057
+50,"WDE","Weak Diffuse Enrichment",2.5,"Fisher",1,0.996,0.997
+50,"WDE","Weak Diffuse Enrichment",2.5,"Stouffer",1,0.996,1
+50,"WDE","Weak Diffuse Enrichment",2.5,"minP",0.814,0.304,0.053
+50,"WDE","Weak Diffuse Enrichment",2.5,"TFisher",1,0.996,0.997
+50,"WDE","Weak Diffuse Enrichment",2.5,"Omnibus",1,0.997,0.999
+50,"WDE","Weak Diffuse Enrichment",3,"ACAT",0.997,0.625,0.156
+50,"WDE","Weak Diffuse Enrichment",3,"Fisher",1,1,1
+50,"WDE","Weak Diffuse Enrichment",3,"Stouffer",1,1,1
+50,"WDE","Weak Diffuse Enrichment",3,"minP",0.953,0.509,0.137
+50,"WDE","Weak Diffuse Enrichment",3,"TFisher",1,1,1
+50,"WDE","Weak Diffuse Enrichment",3,"Omnibus",1,1,1
+50,"MSA","Mixed Signal Architecture",0.5,"ACAT",0.283,0.028,0.002
+50,"MSA","Mixed Signal Architecture",0.5,"Fisher",0.655,0.141,0.335
+50,"MSA","Mixed Signal Architecture",0.5,"Stouffer",0.638,0.144,0.396
+50,"MSA","Mixed Signal Architecture",0.5,"minP",0.199,0.031,0.002
+50,"MSA","Mixed Signal Architecture",0.5,"TFisher",0.614,0.116,0.289
+50,"MSA","Mixed Signal Architecture",0.5,"Omnibus",0.631,0.145,0.334
+50,"MSA","Mixed Signal Architecture",1,"ACAT",0.857,0.24,0.038
+50,"MSA","Mixed Signal Architecture",1,"Fisher",0.996,0.884,0.969
+50,"MSA","Mixed Signal Architecture",1,"Stouffer",0.995,0.831,0.957
+50,"MSA","Mixed Signal Architecture",1,"minP",0.711,0.214,0.037
+50,"MSA","Mixed Signal Architecture",1,"TFisher",0.995,0.859,0.957
+50,"MSA","Mixed Signal Architecture",1,"Omnibus",0.996,0.863,0.96
+50,"MSA","Mixed Signal Architecture",1.5,"ACAT",0.999,0.798,0.3
+50,"MSA","Mixed Signal Architecture",1.5,"Fisher",1,1,1
+50,"MSA","Mixed Signal Architecture",1.5,"Stouffer",1,1,1
+50,"MSA","Mixed Signal Architecture",1.5,"minP",0.972,0.705,0.26
+50,"MSA","Mixed Signal Architecture",1.5,"TFisher",1,1,1
+50,"MSA","Mixed Signal Architecture",1.5,"Omnibus",1,1,1
+50,"MSA","Mixed Signal Architecture",2,"ACAT",1,0.999,0.886
+50,"MSA","Mixed Signal Architecture",2,"Fisher",1,1,1
+50,"MSA","Mixed Signal Architecture",2,"Stouffer",1,1,1
+50,"MSA","Mixed Signal Architecture",2,"minP",1,0.985,0.812
+50,"MSA","Mixed Signal Architecture",2,"TFisher",1,1,1
+50,"MSA","Mixed Signal Architecture",2,"Omnibus",1,1,1
+50,"MSA","Mixed Signal Architecture",2.5,"ACAT",1,1,0.998
+50,"MSA","Mixed Signal Architecture",2.5,"Fisher",1,1,1
+50,"MSA","Mixed Signal Architecture",2.5,"Stouffer",1,1,1
+50,"MSA","Mixed Signal Architecture",2.5,"minP",1,1,0.995
+50,"MSA","Mixed Signal Architecture",2.5,"TFisher",1,1,1
+50,"MSA","Mixed Signal Architecture",2.5,"Omnibus",1,1,1
+50,"MSA","Mixed Signal Architecture",3,"ACAT",1,1,1
+50,"MSA","Mixed Signal Architecture",3,"Fisher",1,1,1
+50,"MSA","Mixed Signal Architecture",3,"Stouffer",1,1,1
+50,"MSA","Mixed Signal Architecture",3,"minP",1,1,1
+50,"MSA","Mixed Signal Architecture",3,"TFisher",1,1,1
+50,"MSA","Mixed Signal Architecture",3,"Omnibus",1,1,1
+50,"SGP","Single-Gene Proxy",0.5,"ACAT",0.289,0.067,0.012
+50,"SGP","Single-Gene Proxy",0.5,"Fisher",0.143,0.006,0.03
+50,"SGP","Single-Gene Proxy",0.5,"Stouffer",0.096,0.005,0.031
+50,"SGP","Single-Gene Proxy",0.5,"minP",0.292,0.073,0.011
+50,"SGP","Single-Gene Proxy",0.5,"TFisher",0.24,0.008,0.056
+50,"SGP","Single-Gene Proxy",0.5,"Omnibus",0.199,0.007,0.04
+50,"SGP","Single-Gene Proxy",1,"ACAT",0.954,0.821,0.614
+50,"SGP","Single-Gene Proxy",1,"Fisher",0.492,0.071,0.221
+50,"SGP","Single-Gene Proxy",1,"Stouffer",0.163,0.012,0.05
+50,"SGP","Single-Gene Proxy",1,"minP",0.956,0.834,0.593
+50,"SGP","Single-Gene Proxy",1,"TFisher",0.93,0.482,0.755
+50,"SGP","Single-Gene Proxy",1,"Omnibus",0.907,0.358,0.698
+50,"SGP","Single-Gene Proxy",1.5,"ACAT",1,1,0.996
+50,"SGP","Single-Gene Proxy",1.5,"Fisher",0.952,0.581,0.818
+50,"SGP","Single-Gene Proxy",1.5,"Stouffer",0.265,0.019,0.103
+50,"SGP","Single-Gene Proxy",1.5,"minP",1,1,0.996
+50,"SGP","Single-Gene Proxy",1.5,"TFisher",1,0.995,1
+50,"SGP","Single-Gene Proxy",1.5,"Omnibus",1,0.991,0.999
+50,"SGP","Single-Gene Proxy",2,"ACAT",1,1,1
+50,"SGP","Single-Gene Proxy",2,"Fisher",1,0.98,0.996
+50,"SGP","Single-Gene Proxy",2,"Stouffer",0.455,0.073,0.233
+50,"SGP","Single-Gene Proxy",2,"minP",1,1,1
+50,"SGP","Single-Gene Proxy",2,"TFisher",1,1,1
+50,"SGP","Single-Gene Proxy",2,"Omnibus",1,1,1
+50,"SGP","Single-Gene Proxy",2.5,"ACAT",1,1,1
+50,"SGP","Single-Gene Proxy",2.5,"Fisher",1,1,1
+50,"SGP","Single-Gene Proxy",2.5,"Stouffer",0.595,0.134,0.374
+50,"SGP","Single-Gene Proxy",2.5,"minP",1,1,1
+50,"SGP","Single-Gene Proxy",2.5,"TFisher",1,1,1
+50,"SGP","Single-Gene Proxy",2.5,"Omnibus",1,1,1
+50,"SGP","Single-Gene Proxy",3,"ACAT",1,1,1
+50,"SGP","Single-Gene Proxy",3,"Fisher",1,1,1
+50,"SGP","Single-Gene Proxy",3,"Stouffer",0.701,0.209,0.473
+50,"SGP","Single-Gene Proxy",3,"minP",1,1,1
+50,"SGP","Single-Gene Proxy",3,"TFisher",1,1,1
+50,"SGP","Single-Gene Proxy",3,"Omnibus",1,1,1

@@ -49,10 +49,21 @@ for (rn in names(RHO)) {
     half    <- seq_len(floor(NREP / 2L))
     cal_min <- minp_wy[half]
     ev_min  <- minp_wy[-half]
-    wy_thresh <- stats::quantile(cal_min, ALPHA, names = FALSE)
-    ## how much of the family minimum is pinned at the package p-value floor:
-    ## if this is large the quantile lands on a tied value and the rate jumps.
-    floor_frac <- mean(minp_wy <= log(MIN_P_DEFAULT) + 1e-9)
+    ## Empirical Westfall-Young adjusted p-value, not a quantile threshold.
+    ## A quantile plus an inclusive comparison fails when the 5% point sits on
+    ## an atom: every draw tied at that value is then rejected. Counting
+    ## null minima at least as extreme as the observed one handles ties
+    ## conservatively and is the standard WY construction.
+    wy_p_eval <- vapply(ev_min, function(s)
+                        (1 + sum(cal_min <= s)) / (length(cal_min) + 1), numeric(1))
+    wy_thresh <- stats::quantile(cal_min, ALPHA, names = FALSE)   # reported only
+    ## Saturation diagnostic. The ACAT omnibus of C components, one of which is
+    ## at the floor, lands near C * floor -- not at the floor itself, which is
+    ## what the previous version tested and why it always read zero.
+    nC <- length(STAT_NAMES) - 1L
+    floor_frac <- mean(abs(minp_wy - log(nC * MIN_P_DEFAULT)) < 1e-6)
+    ## distinct values in the family minimum: 1 means no resolution at all
+    n_distinct <- length(unique(round(minp_wy, 10)))
 
     for (ai in seq_along(ALPHA)) {
       a <- ALPHA[ai]
@@ -60,10 +71,13 @@ for (rn in names(RHO)) {
         rho = RHO[[rn]], ld = rn, m = m, alpha = a,
         t1_analytic   = type1(p_analytic, a),
         t1_mvn        = type1(p_mvn, a),
-        t1_bonferroni = type1(p_analytic, a / NP) * NP,  # inflation factor, NOT a rate
-        t1_wy         = mean(ev_min <= wy_thresh[ai]),
-        wy_tie_frac   = mean(ev_min == wy_thresh[ai]),
+        t1_bonferroni = type1(p_analytic, a / NP) * NP,  # expected false rejections per family
+        t1_bonf_fwer  = mean(exp(minp_wy) < a / NP),     # Bonferroni family-wise error rate
+        np            = NP,
+        t1_wy         = mean(wy_p_eval <= a),
+        wy_tie_frac   = mean(ev_min == stats::quantile(cal_min, a, names = FALSE)),
         wy_floor_frac = floor_frac,
+        wy_n_distinct = n_distinct,
         lambda_analytic = lambda_gc(p_analytic),
         lambda_mvn      = lambda_gc(p_mvn),
         stringsAsFactors = FALSE)

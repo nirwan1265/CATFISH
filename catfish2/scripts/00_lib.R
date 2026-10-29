@@ -36,8 +36,28 @@
 ## floor, so the cap never binds in these simulations.
 ## -----------------------------------------------------------------------------
 
-TAU_GRID_DEFAULT <- c(0.1, 0.05, 0.01, 0.005, 0.001)
-MIN_P_DEFAULT    <- 1e-50
+## Truncation thresholds for adaptive soft TFisher. This is the grid of
+## Zhang, Tong, Landers & Wu (2020), TAU1 = c(0.01, 0.05, 0.5, 1), with the
+## tau = 1 corner dropped because tau = 1 IS Fisher and Fisher is already a
+## separate component. Spanning small, intermediate and large tau is their
+## stated recommendation; a grid confined to small tau leaves m*tau << 1 at
+## realistic pathway sizes and the statistic is empty on most pathways.
+TAU_GRID_DEFAULT <- c(0.01, 0.05, 0.5)
+## Lower floor for component and omnibus p-values. Raised from 1e-50 because
+## ACAT has a Cauchy tail: with every gene in a pathway correlated at rho=0.6
+## the analytic omnibus p underflows past 1e-50 on roughly a quarter of null
+## draws, those draws tie at the floor, and the Westfall-Young threshold then
+## lands on the tie. 1e-300 is near the limit of double precision and is not
+## reached in any configuration tested.
+MIN_P_DEFAULT    <- 1e-300
+
+## TFisher reports Wo = 1 - p.soft(...). In double precision 1 - x is exactly 0
+## once x > 1 - 1e-16, so a strongly enriched pathway returns Wo = 0 and would
+## be clamped to MIN_P_DEFAULT -- reporting 1e-300 for a statistic that cannot
+## resolve past 1e-16. Cap TFisher at its own precision limit instead. Fisher
+## and Stouffer are computed in closed form and genuinely reach 1e-100, so they
+## keep MIN_P_DEFAULT.
+TF_MIN_P         <- 1e-16
 
 ## Component p-value column returned by each CATFISH wrapper.
 COMPONENT_FUN <- list(
@@ -128,7 +148,10 @@ components_from_draw <- function(lp, z, paths_chr, G,
     ## is built under the same rule, so the calibration and the WY threshold
     ## absorb that bias -- an ANALYTIC omnibus p under this rule would be
     ## anti-conservative.
-    if (nm == "TFisher") v[is.finite(v) & v >= 1 - 1e-12] <- NA_real_
+    if (nm == "TFisher") {
+      v[is.finite(v) & v >= 1 - 1e-12] <- NA_real_          # empty statistic
+      v[is.finite(v)] <- pmax(v[is.finite(v)], TF_MIN_P)    # precision limit
+    }
     pm[, nm] <- v
   }
   cbind(log(pmax(pm, min_p)),

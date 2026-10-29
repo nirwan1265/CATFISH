@@ -37,23 +37,30 @@ emit <- function(lines, file, star = TRUE) {
 ## ---------------------------------------------------------------- 01 null ---
 if (have("01_null_calibration.csv")) {
   d <- read.csv(file.path(RES, "01_null_calibration.csv"))
+  ## Bonferroni FWER. Older runs stored type1(p, a/NP) * NP -- an expected
+  ## number of false rejections per family, not a rate. 01's pathways are
+  ## independent by construction, so the family-wise rate follows exactly as
+  ## 1 - (1 - x/NP)^NP. Newer runs record it directly as t1_bonf_fwer.
+  NPF <- if ("np" %in% names(d)) d$np else 200
+  d$bonf_fwer <- if ("t1_bonf_fwer" %in% names(d)) d$t1_bonf_fwer else
+                 1 - (1 - pmin(d$t1_bonferroni / NPF, 1))^NPF
   d5 <- d[d$alpha == 0.05, ]
   lines <- c(
     "\\begin{table*}[!t]", "\\centering",
     paste0("\\caption{Empirical type~I error and genomic-control inflation for the ",
            "CATFISH omnibus under the global null, by within-pathway LD level and ",
-           "pathway size. Analytic: independence-based omnibus. MVN: calibrated against ",
-           "a pathway-specific correlated null. Bonferroni and Westfall--Young (WY) ",
-           "columns are family-wise error rates across the pathway family. ",
-           "Nominal level $\\alpha=0.05$.}"),
+           "pathway size. Analytic: independence-based omnibus. Calibrated: per-pathway ",
+           "calibration against the correlated null. Bonferroni and Westfall--Young (WY): ",
+           "family-wise error rates, the probability of at least one rejection among ",
+           "the pathways of one simulated family. Nominal level $\\alpha=0.05$.}"),
     "\\label{tab:null_calibration}", "\\small",
     "\\begin{tabular}{llrrrrrrr}", "\\hline",
-    "\\textbf{LD} & $\\rho$ & $m$ & \\textbf{Analytic} & \\textbf{MVN} & \\textbf{Bonferroni} & \\textbf{WY} & $\\lambda_{\\mathrm{an}}$ & $\\lambda_{\\mathrm{mvn}}$ \\\\",
+    "\\textbf{LD} & $\\rho$ & $m$ & \\textbf{Analytic} & \\textbf{Calibrated} & \\textbf{Bonferroni} & \\textbf{WY} & $\\lambda_{\\mathrm{an}}$ & $\\lambda_{\\mathrm{cal}}$ \\\\",
     "\\hline")
   for (i in seq_len(nrow(d5))) {
     r <- d5[i, ]
     lines <- c(lines, sprintf("%s & %.1f & %d & %s & %s & %s & %s & %s & %s \\\\",
-      r$ld, r$rho, r$m, f4(r$t1_analytic), f4(r$t1_mvn), f4(r$t1_bonferroni),
+      r$ld, r$rho, r$m, f4(r$t1_analytic), f4(r$t1_mvn), f4(r$bonf_fwer),
       f4(r$t1_wy), f2(r$lambda_analytic), f2(r$lambda_mvn)))
   }
   lines <- c(lines, "\\hline", "\\end{tabular}", "\\end{table*}")
@@ -74,6 +81,13 @@ if (have("01_null_calibration.csv")) {
   def("nLamAnMin", f2(min(d5$lambda_analytic)))
   def("nLamMvnMax",f2(max(d5$lambda_mvn)))
   def("nLamMvnMin",f2(min(d5$lambda_mvn)))
+  def("nTBonfInd",  f4(g("independent", 5,  "bonf_fwer")))
+  def("nTBonfStr",  f4(g("strong",      50, "bonf_fwer")))
+  def("nTBonfMod",  f4(g("moderate",    20, "bonf_fwer")))
+  def("nLamAnInd",  f2(g("independent", 50, "lambda_analytic")))
+  def("nLamAnStr",  f2(g("strong",      50, "lambda_analytic")))
+  if ("wy_n_distinct" %in% names(d5))
+    def("nWyDistinctMin", sprintf("%d", min(d5$wy_n_distinct)))
   d1 <- d[d$alpha == 0.01, ]
   def("nTAnMaxOne",  f4(max(d1$t1_analytic)))
   def("nTMvnMaxOne", f4(max(d1$t1_mvn)))
@@ -360,6 +374,133 @@ if (have("06_candidate_genes_ldl.csv")) {
   ## how many distinct values the GWAS layer resolves at its strongest point
   pg <- d$p_gwas[!is.na(d$p_gwas)]
   def("nCandGwasTies", sprintf("%d", sum(pg <= min(pg) * (1 + 1e-9))))
+}
+
+## -------------------------------------------------- 17 archetype power ---
+## Verification: for each archetype and size, which component actually wins
+## under the family-wise rule, and is that inside the Table 1 prediction set?
+ARCHF <- c("17_archetype_power_wy_tau00100505.csv", "17_archetype_power_wy.csv")
+ARCHF <- ARCHF[vapply(ARCHF, have, logical(1))]
+if (length(ARCHF)) {
+  d <- utils::read.csv(file.path(RES, ARCHF[1]), stringsAsFactors = FALSE)
+  PRED <- list(SSS = c("ACAT", "minP"),
+               MDS = c("Fisher", "Stouffer", "TFisher"),
+               WDE = c("Stouffer", "Fisher"),
+               MSA = c("TFisher", "Fisher", "ACAT"),
+               SGP = c("minP", "ACAT"))
+  ARCH <- intersect(c("SSS", "MDS", "WDE", "MSA", "SGP"), d$archetype)
+  cmp  <- d[d$method != "Omnibus", ]
+  rows <- list(); nin <- 0L; ntot <- 0L
+  for (aa in ARCH) for (mm in sort(unique(d$m))) {
+    s <- cmp[cmp$archetype == aa & cmp$m == mm, ]
+    ## informative cells only: ignore effect scales where nothing or everything fires
+    s <- s[ave(s$power_wy, s$effect_scale, FUN = max) > 0.05 &
+           ave(s$power_wy, s$effect_scale, FUN = max) < 0.98, ]
+    if (!nrow(s)) next
+    tb  <- sort(table(s$method[ave(s$power_wy, s$effect_scale,
+                                   FUN = function(x) x == max(x)) == 1]),
+                decreasing = TRUE)
+    win <- names(tb)[1]
+    om  <- d[d$archetype == aa & d$m == mm & d$method == "Omnibus", ]
+    bst <- tapply(s$power_wy, s$effect_scale, max)
+    omp <- om$power_wy[match(names(bst), om$effect_scale)]
+    ok  <- win %in% PRED[[aa]]
+    nin <- nin + ok; ntot <- ntot + 1L
+    rows[[length(rows) + 1L]] <- sprintf(
+      "%s & %d & %s & %s & %s & %.3f \\\\",
+      aa, mm, paste(PRED[[aa]], collapse = ", "), win,
+      if (ok) "\\checkmark" else "--",
+      max(bst - omp, na.rm = TRUE))
+  }
+  emit(c("\\begin{table*}[!t]", "\\centering",
+         paste0("\\caption{Archetype verification under the family-wise decision ",
+                "rule. For each archetype and pathway size, the component achieving ",
+                "the highest family-wise power most often across effect scales, ",
+                "against the set predicted in Table~\\ref{tab:archetype_summary}. ",
+                "Cells in which no component or every component fires are excluded ",
+                "as uninformative. Worst regret is the largest gap in a single cell ",
+                "between the best component and the omnibus.}"),
+         "\\label{tab:archverify}", "\\small",
+         "\\begin{tabular}{llllcr}", "\\hline",
+         paste("\\textbf{Archetype} & \\textbf{$m$} & \\textbf{Predicted} &",
+               "\\textbf{Observed winner} & \\textbf{In set} & \\textbf{Worst regret} \\\\"),
+         "\\hline", unlist(rows), "\\hline", "\\end{tabular}", "\\end{table*}"),
+       file.path(AUT, "tab_archetype_verification.tex"))
+  def("nArchCellsIn",  sprintf("%d", nin))
+  def("nArchCellsTot", sprintf("%d", ntot))
+}
+
+## Regret summary table
+REGF <- c("17_archetype_regret_wy_tau00100505.csv", "17_archetype_regret_wy.csv")
+REGF <- REGF[vapply(REGF, have, logical(1))]
+if (length(REGF)) {
+  r <- utils::read.csv(file.path(RES, REGF[1]), stringsAsFactors = FALSE)
+  r <- r[order(r$mean_regret), ]
+  emit(c("\\begin{table*}[!t]", "\\centering",
+         paste0("\\caption{Power regret of the ACAT-O omnibus by archetype. ",
+                "Regret is the difference between the best single component and ",
+                "the omnibus in the same cell, over all pathway sizes and effect ",
+                "scales. The final two columns give the fraction of cells in which ",
+                "the omnibus is within $0.05$ and $0.10$ of the best component.}"),
+         "\\label{tab:archregret}", "\\small",
+         "\\begin{tabular}{llrrrrr}", "\\hline",
+         paste("\\textbf{Code} & \\textbf{Archetype} & \\textbf{Mean} &",
+               "\\textbf{Median} & \\textbf{Worst} & \\textbf{$\\le0.05$} &",
+               "\\textbf{$\\le0.10$} \\\\"),
+         "\\hline",
+         sprintf("%s & %s & %.3f & %.3f & %.3f & %.0f\\%% & %.0f\\%% \\\\",
+                 r$archetype, r$archetype_label, r$mean_regret, r$median_regret,
+                 r$max_regret, 100 * r$within_0.05, 100 * r$within_0.10),
+         "\\hline", "\\end{tabular}", "\\end{table*}"),
+       file.path(AUT, "tab_archetype_regret.tex"))
+  def("nArchRegretBest",  sprintf("%.3f", min(r$mean_regret)))
+  def("nArchRegretWorst", sprintf("%.3f", max(r$mean_regret)))
+  def("nArchRegretBestA",  r$archetype[which.min(r$mean_regret)])
+  def("nArchRegretWorstA", r$archetype[which.max(r$mean_regret)])
+  def("nArchMaxRegret",   sprintf("%.3f", max(r$max_regret)))
+}
+
+## ------------------------------------- 17: component ranks across cells ---
+## In each informative (m, archetype, effect) cell, rank the five components by
+## family-wise power. Reports how often each finishes where; the point is that
+## TFisher is never last even though it seldom wins.
+ARCHF2 <- c("17_archetype_power_wy_tau00100505.csv", "17_archetype_power_wy.csv")
+ARCHF2 <- ARCHF2[vapply(ARCHF2, have, logical(1))]
+if (length(ARCHF2)) {
+  d <- utils::read.csv(file.path(RES, ARCHF2[1]), stringsAsFactors = FALSE)
+  d <- d[d$method != "Omnibus", ]
+  key <- paste(d$m, d$archetype, d$effect_scale)
+  mx  <- ave(d$power_wy, key, FUN = max)
+  d   <- d[mx > 0.05 & mx < 0.98, ]
+  key <- paste(d$m, d$archetype, d$effect_scale)
+  d$rk <- ave(-d$power_wy, key, FUN = function(x) rank(x, ties.method = "min"))
+  tf  <- d[d$method == "TFisher", ]
+  def("nArchInfCells", sprintf("%d", length(unique(key))))
+  def("nTFFirst",  sprintf("%d", sum(tf$rk == 1)))
+  def("nTFSecond", sprintf("%d", sum(tf$rk == 2)))
+  def("nTFThird",  sprintf("%d", sum(tf$rk == 3)))
+  def("nTFWorst",  sprintf("%d", max(tf$rk)))
+  fi <- d[d$method == "Fisher", ]
+  def("nFisherFirst", sprintf("%d", sum(fi$rk == 1)))
+  def("nFisherFourthPlus", sprintf("%d", sum(fi$rk >= 4)))
+  mp <- d[d$method == "minP", ]
+  def("nMinPLast", sprintf("%d", sum(mp$rk == 5)))
+}
+
+## --------------------------------- 03: WY threshold against Bonferroni ---
+if (have("03_adaptive_loo.csv")) {
+  d <- utils::read.csv(file.path(RES, "03_adaptive_loo.csv"), stringsAsFactors = FALSE)
+  d <- d[d$dropped == "<none>", ]
+  ind <- d[d$rho == 0, ]; ld <- d[d$rho > 0, ]
+  ## at rho = 0 the WY threshold is MORE permissive than Bonferroni (overlap);
+  ## under LD it is far stricter, because it is set on the analytic scale and
+  ## the analytic p is anti-conservative there
+  def("nWyGainLo", sprintf("%.2f", min(ind$wy_threshold / ind$bonferroni_threshold)))
+  def("nWyGainHi", sprintf("%.2f", max(ind$wy_threshold / ind$bonferroni_threshold)))
+  def("nWyStrictLo", sprintf("%.0f", min(ld$bonferroni_threshold / ld$wy_threshold)))
+  def("nWyStrictHi", format(round(max(ld$bonferroni_threshold / ld$wy_threshold)),
+                            big.mark = ","))
+  def("nBonfThrK", sci(d$bonferroni_threshold[1]))
 }
 
 writeLines(c("%% AUTO-GENERATED by 07_tables_and_numbers.R -- do not edit by hand",

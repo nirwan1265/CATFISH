@@ -1,0 +1,6 @@
+"archetype","archetype_label","mean_regret","median_regret","max_regret","within_0.05","within_0.10"
+"MDS","Moderate Dense Signal",0.00977958446251129,0.0025,0.05,0.944444444444444,1
+"MSA","Mixed Signal Architecture",0.00633333333333334,5e-04,0.042,1,1
+"SGP","Single-Gene Proxy",0.0660555555555555,0.005,0.476,0.722222222222222,0.833333333333333
+"SSS","Strong Sparse Signal",0.0249444444444444,0.0025,0.131,0.833333333333333,0.888888888888889
+"WDE","Weak Diffuse Enrichment",0.00994732677743867,0.01,0.032,1,1
