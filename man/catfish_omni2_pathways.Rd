@@ -2,7 +2,7 @@
 % Please edit documentation in R/OMNIBUS_test.R
 \name{catfish_omni2_pathways}
 \alias{catfish_omni2_pathways}
-\title{CATFISH omnibus pathway p-values (6-method framework; optional global + MVN calibration)}
+\title{CATFISH omnibus pathway p-values (analytic, global resampling, or Westfall--Young)}
 \usage{
 catfish_omni2_pathways(
   gene_results,
@@ -14,10 +14,12 @@ catfish_omni2_pathways(
   p_adj_col = NULL,
   z_col = NULL,
   weight_col = NULL,
+  chr_col = NULL,
   tau_grid = "auto",
   tau_cap = 1,
   min_p = 1e-50,
   min_genes = 2L,
+  max_genes = Inf,
   use_tfisher = TRUE,
   do_fix = TRUE,
   stouffer_min_abs_w = 1e-08,
@@ -27,25 +29,19 @@ catfish_omni2_pathways(
   include_magma_in_perm = FALSE,
   omnibus = c("ACAT", "minP"),
   B_perm = NULL,
-  perm_mode = c("none", "global", "mvn", "mvn_global", "both"),
-  mvn_marginal = c("uniform", "empirical"),
-  mvn_sided = c("one", "two"),
-  mvn_pool = c("use", "raw"),
-  pool_p = NULL,
-  mvn_calibrate_components = FALSE,
+  perm_mode = c("none", "global", "wy", "both"),
+  wy_tau_grid = c(0.01, 0.05, 0.5),
   tail_mode = c("empirical", "hybrid_gpd"),
   tail_switch_exceed = 10L,
   tail_gpd_k = 250L,
   tail_min_B = 10000L,
   tail_min_tail = 50L,
   B_global = 0L,
-  B_mvn = 0L,
+  B_wy = 0L,
   perm_pool = c("raw", "obs"),
   magma_cor_file = NULL,
   magma_cor_pairs = NULL,
-  make_PD = TRUE,
   seed = NULL,
-  n_threads = NULL,
   output = FALSE,
   out_dir = "catfish_omni2"
 )
@@ -54,7 +50,7 @@ catfish_omni2_pathways(
 \item{gene_results}{data.frame of gene-level results (one row per gene recommended).
 Must contain \code{gene_col} and at least one p-value column (\code{p_raw_col} and/or \code{p_adj_col}).
 If you want Stouffer, it must contain \code{z_col}. If you want weighted Stouffer, it must contain
-\code{weight_col}.}
+\code{weight_col}. For Westfall--Young it must also contain \code{chr_col}.}
 
 \item{pathways}{Pathway definitions (provide \code{pathways} OR \code{species}).
 Either a data.frame with columns \code{pathway_id}, \code{gene_id} (optional \code{pathway_name}),
@@ -78,19 +74,22 @@ for ACAT/Fisher/TFisher/minP. Default NULL.}
 
 \item{weight_col}{Character or NULL. Optional weights for Stouffer. Default NULL (equal weights).}
 
-\item{tau_grid}{Adaptive soft-TFisher thresholds. Either a numeric vector of
+\item{chr_col}{Character or NULL. Chromosome column in \code{gene_results}. Required for
+\code{perm_mode = "wy"} / \code{"both"}; genes are drawn jointly within a chromosome and
+independently across chromosomes. Default NULL.}
+
+\item{tau_grid}{Adaptive soft-TFisher thresholds for the analytic component. Either a numeric vector of
 \eqn{\tau} values, or \code{"auto"} (default) to select the grid from the
-empirical quantiles of the pooled gene-level p-values. Under a uniform null
-this matches the classic grid \code{c(0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001)};
-under strong signal it shrinks toward the extreme tail automatically, removing
-the need for a manual strict-vs-default choice. The grid is estimated once
-globally and held fixed across the observed statistics and the MVN null.}
+empirical quantiles of the pooled gene-level p-values.}
 
 \item{tau_cap}{Numeric. Upper bound for \code{tau_grid} (sanity bound). Default 1.}
 
-\item{min_p}{Numeric. P-values are clipped to \code{[min_p, 1-min_p]} to avoid numeric issues. Default 1e-15.}
+\item{min_p}{Numeric. P-values are clipped to \code{[min_p, 1-min_p]} to avoid numeric issues. Default 1e-50.}
 
 \item{min_genes}{Integer. Minimum genes required per pathway. Default 2.}
+
+\item{max_genes}{Numeric. Maximum genes per pathway (counted over genes present). Default \code{Inf}
+(no upper limit).}
 
 \item{use_tfisher}{Logical. Include the adaptive soft-TFisher component. Default TRUE.}
 
@@ -107,31 +106,22 @@ globally and held fixed across the observed statistics and the MVN null.}
 \item{include_magma_in_perm}{Logical. Include MAGMA p-values inside the resampling null. Generally not recommended.
 If FALSE and permutations are run, MAGMA is omitted from the permuted omnibus. Default FALSE.}
 
-\item{omnibus}{Character. \code{"ACAT"} or \code{"minP"} for combining method p-values. Default \code{"ACAT"}.}
+\item{omnibus}{Character. \code{"ACAT"} or \code{"minP"} for combining method p-values. Default \code{"ACAT"}.
+The Westfall--Young omnibus always uses ACAT.}
 
 \item{B_perm}{Integer or NULL. Convenience parameter for number of resampling iterations. If provided,
-it overrides \code{B_global}/\code{B_mvn} according to \code{perm_mode}.}
+it overrides \code{B_global}/\code{B_wy} according to \code{perm_mode}.}
 
-\item{perm_mode}{Character. One of \code{"none"}, \code{"global"}, \code{"mvn"}, \code{"both"}.}
+\item{perm_mode}{Character. One of \code{"none"} (analytic only), \code{"global"} (global gene
+resampling), \code{"wy"} (Westfall--Young) or \code{"both"} (global and Westfall--Young;
+\code{omni_p_final} prefers the Westfall--Young calibrated p-value).}
 
-\item{mvn_marginal}{Character. Only for MVN mode: \code{"uniform"} or \code{"empirical"}.}
-
-\item{mvn_sided}{Character. Only for MVN mode: \code{"one"} (one-sided upper-tail
-\eqn{p = 1 - \Phi(Z)}, matching MAGMA gene-level p-values; default) or
-\code{"two"} (two-sided \eqn{p = 2\min(\Phi(Z), 1 - \Phi(Z))}).}
-
-\item{mvn_pool}{Character. Only for MVN + empirical mode when \code{pool_p} is NULL.
-\code{"use"} uses the same p-values used for observed p-based methods; \code{"raw"} prefers \code{p_raw_col}.
-(If raw p-values are unavailable, falls back to \code{"use"}.)}
-
-\item{pool_p}{Optional numeric vector of p-values to define the empirical null pool (advanced).
-If supplied, it is used directly (no per-pathway exclusion).}
-
-\item{mvn_calibrate_components}{Logical. If TRUE, MVN-calibrates each component first, then builds the omnibus
-(and calibrates that omnibus). Default FALSE.}
+\item{wy_tau_grid}{Numeric. Fixed soft-TFisher grid used inside the Westfall--Young omnibus.
+Default \code{c(0.01, 0.05, 0.5)}: the grid of Zhang et al. (2020) without its \eqn{\tau = 1}
+corner, which is Fisher.}
 
 \item{tail_mode}{Character. \code{"empirical"} or \code{"hybrid_gpd"} (GPD tail
-extrapolation for p-values below the Monte Carlo floor). Default \code{"empirical"}.}
+extrapolation for global-resampling p-values below the Monte Carlo floor). Default \code{"empirical"}.}
 
 \item{tail_switch_exceed}{Integer. Switch to GPD extrapolation when the number of null
 exceedances falls below this. Default 10.}
@@ -146,22 +136,17 @@ Default 50.}
 
 \item{B_global}{Integer. Number of global-resampling iterations (used when \code{B_perm} is NULL).}
 
-\item{B_mvn}{Integer. Number of MVN iterations (used when \code{B_perm} is NULL).}
+\item{B_wy}{Integer. Number of genome-wide Westfall--Young null replicates (used when \code{B_perm} is NULL).}
 
 \item{perm_pool}{Character. For global resampling only: \code{"raw"} (use raw p-values) or \code{"obs"} (use p used by methods).}
 
 \item{magma_cor_file}{Character or NULL. Path to 3-col correlation pairs file: \code{gene1 gene2 r}.
-Required for MVN unless \code{magma_cor_pairs} is provided.}
+Used by Westfall--Young; without it (or \code{magma_cor_pairs}) genes are treated as independent.}
 
-\item{magma_cor_pairs}{data.frame or NULL. In-memory correlation pairs with columns \code{gene1}, \code{gene2}, \code{r}.}
-
-\item{make_PD}{Logical. If TRUE, forces correlation matrices to be positive definite before Cholesky. Default TRUE.}
+\item{magma_cor_pairs}{data.frame or NULL. In-memory correlation pairs with columns \code{gene1}, \code{gene2}, \code{r}.
+If provided, it overrides \code{magma_cor_file}.}
 
 \item{seed}{Integer or NULL. Random seed.}
-
-\item{n_threads}{Integer or NULL. Number of worker threads for MVN inner null computations.
-If NULL, defaults to \code{max(1, detectCores()-1)}. Parallel execution is used only when
-\code{B_mvn >= 1000} and supported by the platform.}
 
 \item{output}{Logical. If TRUE, writes CSV to \code{out_dir} and attaches \code{"file"} attribute. Default FALSE.}
 
@@ -172,8 +157,17 @@ data.frame with one row per pathway, including:
 \itemize{
 \item component p-values (analytic): \code{acat_p}, \code{fisher_p}, \code{tfisher_p_analytic}, \code{minp_p_analytic}, \code{stouffer_p_analytic}
 \item optional \code{magma_pvalue}
-\item \code{omni_p_analytic}, \code{omni_p_global}, \code{omni_p_mvn}, and \code{omni_p_final} (+ BH/qvalue extras if you kept them in \code{catfish_omni2_run})
+\item \code{omni_p_analytic}, \code{omni_p_global}
+\item Westfall--Young columns (when run): \code{omni_p_wy_stat} (observed log-space omnibus)
+and \code{omni_log10_p_wy_stat} (its log10, which does not underflow),
+\code{omni_z_std} (standardised against the pathway's own null), \code{omni_p_cal}
+(per-pathway calibrated p) and \code{omni_p_cal_BH}, \code{omni_p_fwer_wy_std}
+(Westfall--Young family-wise p on the standardised scale; the headline family-wise result)
+and \code{omni_p_fwer_wy} (raw scale)
+\item \code{omni_p_final} (priority: Westfall--Young calibrated > global > analytic) + BH/qvalue extras
 }
+When Westfall--Young is run, the attributes \code{wy_threshold_05}, \code{wy_B} and
+\code{wy_tau_grid} are attached.
 }
 \description{
 Compute pathway-level p-values from gene-level results using up to six component
@@ -181,13 +175,16 @@ methods (ACAT, Fisher, adaptive soft TFisher, minP, Stouffer Z, optional MAGMA
 competitive) and combine them into a single omnibus p-value per pathway.
 }
 \details{
-Resampling / calibration is applied \strong{only to the omnibus} (not to each component),
-using either:
+Calibration is applied \strong{only to the omnibus} (not to each component), using either:
 \itemize{
 \item \strong{Global resampling} (fast heuristic): resample genes from a global pool.
-\item \strong{MVN resampling} (LD-aware): simulate \eqn{Z \sim N(0, R_S)} using pathway-specific
-gene–gene correlation matrices built from MAGMA correlation pairs, then convert simulated
-Z's into p-values for p-based methods.
+\item \strong{Westfall--Young} (LD-aware, family-wise): one genome-wide null bank. Each of
+\code{B_wy} replicates draws every gene's \eqn{z} jointly from \eqn{N(0, R)}, with \eqn{R}
+built from MAGMA gene--gene correlations (block-diagonal by chromosome), and re-scores
+every pathway on that same draw. Read column-wise, the bank gives each pathway a
+calibrated omnibus p-value; read row-wise, its minimum gives the single-step min-P
+Westfall--Young family-wise p-value. See \code{\link{catfish_wy_pathways}} for the
+stand-alone version.
 }
 
 \strong{Component methods per pathway}
@@ -208,25 +205,25 @@ Z's into p-values for p-based methods.
 
 \strong{Which gene-level p-values are used?}
 P-based methods use \code{p_adj_col} if you provide it \emph{and} it exists in \code{gene_results};
-otherwise they use \code{p_raw_col}.
+otherwise they use \code{p_raw_col}. The Westfall--Young omnibus uses the same column.
 
-\strong{MVN marginal mapping (only when \code{perm_mode} includes \code{"mvn"})}
-\itemize{
-\item \code{mvn_marginal="uniform"} (recommended): Gaussian-copula mapping of the
-simulated Z's to null gene-level p-values. With \code{mvn_sided="one"} (default),
-\eqn{p = 1 - \Phi(Z)} (one-sided upper tail, matching MAGMA gene-level p-values);
-with \code{mvn_sided="two"}, \eqn{p = 2\min(\Phi(Z), 1 - \Phi(Z))}.
-\item \code{mvn_marginal="empirical"}: maps copula uniforms to an empirical null p distribution
-derived internally from gene-level p-values (excluding the pathway's own genes to reduce leakage),
-unless you supply \code{pool_p}.
-}
+\strong{Westfall--Young omnibus (\code{perm_mode = "wy"} or \code{"both"})}
+The statistic calibrated by the null bank is ACAT-O across ACAT, Fisher, Stouffer
+(from gene p-values), minP and, if \code{use_tfisher = TRUE}, soft TFisher
+\eqn{W_o} on the fixed grid \code{wy_tau_grid}, all evaluated in log space so
+that gene p-values far below \eqn{10^{-300}} keep their order. TFisher is
+omitted from a pathway's omnibus when no gene falls below any threshold and is
+capped at \eqn{10^{-16}}. MAGMA competitive p-values are not part of this
+statistic, because they cannot be re-evaluated on null draws. Family-wise
+control holds in the strong sense under the multivariate normal model, because
+each pathway's statistic depends only on its own genes; this is why
+\code{wy_tau_grid} must be fixed rather than estimated from the data.
 }
 \examples{
 \dontrun{
-# Load gene results from MAGMA output
-gene_results <- read.delim("magma_output.genes.out")
+gene_results <- read.table("magma_output.genes.out", header = TRUE)
 
-# Run omnibus test with analytic p-values only (no permutation)
+# Analytic p-values only
 omni_res <- catfish_omni2_pathways(
   gene_results = gene_results,
   species = "maize",
@@ -235,28 +232,23 @@ omni_res <- catfish_omni2_pathways(
   z_col = "ZSTAT",
   perm_mode = "none"
 )
-head(omni_res)
 
-# With MVN-based calibration (requires gene-gene correlations)
-omni_mvn <- catfish_omni2_pathways(
+# Westfall--Young calibration (LD-aware, family-wise)
+omni_wy <- catfish_omni2_pathways(
   gene_results = gene_results,
   species = "maize",
-  perm_mode = "mvn",
+  chr_col = "CHR",
+  perm_mode = "wy",
   B_perm = 10000,
-  magma_cor_file = "magma_output.genes.raw"
+  magma_cor_file = "magma_gene_cor_pairs.txt",
+  seed = 1
 )
-
-# With global resampling
-omni_global <- catfish_omni2_pathways(
-  gene_results = gene_results,
-  species = "maize",
-  perm_mode = "global",
-  B_perm = 5000
-)
+attr(omni_wy, "wy_threshold_05")
 }
 
 }
 \seealso{
-\code{\link{catfish_acat_pathways}}, \code{\link{catfish_fisher_pathways}},
-\code{\link{catfish_minp_pathways}}, \code{\link{catfish_stoufferZ_pathways}}
+\code{\link{catfish_wy_pathways}}, \code{\link{catfish_acat_pathways}},
+\code{\link{catfish_fisher_pathways}}, \code{\link{catfish_minp_pathways}},
+\code{\link{catfish_stoufferZ_pathways}}
 }

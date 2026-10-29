@@ -44,7 +44,8 @@ Invisibly returns the path to the output file.
 \description{
 Parses MAGMA's banded correlation output (.genes.raw) and extracts
 pairwise gene correlations into a simple 3-column format (gene1, gene2, r).
-This file is required for MVN-based resampling in \code{\link{catfish_omni2_pathways}}.
+This file supplies the gene-gene correlations for Westfall--Young calibration in
+\code{\link{catfish_omni2_pathways}} and \code{\link{catfish_wy_pathways}}.
 }
 \details{
 MAGMA stores gene-gene correlations in a banded format within .genes.raw files.

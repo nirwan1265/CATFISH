@@ -32,6 +32,15 @@
 #     use_tfisher  TRUE/FALSE             (default FALSE -- TFisher's analytic
 #                                          null is the slow component)
 #   TRAIT=hdl Rscript 18_westfall_young_trait.R 10000 FALSE human
+#
+#   2026-10-29: TFisher component corrected to match the simulations and the
+#   package (see .tfisher_log). Statistics otherwise unchanged; B, the window,
+#   the gene and pathway inputs and all output paths are as before.
+#   2026-10-29 (later): .acat_log and .minp_log replaced by the CATFISH
+#   package's log-space versions (R/westfall_young.R): negative ACAT T handled
+#   instead of clamped to p = 0.5, and minP no longer underflows to -Inf (and
+#   drops out of the omnibus) when the smallest gene p is below ~1e-16/m.
+#   19_compare_pkg_wy.R checks this script against the package.
 # =============================================================================
 suppressPackageStartupMessages({ library(CATFISH) })
 
@@ -129,26 +138,30 @@ t0 <- Sys.time()
   m + log(sum(exp(lx - m)))
 }
 
-# ACAT on log p-values, returning log(p_ACAT).
-#   T = mean_i tan((0.5 - p_i) * pi);  for small p, tan(.) -> 1/(p*pi)
-#   large T  =>  p_ACAT -> 1/(T*pi)
+# ACAT on log p-values, returning log(p_ACAT). Identical to the CATFISH
+# package's .wy_acat_log (R/westfall_young.R):
+#   T = mean tan((1/2 - p) pi). For p < 1e-15, tan(.) ~ 1/(p pi) and those
+#   terms are accumulated by log-sum-exp; for T > 1e6, p ~ 1/(T pi); and T may
+#   be NEGATIVE when most inputs exceed 1/2, which is handled directly rather
+#   than clamped (clamping set p = 0.5 and lost the order of the upper half).
 .acat_log <- function(lp) {
-  lp <- pmin(lp, -1e-300)
+  lp <- lp[is.finite(lp)]
   m  <- length(lp)
+  if (!m) return(NA_real_)
+  lp <- pmin(lp, log1p(-1e-15))          # keep p < 1 so tan() stays finite
   small <- lp < log(1e-15)
-  logS_small <- if (any(small)) .logsumexp(-lp[small] - log(pi)) else -Inf
   S_big <- if (any(!small)) sum(tan((0.5 - exp(lp[!small])) * pi)) else 0
-  if (is.finite(logS_small)) {
-    logS <- if (logS_small > log(abs(S_big) + 1e-300) + 50) logS_small
-            else log(max(exp(logS_small) + S_big, 1e-300))
+  if (any(small)) {
+    logS_small <- .logsumexp(-lp[small] - log(pi))
+    if (logS_small > log(m) + log(1 / (1e-15 * pi)) + 40)
+      return(-(logS_small - log(m)) - log(pi))
+    S <- exp(logS_small) + S_big
   } else {
-    logS <- log(max(S_big, 1e-300))
+    S <- S_big
   }
-  logT <- logS - log(m)
-  if (logT > log(1e15)) return(-logT - log(pi))
-  Tv <- exp(logT)
-  pv <- 0.5 - atan(Tv) / pi
-  if (pv <= 0) -745 else log(pv)
+  Tm <- S / m
+  if (Tm > 1e6) return(-log(Tm) - log(pi))
+  log(0.5 - atan(Tm) / pi)
 }
 
 .fisher_log <- function(lp) {
@@ -160,22 +173,42 @@ t0 <- Sys.time()
   z[!is.finite(z)] <- 0
   stats::pnorm(sum(z) / sqrt(length(z)), lower.tail = FALSE, log.p = TRUE)
 }
+# minP with Sidak inversion 1 - (1 - q)^m. Identical to the package's
+# .wy_minp_log: the Sidak form underflows once q < ~1e-16/m (the old version
+# then returned -Inf and minP silently dropped out of the omnibus), so the
+# m * q asymptote is used whenever it is below 1e-8.
 .minp_log <- function(lp) {
   m <- length(lp); lmin <- min(lp)
-  v <- m * log1p(-exp(lmin))
-  if (!is.finite(v)) return(lmin + log(m))
-  log1p(-exp(v))
+  approx <- lmin + log(m)
+  if (approx < log(1e-8)) return(approx)
+  r <- log1p(-exp(m * log1p(-exp(lmin))))
+  if (is.finite(r)) r else approx
 }
-TAU_GRID <- c(0.1, 0.05, 0.01, 0.005, 0.001)
+## Adaptive soft TFisher -- matched to the simulations (catfish2/scripts/00_lib.R)
+## and to the CATFISH package's tfisher_p_min.
+##   * Wo = TFisher::stat.soft.omni(...)$omni, the minimum over the tau grid of
+##     the single-tau RIGHT-tail p. This is exactly the package's tfisher_p_min
+##     (R/adaptive_soft_TFisher_wrappers.R). The previous version used
+##     TFisher::p.soft directly, which returns the CDF, so strongly enriched
+##     pathways scored p ~ 1.
+##   * Grid: Zhang, Tong, Landers & Wu (2020) TAU1 = c(0.01, 0.05, 0.5, 1), with
+##     the tau = 1 corner dropped because tau = 1 is Fisher, already a component.
+##     Fixed in advance -- a data-adaptive grid would break subset pivotality.
+##   * Empty statistic (no gene below any tau, Wo = 1): UNDEFINED, returned as
+##     NA so .omni_log combines only the components that are defined. Entering
+##     it as p = 1 would make ACAT count it as evidence against the pathway.
+##   * Saturation: 1 - CDF has no precision below ~1e-16, so Wo is capped there
+##     rather than at a lower floor that would assert resolution it lacks.
+TAU_GRID <- c(0.01, 0.05, 0.5)
+TF_MIN_P <- 1e-16
 .tfisher_log <- function(lp) {
   if (!USE_TFISHER) return(NA_real_)
-  p <- exp(pmax(lp, -700)); m <- length(p); best <- 0
-  for (tau in TAU_GRID) {
-    st <- TFisher::stat.soft(p = p, tau1 = tau)
-    pv <- TFisher::p.soft(q = st, n = m, tau1 = tau, M = NULL)
-    if (is.finite(pv) && pv > 0 && log(pv) < best) best <- log(pv)
-  }
-  if (best == 0) NA_real_ else best
+  p  <- pmin(pmax(exp(lp), 1e-300), 1 - 1e-15)
+  Wo <- tryCatch(as.numeric(TFisher::stat.soft.omni(p = p, TAU1 = TAU_GRID,
+                                                    M = NULL)$omni),
+                 error = function(e) NA_real_)
+  if (!is.finite(Wo) || Wo >= 1 - 1e-12) return(NA_real_)   # empty: undefined
+  log(max(Wo, TF_MIN_P))                                      # precision cap
 }
 
 # omnibus = ACAT across component log-p values; returns log(p_omnibus)

@@ -7,8 +7,8 @@ Description: CATFISH provides an R interface to MAGMA (Multi-marker Analysis of
     GenoMic Annotation) for post-GWAS pathway enrichment analysis. It implements
     multiple p-value combination methods (ACAT, Fisher, Stouffer, minP, adaptive
     soft TFisher) and combines them into an omnibus test with optional
-    permutation-based or MVN-based calibration to account for gene-gene
-    correlations. Built-in support for Plant Metabolic Network (PMN) pathways
+    permutation-based or Westfall-Young calibration that accounts for gene-gene
+    correlations and controls the family-wise error rate. Built-in support for Plant Metabolic Network (PMN) pathways
     for maize, sorghum, arabidopsis, and general plant species.
 License: MIT + file LICENSE
 URL: https://github.com/nirwantandukar/CATFISH

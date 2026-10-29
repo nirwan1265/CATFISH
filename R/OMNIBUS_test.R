@@ -1,5 +1,5 @@
 ## ============================================================
-##  CATFISH omnibus (fresh, fast, 6-method, with global + MVN resampling)
+##  CATFISH omnibus (6-method, with global resampling + Westfall-Young)
 ##
 ##  Methods (component p-values per pathway):
 ##    1) ACAT (gene-level)
@@ -11,188 +11,24 @@
 ##
 ##  Omnibus across METHODS (per pathway): ACAT or minP (Sidak across methods)
 ##
-##  Permutation / resampling (omnibus only):
-##    - global_resampling: resample genes from a global pool (fast heuristic)
-##    - mvn_resampling: simulate correlated Z ~ MVN(0, R_S) using gene-gene correlations
-##      (requires magma_cor_file or magma_cor_pairs)
+##  Calibration (omnibus only):
+##    - global resampling: resample genes from a global pool (fast heuristic)
+##    - Westfall-Young: one genome-wide null bank of correlated gene z's
+##      (MVN by chromosome from MAGMA gene-gene correlations), read per pathway
+##      (calibrated p) and across pathways (family-wise min-P adjusted p).
+##      Engine in R/westfall_young.R.
 ##
-#' CATFISH omnibus pathway p-values (6-method framework; optional global + MVN calibration)
+#' CATFISH omnibus pathway p-values (internal run step)
 #'
-#' Computes pathway-level p-values from gene-level statistics using up to six component
-#' methods and combines them into a single omnibus p-value per pathway. Optionally,
-#' calibrates the omnibus p-values using either (i) global gene resampling or (ii)
-#' LD-aware MVN resampling based on MAGMA gene–gene correlations.
-#'
-#' @details
-#' \strong{Component methods (per pathway):}
-#' \enumerate{
-#'   \item \strong{ACAT (gene-level):} ACAT combine of gene p-values in the pathway.
-#'   \item \strong{Fisher (gene-level):} Fisher's method on gene p-values in the pathway.
-#'   \item \strong{Adaptive soft TFisher (gene-level):} For each \code{tau} in \code{tau_grid},
-#'         computes \code{TFisher::stat.soft()} and its analytic p-value via \code{TFisher::p.soft()},
-#'         then takes the minimum p-value over \code{tau_grid}.
-#'   \item \strong{minP (gene-level):} Sidak-adjusted minimum gene p-value in the pathway.
-#'   \item \strong{Stouffer Z (gene-level):} Stouffer combination of gene Z-scores (optionally weighted).
-#'   \item \strong{MAGMA competitive (optional):} Uses your precomputed MAGMA competitive
-#'         gene-set p-value (provided via \code{magma_out}).
-#' }
-#'
-#' \strong{Omnibus across methods (per pathway):}
-#' Combines the component method p-values using either:
-#' \itemize{
-#'   \item \code{omnibus="ACAT"}: ACAT across method p-values, or
-#'   \item \code{omnibus="minP"}: Sidak-adjusted minP across method p-values.
-#' }
-#'
-#' \strong{Resampling / calibration (omnibus only):}
-#' \itemize{
-#'   \item \code{perm_mode="global"}: resamples gene p-values (and optionally Z's) from a global pool
-#'         to build a null distribution of the omnibus statistic.
-#'   \item \code{perm_mode="mvn"}: simulates correlated gene Z's
-#'         \eqn{Z \sim \mathcal{N}(0, R_S)} using a pathway-specific correlation matrix \eqn{R_S}
-#'         built from MAGMA gene–gene correlations. P-values for p-based methods are derived from the
-#'         simulated Z's.
-#' }
-#'
-#' \strong{MVN p-value marginals:}
-#' When \code{perm_mode} includes \code{"mvn"}, p-values for p-based component methods are obtained from
-#' the simulated MVN Z's in one of two ways:
-#' \itemize{
-#'   \item \code{mvn_marginal="uniform"} (recommended): Gaussian-copula mapping
-#'         \eqn{U=\Phi(Z)}, \eqn{p=2\min(U,1-U)} so each marginal is Uniform(0,1).
-#'   \item \code{mvn_marginal="empirical"} (advanced): Gaussian copula for dependence, but map
-#'         \eqn{U=\Phi(Z)} to an empirical null p-value distribution \eqn{F_0^{-1}(U)} derived from
-#'         \code{pool_p} (or an automatically constructed pool).
-#' }
-#'
-#' @param gene_results A data.frame of gene-level results (typically one row per gene).
-#'   Must contain the gene identifier column specified by \code{gene_col} and at least one
-#'   p-value column (\code{p_raw_col} and/or \code{p_adj_col}). If you want Stouffer, it must
-#'   also contain \code{z_col}. If you want weighted Stouffer, it must contain \code{weight_col}.
-#'
-#' @param pathways Pathway definitions. Either:
-#'   \itemize{
-#'     \item a data.frame with columns \code{pathway_id} and \code{gene_id} (and optional \code{pathway_name}), or
-#'     \item a named list where each element is a character vector of gene IDs (names are pathway IDs).
-#'   }
-#'   Provide \code{pathways} \strong{or} \code{species} (not both).
-#'
-#' @param species Character. If \code{pathways} is \code{NULL}, a species keyword
-#'   (one of "maize", "sorghum", "arabidopsis", "plant", "fly") used to auto-load built-in
-#'   pathway sets. Provide \code{species} \strong{or} \code{pathways} (not both).
-#'
-#' @param pmn_gene_col Character. When \code{species} is used, the name of the gene identifier column
-#'   in the built-in PMN pathway table (e.g., \code{"Gene-name"}). Ignored if \code{pathways} is provided.
-#'
-#' @param gene_col Character. Column name in \code{gene_results} containing gene IDs.
-#'   Default \code{"GENE"}.
-#'
-#' @param p_raw_col Character. Column name in \code{gene_results} containing raw gene-level p-values.
-#'   Default \code{"P"}.
-#'
-#' @param p_adj_col Character or \code{NULL}. Optional column name for adjusted/preferred gene p-values.
-#'   If provided and present, this column is used for the p-based component methods (ACAT/Fisher/TFisher/minP).
-#'   If \code{NULL}, \code{p_raw_col} is used.
-#'
-#' @param z_col Character or \code{NULL}. Optional column name in \code{gene_results} containing gene-level Z
-#'   statistics used for Stouffer. If \code{NULL}, Stouffer is not computed (set to \code{NA}).
-#'
-#' @param weight_col Character or \code{NULL}. Optional column name in \code{gene_results} containing weights
-#'   for Stouffer (e.g., gene size or other reliability weights). If \code{NULL}, equal weights are used.
-#'
-#' @param tau_grid Numeric vector of \eqn{\tau} values for adaptive soft TFisher, or \code{"auto"}.
-#'   Values are sanitized to satisfy \eqn{0 < \tau < 1}; the \eqn{\tau = 1} Fisher corner is
-#'   excluded because CATFISH already includes Fisher as a separate component test.
-#'
-#' @param tau_cap Numeric. Upper sanity bound used before enforcing \eqn{\tau < 1}. Default \code{1}.
-#'
-#' @param min_p Numeric. Lower bound for p-value clipping to avoid numerical issues (e.g., \code{log(0)} in Fisher,
-#'   \code{tan()} blowups in ACAT). P-values are clipped to \code{[min_p, 1-min_p]}. Default \code{1e-15}.
-#'
-#' @param min_genes Integer. Minimum number of genes required for a pathway to be evaluated. Pathways with fewer
-#'   genes are dropped. Default \code{2L}.
-#'
-#' @param magma_out Optional data.frame of MAGMA competitive gene-set results. Must include \code{pathway_id} and
-#'   \code{magma_pvalue}. If \code{NULL}, MAGMA competitive is not included.
-#'
-#' @param include_magma_in_omni Logical. If \code{TRUE} and \code{magma_out} is provided, include MAGMA competitive
-#'   p-values as an additional component in the omnibus across methods. Default \code{TRUE}.
-#'
-#' @param include_magma_in_perm Logical. If \code{TRUE}, also include MAGMA competitive within the resampling null.
-#'   This is generally \strong{not recommended} because there is no cheap principled null generator for competitive
-#'   MAGMA; default \code{FALSE}.
-#'
-#' @param omnibus Character. How to combine the component method p-values into one omnibus p-value per pathway:
-#'   \code{"ACAT"} (ACAT across methods) or \code{"minP"} (Sidak-adjusted minimum across methods).
-#'
-#' @param B_perm Integer or \code{NULL}. Convenience parameter for the number of resampling iterations. When provided,
-#'   it is mapped to \code{B_global} and/or \code{B_mvn} according to \code{perm_mode}.
-#'
-#' @param perm_mode Character. Which resampling/calibration mode to run for the omnibus:
-#'   \code{"none"} (analytic only), \code{"global"} (global gene resampling), \code{"mvn"} (LD-aware MVN resampling),
-#'   \code{"mvn_global"} (try MVN first, fall back to global if MVN fails for a pathway), or
-#'   \code{"both"} (run both; final p-value prefers MVN if available).
-#'
-#' @param mvn_marginal Character. Only used when \code{perm_mode} includes \code{"mvn"}.
-#'   Controls how simulated MVN Z's are converted to p-values for p-based component methods:
-#'   \code{"uniform"} (Gaussian copula; Uniform(0,1) marginals) or \code{"empirical"} (map copula uniforms to an
-#'   empirical null p distribution).
-#'
-#' @param mvn_pool Character. Only used when \code{mvn_marginal="empirical"} and \code{pool_p} is \code{NULL}.
-#'   Determines which gene-level p-values are used to construct the empirical null pool:
-#'   \code{"use"} (the p column used for observed p-based methods; typically \code{p_adj_col} if present) or
-#'   \code{"raw"} (\code{p_raw_col}).
-#'
-#' @param pool_p Numeric vector or \code{NULL}. Optional explicit empirical null pool of p-values used when
-#'   \code{mvn_marginal="empirical"}. If \code{NULL}, an empirical pool is constructed automatically (excluding
-#'   pathway genes to reduce leakage).
-#'
-#' @param B_global Integer. Number of global resampling iterations (back-compat / low-level control). Ignored if
-#'   \code{B_perm} is provided (then \code{B_perm} + \code{perm_mode} determine \code{B_global}).
-#'
-#' @param B_mvn Integer. Number of MVN resampling iterations (back-compat / low-level control). Ignored if
-#'   \code{B_perm} is provided.
-#'
-#' @param perm_pool Character. Only affects global resampling. Which p-value pool to resample from:
-#'   \code{"obs"} uses the same p-values used for observed p-based methods (typically \code{p_adj_col} if present),
-#'   while \code{"raw"} uses \code{p_raw_col}.
-#'
-#' @param magma_cor_file Character or \code{NULL}. Path to a 3-column gene correlation pairs file:
-#'   \code{gene1 gene2 r}. Required for \code{perm_mode="mvn"} unless \code{magma_cor_pairs} is provided.
-#'
-#' @param magma_cor_pairs data.frame or \code{NULL}. In-memory correlation pairs table with columns
-#'   \code{gene1}, \code{gene2}, \code{r}. If provided, it overrides \code{magma_cor_file}.
-#'
-#' @param make_PD Logical. If \code{TRUE}, force the pathway correlation matrix \eqn{R_S} to be positive definite
-#'   (using \code{Matrix::nearPD()}) before Cholesky. Strongly recommended. Default \code{TRUE}.
-#'
-#' @param n_threads Integer or \code{NULL}. Number of worker threads for MVN inner null computations.
-#'   If \code{NULL}, uses \code{max(1, detectCores()-1)}. Parallel execution is used only when
-#'   \code{B_mvn >= 1000} and the platform supports fork parallelism.
-#'
-#' @param seed Integer or \code{NULL}. Random seed for reproducible resampling.
-#'
-#' @param output Logical. If \code{TRUE}, write results to CSV in \code{out_dir} and attach the file path as an attribute.
-#'
-#' @param out_dir Character. Output directory used when \code{output=TRUE}. Created if it does not exist.
-#'
-#' @return
-#' A data.frame with one row per pathway, including:
-#' \itemize{
-#'   \item \code{acat_p}, \code{fisher_p}, \code{tfisher_p_analytic}, \code{minp_p_analytic}, \code{stouffer_p_analytic}
-#'   \item \code{magma_pvalue} (if provided)
-#'   \item \code{omni_p_analytic} and BH-adjusted version
-#'   \item \code{omni_p_global} (if global resampling run) and BH-adjusted version
-#'   \item \code{omni_p_mvn} (if MVN resampling run) and BH-adjusted version
-#'   \item \code{omni_p_final} (priority: MVN > global > analytic) and BH-adjusted version
-#'   \item \code{calib_mode} (for \code{perm_mode="mvn_global"}): which calibration was used per pathway
-#'         (\code{"mvn"} or \code{"global"} fallback)
-#' }
+#' Computes pathway-level p-values from a \code{catfish_omni2_prepare()} object,
+#' combines components into an omnibus, and optionally calibrates the omnibus by
+#' global resampling and/or Westfall--Young. See \code{catfish_omni2_pathways()}
+#' for the full description of arguments and output columns.
 #'
 #' @keywords internal
 #' @noRd
 # ============================================================
-# CATFISH omnibus (fast, 6-method; global + MVN calibration for OMNIBUS only)
+# CATFISH omnibus (fast, 6-method; global + Westfall-Young calibration for OMNIBUS only)
 #   - Component methods are computed by YOUR CATFISH wrappers (analytic only)
 #   - Permutations/resampling are ONLY for the OMNIBUS
 # ============================================================
@@ -899,10 +735,12 @@ catfish_omni2_prepare <- function(gene_results,
                                 p_adj_col = NULL,
                                 z_col = NULL,
                                 weight_col = NULL,
+                                chr_col = NULL,
                                 tau_grid = "auto",
                                 tau_cap = 1,
                                 min_p = 1e-50,
                                 min_genes = 2L,
+                                max_genes = Inf,
                                 seed = NULL) {
 
   if (!is.null(seed)) set.seed(seed)
@@ -963,6 +801,14 @@ catfish_omni2_prepare <- function(gene_results,
     w_use <- suppressWarnings(as.numeric(gene_results[[weight_col]]))[okg][okp]
   }
 
+  # chromosome aligned (needed by the Westfall-Young null: genes are drawn
+  # jointly within a chromosome and independently across chromosomes)
+  chr_use <- NULL
+  if (!is.null(chr_col)) {
+    if (!(chr_col %in% names(gene_results))) stop("chr_col not found: ", chr_col, call. = FALSE)
+    chr_use <- as.character(gene_results[[chr_col]])[okg][okp]
+  }
+
   # dedup by normalized gene id (keep first)
   keep1 <- !duplicated(g_norm)
   g_raw  <- g_raw[keep1]
@@ -971,6 +817,7 @@ catfish_omni2_prepare <- function(gene_results,
   if (!is.null(p_raw_vec)) p_raw_vec <- p_raw_vec[keep1]
   if (!is.null(z_use)) z_use <- z_use[keep1]
   if (!is.null(w_use)) w_use <- w_use[keep1]
+  if (!is.null(chr_use)) chr_use <- chr_use[keep1]
 
   gene_map <- stats::setNames(g_raw, g_norm)
   gene_p <- stats::setNames(p_use, g_norm)
@@ -1011,6 +858,11 @@ catfish_omni2_prepare <- function(gene_results,
     keep_pw <- lengths(g_list_norm) >= min_genes
     g_list_norm <- g_list_norm[keep_pw]
   }
+  max_genes <- suppressWarnings(as.numeric(max_genes))
+  if (length(max_genes) == 1L && is.finite(max_genes)) {
+    g_list_norm <- g_list_norm[lengths(g_list_norm) <= max_genes]
+  }
+  if (!length(g_list_norm)) stop("No pathway passes the min_genes/max_genes filter.", call. = FALSE)
 
   pid <- names(g_list_norm)
 
@@ -1066,6 +918,8 @@ catfish_omni2_prepare <- function(gene_results,
       gene_p_all_raw = p_raw_vec,
       gene_z_all     = z_use,
       gene_w_all     = w_use,
+      gene_id_all    = g_norm,
+      gene_chr_all   = chr_use,
 
       gene_col   = gene_col,
       p_use_col  = p_use_col,
@@ -1073,10 +927,12 @@ catfish_omni2_prepare <- function(gene_results,
       p_adj_col  = p_adj_col,
       z_col      = z_col,
       weight_col = weight_col,
+      chr_col    = chr_col,
       tau_grid   = tau_grid,
       tau_cap    = tau_cap,
       min_p      = min_p,
       min_genes  = min_genes,
+      max_genes  = max_genes,
       seed       = seed,
 
       gene_results_core  = gene_results_core,
@@ -1102,25 +958,18 @@ catfish_omni2_run <- function(prep,
                             include_magma_in_perm = FALSE,
                             # omnibus calibration
                             B_global = 0L,
-                            B_mvn = 0L,
-                            perm_mode = c("none","global","mvn","mvn_global","both"),
+                            B_wy = 0L,
+                            perm_mode = c("none","global","wy","both"),
                             perm_pool = c("raw","obs"),
-                            mvn_marginal = c("uniform","empirical"),
-                            mvn_sided    = c("one","two"),
-                            mvn_pool     = c("use","raw"),
-                            pool_p       = NULL,
+                            wy_tau_grid = c(0.01, 0.05, 0.5),
                             magma_cor_file = NULL,
                             magma_cor_pairs = NULL,
-                            mvn_calibrate_components = FALSE,
                             # GPD tail extrapolation (Knijnenburg et al. 2009)
                             tail_mode = c("empirical", "hybrid_gpd"),
                             tail_switch_exceed = 10L,
                             tail_gpd_k = 250L,
                             tail_min_B = 10000L,
                             tail_min_tail = 50L,
-                            make_PD = TRUE,
-                            # Parallelization
-                            n_threads = NULL,
                             output = FALSE,
                             out_dir = "catfish_omni2") {
 
@@ -1128,40 +977,14 @@ catfish_omni2_run <- function(prep,
   omnibus   <- match.arg(omnibus)
   perm_mode <- match.arg(perm_mode)
   perm_pool <- match.arg(perm_pool)
-  mvn_marginal <- match.arg(mvn_marginal)
-  mvn_sided    <- match.arg(mvn_sided)
-  mvn_pool     <- match.arg(mvn_pool)
   stouffer_alternative <- match.arg(stouffer_alternative)
   tail_mode <- match.arg(tail_mode)
 
   B_global <- as.integer(B_global)
-  B_mvn    <- as.integer(B_mvn)
-  do_perm  <- (B_global > 0L || B_mvn > 0L)
-
-  # Setup parallelization (MVN inner null computation)
-  n_cores_available <- suppressWarnings(as.integer(parallel::detectCores(logical = FALSE)))
-  if (!is.finite(n_cores_available) || is.na(n_cores_available) || n_cores_available < 1L) {
-    n_cores_available <- 1L
-  }
-  if (is.null(n_threads)) {
-    n_threads <- max(1L, n_cores_available - 1L)
-  }
-  n_threads <- suppressWarnings(as.integer(n_threads))
-  if (!is.finite(n_threads) || is.na(n_threads) || n_threads < 1L) {
-    n_threads <- 1L
-  }
-  n_threads <- as.integer(min(n_threads, n_cores_available))
-
-  supports_fork <- (.Platform$OS.type != "windows")
-  use_parallel <- isTRUE(supports_fork) && (n_threads > 1L) && (B_mvn >= 1000L)
-
-  if (!supports_fork && n_threads > 1L && B_mvn > 0L) {
-    warning("n_threads > 1 requested, but fork parallelism is unsupported on Windows; using serial mode.", call. = FALSE)
-  }
-  if (use_parallel) {
-    message("Parallel processing enabled: ", n_threads, " threads")
-    message("Note: Parallelization applied to inner null computations per pathway")
-  }
+  B_wy     <- as.integer(B_wy)
+  if (is.na(B_wy) || B_wy < 0L) B_wy <- 0L
+  if (!(perm_mode %in% c("wy", "both"))) B_wy <- 0L
+  do_perm  <- (B_global > 0L || B_wy > 0L)
 
   pid <- prep$pathway_id
   n_genes <- lengths(prep$g_list_norm)
@@ -1173,7 +996,7 @@ catfish_omni2_run <- function(prep,
     stringsAsFactors = FALSE
   )
 
-  # Track which calibration mode was used per pathway (for mvn_global mode)
+  # Track which calibration mode was used per pathway
   res$calib_mode <- NA_character_
 
   # ============================================================
@@ -1432,331 +1255,72 @@ if (!is.null(prep$z_col)) {
 
 
   # ============================================================
-  # MVN resampling (LD-aware): option to calibrate COMPONENTS first
+  # Westfall-Young calibration (LD-aware)
+  # One genome-wide null bank: each of B_wy replicates draws every gene's z
+  # jointly from N(0, R) (R from the MAGMA gene-gene correlations, block-
+  # diagonal by chromosome) and re-scores every pathway on that same draw.
+  # Column-wise the bank gives each pathway a calibrated omnibus p; row-wise
+  # its minimum gives the single-step min-P Westfall-Young family-wise p.
+  # The omnibus here is ACAT-O over ACAT, Fisher, Stouffer, minP and
+  # (optionally) soft TFisher, all computed in log space from gene p-values.
   # ============================================================
-  res$omni_p_mvn <- NA_real_
-  res$omni_p_mvn_BH <- NA_real_
+  res$omni_p_wy_stat     <- NA_real_   # observed log-space omnibus (as a p)
+  res$omni_log10_p_wy_stat <- NA_real_ # same on log10 scale (no underflow)
+  res$omni_z_std         <- NA_real_   # standardised against own null
+  res$omni_p_cal         <- NA_real_   # per-pathway calibrated p
+  res$omni_p_cal_BH      <- NA_real_
+  res$omni_p_fwer_wy     <- NA_real_   # WY family-wise p, raw scale
+  res$omni_p_fwer_wy_std <- NA_real_   # WY family-wise p, standardised scale
+  wy_info <- NULL
 
-  # NEW: store MVN-calibrated component p-values if requested
-  res$acat_p_mvn_cal     <- NA_real_
-  res$fisher_p_mvn_cal   <- NA_real_
-  res$tfisher_p_mvn_cal  <- NA_real_
-  res$minp_p_mvn_cal     <- NA_real_
-  res$stouffer_p_mvn_cal <- NA_real_
+  if (B_wy > 0L) {
+    if (is.null(prep$gene_chr_all))
+      stop("perm_mode = 'wy' needs chromosome labels: pass chr_col to catfish_omni2_prepare().",
+           call. = FALSE)
+    if (is.character(wy_tau_grid))
+      stop("wy_tau_grid must be a fixed numeric grid; a data-adaptive grid breaks ",
+           "the strong family-wise control of the Westfall-Young procedure.", call. = FALSE)
+    wy_tau_grid <- sort(unique(as.numeric(wy_tau_grid)))
+    if (!length(wy_tau_grid) || any(!is.finite(wy_tau_grid)) ||
+        any(wy_tau_grid <= 0 | wy_tau_grid >= 1))
+      stop("wy_tau_grid values must lie in (0, 1).", call. = FALSE)
+    if (omnibus != "ACAT")
+      warning("The Westfall-Young omnibus always combines components with ACAT; ",
+              "omnibus = '", omnibus, "' applies only to omni_p_analytic/omni_p_global.",
+              call. = FALSE)
+    if (any(is.finite(res$magma_pvalue)))
+      warning("MAGMA competitive p-values cannot be re-evaluated on null draws and ",
+              "are not part of the Westfall-Young omnibus.", call. = FALSE)
 
-  # (optional) store the omnibus built from component-calibrated p's (not yet calibrated)
-  res$omni_p_mvn_compcal <- NA_real_
+    cp_wy <- .wy_read_cor_pairs(magma_cor_pairs, magma_cor_file)
+    if (is.null(cp_wy) || !nrow(cp_wy))
+      warning("No gene correlations supplied: every gene is treated as independent.",
+              call. = FALSE)
 
-  if (B_mvn > 0L) {
+    gid_wy <- prep$gene_id_all
+    glp_wy <- log(pmin(pmax(suppressWarnings(as.numeric(prep$gene_p_all_use)), 1e-320), 1))
+    idx_of <- stats::setNames(seq_along(gid_wy), gid_wy)
+    paths_wy <- lapply(prep$g_list_norm[res$pathway_id], function(g) as.integer(idx_of[g]))
+    names(paths_wy) <- res$pathway_id
 
-    cor_pairs <- .magma_read_gene_cor_pairs(magma_cor_file = magma_cor_file, magma_cor_pairs = magma_cor_pairs)
-    if (is.null(cor_pairs) || !nrow(cor_pairs)) stop("MVN resampling requires magma_cor_file or magma_cor_pairs.", call. = FALSE)
+    eng <- .wy_engine(gid_wy, glp_wy, prep$gene_chr_all, paths_wy, cp_wy,
+                      B_wy, isTRUE(use_tfisher), wy_tau_grid, prep$seed, TRUE)
 
-    # For mvn_global mode: prepare global pool for fallback
-    mvn_global_mode <- (perm_mode == "mvn_global")
-    global_pool_p <- NULL
-    global_pool_z <- NULL
-    global_pool_w <- NULL
+    res$omni_p_wy_stat     <- exp(eng$obs_log)
+    res$omni_log10_p_wy_stat <- eng$obs_log / log(10)
+    res$omni_z_std         <- eng$z_std
+    res$omni_p_cal         <- eng$p_cal
+    res$omni_p_cal_BH      <- .catfish_bh(res$omni_p_cal)
+    res$omni_p_fwer_wy     <- eng$p_fwer_wy
+    res$omni_p_fwer_wy_std <- eng$p_fwer_wy_std
+    res$calib_mode[is.finite(res$omni_p_cal)] <- "wy"
 
-    if (mvn_global_mode) {
-      if (perm_pool == "raw" && !is.null(prep$p_raw_col) && !is.null(prep$gene_p_all_raw)) {
-        global_pool_p <- suppressWarnings(as.numeric(prep$gene_p_all_raw))
-      } else {
-        global_pool_p <- suppressWarnings(as.numeric(prep$gene_p_all_use))
-      }
-      if (!is.null(prep$z_col) && !is.null(prep$gene_z_all)) {
-        global_pool_z <- suppressWarnings(as.numeric(prep$gene_z_all))
-        if (!is.null(prep$weight_col) && !is.null(prep$gene_w_all)) {
-          global_pool_w <- suppressWarnings(as.numeric(prep$gene_w_all))
-        }
-      }
-      ok <- is.finite(global_pool_p) & !is.na(global_pool_p) & global_pool_p > 0 & global_pool_p < 1
-      if (!is.null(global_pool_z)) ok <- ok & is.finite(global_pool_z) & !is.na(global_pool_z)
-      if (!is.null(global_pool_w)) ok <- ok & is.finite(global_pool_w) & !is.na(global_pool_w)
-      global_pool_p <- global_pool_p[ok]
-      if (!is.null(global_pool_z)) global_pool_z <- global_pool_z[ok]
-      if (!is.null(global_pool_w)) global_pool_w <- global_pool_w[ok]
-      global_pool_p <- .catfish_fix_p(global_pool_p, min_p = prep$min_p, do_fix = isTRUE(do_fix))
-    }
-
-    if (!is.null(prep$seed)) set.seed(prep$seed)
-
-    n_pathways <- nrow(res)
-    for (i in seq_len(n_pathways)) {
-      # Progress message
-      if (i == 1L || i %% 10L == 0L || i == n_pathways) {
-        message(sprintf("[MVN] Pathway %d/%d: %s", i, n_pathways, res$pathway_id[i]))
-      }
-
-      d <- res$n_genes[i]
-      if (!is.finite(d) || d < prep$min_genes) next
-
-      # observed component p's (analytic) already computed above
-      pA_obs <- res$acat_p[i]
-      pF_obs <- res$fisher_p[i]
-      pT_obs <- res$tfisher_p_analytic[i]
-      pM_obs <- res$minp_p_analytic[i]
-      pS_obs <- res$stouffer_p_analytic[i]
-
-      # if we have literally nothing finite, skip
-      if (!any(is.finite(c(pA_obs, pF_obs, pT_obs, pM_obs, pS_obs)))) next
-
-      genes_S <- prep$g_list_raw[[res$pathway_id[i]]]
-      genes_S <- as.character(genes_S)
-      genes_S <- genes_S[!is.na(genes_S) & genes_S != ""]
-      if (length(genes_S) < prep$min_genes) next
-
-      # Helper: fall back to global for this pathway
-      .do_fallback_global <- function() {
-        if (mvn_global_mode && length(global_pool_p) >= 2L) {
-          omni_obs_fallback <- res$omni_p_analytic[i]
-          if (is.finite(omni_obs_fallback)) {
-            magma_pval <- if (!is.null(res$magma_pvalue)) res$magma_pvalue[i] else NA_real_
-            fb_result <- tryCatch(
-              .do_global_resampling_pathway(
-                d = d, B = B_mvn, pool_p = global_pool_p, pool_z = global_pool_z,
-                pool_w = global_pool_w, omni_obs = omni_obs_fallback,
-                tau_grid = prep$tau_grid, min_p = prep$min_p, do_fix = isTRUE(do_fix),
-                omnibus = omnibus, stouffer_alternative = stouffer_alternative,
-                stouffer_min_abs_w = stouffer_min_abs_w,
-                include_magma = isTRUE(include_magma_eff), magma_pval = magma_pval,
-                tail_mode = tail_mode, tail_switch_exceed = tail_switch_exceed,
-                tail_gpd_k = tail_gpd_k, tail_min_B = tail_min_B, tail_min_tail = tail_min_tail
-              ),
-              error = function(e) NA_real_
-            )
-            res$omni_p_mvn[i] <<- fb_result
-            res$calib_mode[i] <<- "global"
-          }
-        }
-      }
-
-      # Try MVN, catch any error and fall back to global
-      mvn_result <- tryCatch({
-        R <- .magma_build_R_from_pairs(genes = genes_S, cor_pairs = cor_pairs, make_PD = make_PD)
-        if (is.null(R)) stop("R is NULL")
-
-        Z <- .magma_simulate_Z_from_R(R, B = B_mvn)
-        if (is.null(Z)) stop("Z is NULL")
-
-        list(R = R, Z = Z, success = TRUE)
-      }, error = function(e) {
-        list(R = NULL, Z = NULL, success = FALSE, error = e$message)
-      })
-
-      # If MVN failed, fall back to global
-      if (!mvn_result$success) {
-        .do_fallback_global()
-        next
-      }
-
-      R <- mvn_result$R
-      Z <- mvn_result$Z
-
-      # Wrap entire MVN processing in tryCatch - fall back to global on any error
-      mvn_process_result <- tryCatch({
-
-      # map MVN Z -> p matrix for p-based methods
-      if (mvn_marginal == "uniform") {
-        P <- .mvn_z_to_p(Z, min_p = prep$min_p, sided = mvn_sided)
-      } else {
-
-        if (!is.null(pool_p)) {
-          # user provided a pool explicitly (no gene IDs to exclude from)
-          pool_this <- pool_p
-        } else {
-          # build a pool from ALL genes EXCEPT the pathway genes (prevents leakage)
-          gene_all <- tolower(trimws(as.character(prep$gene_results_core[[prep$gene_col]])))
-          genes_S2 <- tolower(trimws(as.character(genes_S)))
-
-          keep <- !(gene_all %in% genes_S2)
-          pool_this <- prep$gene_p_all_use[keep]
-
-          # safety: if exclusion leaves you with too few genes, fall back
-          if (length(pool_this) < 1000L) {
-            pool_this <- prep$gene_p_all_use
-          }
-        }
-
-        P <- .mvn_z_to_empirical_p(Z, pool_p = pool_this, min_p = prep$min_p, sided = mvn_sided)
-      }
-
-
-      # --- NULL component p-values (same “analytic formulas” you already use) ---
-      # ACAT null - can be parallelized
-      if (use_parallel) {
-        pA_null <- unlist(parallel::mclapply(seq_len(B_mvn), function(b) {
-          .catfish_acat_combine(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix))
-        }, mc.cores = n_threads))
-      } else {
-        pA_null <- vapply(seq_len(B_mvn), function(b) {
-          .catfish_acat_combine(P[b, ], min_p = prep$min_p, do_fix = isTRUE(do_fix))
-        }, numeric(1))
-      }
-
-      pF_null <- stats::pchisq(-2 * rowSums(log(P)), df = 2 * ncol(P), lower.tail = FALSE)
-
-      # TFisher null - expensive, parallelize (only if use_tfisher = TRUE)
-      pT_null <- rep(NA_real_, B_mvn)
-      if (isTRUE(use_tfisher)) {
-        if (!requireNamespace("TFisher", quietly = TRUE)) stop("TFisher required for omnibus TFisher null.", call. = FALSE)
-
-        .compute_tfisher_null_b <- function(b) {
-          .catfish_tfisher_adaptive_p(
-            P[b, ],
-            tau_grid = prep$tau_grid,
-            min_p = prep$min_p,
-            do_fix = isTRUE(do_fix)
-          )
-        }
-
-        if (use_parallel) {
-          pT_null <- unlist(parallel::mclapply(seq_len(B_mvn), .compute_tfisher_null_b, mc.cores = n_threads))
-        } else {
-          pT_null <- vapply(seq_len(B_mvn), .compute_tfisher_null_b, numeric(1))
-        }
-      }
-
-      pM_null <- {
-        k <- ncol(P)
-        pmin <- apply(P, 1, min)
-        1 - (1 - pmin)^k
-      }
-
-      # stouffer null p-values from MVN Z (if stouffer is enabled)
-      pS_null <- rep(NA_real_, B_mvn)
-      if (!is.null(prep$z_col) && !is.null(prep$z_list)) {
-        w_i <- NULL
-        if (!is.null(prep$w_list)) w_i <- prep$w_list[[res$pathway_id[i]]]
-
-        if (!is.null(w_i)) {
-          w_i <- suppressWarnings(as.numeric(w_i))
-          bad <- !is.finite(w_i) | is.na(w_i) | abs(w_i) <= stouffer_min_abs_w
-          if (any(bad)) {
-            w_ok <- abs(w_i[!bad])
-            repl <- if (length(w_ok)) stats::median(w_ok) else 1
-            w_i[bad] <- repl
-          }
-        }
-
-        Zs <- if (is.null(w_i)) {
-          rowSums(Z) / sqrt(ncol(Z))
-        } else {
-          as.numeric(Z %*% w_i) / sqrt(sum(w_i^2))
-        }
-
-        if (stouffer_alternative == "greater") {
-          pS_null <- stats::pnorm(Zs, lower.tail = FALSE)
-        } else if (stouffer_alternative == "less") {
-          pS_null <- stats::pnorm(Zs, lower.tail = TRUE)
-        } else {
-          pS_null <- 2 * stats::pnorm(-abs(Zs))
-        }
-        # Clamp to avoid 0/1 extremes
-        pS_null <- pmax(pmin(pS_null, 1 - 1e-15), 1e-15)
-      }
-
-      # ============================================================
-      # NEW OPTION: MVN-calibrate components first, then build omnibus
-      # ============================================================
-      if (isTRUE(mvn_calibrate_components)) {
-
-        # observed component -> MVN-calibrated component p (empirical vs null)
-        pA_cal_obs <- if (is.finite(pA_obs)) .emp_p_obs_lower(pA_null, pA_obs) else NA_real_
-        pF_cal_obs <- if (is.finite(pF_obs)) .emp_p_obs_lower(pF_null, pF_obs) else NA_real_
-        pT_cal_obs <- if (is.finite(pT_obs)) .emp_p_obs_lower(pT_null, pT_obs) else NA_real_
-        pM_cal_obs <- if (is.finite(pM_obs)) .emp_p_obs_lower(pM_null, pM_obs) else NA_real_
-        pS_cal_obs <- if (is.finite(pS_obs)) .emp_p_obs_lower(pS_null, pS_obs) else NA_real_
-
-        res$acat_p_mvn_cal[i]     <- pA_cal_obs
-        res$fisher_p_mvn_cal[i]   <- pF_cal_obs
-        res$tfisher_p_mvn_cal[i]  <- pT_cal_obs
-        res$minp_p_mvn_cal[i]     <- pM_cal_obs
-        res$stouffer_p_mvn_cal[i] <- pS_cal_obs
-
-        comps_obs <- c(pA_cal_obs, pF_cal_obs, pT_cal_obs, pM_cal_obs, pS_cal_obs)
-        comps_obs <- comps_obs[is.finite(comps_obs) & !is.na(comps_obs)]
-        if (!length(comps_obs)) stop("No valid calibrated component p-values")
-
-        omni_obs <- .catfish_omni_methods(comps_obs, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
-        res$omni_p_mvn_compcal[i] <- omni_obs
-
-        # per-draw component-calibrated p vectors (keeps cross-method dependence automatically)
-        pA_cal_null <- .emp_p_null_lower(pA_null)
-        pF_cal_null <- .emp_p_null_lower(pF_null)
-        pT_cal_null <- .emp_p_null_lower(pT_null)
-        pM_cal_null <- .emp_p_null_lower(pM_null)
-        pS_cal_null <- .emp_p_null_lower(pS_null)
-
-        # build omnibus null from the per-draw calibrated component p's
-        .compute_omni_null_compcal <- function(b) {
-          comps_b <- c(pA_cal_null[b], pF_cal_null[b], pT_cal_null[b], pM_cal_null[b], pS_cal_null[b])
-          comps_b <- comps_b[is.finite(comps_b) & !is.na(comps_b)]
-          if (!length(comps_b)) return(NA_real_)
-          .catfish_omni_methods(comps_b, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
-        }
-
-        if (use_parallel) {
-          omni_null <- unlist(parallel::mclapply(seq_len(B_mvn), .compute_omni_null_compcal, mc.cores = n_threads))
-        } else {
-          omni_null <- vapply(seq_len(B_mvn), .compute_omni_null_compcal, numeric(1))
-        }
-
-        res$omni_p_mvn[i] <- .emp_or_gpd_p_lower(
-          p_null = omni_null,
-          p_obs  = omni_obs,
-          method = tail_mode,
-          switch_exceed = tail_switch_exceed,
-          gpd_k = tail_gpd_k,
-          min_B = tail_min_B,
-          min_tail = tail_min_tail
-        )
-        res$calib_mode[i] <- "mvn"
-
-      } else {
-
-        # ORIGINAL behavior: calibrate omnibus directly from null analytic component p's
-        omni_obs <- res$omni_p_analytic[i]
-        if (!is.finite(omni_obs) || is.na(omni_obs)) stop("omni_obs not finite")
-
-        .compute_omni_null_b <- function(b) {
-          comps <- c(pA_null[b], pF_null[b], pT_null[b], pM_null[b], pS_null[b])
-          comps <- comps[is.finite(comps) & !is.na(comps)]
-          if (!length(comps)) return(NA_real_)
-          .catfish_omni_methods(comps, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
-        }
-
-        if (use_parallel) {
-          omni_null <- unlist(parallel::mclapply(seq_len(B_mvn), .compute_omni_null_b, mc.cores = n_threads))
-        } else {
-          omni_null <- vapply(seq_len(B_mvn), .compute_omni_null_b, numeric(1))
-        }
-
-        res$omni_p_mvn[i] <- .emp_or_gpd_p_lower(
-          p_null = omni_null,
-          p_obs  = omni_obs,
-          method = tail_mode,
-          switch_exceed = tail_switch_exceed,
-          gpd_k = tail_gpd_k,
-          min_B = tail_min_B,
-          min_tail = tail_min_tail
-        )
-        res$calib_mode[i] <- "mvn"
-      }
-
-      TRUE  # MVN processing succeeded
-      }, error = function(e) {
-        # MVN processing failed - fall back to global
-        FALSE
-      })
-
-      # If MVN processing failed, fall back to global
-      if (!isTRUE(mvn_process_result)) {
-        .do_fallback_global()
-      }
-    }
-
-    res$omni_p_mvn_BH <- .catfish_bh(res$omni_p_mvn)
+    wy_info <- list(
+      B = B_wy,
+      tau_grid = wy_tau_grid,
+      threshold_05 = exp(stats::quantile(eng$minp_null, 0.05, names = FALSE)),
+      repaired_chr = eng$chol$repaired
+    )
   }
 
   # ============================================================
@@ -1767,9 +1331,9 @@ if (!is.null(prep$z_col)) {
     idx_g <- is.finite(res$omni_p_global) & !is.na(res$omni_p_global)
     if (any(idx_g)) res$omni_p_final[idx_g] <- res$omni_p_global[idx_g]
   }
-  if (B_mvn > 0L) {
-    idx_m <- is.finite(res$omni_p_mvn) & !is.na(res$omni_p_mvn)
-    if (any(idx_m)) res$omni_p_final[idx_m] <- res$omni_p_mvn[idx_m]
+  if (B_wy > 0L) {
+    idx_w <- is.finite(res$omni_p_cal) & !is.na(res$omni_p_cal)
+    if (any(idx_w)) res$omni_p_final[idx_w] <- res$omni_p_cal[idx_w]
   }
   res$omni_p_final_BH <- .catfish_bh(res$omni_p_final)
 
@@ -1808,7 +1372,7 @@ if (!is.null(prep$z_col)) {
   if (isTRUE(output)) {
     if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
     tag <- paste0("omni_", tolower(omnibus),
-                  if (B_mvn > 0L) "_mvn" else if (B_global > 0L) "_global" else "_analytic")
+                  if (B_wy > 0L) "_wy" else if (B_global > 0L) "_global" else "_analytic")
     out_path <- file.path(out_dir, paste0(tag, ".csv"))
     utils::write.csv(res, out_path, row.names = FALSE)
     attr(res, "file") <- out_path
@@ -1856,7 +1420,7 @@ if (!is.null(prep$z_col)) {
   }
 
   # --- calibration impact: compare analytic omnibus vs the calibrated omnibus you actually report
-  # Use omni_p_final (because it's MVN if available, else global, else analytic)
+  # Use omni_p_final (WY-calibrated if available, else global, else analytic)
   res$calibration_impact <- NA_character_
   if ("omni_p_analytic" %in% names(res) && "omni_p_final" %in% names(res)) {
     a <- res$omni_p_analytic
@@ -1871,24 +1435,32 @@ if (!is.null(prep$z_col)) {
     )
   }
 
+  if (!is.null(wy_info)) {
+    attr(res, "wy_threshold_05") <- wy_info$threshold_05
+    attr(res, "wy_B")            <- wy_info$B
+    attr(res, "wy_tau_grid")     <- wy_info$tau_grid
+  }
   return(res)
 
 }
 
 
-#' CATFISH omnibus pathway p-values (6-method framework; optional global + MVN calibration)
+#' CATFISH omnibus pathway p-values (analytic, global resampling, or Westfall--Young)
 #'
 #' Compute pathway-level p-values from gene-level results using up to six component
 #' methods (ACAT, Fisher, adaptive soft TFisher, minP, Stouffer Z, optional MAGMA
 #' competitive) and combine them into a single omnibus p-value per pathway.
 #'
-#' Resampling / calibration is applied **only to the omnibus** (not to each component),
-#' using either:
+#' Calibration is applied **only to the omnibus** (not to each component), using either:
 #' \itemize{
 #'   \item \strong{Global resampling} (fast heuristic): resample genes from a global pool.
-#'   \item \strong{MVN resampling} (LD-aware): simulate \eqn{Z \sim N(0, R_S)} using pathway-specific
-#'         gene–gene correlation matrices built from MAGMA correlation pairs, then convert simulated
-#'         Z's into p-values for p-based methods.
+#'   \item \strong{Westfall--Young} (LD-aware, family-wise): one genome-wide null bank. Each of
+#'         \code{B_wy} replicates draws every gene's \eqn{z} jointly from \eqn{N(0, R)}, with \eqn{R}
+#'         built from MAGMA gene--gene correlations (block-diagonal by chromosome), and re-scores
+#'         every pathway on that same draw. Read column-wise, the bank gives each pathway a
+#'         calibrated omnibus p-value; read row-wise, its minimum gives the single-step min-P
+#'         Westfall--Young family-wise p-value. See \code{\link{catfish_wy_pathways}} for the
+#'         stand-alone version.
 #' }
 #'
 #' @details
@@ -1910,23 +1482,24 @@ if (!is.null(prep$z_col)) {
 #'
 #' \strong{Which gene-level p-values are used?}
 #' P-based methods use \code{p_adj_col} if you provide it \emph{and} it exists in \code{gene_results};
-#' otherwise they use \code{p_raw_col}.
+#' otherwise they use \code{p_raw_col}. The Westfall--Young omnibus uses the same column.
 #'
-#' \strong{MVN marginal mapping (only when \code{perm_mode} includes \code{"mvn"})}
-#' \itemize{
-#'   \item \code{mvn_marginal="uniform"} (recommended): Gaussian-copula mapping of the
-#'         simulated Z's to null gene-level p-values. With \code{mvn_sided="one"} (default),
-#'         \eqn{p = 1 - \Phi(Z)} (one-sided upper tail, matching MAGMA gene-level p-values);
-#'         with \code{mvn_sided="two"}, \eqn{p = 2\min(\Phi(Z), 1 - \Phi(Z))}.
-#'   \item \code{mvn_marginal="empirical"}: maps copula uniforms to an empirical null p distribution
-#'         derived internally from gene-level p-values (excluding the pathway's own genes to reduce leakage),
-#'         unless you supply \code{pool_p}.
-#' }
+#' \strong{Westfall--Young omnibus (\code{perm_mode = "wy"} or \code{"both"})}
+#' The statistic calibrated by the null bank is ACAT-O across ACAT, Fisher, Stouffer
+#' (from gene p-values), minP and, if \code{use_tfisher = TRUE}, soft TFisher
+#' \eqn{W_o} on the fixed grid \code{wy_tau_grid}, all evaluated in log space so
+#' that gene p-values far below \eqn{10^{-300}} keep their order. TFisher is
+#' omitted from a pathway's omnibus when no gene falls below any threshold and is
+#' capped at \eqn{10^{-16}}. MAGMA competitive p-values are not part of this
+#' statistic, because they cannot be re-evaluated on null draws. Family-wise
+#' control holds in the strong sense under the multivariate normal model, because
+#' each pathway's statistic depends only on its own genes; this is why
+#' \code{wy_tau_grid} must be fixed rather than estimated from the data.
 #'
 #' @param gene_results data.frame of gene-level results (one row per gene recommended).
 #'   Must contain \code{gene_col} and at least one p-value column (\code{p_raw_col} and/or \code{p_adj_col}).
 #'   If you want Stouffer, it must contain \code{z_col}. If you want weighted Stouffer, it must contain
-#'   \code{weight_col}.
+#'   \code{weight_col}. For Westfall--Young it must also contain \code{chr_col}.
 #'
 #' @param pathways Pathway definitions (provide \code{pathways} OR \code{species}).
 #'   Either a data.frame with columns \code{pathway_id}, \code{gene_id} (optional \code{pathway_name}),
@@ -1945,17 +1518,18 @@ if (!is.null(prep$z_col)) {
 #'   for ACAT/Fisher/TFisher/minP. Default NULL.
 #' @param z_col Character or NULL. Gene Z column for Stouffer. If NULL, Stouffer is skipped. Default NULL.
 #' @param weight_col Character or NULL. Optional weights for Stouffer. Default NULL (equal weights).
+#' @param chr_col Character or NULL. Chromosome column in \code{gene_results}. Required for
+#'   \code{perm_mode = "wy"} / \code{"both"}; genes are drawn jointly within a chromosome and
+#'   independently across chromosomes. Default NULL.
 #'
-#' @param tau_grid Adaptive soft-TFisher thresholds. Either a numeric vector of
+#' @param tau_grid Adaptive soft-TFisher thresholds for the analytic component. Either a numeric vector of
 #'   \eqn{\tau} values, or \code{"auto"} (default) to select the grid from the
-#'   empirical quantiles of the pooled gene-level p-values. Under a uniform null
-#'   this matches the classic grid \code{c(0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001)};
-#'   under strong signal it shrinks toward the extreme tail automatically, removing
-#'   the need for a manual strict-vs-default choice. The grid is estimated once
-#'   globally and held fixed across the observed statistics and the MVN null.
+#'   empirical quantiles of the pooled gene-level p-values.
 #' @param tau_cap Numeric. Upper bound for \code{tau_grid} (sanity bound). Default 1.
-#' @param min_p Numeric. P-values are clipped to \code{[min_p, 1-min_p]} to avoid numeric issues. Default 1e-15.
+#' @param min_p Numeric. P-values are clipped to \code{[min_p, 1-min_p]} to avoid numeric issues. Default 1e-50.
 #' @param min_genes Integer. Minimum genes required per pathway. Default 2.
+#' @param max_genes Numeric. Maximum genes per pathway (counted over genes present). Default \code{Inf}
+#'   (no upper limit).
 #'
 #' @param do_fix Logical. If TRUE, uses your \code{fix_p_for_acat()} if available (else clips). Default TRUE.
 #' @param stouffer_min_abs_w Numeric. Non-finite / <=0 Stouffer weights replaced by this. Default 1e-8.
@@ -1967,41 +1541,32 @@ if (!is.null(prep$z_col)) {
 #'   If FALSE and permutations are run, MAGMA is omitted from the permuted omnibus. Default FALSE.
 #'
 #' @param omnibus Character. \code{"ACAT"} or \code{"minP"} for combining method p-values. Default \code{"ACAT"}.
+#'   The Westfall--Young omnibus always uses ACAT.
 #'
 #' @param B_perm Integer or NULL. Convenience parameter for number of resampling iterations. If provided,
-#'   it overrides \code{B_global}/\code{B_mvn} according to \code{perm_mode}.
-#' @param perm_mode Character. One of \code{"none"}, \code{"global"}, \code{"mvn"}, \code{"both"}.
-#'
-#' @param mvn_marginal Character. Only for MVN mode: \code{"uniform"} or \code{"empirical"}.
-#' @param mvn_sided Character. Only for MVN mode: \code{"one"} (one-sided upper-tail
-#'   \eqn{p = 1 - \Phi(Z)}, matching MAGMA gene-level p-values; default) or
-#'   \code{"two"} (two-sided \eqn{p = 2\min(\Phi(Z), 1 - \Phi(Z))}).
-#' @param mvn_pool Character. Only for MVN + empirical mode when \code{pool_p} is NULL.
-#'   \code{"use"} uses the same p-values used for observed p-based methods; \code{"raw"} prefers \code{p_raw_col}.
-#'   (If raw p-values are unavailable, falls back to \code{"use"}.)
-#' @param pool_p Optional numeric vector of p-values to define the empirical null pool (advanced).
-#'   If supplied, it is used directly (no per-pathway exclusion).
+#'   it overrides \code{B_global}/\code{B_wy} according to \code{perm_mode}.
+#' @param perm_mode Character. One of \code{"none"} (analytic only), \code{"global"} (global gene
+#'   resampling), \code{"wy"} (Westfall--Young) or \code{"both"} (global and Westfall--Young;
+#'   \code{omni_p_final} prefers the Westfall--Young calibrated p-value).
+#' @param wy_tau_grid Numeric. Fixed soft-TFisher grid used inside the Westfall--Young omnibus.
+#'   Default \code{c(0.01, 0.05, 0.5)}: the grid of Zhang et al. (2020) without its \eqn{\tau = 1}
+#'   corner, which is Fisher.
 #'
 #' @param B_global Integer. Number of global-resampling iterations (used when \code{B_perm} is NULL).
-#' @param B_mvn Integer. Number of MVN iterations (used when \code{B_perm} is NULL).
+#' @param B_wy Integer. Number of genome-wide Westfall--Young null replicates (used when \code{B_perm} is NULL).
 #' @param perm_pool Character. For global resampling only: \code{"raw"} (use raw p-values) or \code{"obs"} (use p used by methods).
 #'
 #' @param magma_cor_file Character or NULL. Path to 3-col correlation pairs file: \code{gene1 gene2 r}.
-#'   Required for MVN unless \code{magma_cor_pairs} is provided.
+#'   Used by Westfall--Young; without it (or \code{magma_cor_pairs}) genes are treated as independent.
 #' @param magma_cor_pairs data.frame or NULL. In-memory correlation pairs with columns \code{gene1}, \code{gene2}, \code{r}.
-#' @param make_PD Logical. If TRUE, forces correlation matrices to be positive definite before Cholesky. Default TRUE.
-#' @param n_threads Integer or NULL. Number of worker threads for MVN inner null computations.
-#'   If NULL, defaults to \code{max(1, detectCores()-1)}. Parallel execution is used only when
-#'   \code{B_mvn >= 1000} and supported by the platform.
-#' @param mvn_calibrate_components Logical. If TRUE, MVN-calibrates each component first, then builds the omnibus
-#'   (and calibrates that omnibus). Default FALSE.
+#'   If provided, it overrides \code{magma_cor_file}.
 #'
 #' @param seed Integer or NULL. Random seed.
 #' @param output Logical. If TRUE, writes CSV to \code{out_dir} and attaches \code{"file"} attribute. Default FALSE.
 #' @param out_dir Character. Output directory. Default \code{"catfish_omni2"}.
 #' @param use_tfisher Logical. Include the adaptive soft-TFisher component. Default TRUE.
 #' @param tail_mode Character. \code{"empirical"} or \code{"hybrid_gpd"} (GPD tail
-#'   extrapolation for p-values below the Monte Carlo floor). Default \code{"empirical"}.
+#'   extrapolation for global-resampling p-values below the Monte Carlo floor). Default \code{"empirical"}.
 #' @param tail_switch_exceed Integer. Switch to GPD extrapolation when the number of null
 #'   exceedances falls below this. Default 10.
 #' @param tail_gpd_k Integer. Number of extreme null draws used to fit the GPD. Default 250.
@@ -2014,15 +1579,23 @@ if (!is.null(prep$z_col)) {
 #' \itemize{
 #'   \item component p-values (analytic): \code{acat_p}, \code{fisher_p}, \code{tfisher_p_analytic}, \code{minp_p_analytic}, \code{stouffer_p_analytic}
 #'   \item optional \code{magma_pvalue}
-#'   \item \code{omni_p_analytic}, \code{omni_p_global}, \code{omni_p_mvn}, and \code{omni_p_final} (+ BH/qvalue extras if you kept them in \code{catfish_omni2_run})
+#'   \item \code{omni_p_analytic}, \code{omni_p_global}
+#'   \item Westfall--Young columns (when run): \code{omni_p_wy_stat} (observed log-space omnibus)
+#'     and \code{omni_log10_p_wy_stat} (its log10, which does not underflow),
+#'     \code{omni_z_std} (standardised against the pathway's own null), \code{omni_p_cal}
+#'     (per-pathway calibrated p) and \code{omni_p_cal_BH}, \code{omni_p_fwer_wy_std}
+#'     (Westfall--Young family-wise p on the standardised scale; the headline family-wise result)
+#'     and \code{omni_p_fwer_wy} (raw scale)
+#'   \item \code{omni_p_final} (priority: Westfall--Young calibrated > global > analytic) + BH/qvalue extras
 #' }
+#' When Westfall--Young is run, the attributes \code{wy_threshold_05}, \code{wy_B} and
+#' \code{wy_tau_grid} are attached.
 #'
 #' @examples
 #' \dontrun{
-#' # Load gene results from MAGMA output
-#' gene_results <- read.delim("magma_output.genes.out")
+#' gene_results <- read.table("magma_output.genes.out", header = TRUE)
 #'
-#' # Run omnibus test with analytic p-values only (no permutation)
+#' # Analytic p-values only
 #' omni_res <- catfish_omni2_pathways(
 #'   gene_results = gene_results,
 #'   species = "maize",
@@ -2031,28 +1604,23 @@ if (!is.null(prep$z_col)) {
 #'   z_col = "ZSTAT",
 #'   perm_mode = "none"
 #' )
-#' head(omni_res)
 #'
-#' # With MVN-based calibration (requires gene-gene correlations)
-#' omni_mvn <- catfish_omni2_pathways(
+#' # Westfall--Young calibration (LD-aware, family-wise)
+#' omni_wy <- catfish_omni2_pathways(
 #'   gene_results = gene_results,
 #'   species = "maize",
-#'   perm_mode = "mvn",
+#'   chr_col = "CHR",
+#'   perm_mode = "wy",
 #'   B_perm = 10000,
-#'   magma_cor_file = "magma_output.genes.raw"
+#'   magma_cor_file = "magma_gene_cor_pairs.txt",
+#'   seed = 1
 #' )
-#'
-#' # With global resampling
-#' omni_global <- catfish_omni2_pathways(
-#'   gene_results = gene_results,
-#'   species = "maize",
-#'   perm_mode = "global",
-#'   B_perm = 5000
-#' )
+#' attr(omni_wy, "wy_threshold_05")
 #' }
 #'
-#' @seealso \code{\link{catfish_acat_pathways}}, \code{\link{catfish_fisher_pathways}},
-#'   \code{\link{catfish_minp_pathways}}, \code{\link{catfish_stoufferZ_pathways}}
+#' @seealso \code{\link{catfish_wy_pathways}}, \code{\link{catfish_acat_pathways}},
+#'   \code{\link{catfish_fisher_pathways}}, \code{\link{catfish_minp_pathways}},
+#'   \code{\link{catfish_stoufferZ_pathways}}
 #' @export
 catfish_omni2_pathways <- function(gene_results,
                                  pathways = NULL,
@@ -2063,10 +1631,12 @@ catfish_omni2_pathways <- function(gene_results,
                                  p_adj_col = NULL,
                                  z_col = NULL,
                                  weight_col = NULL,
+                                 chr_col = NULL,
                                  tau_grid = "auto",
                                  tau_cap = 1,
                                  min_p = 1e-50,
                                  min_genes = 2L,
+                                 max_genes = Inf,
                                  # component knobs
                                  use_tfisher = TRUE,
                                  do_fix = TRUE,
@@ -2080,12 +1650,8 @@ catfish_omni2_pathways <- function(gene_results,
                                  omnibus = c("ACAT","minP"),
                                  # resampling
                                  B_perm = NULL,
-                                 perm_mode = c("none","global","mvn","mvn_global","both"),
-                                 mvn_marginal = c("uniform","empirical"),
-                                 mvn_sided    = c("one","two"),
-                                 mvn_pool     = c("use","raw"),
-                                 pool_p       = NULL,
-                                 mvn_calibrate_components = FALSE,
+                                 perm_mode = c("none","global","wy","both"),
+                                 wy_tau_grid = c(0.01, 0.05, 0.5),
                                  # GPD tail extrapolation (Knijnenburg et al. 2009)
                                  tail_mode = c("empirical", "hybrid_gpd"),
                                  tail_switch_exceed = 10L,
@@ -2094,14 +1660,11 @@ catfish_omni2_pathways <- function(gene_results,
                                  tail_min_tail = 50L,
                                  # back-compat / low-level
                                  B_global = 0L,
-                                 B_mvn = 0L,
+                                 B_wy = 0L,
                                  perm_pool = c("raw","obs"),
                                  magma_cor_file = NULL,
                                  magma_cor_pairs = NULL,
-                                 make_PD = TRUE,
                                  seed = NULL,
-                                 # Parallelization
-                                 n_threads = NULL,
                                  output = FALSE,
                                  out_dir = "catfish_omni2") {
 
@@ -2109,9 +1672,6 @@ catfish_omni2_pathways <- function(gene_results,
   omnibus   <- match.arg(omnibus)
   perm_mode <- match.arg(perm_mode)
   perm_pool <- match.arg(perm_pool)
-  mvn_marginal <- match.arg(mvn_marginal)
-  mvn_sided    <- match.arg(mvn_sided)
-  mvn_pool     <- match.arg(mvn_pool)
   stouffer_alternative <- match.arg(stouffer_alternative)
   tail_mode <- match.arg(tail_mode)
 
@@ -2129,49 +1689,45 @@ catfish_omni2_pathways <- function(gene_results,
     stop("min_genes must be a positive integer.", call. = FALSE)
   }
 
-  # ---- map B_perm + perm_mode -> B_global/B_mvn (B_perm overrides) ----
+  # ---- map B_perm + perm_mode -> B_global/B_wy (B_perm overrides) ----
   if (!is.null(B_perm)) {
     B_perm <- as.integer(B_perm)
     if (!is.finite(B_perm) || is.na(B_perm) || B_perm < 0L) stop("B_perm must be >= 0.", call. = FALSE)
 
     if (perm_mode == "none" || B_perm == 0L) {
-      B_global <- 0L; B_mvn <- 0L
+      B_global <- 0L; B_wy <- 0L
     } else if (perm_mode == "global") {
-      B_global <- B_perm; B_mvn <- 0L
-    } else if (perm_mode == "mvn") {
-      B_global <- 0L; B_mvn <- B_perm
-    } else if (perm_mode == "mvn_global") {
-      # mvn_global: try MVN first, fall back to global per-pathway
-      B_global <- B_perm; B_mvn <- B_perm
+      B_global <- B_perm; B_wy <- 0L
+    } else if (perm_mode == "wy") {
+      B_global <- 0L; B_wy <- B_perm
     } else { # both
-      B_global <- B_perm; B_mvn <- B_perm
+      B_global <- B_perm; B_wy <- B_perm
     }
   } else {
-    # respect perm_mode even if user sets B_global/B_mvn
+    # respect perm_mode even if user sets B_global/B_wy
     B_global <- as.integer(B_global); if (is.na(B_global) || B_global < 0L) B_global <- 0L
-    B_mvn    <- as.integer(B_mvn);    if (is.na(B_mvn)    || B_mvn    < 0L) B_mvn <- 0L
+    B_wy     <- as.integer(B_wy);     if (is.na(B_wy)     || B_wy     < 0L) B_wy <- 0L
 
     if (perm_mode == "none") {
-      B_global <- 0L; B_mvn <- 0L
+      B_global <- 0L; B_wy <- 0L
     } else if (perm_mode == "global") {
-      B_mvn <- 0L
-    } else if (perm_mode == "mvn") {
+      B_wy <- 0L
+    } else if (perm_mode == "wy") {
       B_global <- 0L
-    } else if (perm_mode == "mvn_global") {
-      # mvn_global: need both; logic handles per-pathway
-      if (B_global == 0L) B_global <- B_mvn
-      if (B_mvn == 0L) B_mvn <- B_global
     } else {
       # both: keep as-is
     }
   }
 
-  # MVN requirements
-  if (B_mvn > 0L) {
-    if (is.null(magma_cor_pairs) && is.null(magma_cor_file)) {
-      stop("perm_mode includes 'mvn' (B_mvn > 0) but no gene-correlation input was provided.\n",
-           "Provide magma_cor_file (path to 3-col gene1 gene2 r) or magma_cor_pairs (data.frame).",
+  # Westfall-Young requirements
+  if (B_wy > 0L) {
+    if (is.null(chr_col)) {
+      stop("perm_mode includes 'wy' (B_wy > 0) but chr_col is NULL.\n",
+           "Provide the chromosome column of gene_results (e.g. chr_col = \"CHR\").",
            call. = FALSE)
+    }
+    if (isTRUE(use_tfisher) && !requireNamespace("TFisher", quietly = TRUE)) {
+      stop("Package 'TFisher' is required when use_tfisher = TRUE.", call. = FALSE)
     }
   }
 
@@ -2182,13 +1738,6 @@ catfish_omni2_pathways <- function(gene_results,
   }
 
   # ---- prepare (standardizes gene_results + pathways) ----
-  if (!exists("catfish_omni2_prepare", mode = "function")) {
-    stop("catfish_omni2_prepare() not found. Source your CATFISH omnibus code first.", call. = FALSE)
-  }
-  if (!exists("catfish_omni2_run", mode = "function")) {
-    stop("catfish_omni2_run() not found. Source your CATFISH omnibus code first.", call. = FALSE)
-  }
-
   prep <- catfish_omni2_prepare(
     gene_results = gene_results,
     pathways = pathways,
@@ -2199,25 +1748,16 @@ catfish_omni2_pathways <- function(gene_results,
     p_adj_col = p_adj_col,
     z_col = z_col,
     weight_col = weight_col,
+    chr_col = chr_col,
     tau_grid = tau_grid,
     tau_cap = tau_cap,
     min_p = min_p,
     min_genes = min_genes,
+    max_genes = max_genes,
     seed = seed
   )
 
-  # ---- MVN empirical pool choice (only when pool_p is NULL) ----
-  # If you want "raw" empirical pool and raw is available, we swap the internal pool used by MVN mapping.
-  # This preserves the per-pathway exclusion logic inside catfish_omni2_run().
-  if (B_mvn > 0L && mvn_marginal == "empirical" && is.null(pool_p) && mvn_pool == "raw") {
-    if (!is.null(prep$gene_p_all_raw)) {
-      prep$gene_p_all_use <- prep$gene_p_all_raw
-    } else {
-      warning("mvn_pool='raw' requested but raw p-values are unavailable; falling back to mvn_pool='use'.", call. = FALSE)
-    }
-  }
-
-  # ---- run (components analytic; permutations ONLY for omnibus) ----
+  # ---- run (components analytic; calibration ONLY for omnibus) ----
   catfish_omni2_run(
     prep = prep,
     omnibus = omnibus,
@@ -2229,23 +1769,17 @@ catfish_omni2_pathways <- function(gene_results,
     include_magma_in_omni = include_magma_in_omni,
     include_magma_in_perm = include_magma_in_perm,
     B_global = B_global,
-    B_mvn = B_mvn,
+    B_wy = B_wy,
     perm_mode = perm_mode,
     perm_pool = perm_pool,
-    mvn_marginal = mvn_marginal,
-    mvn_sided = mvn_sided,
-    mvn_pool = mvn_pool,
-    pool_p = pool_p,
-    mvn_calibrate_components = mvn_calibrate_components,
+    wy_tau_grid = wy_tau_grid,
+    magma_cor_file = magma_cor_file,
+    magma_cor_pairs = magma_cor_pairs,
     tail_mode = tail_mode,
     tail_switch_exceed = tail_switch_exceed,
     tail_gpd_k = tail_gpd_k,
     tail_min_B = tail_min_B,
     tail_min_tail = tail_min_tail,
-    magma_cor_file = magma_cor_file,
-    magma_cor_pairs = magma_cor_pairs,
-    make_PD = make_PD,
-    n_threads = n_threads,
     output = output,
     out_dir = out_dir
   )

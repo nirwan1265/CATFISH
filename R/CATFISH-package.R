@@ -8,8 +8,8 @@
 #' CATFISH provides an R interface to MAGMA (Multi-marker Analysis of
 #' GenoMic Annotation) for post-GWAS pathway enrichment analysis. It implements
 #' multiple p-value combination methods and combines them into an omnibus test
-#' with optional permutation-based or MVN-based calibration to account for
-#' gene-gene correlations.
+#' with optional permutation-based or Westfall--Young calibration that accounts
+#' for gene-gene correlations and controls the family-wise error rate.
 #'
 #' @section Main Function Families:
 #'
@@ -25,7 +25,8 @@
 #' \strong{Omnibus Testing:}
 #' \itemize{
 #'   \item \code{\link{catfish_omni2_pathways}} - Omnibus combination of multiple methods
-#'     with optional MVN resampling for correlation-aware calibration
+#'     with optional Westfall--Young calibration (correlation-aware, family-wise)
+#'   \item \code{\link{catfish_wy_pathways}} - Stand-alone Westfall--Young pathway testing
 #' }
 #'
 #' \strong{MAGMA Interface:}
