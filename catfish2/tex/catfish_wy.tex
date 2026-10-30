@@ -536,7 +536,7 @@ $B_{\mathrm{hub}}(g)=\log_{10}(n_{\mathrm{path}}(g)+1)$ rewards membership in
 several pathways. Genes missing a layer score zero for it, so an absent layer
 neither helps nor penalises.
 
-We use ranks instead of $-\log_{10}p$ to make layers with different tail behaviour comparable and to avoid the $p$-value floors in Section~2.4. Pathway evidence is halved because the pathway $p$-value is a set-level statistic shared across member genes; the hub term is intentionally secondary. We fixed weights \emph{a priori}; simulations showed rankings were stable for $w_{\mathrm{path}}\in[0,1]$ and $w_{\mathrm{hub}}\in[0,0.5]$, with defaults on a broad plateau rather than a fragile optimum \citep{Tandukar2025Thesis}. We did not re-tune on the validation genes in Section~3.9.4 to avoid circularity.
+We use ranks instead of $-\log_{10}p$ to make layers with different tail behaviour comparable and to avoid the $p$-value floors in Section~2.4. Pathway evidence is halved because the pathway $p$-value is a set-level statistic shared across member genes; the hub term is intentionally secondary. We fixed the weights \emph{a priori} and assessed them afterwards over a grid, $w_{\mathrm{path}}\in\{0,0.25,0.5,0.75,1\}$ and $w_{\mathrm{hub}}\in\{0,0.1,\dots,0.5\}$, in a truth-planted simulation and in the real analyses of Section~3.9 (Supplementary Figure~\ref{fig:weights}). The simulation draws $400$ replicate datasets of $500$ genes and $50$ pathways, plants causal genes concentrated in five pathways, and generates correlated GWAS-, MAGMA- and pathway-level evidence for them \citep{Tandukar2025Thesis}. Rankings were stable across the grid: the Spearman correlation of each full ranking with the default ranking was at least $0.986$, and the top twenty genes overlapped the default top twenty by at least $88\%$. Recovery of planted causal genes in the top twenty rose steadily with the pathway weight, from $0.71$ to $0.85$, and was $0.80$ at the defaults, so the defaults are not the optimum of that simulation. They are a deliberately conservative middle value: the pathway layer is set-level evidence shared by every member gene and, in curated databases, partly encodes prior knowledge, so it should not outweigh direct genetic evidence. We did not re-tune the weights on the validation genes of Section~3.9.4.
 
 The score is a heuristic ranking metric, not an inferential model: it has no null distribution or $p$-value. We also report per-layer ranks, because the GWAS and MAGMA layers use the same variants and are not independent evidence.
 
@@ -1312,6 +1312,21 @@ $\nLipRecLDLGwasTopTen$ and $\nLipRecHDLGwasTopTen$ for the GWAS layer, and
 $\nLipRecLDLScoreTopFifty$ and $\nLipRecHDLScoreTopFifty$ in the top fifty,
 against $\nLipRecLDLGwasTopFifty$ and $\nLipRecHDLGwasTopFifty$.
 
+This does not depend on the particular weights (Supplementary
+Figure~\ref{fig:weights}C--D). Across the whole weight grid of Section~2.5,
+including the settings that switch the pathway or hub term off, the full
+ranking kept a Spearman correlation of at least $0.89$ with the default ranking
+in both traits, and at least $13$ (LDL-C) and $15$ (HDL-C) of the default top
+twenty genes stayed in the top twenty. Over the same grid of Section~2.5 the
+established genes' median rank ranged from $10$ to $29$ for LDL-C and from
+$12.5$ to $30$ for HDL-C. It improved as the pathway weight rose and changed
+little with the hub weight, and from a pathway weight of $0.5$ upwards the score
+placed six or seven (LDL-C) and six (HDL-C) of the established genes in the top
+ten. Every setting with a pathway weight of at least $0.25$ gave a better median
+rank than the GWAS layer alone. Larger pathway weights did better still, which
+matches the simulation; we kept the a~priori defaults rather than choose weights
+on the genes used to evaluate them.
+
 The gain comes from agreement between layers rather than from any one of them.
 The GWAS layer ranks a gene by the single strongest variant assigned to it, so
 every gene at a strong locus inherits the same evidence: \textit{APOE},
@@ -1557,8 +1572,9 @@ The second is that the pathway result is most useful when it is carried down to
 genes. Ranked by its strongest variant, a gene inherits the evidence of its
 whole locus; ranked by its gene-level test, it can lose a strong signal carried
 by one or two variants. The combined score recovered the established genes of
-both traits better than either layer alone, because genes supported by several
-layers rise and genes supported by one fall. The gain is real but modest, and
+both traits better than either layer alone, across the range of weights we
+examined, because genes supported by several layers rise and genes supported by
+one fall. The gain is real but modest, and
 it is partly circular: the pathway layer rewards membership in curated
 pathways, which favours well-studied genes, so recovery of established genes
 overstates what the score would achieve for genes not yet in any pathway
@@ -1787,6 +1803,22 @@ The authors thank the anonymous reviewers for their valuable suggestions.
 \section*{Supplementary material}
 
 \maybeinput{auto/tab_candidates_supp.tex}
+
+\begin{figure*}[!t]
+\centering
+\maybefig{Fig16_weight_sensitivity.png}{\textwidth}{Sensitivity of the
+candidate-gene score to the pathway weight $w_{\mathrm{path}}$ ($x$-axis) and
+the hub weight $w_{\mathrm{hub}}$ ($y$-axis); the red box marks the defaults
+($0.5$, $0.3$). \textbf{A},~\textbf{B}~Truth-planted simulation
+($400$ replicates of $500$ genes and $50$ pathways with causal genes concentrated
+in five pathways): mean fraction of planted causal genes among the top twenty
+(\textbf{A}) and mean Spearman correlation of the full ranking with the ranking
+at the defaults (\textbf{B}). \textbf{C},~\textbf{D}~The lipid analyses of
+Section~3.9: median rank, among all $\nLipNgenes$ genes, of the pre-specified
+established genes for LDL-C (\textbf{C}) and HDL-C (\textbf{D}); lower is
+better. Rankings are stable across the grid, and recovery improves with the
+pathway weight in both the simulation and the real data.}{fig:weights}
+\end{figure*}
 
 \clearpage
 \bibliographystyle{oup-abbrvnat}
