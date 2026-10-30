@@ -9,12 +9,13 @@
 ##   S(.)   = -log10(rank / N)                    rank 1 = strongest
 ##   B_hub  = log10(n_pathways(g) + 1)
 ##
-## Pathway evidence is ranked on `log10_p_omnibus` rather than on the
-## Westfall-Young adjusted p-value. The two give the IDENTICAL ordering, since
-## the adjusted p is a monotone transform of the observed statistic, but the
-## adjusted p is floored at 1/(B+1): in the human run with B = 200 the whole
-## top of the list is tied at 0.00498, which would flatten the pathway layer to
-## a constant. The statistic has no such floor.
+## Pathway evidence is ranked on `z_std`, the Westfall-Young standardised
+## statistic (each pathway's observed omnibus against its own null). It gives
+## the same ordering as the headline family-wise p-value p_fwer_std, but that
+## p-value is floored at 1/(B+1) and ties the whole top of the list, while
+## z_std has no floor. (Until 2026-10-29 the default was `log10_p_omnibus`,
+## the raw omnibus, whose ordering is dominated by pathway size; set
+## PATHWAY_P_COL=log10_p_omnibus to reproduce that.)
 ##
 ## Every input path can be overridden with an environment variable so the
 ## script runs unchanged on another machine.
@@ -115,9 +116,9 @@ GWAS_POS_COL <- Sys.getenv("GWAS_POS_COL", "Pos")
 GWAS_P_COL   <- Sys.getenv("GWAS_P_COL",   "p")
 WINDOW       <- as.integer(Sys.getenv("GWAS_WINDOW", "10000"))
 
-## pathway p-value column to use: p_fwer_std (size-standardised WY, the
-## manuscript default), p_fwer_wy (raw WY) or p_omnibus (uncorrected)
-PCOL <- Sys.getenv("PATHWAY_P_COL", "log10_p_omnibus")
+## pathway statistic to rank on (smaller = stronger): z_std (size-standardised
+## WY statistic, the default), log10_p_omnibus (raw omnibus), or a p-value column
+PCOL <- Sys.getenv("PATHWAY_P_COL", "z_std")
 
 OUT_DIR <- file.path(BASE, "catfish2/results")
 dir.create(OUT_DIR, showWarnings = FALSE, recursive = TRUE)

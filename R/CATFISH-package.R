@@ -29,6 +29,11 @@
 #'   \item \code{\link{catfish_wy_pathways}} - Stand-alone Westfall--Young pathway testing
 #' }
 #'
+#' \strong{Candidate Genes:}
+#' \itemize{
+#'   \item \code{\link{gene_prioritize}} - Rank genes by GWAS, MAGMA and pathway evidence
+#' }
+#'
 #' \strong{MAGMA Interface:}
 #' \itemize{
 #'   \item \code{\link{magma_path}} - Locate MAGMA binary

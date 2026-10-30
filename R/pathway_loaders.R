@@ -3,7 +3,8 @@
 ## ==========================================================================
 ##
 ## Functions for loading built-in pathway databases (PMN for plants, FlyCyc
-## for Drosophila). These are used by all pathway testing wrappers.
+## for Drosophila, HumanCyc and Reactome for human). These are used by all
+## pathway testing wrappers.
 ##
 ## Data files are stored in: inst/extdata/pathway/
 ## ==========================================================================
@@ -20,6 +21,11 @@
 #'   \item{"plant"}{PlantCyc general plant pathways (plantcyc_pathways.20230103)}
 #'   \item{"fly"}{FlyCyc Drosophila pathways (Fly_Cyc.tsv)}
 #'   \item{"human"}{HumanCyc pathways (humancyc_pathways.20261024)}
+#'   \item{"human_reactome"}{Reactome pathways for human, Entrez gene IDs
+#'     (human_reactome.pw; 1,867 pathways from MSigDB v2026.2 C2:CP:REACTOME,
+#'     c2.cp.reactome.v2026.2.Hs.entrez). MSigDB gene sets are distributed under the Creative
+#'     Commons Attribution 4.0 International License; cite MSigDB and Reactome
+#'     when you use them. One pathway per line: ID, then member genes.}
 #' }
 #'
 #' @return Character. File path to the selected pathway file in the CATFISH
@@ -38,7 +44,8 @@
 #'   data.frame
 #' @export
 catfish_pmn_file <- function(
-    species = c("maize", "sorghum", "arabidopsis", "plant", "fly", "human")
+    species = c("maize", "sorghum", "arabidopsis", "plant", "fly", "human",
+                "human_reactome")
 ) {
 
   species <- match.arg(species)
@@ -50,7 +57,8 @@ catfish_pmn_file <- function(
     arabidopsis = "aracyc_pathways.20230103",
     plant       = "plantcyc_pathways.20230103",
     fly         = "Fly_Cyc.tsv",
-    human       = "humancyc_pathways.20261024"
+    human       = "humancyc_pathways.20261024",
+    human_reactome = "human_reactome.pw"
   )
 
   path <- system.file("extdata/pathway", fname, package = "CATFISH")
@@ -71,7 +79,8 @@ catfish_pmn_file <- function(
 #' (PMN) pathway files for plants and FlyCyc for Drosophila.
 #'
 #' @param species Character. One of "maize", "sorghum", "arabidopsis",
-#'   "plant", or "fly".
+#'   "plant", "fly", "human" (HumanCyc) or "human_reactome" (Reactome, Entrez
+#'   IDs, from MSigDB).
 #' @param gene_col Character or NULL. Column name to use for gene IDs.
 #'   If NULL (default), the function will:
 #'   \itemize{
@@ -97,6 +106,11 @@ catfish_pmn_file <- function(
 #'   \item \strong{arabidopsis}: AraCyc from PMN
 #'   \item \strong{plant}: PlantCyc (general plant pathways) from PMN
 #'   \item \strong{fly}: FlyCyc (Drosophila melanogaster pathways)
+#'   \item \strong{human}: HumanCyc (Entrez IDs by default)
+#'   \item \strong{human_reactome}: Reactome via MSigDB v2026.2 C2:CP:REACTOME,
+#'     Entrez IDs; \code{pathway_name} is the ID without the
+#'     \code{REACTOME_} prefix, in lower case. CC BY 4.0; cite MSigDB and
+#'     Reactome.
 #' }
 #'
 #' @examples
@@ -127,11 +141,36 @@ catfish_pmn_file <- function(
 #' \code{\link{catfish_minp_pathways}} for pathway enrichment tests
 #' @export
 catfish_load_pathways <- function(
-    species      = c("maize", "sorghum", "arabidopsis", "plant", "fly", "human"),
+    species      = c("maize", "sorghum", "arabidopsis", "plant", "fly", "human",
+                     "human_reactome"),
     gene_col     = NULL,
     drop_unknown = TRUE
 ) {
   species <- match.arg(species)
+
+  # Reactome (MSigDB) ships as a MAGMA-style set file: one pathway per line,
+  # the pathway ID followed by its member Entrez gene IDs (tab separated).
+  if (identical(species, "human_reactome")) {
+    fpath <- catfish_pmn_file(species)
+    ln <- readLines(fpath, warn = FALSE)
+    ln <- ln[nzchar(trimws(ln))]
+    f  <- strsplit(ln, "\t")
+    id <- vapply(f, `[`, character(1), 1L)
+    g  <- lapply(f, function(x) x[-1L])
+    df <- data.frame(
+      pathway_id   = rep(id, lengths(g)),
+      pathway_name = rep(tolower(gsub("_", " ", sub("^REACTOME_", "", id))),
+                         lengths(g)),
+      gene_id      = unlist(g, use.names = FALSE),
+      stringsAsFactors = FALSE
+    )
+    if (isTRUE(drop_unknown)) {
+      bad <- is.na(df$gene_id) | df$gene_id == "" | df$gene_id == "unknown"
+      df <- df[!bad, , drop = FALSE]
+    }
+    return(df)
+  }
+
   # HumanCyc ships both symbols (Gene-name) and Entrez (Gene-id). MAGMA human
   # gene location files are Entrez-keyed, so default to Gene-id there.
   if (identical(species, "human") && is.null(gene_col)) gene_col <- "Gene-id"

@@ -5,14 +5,16 @@
 \title{Load pathways as a data.frame}
 \usage{
 catfish_load_pathways(
-  species = c("maize", "sorghum", "arabidopsis", "plant", "fly"),
+  species = c("maize", "sorghum", "arabidopsis", "plant", "fly", "human",
+    "human_reactome"),
   gene_col = NULL,
   drop_unknown = TRUE
 )
 }
 \arguments{
 \item{species}{Character. One of "maize", "sorghum", "arabidopsis",
-"plant", or "fly".}
+"plant", "fly", "human" (HumanCyc) or "human_reactome" (Reactome, Entrez
+IDs, from MSigDB).}
 
 \item{gene_col}{Character or NULL. Column name to use for gene IDs.
 If NULL (default), the function will:
@@ -46,6 +48,11 @@ the CATFISH package. The supported species and their source databases are:
 \item \strong{arabidopsis}: AraCyc from PMN
 \item \strong{plant}: PlantCyc (general plant pathways) from PMN
 \item \strong{fly}: FlyCyc (Drosophila melanogaster pathways)
+\item \strong{human}: HumanCyc (Entrez IDs by default)
+\item \strong{human_reactome}: Reactome via MSigDB v2026.2 C2:CP:REACTOME,
+Entrez IDs; \code{pathway_name} is the ID without the
+\code{REACTOME_} prefix, in lower case. CC BY 4.0; cite MSigDB and
+Reactome.
 }
 }
 \examples{

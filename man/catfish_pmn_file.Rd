@@ -5,7 +5,8 @@
 \title{Path to built-in pathway file}
 \usage{
 catfish_pmn_file(
-  species = c("maize", "sorghum", "arabidopsis", "plant", "fly")
+  species = c("maize", "sorghum", "arabidopsis", "plant", "fly", "human",
+    "human_reactome")
 )
 }
 \arguments{
@@ -16,6 +17,12 @@ catfish_pmn_file(
 \item{"arabidopsis"}{AraCyc pathways (aracyc_pathways.20230103)}
 \item{"plant"}{PlantCyc general plant pathways (plantcyc_pathways.20230103)}
 \item{"fly"}{FlyCyc Drosophila pathways (Fly_Cyc.tsv)}
+\item{"human"}{HumanCyc pathways (humancyc_pathways.20261024)}
+\item{"human_reactome"}{Reactome pathways for human, Entrez gene IDs
+(human_reactome.pw; 1,867 pathways from MSigDB v2026.2 C2:CP:REACTOME,
+c2.cp.reactome.v2026.2.Hs.entrez). MSigDB gene sets are distributed under the Creative
+Commons Attribution 4.0 International License; cite MSigDB and Reactome
+when you use them. One pathway per line: ID, then member genes.}
 }}
 }
 \value{

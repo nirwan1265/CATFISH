@@ -57,7 +57,8 @@ Either a data.frame with columns \code{pathway_id}, \code{gene_id} (optional \co
 or a named list mapping \code{pathway_id -> character vector of genes}.}
 
 \item{species}{Optional character (provide \code{species} OR \code{pathways}), one of
-\code{"maize"}, \code{"sorghum"}, \code{"arabidopsis"}, \code{"plant"}.
+\code{"maize"}, \code{"sorghum"}, \code{"arabidopsis"}, \code{"plant"}, \code{"fly"},
+\code{"human"} (HumanCyc) or \code{"human_reactome"} (Reactome, Entrez IDs).
 When provided, pathways are loaded via \code{catfish_load_pathways()}.}
 
 \item{pmn_gene_col}{Optional character. When \code{species} is used, passed to
@@ -220,6 +221,34 @@ each pathway's statistic depends only on its own genes; this is why
 \code{wy_tau_grid} must be fixed rather than estimated from the data.
 }
 \examples{
+## Toy GWAS: 300 genes on 3 chromosomes, neighbouring genes correlated
+## (r = 0.3), 6 associated genes inside pathway "PWY_signal".
+set.seed(1)
+genes <- data.frame(GENE = paste0("g", 1:300), CHR = rep(1:3, each = 100))
+R <- diag(100)
+R[cbind(1:99, 2:100)] <- R[cbind(2:100, 1:99)] <- 0.3
+z <- as.vector(replicate(3, t(chol(R)) \%*\% rnorm(100)))
+z[1:6] <- z[1:6] + 4
+genes$ZSTAT <- z
+genes$P     <- pnorm(z, lower.tail = FALSE)
+cor_pairs <- do.call(rbind, lapply(split(genes$GENE, genes$CHR), function(g)
+  data.frame(gene1 = head(g, -1), gene2 = tail(g, -1), r = 0.3)))
+pathways <- c(list(PWY_signal = paste0("g", 1:15)),
+              setNames(lapply(1:19, function(i) sample(genes$GENE[-(1:15)], 15)),
+                       paste0("PWY_", 1:19)))
+
+# analytic omnibus only
+res0 <- catfish_omni2_pathways(genes, pathways = pathways, z_col = "ZSTAT",
+                               min_genes = 10)
+
+# Westfall--Young calibration (small B for the example)
+res_wy <- catfish_omni2_pathways(genes, pathways = pathways, z_col = "ZSTAT",
+                                 chr_col = "CHR", min_genes = 10,
+                                 perm_mode = "wy", B_perm = 200,
+                                 magma_cor_pairs = cor_pairs, seed = 1)
+head(res_wy[, c("pathway_id", "omni_p_analytic", "omni_p_cal",
+                "omni_p_fwer_wy_std")])
+
 \dontrun{
 gene_results <- read.table("magma_output.genes.out", header = TRUE)
 

@@ -352,7 +352,7 @@ if (have("06_candidate_genes_ldl.csv")) {
        file.path(AUT, "tab_candidates.tex"), star = FALSE)
 
   cap_supp <- sprintf(paste0("Top fifty prioritized genes for LDL cholesterol, ",
-    "with per-layer ranks. Layer sizes as in Table~\\ref{tab:candidates} ",
+    "with per-layer ranks. Layer sizes as in Table~\\ref{tab:lipid_candidates} ",
     "(%d / %d / %d genes)."), NW, NG, NP2)
   emit(mk(utils::head(d, 50), cap_supp, "tab:candidates_supp", TRUE),
        file.path(AUT, "tab_candidates_supp.tex"), star = TRUE)

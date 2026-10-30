@@ -81,6 +81,16 @@ all.equal(omni$omni_p_fwer_wy_std[m], res$p_fwer_std)
 
 Only `PWY_signal` should pass `p_fwer_std <= 0.05`.
 
+Candidate genes from the same results. With no SNP-level file the score uses
+the MAGMA and pathway layers only; the six associated genes should come first:
+
+```{r quick-genes, eval = TRUE}
+cand <- gene_prioritize(magma = genes, pathway_results = res,
+                        pathways = pathways, verbose = FALSE)
+head(cand[, c("rank", "gene", "score", "magma_rank", "pathway_rank",
+              "best_pathway")], 8)
+```
+
 ## Workflow Overview
 
 A typical CATFISH workflow consists of:
@@ -89,7 +99,8 @@ A typical CATFISH workflow consists of:
 2. **Run MAGMA annotation** to map SNPs to genes
 3. **Run MAGMA gene analysis** to get gene-level p-values
 4. **Combine chromosome results** into a single file
-5. **Run pathway tests** (individual or omnibus)
+5. **Optional: adjust gene p-values** for gene length/SNP density (not needed for MAGMA output)
+6. **Run pathway tests** (individual or omnibus)
 
 ## Step 1: Create Gene Location File
 
@@ -172,7 +183,63 @@ genes_all <- genes_all[order(genes_all$GENE, genes_all$P), ]
 genes_all <- genes_all[!duplicated(genes_all$GENE), ]
 ```
 
-## Step 5: Individual Pathway Tests
+## Step 5 (Optional): Gene-size Adjustment
+
+**Not needed for MAGMA output.** MAGMA's gene analysis already accounts for gene
+size, SNP count and LD within each gene: each gene's p-value is computed against
+a null built from that gene's own SNPs, so with no association it is uniform
+whatever the gene's size. Larger genes are still more often significant when
+there is real signal, but that is extra power, not bias, and removing it throws
+away evidence. If your gene p-values come from MAGMA, skip this step and use
+`genes_all` in the steps below.
+
+The step is for gene-level p-values from a method that does **not** calibrate
+for gene size, for example:
+
+- the smallest SNP p-value in the gene, taken without correcting for the number
+  of SNPs;
+- Fisher's or Stouffer's combination of a gene's SNP p-values that ignores LD
+  among the SNPs.
+
+With these, genes with more SNPs get smaller p-values even when nothing is
+associated. Gene tests that model LD (VEGAS, fastBAT, PASCAL) are calibrated
+like MAGMA and do not need the step. Neither does ACAT across a gene's SNPs: the
+Cauchy combination stays approximately calibrated whatever the number of SNPs
+and their LD, and the approximation is best for small p-values.
+
+`catfish_adjust_gene_p()` regresses the gene z-scores on (log) gene length and
+SNP count and returns the standardised residuals as adjusted z-scores and
+p-values. It is a heuristic: it cannot separate confounding by gene size from
+genuine signal in large genes. Westfall--Young calibration assumes each gene's
+p-value is uniform under no association and uses gene--gene correlations, so
+both should come from the same gene-level method.
+
+```{r adjust-p}
+# Get gene lengths from GFF3
+gene_lengths <- get_gene_lengths(
+  gff3_file  = "path/to/annotation.gff3",
+  output     = TRUE,
+  output_dir = "inst/extdata",
+  file_name  = "gene_lengths.tsv"
+)
+
+# Adjust p-values
+adj_out <- catfish_adjust_gene_p(
+  gene_results = genes_all,
+  gene_lengths = gene_lengths,
+  gene_col     = "GENE",
+  nsnp_col     = "NSNPS",
+  p_col        = "P",
+  z_col        = "ZSTAT",
+  len_gene_col = "gene_id",
+  len_col      = "length"
+)
+
+# Extract adjusted results; use genes_adj instead of genes_all below
+genes_adj <- adj_out[, c("GENE", "ZSTAT", "P")]
+```
+
+## Step 6: Individual Pathway Tests
 
 ### ACAT (Aggregated Cauchy Association Test)
 
@@ -250,7 +317,7 @@ tfisher_res <- catfish_soft_tfisher_adaptive_pathways(
 )
 ```
 
-## Step 6: Omnibus Test with Westfall--Young Calibration (Recommended)
+## Step 7: Omnibus Test with Westfall--Young Calibration (Recommended)
 
 The omnibus combines the component tests with ACAT and is calibrated by
 Westfall--Young resampling:
@@ -322,6 +389,48 @@ model, because each pathway's statistic depends only on its own genes. For the
 same reason the TFisher grid (`wy_tau_grid`) is fixed in advance rather than
 estimated from the data.
 
+## Step 8: Candidate Gene Prioritisation
+
+`gene_prioritize()` ranks every gene by combining three layers of evidence: the
+strongest SNP near the gene (GWAS), the MAGMA gene p-value (MAGMA), and the
+strongest tested pathway containing the gene (pathway), plus a small bonus for
+genes in many tested pathways. Each layer is converted to a rank score
+-log10(rank / N), so layers on different scales are comparable:
+
+score = S_gwas + S_magma + 0.5 S_pathway + 0.3 log10(1 + n_pathways)
+
+Every input can be an R object or a file path. Required columns:
+
+| Input | Required columns (argument to rename) |
+|-------|---------------------------------------|
+| `magma` (`.genes.out`) | `GENE` (`magma_gene_col`), `P` or `P_MULTI` (`magma_p_col`) |
+| `pathway_results` | `pathway_id` (`pathway_id_col`), a statistic where smaller = stronger (`pathway_stat_col`); by default the size-standardised Westfall--Young statistic `z_std` (or `omni_z_std`), otherwise `log10_p_omnibus` |
+| `pathways` | named list, data.frame (`pathway_id`, `gene_id`), or set file (`id gene gene ...`) |
+| `gwas` (optional) | `SNP` (`gwas_snp_col`) and `NEGLOG10P` or `P` (`gwas_neglog10p_col`, `gwas_p_col`); `CHR`, `BP` only for the position route |
+| `gene_annot` (optional) | MAGMA `.genes.annot`, or data.frame (`gene`, `SNP`) |
+| `gene_loc` (optional) | `.gene.loc` (gene, chr, start, end, strand, symbol) or data.frame (`gene`, `chr`, `start`, `end`, `symbol`) |
+
+SNPs are assigned to genes with `gene_annot` (the same annotation as the MAGMA
+run) or, failing that, by position within `window` bp of each gene in
+`gene_loc`. Give the GWAS layer as -log10(p) when you can: a p column is usually
+floored (e.g. at 1e-300), which ties the strongest genes.
+
+```{r gene-prioritize}
+cand <- gene_prioritize(
+  magma           = "magma_output.genes.out",
+  pathway_results = wy_res,                     # from Step 7
+  pathways        = "pathways.sets.annot",
+  gwas            = "gwas.neglog10.txt",        # SNP, NEGLOG10P
+  gene_annot      = "magma_output.genes.annot", # from magma --annotate
+  gene_loc        = "genes.loc",                # adds gene symbols
+  targets         = c("GENE_A", "GENE_B"),      # known genes, optional
+  output          = TRUE,
+  out_file        = "candidate_genes.csv"
+)
+head(cand)
+attr(cand, "targets")      # where the known genes rank
+```
+
 ## Using Custom Pathways
 
 Instead of built-in PMN pathways, you can provide custom pathways:
@@ -391,7 +500,7 @@ For the omnibus test, additional columns include:
 
 1. **Always use calibration** (`B_perm >= 10000`) for publication-quality results
 2. **Use Westfall--Young** (`perm_mode = "wy"`, with `chr_col` and the MAGMA gene correlations) when genes are correlated (typical in GWAS)
-3. **Use the gene-level p-values from MAGMA as they are**: MAGMA already calibrates each gene's p-value for its size and SNP count
+3. **Use MAGMA gene p-values as they are**; adjust for gene length (Step 5) only if your gene p-values come from a method that does not calibrate for gene size
 4. **Use the omnibus test** rather than cherry-picking individual tests
 5. **Apply FDR correction** to the final p-values for multiple testing
 

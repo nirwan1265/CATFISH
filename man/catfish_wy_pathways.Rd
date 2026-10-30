@@ -111,3 +111,35 @@ model, because each pathway's statistic depends only on its own genes. This
 requires \code{tau_grid} to be fixed in advance rather than estimated from
 the gene-level \eqn{p}-values.
 }
+\examples{
+## Toy GWAS: 300 genes on 3 chromosomes, neighbouring genes correlated
+## (r = 0.3), 6 associated genes inside pathway "PWY_signal".
+set.seed(1)
+genes <- data.frame(GENE = paste0("g", 1:300), CHR = rep(1:3, each = 100))
+R <- diag(100)
+R[cbind(1:99, 2:100)] <- R[cbind(2:100, 1:99)] <- 0.3
+z <- as.vector(replicate(3, t(chol(R)) \%*\% rnorm(100)))
+z[1:6] <- z[1:6] + 4
+genes$ZSTAT <- z
+genes$P     <- pnorm(z, lower.tail = FALSE)
+cor_pairs <- do.call(rbind, lapply(split(genes$GENE, genes$CHR), function(g)
+  data.frame(gene1 = head(g, -1), gene2 = tail(g, -1), r = 0.3)))
+pathways <- c(list(PWY_signal = paste0("g", 1:15)),
+              setNames(lapply(1:19, function(i) sample(genes$GENE[-(1:15)], 15)),
+                       paste0("PWY_", 1:19)))
+
+res <- catfish_wy_pathways(genes, pathways = pathways, cor_pairs = cor_pairs,
+                           B = 200, min_genes = 10, seed = 1, verbose = FALSE)
+head(res[, c("pathway_id", "n_genes", "p_calibrated", "p_fwer_std")])
+attr(res, "wy_threshold_05")
+
+\dontrun{
+# MAGMA output (gene-level p-values with chromosome) and MAGMA gene-gene
+# correlations; use B = 10000 for final results
+genes <- read.table("trait.genes.out", header = TRUE)
+res <- catfish_wy_pathways(genes, pathways = my_pathways,
+                           gene_col = "GENE", p_col = "P", chr_col = "CHR",
+                           z_col = "ZSTAT", cor_file = "trait.cor_pairs.txt",
+                           B = 10000, min_genes = 10, max_genes = 200)
+}
+}

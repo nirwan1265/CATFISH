@@ -38,6 +38,8 @@
 %% ---- placeholder / auto-number machinery ------------------------------
 \input{auto/numbers_stub.tex}
 \IfFileExists{auto/numbers.tex}{\input{auto/numbers.tex}}{}
+\input{auto/lipids_stub.tex}
+\IfFileExists{auto/lipids.tex}{\input{auto/lipids.tex}}{}
 
 %% \maybefig{file}{width}{caption}{label} -- draws the figure if the PNG has
 %% been generated, otherwise a visible reminder box, so the manuscript
@@ -114,12 +116,16 @@ component predicted to be sensitive to each was the best-performing component in
 $\nArchCellsIn$ of $\nArchCellsTot$ architecture-by-size combinations. Applied to a maize
 grain-nitrogen GWAS, the Westfall--Young ordering recovered L-homoserine
 biosynthesis as the leading pathway and placed a known aspartate kinase isozyme
-first among 34,873 genes. Applied to a GLGC LDL-cholesterol GWAS, it exposed a
-regime in which the self-contained null is false almost everywhere: 11.2\% of
-genes reach genome-wide significance, essentially every pathway is significant,
-and exact FWER control does not rescue the ranking. We argue this is a property
-of self-contained testing at very large $n$, not a failure of multiple-testing
-correction.\\
+first among 34,873 genes. Applied to GLGC LDL- and HDL-cholesterol GWAS, it
+exposed a regime in which the self-contained null is false almost everywhere:
+11.2\% of genes reach genome-wide significance for LDL-C and essentially every
+pathway is significant, so significance no longer discriminates. The ordering
+still does: plasma lipoprotein assembly, remodeling and clearance ranked first
+of $\nLipNpw$ Reactome pathways for LDL-C and third for HDL-C, and the combined
+gene score ranked \textit{LDLR} and \textit{ABCA1} first and recovered
+established lipid genes better than ranking by GWAS association alone. We argue
+that the saturation is a property of self-contained testing at very large $n$,
+not a failure of multiple-testing correction.\\
 \textbf{Availability:} CATFISH is an R package available at
 \url{https://github.com/nirwantandukar/CATFISH} under the MIT licence. All
 simulation, analysis and figure code for this paper is in the
@@ -256,14 +262,17 @@ now routine in human GWAS consortia, the analytic omnibus $p$-value for a
 typical pathway falls below the smallest representable double-precision number,
 every such pathway is assigned the same floor value, and the ranking that the
 whole analysis exists to produce is destroyed without any error being raised.
-Third, we report a negative result we believe is general. In a GLGC
-LDL-cholesterol GWAS of roughly 1.3 million individuals, the self-contained null
-hypothesis is false for almost every gene set that could be constructed, nearly
-every pathway is significant, and exact family-wise error control does not
-recover a usable ordering. We interpret this as saturation of the self-contained
-hypothesis rather than as a defect of the correction, and discuss what it
-implies for the choice between self-contained and competitive testing as GWAS
-sample sizes continue to grow.
+Third, we report a result we believe is general. In GLGC LDL- and
+HDL-cholesterol GWAS of roughly 1.3 million individuals, the self-contained null
+hypothesis is false for almost every gene set that could be constructed and
+nearly every pathway is significant, so family-wise significance no longer
+discriminates between pathways. We interpret this as saturation of the
+self-contained hypothesis rather than as a defect of the correction. The
+ordering of pathways, read against their size, still recovers lipoprotein
+metabolism in both traits, and the gene-level prioritization recovers the
+established genes of each trait better than GWAS association alone. We discuss
+what saturation implies for the choice between self-contained and competitive
+testing as GWAS sample sizes continue to grow.
 
 CATFISH is implemented as an R package and is freely available at
 \url{https://github.com/nirwantandukar/CATFISH} under the MIT licence.
@@ -371,7 +380,7 @@ A threshold is informative mainly when \(m\tau\) is not far below one, so which 
 
 \smallskip\noindent\textit{Undefined components.} When no gene in a pathway falls below any threshold in the grid, the soft TFisher statistic is zero at every \(\tau\) and its one-sided \(p\)-value is exactly one. We treat this as \emph{undefined} rather than as evidence against enrichment, and the omnibus for that pathway is formed from the components that are defined. The distinction is not cosmetic. The ACAT operator maps each component \(p\)-value through \(\tan\{(1/2-p)\pi\}\), so a value at the upper boundary contributes a large negative term; a component that could not be computed would otherwise vote against the pathway and bias the omnibus toward the null. The rule is applied per pathway rather than by set size, because a large pathway in which no gene is individually strong is equally uncomputable. It does condition the component on having at least one gene below a threshold, so where TFisher does contribute its \(p\)-values are stochastically small; because the resampling null is generated under the identical rule, that conditioning appears in the null distribution and is absorbed by the calibration. An analytic omnibus \(p\)-value under this rule would be anti-conservative, whereas the resampled one is not.
 
-\smallskip\noindent\textit{Precision limit.} The soft TFisher implementation returns the null distribution function of the soft-thresholding statistic, so the one-sided \(p\)-value is formed as one minus that value. In double precision the difference is exactly zero once the distribution function exceeds \(1-10^{-16}\), and a strongly enriched pathway would then report \(p=0\). We cap the soft TFisher \(p\)-value at \(10^{-16}\), the smallest value the computation can resolve, rather than at the general lower floor applied to components whose tails are computed in closed form. A cap below the precision limit asserts resolution the statistic does not have; Section~4.3 shows what that does to the family-wise threshold.
+\smallskip\noindent\textit{Precision limit.} The soft TFisher implementation returns the null distribution function of the soft-thresholding statistic, so the one-sided \(p\)-value is formed as one minus that value. In double precision the difference is exactly zero once the distribution function exceeds \(1-10^{-16}\), and a strongly enriched pathway would then report \(p=0\). We cap the soft TFisher \(p\)-value at \(10^{-16}\), the smallest value the computation can resolve, rather than at the general lower floor applied to components whose tails are computed in closed form. A cap below the precision limit asserts resolution the statistic does not have; Section~4.4 shows what that does to the family-wise threshold.
 
 \begin{table*}[!t]
 \centering
@@ -490,7 +499,7 @@ the Westfall--Young adjusted $p$-value \citep{Westfall1993}
 \tilde p^{\mathrm{WY}}_k \;=\;
 \frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(M^{(b)}\le q^{\mathrm{obs}}_k\right)}{B+1},
 \]
-Rejecting all pathways with $\tilde p^{\mathrm{WY}}_k\le\alpha$ controls the family-wise error rate at level $\alpha$ under the complete null, whatever the dependence among pathways, because a false rejection anywhere in the family requires the family minimum to cross the threshold. Three further points apply. First, the control is in the strong sense, not only under the complete null. Westfall--Young procedures control the family-wise error rate strongly when the joint distribution of the statistics for the true null hypotheses does not depend on which other hypotheses are false---the condition of subset pivotality \citep{Westfall1993}. Two features of the construction give it. Each pathway statistic is a deterministic function of its own genes' $z$-scores only; and under the model of Step~1, with association represented as a shift in the means of the associated genes, the genes of a pathway containing no associated gene are jointly $\mathcal{N}(0,R)$, restricted to those genes, whatever happens elsewhere. The observed statistics of the null pathways therefore have exactly their complete-null joint distribution, and because the minimum over any subset of pathways is never smaller than the minimum over the whole family, the probability that any null pathway crosses the threshold is at most $\alpha$. The argument requires the soft TFisher truncation grid to be fixed in advance: a grid chosen from the empirical distribution of all gene-level $p$-values, as in data-adaptive implementations, would make every pathway's statistic depend on genes outside it. Second, the null is parametric: it is generated from the multivariate normal model of Step~1 rather than by permuting phenotypes, so the procedure is Westfall--Young in construction but inherits the adequacy of that model. Third, the counting form of the adjusted $p$-value above, in which null minima equal to the observed value count as at least as extreme, is required rather than a matter of taste. A threshold taken as a quantile of $M$ and applied with an inclusive comparison rejects every observation tied at that quantile, and if the omnibus loses resolution in the tail so that many null minima coincide, the empirical family-wise error rate can approach one (Section~4.3).
+Rejecting all pathways with $\tilde p^{\mathrm{WY}}_k\le\alpha$ controls the family-wise error rate at level $\alpha$ under the complete null, whatever the dependence among pathways, because a false rejection anywhere in the family requires the family minimum to cross the threshold. Three further points apply. First, the control is in the strong sense, not only under the complete null. Westfall--Young procedures control the family-wise error rate strongly when the joint distribution of the statistics for the true null hypotheses does not depend on which other hypotheses are false---the condition of subset pivotality \citep{Westfall1993}. Two features of the construction give it. Each pathway statistic is a deterministic function of its own genes' $z$-scores only; and under the model of Step~1, with association represented as a shift in the means of the associated genes, the genes of a pathway containing no associated gene are jointly $\mathcal{N}(0,R)$, restricted to those genes, whatever happens elsewhere. The observed statistics of the null pathways therefore have exactly their complete-null joint distribution, and because the minimum over any subset of pathways is never smaller than the minimum over the whole family, the probability that any null pathway crosses the threshold is at most $\alpha$. The argument requires the soft TFisher truncation grid to be fixed in advance: a grid chosen from the empirical distribution of all gene-level $p$-values, as in data-adaptive implementations, would make every pathway's statistic depend on genes outside it. Second, the null is parametric: it is generated from the multivariate normal model of Step~1 rather than by permuting phenotypes, so the procedure is Westfall--Young in construction but inherits the adequacy of that model. Third, the counting form of the adjusted $p$-value above, in which null minima equal to the observed value count as at least as extreme, is required rather than a matter of taste. A threshold taken as a quantile of $M$ and applied with an inclusive comparison rejects every observation tied at that quantile, and if the omnibus loses resolution in the tail so that many null minima coincide, the empirical family-wise error rate can approach one (Section~4.4).
 
 Between-pathway correlation is never explicitly estimated or modelled. Because all $K$ pathways are evaluated on the same draw in Step~2, genes shared across pathways perturb them jointly, as in the observed data, and this dependence is reflected in the distribution of $M$. The threshold $\hat t_\alpha=\mathrm{quantile}_\alpha(M)$ is the family-wise significance cutoff implied by the pathway database in use; its ratio to the Bonferroni cutoff $\alpha/K$ quantifies the database’s departure from independence at no extra cost, provided it is read on calibrated statistics; on the analytic scale the ratio also absorbs any miscalibration of the per-pathway statistic (Section~4.1).
 
@@ -521,7 +530,8 @@ Each layer enters by rank rather than by its raw statistic,
 $S_\bullet(g)=-\log_{10}\!\left(r_\bullet(g)/N_\bullet\right)$, where
 $r_{\mathrm{GWAS}}$ is the gene's rank by minimum SNP-level $p$-value,
 $r_{\mathrm{MAGMA}}$ its rank by gene-level $p$-value, and $r_{\mathrm{PATH}}$
-the rank of its best pathway; rank one is the strongest evidence. The hub term
+the rank of its best pathway by the size-standardised Westfall--Young statistic
+$z_k$ of Section~2.3; rank one is the strongest evidence. The hub term
 $B_{\mathrm{hub}}(g)=\log_{10}(n_{\mathrm{path}}(g)+1)$ rewards membership in
 several pathways. Genes missing a layer score zero for it, so an absent layer
 neither helps nor penalises.
@@ -577,9 +587,11 @@ which only chromosome~1 correlations had been parsed and $85\%$ of the genome
 was silently treated as independent. Candidate-gene scoring used the three-layer
 score of Section~2.5 over all $34{,}873$ annotated genes.
 
-\textbf{Human LDL cholesterol.} We used the Global Lipids Genetics Consortium
-LDL-cholesterol summary statistics for the European-ancestry meta-analysis
-($n\approx1.3$ million) \citep{Graham2021GLGC}.
+\textbf{Human LDL and HDL cholesterol.} We used the Global Lipids Genetics
+Consortium LDL- and HDL-cholesterol summary statistics for the
+European-ancestry meta-analysis ($n\approx1.3$ million)
+\citep{Graham2021GLGC}. The two traits were processed identically, as
+described below.
 
 \emph{Variant filtering and the $p$-value floor.} Variants were restricted to
 rsIDs present in the 1000 Genomes European reference panel used for LD. The
@@ -610,17 +622,21 @@ the regime the family-wise procedure is designed for.
 \emph{Candidate genes.} The GWAS layer uses MAGMA's own
 \texttt{.genes.annot} file rather than re-deriving a window, so that the GWAS
 and gene layers are assigned from identical variant sets. The pathway layer is
-ranked on the observed omnibus statistic rather than the Westfall--Young
-adjusted $p$-value. The two give the identical ordering, since the adjusted
-$p$-value is a monotone transform of the statistic, but the adjusted value is
+ranked on the size-standardised statistic $z_k$ rather than on the
+standardised Westfall--Young $p$-value. The two give the identical ordering,
+since the $p$-value is a monotone transform of $z_k$, but the $p$-value is
 floored at $1/(B+1)$ and the entire top of the list is tied there at the $B$
 used here.
 
 \emph{Positive controls.} Thirteen genes with established roles in LDL-C
 biology---\textit{LDLR}, \textit{PCSK9}, \textit{APOB}, \textit{APOE},
 \textit{SORT1}, \textit{HMGCR}, \textit{NPC1L1}, \textit{ABCG8}, \textit{LPA},
-\textit{CETP}, \textit{LDLRAP1}, \textit{MYLIP} and \textit{ANGPTL3}---were
-named before the prioritization was run and are used to assess it. They are a
+\textit{CETP}, \textit{LDLRAP1}, \textit{MYLIP} and \textit{ANGPTL3}---and
+twelve with established roles in HDL-C biology---\textit{CETP},
+\textit{LIPC}, \textit{LIPG}, \textit{ABCA1}, \textit{APOA1},
+\textit{APOA5}, \textit{LCAT}, \textit{SCARB1}, \textit{PLTP},
+\textit{LPL}, \textit{ANGPTL4} and \textit{CUBN}---were named before the
+prioritization was run and are used to assess it. They are a
 validation set, not a discovery; the score has no access to them.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1089,16 +1105,31 @@ precisely the regime in which a ranking is the only available output. We regard
 the agreement as encouraging evidence that the ordering is meaningful in the
 low-signal regime, and we do not claim more than that.
 
-\subsection*{3.9 Human blood lipids: saturation at the pathway level, intact
-resolution at the gene level}
+\subsection*{3.9 Human blood lipids: every pathway is significant, but the
+ranking and the gene list recover lipoprotein biology}
 
 The GLGC lipid meta-analyses ($n\approx1.3$ million) are the opposite regime
 from the maize analysis: very large samples, well-characterised traits, and
 gene-level signal everywhere. We analysed LDL-C and HDL-C through an identical
 pipeline---same reference panel, same gene annotation, same Reactome sets, same
-window, same number of permutations---so that the only thing differing between
-them is the phenotype. Together they produce one clearly negative result and
-one clearly positive one, and the pair says more than either alone.
+window, same number of null replicates---so that the only thing differing
+between them is the phenotype. Figure~\ref{fig:lipid_manhattan} shows the
+variant- and gene-level association for both traits. The pair supports three
+conclusions: significance no longer discriminates between pathways, the
+ordering of pathways still recovers lipoprotein metabolism once pathway size is
+taken into account, and the combined gene score recovers the established genes
+of each trait better than any single layer of evidence.
+
+\begin{figure*}[!t]
+\centering
+\maybefig{Fig13_lipid_manhattan.png}{\textwidth}{Association for LDL-C (top)
+and HDL-C (bottom). Left, variant-level GWAS: $-\log_{10}p$ for variants in
+the 1000 Genomes European reference panel (all variants with $-\log_{10}p\ge3$
+and a random 1\% of the rest). Right, MAGMA gene-level $-\log_{10}p$, labelled
+with the highest-scoring CATFISH candidate at each of the six leading loci. Dashed lines: genome-wide
+significance ($5\times10^{-8}$ for variants; Bonferroni across genes for genes).
+Values above the axis limit are drawn as triangles at the limit.}{fig:lipid_manhattan}
+\end{figure*}
 
 \subsubsection*{3.9.1 The self-contained null is false almost everywhere}
 
@@ -1113,38 +1144,98 @@ hypothesis---that the genes in a set carry no more association than the
 background---is therefore false for essentially any set of genes one could
 assemble, including sets with no biological coherence whatever.
 
-The output reflects this. Of the $1{,}390$ Reactome pathways, $1{,}366$ were
+The output reflects this. Of the $\nLipNpw$ Reactome pathways, $\nLipSigLDL$ were
 significant under Westfall--Young family-wise control at $\alpha=0.05$ for
-LDL-C and $1{,}384$ for HDL-C. The natural first explanation is an inadequate
-multiple-testing correction, and we can rule it out: the Westfall--Young
-procedure controls the family-wise error rate exactly under the realized
-between-pathway dependence, and it removed essentially nothing. The rejections
+LDL-C and $\nLipSigHDL$ for HDL-C, and $\nLipFloorLDL$ and $\nLipFloorHDL$ sat at
+the resolution limit $1/(B+1)$ with $B=\nLipB$. The natural first explanation is
+an inadequate multiple-testing correction, and we can rule it out: the
+Westfall--Young procedure controls the family-wise error rate in the strong
+sense under the multivariate normal model of between-gene dependence
+(Section~2.3), and it removed essentially nothing. The rejections
 are not false positives in the sense a correction addresses. The null really is
 false for those sets. The problem is the hypothesis, not the threshold.
 
 A second, subtler consequence is that the ranking acquires a strong dependence
-on pathway size. The twenty highest-ranked pathways had a median of $159$ genes
-for LDL-C and $182$ for HDL-C, against a median of $29$ across all $1{,}390$
-sets, and the correlation between $\log_{10}$ set size and the pathway
-statistic was $-0.825$. In a saturated genome a large set samples more of an
+on pathway size. The twenty highest-ranked pathways had a median of
+$\nLipTopTwentyMedSizeLDL$ genes for LDL-C and $\nLipTopTwentyMedSizeHDL$ for
+HDL-C, against a median of $\nLipMedSizeAll$ across all $\nLipNpw$ sets, and the
+Spearman correlation between set size and the standardised statistic
+$z_{\mathrm{std}}$ was $\nLipSizeRhoLDL$ for LDL-C and $\nLipSizeRhoHDL$ for
+HDL-C. In a saturated genome a large set samples more of an
 enriched background, so it accumulates more evidence for a reason that has
 nothing to do with the trait. Any interpretation of the ordering has to be made
 against that gradient, and we return to it below.
 
-\subsubsection*{3.9.2 Two traits, different genes, the same pathway}
+\subsubsection*{3.9.2 The ranking recovers lipoprotein metabolism once size is
+taken into account}
+
+Significance does not discriminate here, but the ordering still can.
+Table~\ref{tab:lipid_pathways} lists the ten highest-ranked pathways for each
+trait by the standardised statistic. For LDL-C the first is plasma lipoprotein
+assembly, remodeling and clearance, the Reactome pathway that contains the LDL
+receptor and the apolipoproteins it clears; for HDL-C the same pathway is at
+rank~$\nLipTopRankHDL$. Regulation of lipid metabolism by PPAR$\alpha$ is at
+rank~$\nLipPparRankLDL$ for LDL-C and rank~$\nLipPparRankHDL$ for HDL-C.
+
+The rest of both lists is occupied by large, generic sets---cellular response
+to chemical stress, sumoylation, rRNA processing---which is the size gradient
+of Section~3.9.1 at work, and it means that rank alone undersells smaller
+pathways. Figure~\ref{fig:lipid_size} therefore plots each pathway's statistic
+against its size. The $\nLipFamN$ sets of the Reactome plasma-lipoprotein
+subtree---the parent pathway and the sets beneath it in the Reactome
+hierarchy, a family fixed by the database rather than by the results---lie far
+below the size trend in both traits. To put a number on it, we compared each pathway
+with the pathways of similar size (within a factor of $1.25$ in gene count)
+and recorded the percentage of those with a more extreme statistic. The
+subtree's median was $\nLipFamPctMedLDL\%$ for LDL-C and $\nLipFamPctMedHDL\%$
+for HDL-C, against $\nLipAllPctMedLipoFreeLDL\%$ and $\nLipAllPctMedLipoFreeHDL\%$
+for all other pathways, where $50\%$ is what a set with no special evidence
+would show; $\nLipFamBestFiveLDL$ and $\nLipFamBestFiveHDL$ of the
+$\nLipFamN$ sets were in the most extreme $5\%$ of their size class. Only the
+parent set reaches the overall top fifty: the smaller members are held back by
+their size, not by weak evidence. The sets overlap, so these are descriptive
+summaries rather than independent tests.
+
+Not every lipid-related set behaves this way, and the exceptions are
+informative. Cholesterol biosynthesis and bile-acid metabolism stand out from
+their size classes for LDL-C (size-matched percentiles of $14\%$ and $11\%$)
+but not for HDL-C ($65\%$ and $61\%$), in line with hepatic cholesterol
+synthesis---the pathway statins inhibit---bearing on LDL-C more than on HDL-C.
+
+\maybeinput{auto/tab_lipid_pathways.tex}
+
+\begin{figure*}[!t]
+\centering
+\maybefig{Fig14_lipid_pathway_size.png}{\textwidth}{Pathway evidence against
+pathway size for LDL-C (left) and HDL-C (right). Each point is one of the
+$\nLipNpw$ Reactome pathways; lower values of the standardised statistic
+$z_{\mathrm{std}}$ are stronger. The grey line is a lowess fit of the size
+trend. Red points are the plasma-lipoprotein subtree of Reactome; the circled
+point is its parent set, plasma lipoprotein assembly, remodeling and
+clearance. Large sets accumulate evidence in a saturated genome; the
+lipoprotein sets are extreme for their size in both traits.}{fig:lipid_size}
+\end{figure*}
+
+\subsubsection*{3.9.3 Two traits, different genes, the same pathway}
 
 LDL-C and HDL-C are biologically distinct arms of lipoprotein metabolism, and
 their gene-level results differ accordingly
-(Figure~\ref{fig:convergence}A). Across the $18{,}563$ genes analysed in both,
-the Spearman correlation of gene-level $Z$ statistics was $0.393$. Of the top
-hundred genes in each trait, $13$ were shared, and of the genes reaching
-genome-wide significance in either, the Jaccard overlap was $0.208$
-($830$ shared of $3{,}987$). These are not two readings of the same signal.
+(Figure~\ref{fig:convergence}A). Across the $\nLipNgenes$ genes analysed in
+both, the Spearman correlation of gene-level $Z$ statistics was
+$\nLipGeneRho$. Of the top hundred genes in each trait, $13$ were shared, and
+of the genes reaching genome-wide significance in either, the Jaccard overlap
+was $0.208$ ($830$ shared of $3{,}987$). These are not two readings of the
+same signal.
 
-Despite that, the highest-ranked pathway of the $1{,}390$ tested was the same
-in both: \texttt{REACTOME\_PLASMA\_LIPOPROTEIN\_ASSEMBLY\_REMODELING\_AND\_%
-CLEARANCE}. At $74$ genes it is well below the $159$--$182$ median size of the
-surrounding top twenty, so it reaches first place against the size gradient of
+Despite that, the two traits converge on the same pathway. Plasma lipoprotein
+assembly, remodeling and clearance is at rank~$\nLipTopRankLDL$ for LDL-C and
+rank~$\nLipTopRankHDL$ for HDL-C, where its standardised statistic is within $1\%$
+of the first-ranked set. All of the leading HDL-C sets are at the
+Westfall--Young resolution limit, so their order among themselves is not
+resolved by the family-wise $p$-value, and we do not read anything into first
+against third. At $74$ genes the pathway is far smaller than the
+$\nLipTopTwentyMedSizeLDL$--$\nLipTopTwentyMedSizeHDL$ median size of the
+surrounding top twenty, so it reaches the top against the size gradient of
 Section~3.9.1 rather than because of it.
 
 The reason the two traits converge is visible in which genes carry the pathway
@@ -1155,8 +1246,9 @@ LDL-C contributions come from the receptor-uptake arm---\textit{LDLR}
 \textit{MTTP} close behind---while for HDL-C they come from the reverse-transport
 and lipolysis arm: \textit{ABCA1} ($1.3\times10^{-33}$), \textit{LIPC}
 ($5.8\times10^{-29}$), \textit{SCARB1} ($1.9\times10^{-22}$), \textit{LPL}
-($8.9\times10^{-22}$), with \textit{APOA1}, \textit{ANGPTL3} and \textit{LMF1}
-following. Only five of the fifteen leading drivers are common to both traits.
+($8.9\times10^{-22}$), with \textit{CETP}, \textit{LMF1} and \textit{APOA1}
+following. Of the twelve leading drivers in each trait, only four
+(\textit{LDLR}, \textit{ABCA1}, \textit{CETP} and \textit{LPA}) are shared.
 
 This is the behaviour a pathway method exists to produce. Two GWAS that
 disagree about which genes matter are nonetheless aggregated onto the same
@@ -1165,116 +1257,104 @@ not a restatement of a shared gene-level signal; the gene-level signals are
 largely disjoint.
 
 Two qualifications belong with the claim. First, the two traits are not
-independent replicates at the pathway level: across all $1{,}390$ sets the
-Spearman correlation of the pathway statistic was $0.863$, and $75$ of the top
-hundred pathways were shared (Figure~\ref{fig:convergence}C). That correlation
-is driven by the size-dependent background of Section~3.9.1, which is common to
-both traits, rather than by the leading hits---which is precisely why the
-driver-level comparison, not the aggregate correlation, is the evidence for the
-claim above. Second, the phenotypes themselves are genetically correlated to a
-degree we have not estimated here; the gene-level Spearman of $0.393$ is the
+independent replicates at the pathway level: across all $\nLipNpw$ sets the
+Spearman correlation of the pathway ranks was $\nLipCrossRho$, and
+$\nLipCrossTopHundred$ of the top hundred pathways were shared
+(Figure~\ref{fig:convergence}C). That correlation is driven by the
+size-dependent background of Section~3.9.1, which is common to both traits,
+rather than by the leading hits---which is precisely why the driver-level
+comparison, not the aggregate correlation, is the evidence for the claim above.
+Second, the phenotypes themselves are genetically correlated to a degree we
+have not estimated here; the gene-level Spearman of $\nLipGeneRho$ is the
 quantity that actually enters CATFISH and is reported in its place.
-
-Below the first rank, large generic sets---sumoylation, Golgi traffic, cellular
-response to chemical stress, rRNA processing---are interleaved with the lipid
-pathways in both traits, again consistent with the size gradient. Lipid,
-lipoprotein and sterol sets nonetheless concentrate near the top of both
-orderings, and they move between traits in a biologically sensible way:
-PPAR$\alpha$-regulated lipid metabolism ranks $16$th for LDL-C and $7$th for
-HDL-C, while sphingolipid metabolism ranks $81$st and $182$nd respectively.
 
 \begin{figure*}[!t]
 \centering
 \maybefig{Fig10_ldl_hdl_convergence.png}{\textwidth}{LDL-C and HDL-C reach the
 same pathway from different genes. \textbf{A}~Gene-level $-\log_{10}p$ for the
-$18{,}563$ genes analysed in both traits; the $74$ members of the top-ranked
-pathway are highlighted and selected drivers labelled. The two GWAS agree only
-moderately (Spearman $0.393$; $13$ of the top hundred genes shared).
-\textbf{B}~Within that pathway, the twelve strongest contributors in each
-trait. LDL-C is carried by the receptor-uptake arm and HDL-C by the
-reverse-transport and lipolysis arm, with five of fifteen leading drivers in
-common. \textbf{C}~Pathway ranks in the two traits, lipid-related sets
-highlighted and the shared top pathway circled; it ranks first in both. The
-broad agreement away from the top reflects the size-dependent background of
-Section~3.9.1 rather than shared leading signal.}{fig:convergence}
+$\nLipNgenes$ genes analysed in both traits; the $74$ members of plasma
+lipoprotein assembly, remodeling and clearance are highlighted and selected
+drivers labelled. The two GWAS agree only moderately (Spearman
+$\nLipGeneRho$; $13$ of the top hundred genes shared). \textbf{B}~Within that
+pathway, the twelve strongest contributors in each trait. LDL-C is carried by
+the receptor-uptake arm and HDL-C by the reverse-transport and lipolysis arm,
+with four of twelve leading drivers in common. \textbf{C}~Pathway ranks in the
+two traits, lipid-related sets highlighted and the plasma lipoprotein pathway
+circled; it is at rank~$\nLipTopRankLDL$ for LDL-C and rank~$\nLipTopRankHDL$
+for HDL-C.
+The broad agreement away from the top reflects the size-dependent background
+of Section~3.9.1 rather than shared leading signal.}{fig:convergence}
 \end{figure*}
 
-\subsubsection*{3.9.3 The adaptive TFisher component is defensible but not
-load-bearing}
+\subsubsection*{3.9.4 Gene prioritization recovers the established genes better
+than any single layer}
 
-The analyses above use all five component tests. Because the soft TFisher
-component is adaptive over a grid of truncation thresholds and is by some
-margin the slowest to evaluate, we also ran the complete HDL-C analysis with it
-removed, at matched $B=10{,}000$, as a direct ablation.
+The three-layer score of Section~2.5 was computed over all $\nLipNgenes$ genes
+for each trait. Table~\ref{tab:lipid_candidates} lists the top ten and
+Supplementary Table~\ref{tab:candidates_supp} the top fifty for LDL-C. The
+first-ranked gene is \textit{LDLR} for LDL-C and \textit{ABCA1} for HDL-C: the
+receptor that clears LDL from plasma, and the transporter that loads
+cholesterol onto nascent HDL. The top ten contain $\nLipTopTenCtrlLDL$
+(LDL-C) and $\nLipTopTenCtrlHDL$ (HDL-C) of the established genes named before
+the analysis (Section~2.7).
 
-The two orderings are almost identical: the Spearman rank correlation between
-the four- and five-component results was $0.9994$, the median rank change was
-three places, and the largest change over all $1{,}390$ pathways was $104$
-places, with $44$ sets moving more than fifty. Every lipid pathway moved
-slightly upward when TFisher was included---plasma lipoprotein assembly
-$2\rightarrow1$, PPAR$\alpha$ $8\rightarrow7$, lipoprotein clearance
-$98\rightarrow87$. This matches the leave-one-out simulation of Section~3.4,
-where removing TFisher left the family-wise error rate unchanged at $0.042$.
+The question that matters for a prioritization method is whether it does better
+than the obvious alternative of ranking genes by their strongest GWAS variant.
+Table~\ref{tab:lipid_recovery} and Figure~\ref{fig:lipid_recovery} compare the
+ranks of the established genes---$\nLipCtrlLDL$ for LDL-C and $\nLipCtrlHDL$
+for HDL-C---under each layer alone and under the combined score. The combined
+score gave the best median rank in both traits: $\nLipRecLDLScoreMed$ against
+$\nLipRecLDLGwasMed$ for the GWAS layer and $\nLipRecLDLMagmaMed$ for MAGMA in
+LDL-C, and $\nLipRecHDLScoreMed$ against $\nLipRecHDLGwasMed$ and
+$\nLipRecHDLMagmaMed$ in HDL-C. It placed $\nLipRecLDLScoreTopTen$ (LDL-C) and
+$\nLipRecHDLScoreTopTen$ (HDL-C) of them in the top ten, against
+$\nLipRecLDLGwasTopTen$ and $\nLipRecHDLGwasTopTen$ for the GWAS layer, and
+$\nLipRecLDLScoreTopFifty$ and $\nLipRecHDLScoreTopFifty$ in the top fifty,
+against $\nLipRecLDLGwasTopFifty$ and $\nLipRecHDLGwasTopFifty$.
 
-We report this because the adaptive grid is the component most open to the
-objection that taking a minimum across five thresholds without correcting for
-the search is anti-conservative. That objection is correct for the analytic
-component---its uncalibrated type~I error reaches $\nCmpTFisherStr$ at strong
-LD---but the resampling applies the same grid search to every null draw, so the
-inflation cancels, and the calibrated component is the best behaved of the five
-($\nCmpTFisherCal$). The ablation confirms that nothing in the real-data
-conclusions depends on it either way.
+The gain comes from agreement between layers rather than from any one of them.
+The GWAS layer ranks a gene by the single strongest variant assigned to it, so
+every gene at a strong locus inherits the same evidence: \textit{APOE},
+\textit{APOC1} and \textit{TOMM40}, the latter two within $5\,\mathrm{kb}$ of
+\textit{APOE} on chromosome~19, tie for second place. The MAGMA layer resolves some of these
+ties, because it uses all of a gene's variants, but it demotes genes whose
+association rests on one or two variants, such as \textit{APOE} itself (rank
+$308$). Neither layer on its own knows which genes act on the trait. The
+pathway layer adds that, weakly: the established genes are members of the
+lipoprotein pathways that rank near the top in both traits, and an LD neighbour
+with the same GWAS evidence but no such membership does not receive the lift.
+Two caveats apply. The pathway layer carries prior knowledge, since curated
+pathways contain the genes that have been studied, so part of its contribution
+to recovering established genes is circular in a way the GWAS and MAGMA layers
+are not. And it helps only when it uses the ordering of the family-wise
+analysis: ranked on the raw omnibus statistic, which favours large pathways
+(Section~3.9.1), the established genes' best pathways fall to a median rank of
+about $460$ (LDL-C) and $820$ (HDL-C) among annotated genes, against
+$\nLipRecLDLPathMed$ and $\nLipRecHDLPathMed$ on the standardised statistic,
+and the combined score recovers $3$ and $5$ of them in the top ten instead of
+$\nLipRecLDLScoreTopTen$ and $\nLipRecHDLScoreTopTen$.
 
-\subsubsection*{3.9.4 Gene prioritization is unaffected}
+The top-ranked genes outside the pre-specified lists are mostly at the same
+loci as genes on them, and they illustrate what a gene-based method can and
+cannot do. \textit{PVRL2} lies $17\,\mathrm{kb}$ from \textit{APOE};
+\textit{KIAA1324} lies $43\,\mathrm{kb}$ from \textit{CELSR2}
+at the \textit{SORT1} locus; \textit{NLRC5} and \textit{SLC12A3} lie within
+$50\,\mathrm{kb}$ of \textit{CETP}; and \textit{MYO5B} lies $230\,\mathrm{kb}$
+from \textit{LIPG}. (\textit{APOC1}, also at the \textit{APOE} locus, is
+itself an apolipoprotein, a case where the locus and a plausible gene
+coincide.) Each ranks highly because the association at a locus is
+shared by the genes within it. This is the expected behaviour of every
+gene-based test, CATFISH included: the method ranks \emph{loci}, and resolving
+the causal gene inside a locus requires evidence it does not use, such as
+colocalisation with expression or fine-mapping. The exceptions in the top ten,
+genes more than $1\,\mathrm{Mb}$ from any pre-specified gene, are candidates
+the score cannot adjudicate on its own. We state this explicitly because a
+table of top-ranked genes invites the opposite reading.
 
-The three-layer score of Section~2.5 was computed over all $\nCandN$ genes.
-Table~\ref{tab:candidates} gives the top five and Supplementary
-Table~\ref{tab:candidates_supp} the top fifty.
-
-\textit{LDLR} ranked $\nCandLDLR$ and \textit{PCSK9} $\nCandPCSKnine$---the
-receptor that clears LDL from plasma and the protease that degrades it, the two
-genes around which LDL-lowering pharmacology is built. \textit{APOE} and
-\textit{APOC1}, at the chromosome~19 apolipoprotein cluster, follow close
-behind. Three of the top five are therefore genes with direct causal roles in
-LDL-C biology.
-
-The other two require care, because they illustrate what a gene-based test can
-and cannot do. \textit{PVRL2} (chr19:45.35--45.39\,Mb) lies $17\,\mathrm{kb}$
-from \textit{APOE}, and \textit{SMARCA4} (chr19:11.07--11.17\,Mb) lies
-$27\,\mathrm{kb}$ from \textit{LDLR}; \textit{KIAA1324}
-(chr1:109.66--109.75\,Mb), just outside the top five, sits in the
-\textit{SORT1}/\textit{CELSR2}/\textit{PSRC1} region. None of these is a
-lipid gene. Each is an LD neighbour of one, and ranks highly because the
-association signal at a locus is shared across the genes within it. This is the
-expected behaviour of every gene-based test, CATFISH included: the method ranks
-\emph{loci}, and resolving the causal gene inside a locus requires evidence it
-does not use. We state this explicitly because a table of top-ranked genes
-invites the opposite reading.
-
-Figure~\ref{fig:candlayers} shows where each of the top twenty genes sits in
-each layer, which separates genes carried by a single layer from those with
-concordant support across all three.
-
-As a pre-specified check, all thirteen established LDL-C genes named in
-Section~2.7 were recovered, with a median rank of $\nCandCtrlMedian$ out of
-$\nCandN$ against a random expectation of $\nCandRandom$, and
-$\nCandCtrlTopPct$ of $\nCandCtrlTotal$ in the top $1\%$.
-
-The informative detail is \emph{which} layer produces this. The pathway ranks of
-the control genes are good but unremarkable---\textit{LDLR} ranks $462$nd of
-$\nCandNPath$ pathway-annotated genes---while their GWAS and MAGMA ranks are
-near the top. The ordering is driven by the gene-level layers, and the pathway
-layer contributes little. That is the saturation result of Section~3.9.1 seen
-from the other side: saturation degrades the pathway layer specifically, because
-the self-contained hypothesis has stopped discriminating between gene sets,
-while leaving gene-level resolution intact. A composite score that weights
-pathway evidence at half the strength of direct genetic evidence degrades
-gracefully in exactly this regime, which was the reason for the weighting
-(Section~2.5.3) but not a situation it was designed against.
-
-One implementation point affects this table directly and generalises beyond it.
+One implementation point affects these tables directly and generalises beyond them.
 When the GWAS layer is ranked on probabilities reconstructed from GLGC and
-floored at $10^{-300}$, $\nCandGwasTies$ genes tie at the floor---including
+floored at $10^{-300}$, $53$ genes tie at the floor for LDL-C and $24$ for
+HDL-C---including
 \textit{LDLR}, \textit{PCSK9}, \textit{APOB}, \textit{APOE}, \textit{LPA} and
 \textit{HMGCR}---and the layer cannot order the very genes it most needs to.
 Ranking on unfloored $-\log_{10}p$ removes the tie at no other cost. This is the
@@ -1282,19 +1362,51 @@ same double-precision limit as Section~2.4, surfacing in a different part of the
 pipeline, and it is worth checking wherever a ranking is built from
 large-$n$ GWAS summary statistics.
 
-\maybeinput{auto/tab_candidates.tex}
+\maybeinput{auto/tab_lipid_candidates.tex}
 
-\begin{figure}[!t]
+\maybeinput{auto/tab_lipid_recovery.tex}
+
+\begin{figure*}[!t]
 \centering
-\maybefig{Fig8_candidate_layers.png}{\columnwidth}{Evidence layers for the
-twenty highest-scoring genes in the LDL-C analysis. Each row is a gene; the
-three points give its rank within the locus-level GWAS layer, the MAGMA
-gene-level layer and the CATFISH pathway layer, on a log rank scale with one
-the strongest. Genes in bold are the pre-specified positive controls. The
-genetic layers place the controls near the top while their pathway ranks are
-unremarkable, which is the saturation of Section~3.9.1 seen gene by
-gene.}{fig:candlayers}
-\end{figure}
+\maybefig{Fig15_lipid_gene_recovery.png}{\textwidth}{Ranks of the
+pre-specified established genes among all $\nLipNgenes$ genes for LDL-C (left)
+and HDL-C (right), ranked by the strongest assigned variant (GWAS), by the
+MAGMA gene-level $p$-value, and by the combined CATFISH score. Lines join the
+same gene; black bars are medians; the dotted lines mark ranks $10$ and
+$50$.}{fig:lipid_recovery}
+\end{figure*}
+
+\subsubsection*{3.9.5 The adaptive TFisher component is defensible but not
+load-bearing}
+
+The analyses above use all five component tests. Because the soft TFisher
+component is adaptive over a grid of truncation thresholds and is by some
+margin the slowest to evaluate, we also ran the complete HDL-C analysis with it
+removed, at matched $B=10{,}000$, as a direct ablation.
+
+The two orderings are almost identical. The Spearman correlation between the
+four- and five-component rankings by $z_{\mathrm{std}}$ was $0.9999$, the
+median rank change was two places, and the largest change over all $1{,}390$
+pathways was $47$ places, with $9$ sets moving more than twenty and none more
+than fifty. The number of pathways significant at family-wise $\alpha=0.05$ was
+$1{,}387$ in both. Lipid-related sets moved in both directions and by little:
+plasma lipoprotein assembly, remodeling and clearance went from rank~$2$
+without TFisher to rank~$3$ with it, PPAR$\alpha$ stayed at rank~$8$, and
+plasma lipoprotein clearance went from $100$ to $96$; of the $41$ sets matching
+lipid, lipoprotein or sterol terms, $13$ moved up, $20$ moved down and $8$ did
+not move, with a median change of zero. This matches the leave-one-out
+simulation of Section~3.4, where removing TFisher changed the Westfall--Young
+family-wise error rate by at most $0.004$ in any configuration
+(Table~\ref{tab:loo}).
+
+We report this because the adaptive grid is the component most open to the
+objection that taking a minimum across three thresholds without correcting for
+the search is anti-conservative. That objection is correct for the analytic
+component---its uncalibrated type~I error reaches $\nCmpTFisherStr$ at strong
+LD---but the resampling applies the same grid search to every null draw, so the
+inflation cancels, and the calibrated component is the best behaved of the five
+($\nCmpTFisherCal$). The ablation confirms that nothing in the real-data
+conclusions depends on it either way.
 
 \begin{table}[!t]
 \centering
@@ -1319,7 +1431,7 @@ Human LDL-C (GLGC, EUR)    & 11.2\%  & 0.083 & $-0.807$ \\
 \end{tabular}
 \end{table}
 
-\subsubsection*{3.9.5 Signal density across datasets}
+\subsubsection*{3.9.6 Signal density across datasets}
 
 Table~\ref{tab:density} places the two real analyses in context. Gene-level
 signal density varies by more than an order of magnitude between the maize MLM
@@ -1404,8 +1516,9 @@ hypothesis being tested has simply stopped discriminating.
 Three consequences follow. First, as GWAS sample sizes grow, self-contained
 testing will fail on more traits, and it will fail silently, producing long
 lists of highly significant pathways that look like results. Second, no amount
-of multiple-testing sophistication fixes this: we applied exact family-wise
-control and $1{,}374$ of $1{,}390$ pathways remained significant. Reporting a
+of multiple-testing sophistication fixes this: we applied strong family-wise
+control and $\nLipSigLDL$ of $\nLipNpw$ pathways remained significant for LDL-C
+($\nLipSigHDL$ for HDL-C). Reporting a
 more careful threshold on a saturated analysis produces a more carefully wrong
 answer. Third, the competitive hypothesis---whether the genes in a set are
 \emph{more} associated than genes outside it---does not saturate in the same
@@ -1417,13 +1530,43 @@ illustrated by the maize analysis, where no gene reaches genome-wide
 significance and a ranking is the only available output.
 
 This is a boundary on the applicability of the method we are presenting, and we
-would rather state it than discover it in review. It also explains an initially
-puzzling observation: the pathways CATFISH ranked highest in the human analysis
-were things like spliceosome assembly and the TCA cycle, which have no
-particular relationship to lipid metabolism but are large and contain many of
-the genes that are significant in a saturated genome.
+would rather state it than discover it in review. It also says how the human
+results should be read. Significance is uninformative there, but the ordering
+is not: the top of both lists mixes lipoprotein pathways with large generic
+sets that accumulate evidence because a saturated genome enriches any large
+set, and once each pathway is compared with others of its size, the
+lipoprotein pathways are extreme in both traits (Section~3.9.2). In a saturated
+analysis the useful output of a self-contained method is a size-aware ranking
+and a gene list, not a list of significant sets.
 
-\subsection*{4.3 Numerical precision is a correctness issue}
+\subsection*{4.3 What the ranking and the gene score add when significance
+saturates}
+
+The lipid analyses show that saturation removes the significance list but not
+the ordering, and two things are needed to read the ordering. The first is
+pathway size. In a saturated genome every large set accumulates evidence, so
+the top of any self-contained ranking is crowded with large generic sets, while
+a relevant small set can be extreme for its size and still rank in the
+hundreds overall. Comparing each pathway with others of similar size recovered
+the plasma-lipoprotein subtree in both traits (Figure~\ref{fig:lipid_size}).
+That comparison is descriptive; an inferential version would need a null
+distribution for size-matched ranks, which the resampling of Section~2.3 could
+supply but which we have not implemented.
+
+The second is that the pathway result is most useful when it is carried down to
+genes. Ranked by its strongest variant, a gene inherits the evidence of its
+whole locus; ranked by its gene-level test, it can lose a strong signal carried
+by one or two variants. The combined score recovered the established genes of
+both traits better than either layer alone, because genes supported by several
+layers rise and genes supported by one fall. The gain is real but modest, and
+it is partly circular: the pathway layer rewards membership in curated
+pathways, which favours well-studied genes, so recovery of established genes
+overstates what the score would achieve for genes not yet in any pathway
+database. The score also ranks loci rather than genes. The established genes in
+our lists sit beside LD neighbours with almost identical evidence, and only
+fine-mapping or functional data can separate them.
+
+\subsection*{4.4 Numerical precision is a correctness issue}
 
 Section~2.4 reads like an implementation note and is not one. Had we not moved
 to log space, this paper would have reported a top-pathway list that was
@@ -1461,7 +1604,7 @@ that point is not meaningful. For a family-wise procedure the corresponding
 check is the number of distinct values taken by the null family minimum; a
 threshold drawn from a distribution with a large atom is not a threshold.
 
-\subsection*{4.4 Practical recommendations}
+\subsection*{4.5 Practical recommendations}
 
 For users, our recommendations are as follows. Inspect the gene-level null
 before running any pathway analysis: a median gene-level $p$-value far from
@@ -1479,9 +1622,11 @@ the comparison is informative about the database. Before trusting any
 family-wise threshold, count the distinct values taken by the null family
 minimum. When using adaptive soft TFisher, choose a truncation grid that spans
 small and large thresholds; a grid confined to small $\tau$ leaves the statistic
-empty on most small pathways. Finally, in the low-signal regime, treat the ranking rather than the
-significance list as the deliverable, and validate it against independent
-biology where possible, as we have attempted to do with the maize analysis.
+empty on most small pathways. Finally, treat the ranking rather than the significance list as the
+deliverable, and validate it against independent biology where possible, as we
+have attempted to do with the maize and lipid analyses. In a saturated analysis,
+compare each pathway with others of its size rather than reading its overall
+rank, and read a candidate-gene list as a ranking of loci.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{5 Limitations and future work}
@@ -1599,9 +1744,13 @@ in log space is a correctness requirement at modern GWAS sample sizes, not an
 optimisation, and the failure it prevents is silent. And self-contained pathway
 testing saturates: in a GWAS of $1.3$ million individuals, $11.2\%$ of genes are
 genome-wide significant, a random fifty-gene set rejects the self-contained null
-with probability $0.997$, and exact family-wise error control leaves $1{,}374$
-of $1{,}390$ pathways significant. That is a property of the hypothesis, not of
-the correction. CATFISH, and self-contained pathway testing generally, is best
+with probability $0.997$, and strong family-wise error control leaves
+$\nLipSigLDL$ of $\nLipNpw$ pathways significant. That is a property of the
+hypothesis, not of the correction, and the ranking survives it: plasma
+lipoprotein assembly, remodeling and clearance led the LDL-C ordering, the
+lipoprotein pathways were extreme for their size in both LDL-C and HDL-C, and
+the gene prioritization recovered established lipid genes better than GWAS
+association alone. CATFISH, and self-contained pathway testing generally, is best
 suited to the low-signal polygenic regime, where the maize grain-nitrogen
 analysis recovered L-homoserine biosynthesis as the leading pathway and a known
 aspartate kinase isozyme as the leading gene out of $34{,}873$, in agreement
@@ -1619,8 +1768,8 @@ Office of Science, through the Genomic Science Program, Office of Biological and
 Environmental Research, under FWP ERKP123.
 
 \section{9 Data availability}
-The GLGC LDL-cholesterol summary statistics are available from the Global Lipids
-Genetics Consortium. The CATFISH R package and all code used to generate the
+The GLGC LDL- and HDL-cholesterol summary statistics are available from the
+Global Lipids Genetics Consortium. The CATFISH R package and all code used to generate the
 figures, tables and simulations underlying this article are available at
 \href{https://github.com/nirwantandukar/CATFISH}{github.com/nirwantandukar/CATFISH},
 in the \texttt{catfish2/} directory.
