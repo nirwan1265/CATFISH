@@ -1,0 +1,41 @@
+Package: CATFISH
+Title: MAGMA-Based Gene and Pathway Analysis with ACAT Aggregation
+Version: 0.1.0
+Authors@R:
+    person("Nirwan", "Tandukar", , "tandukar.nirwan@gmail.com", role = c("aut", "cre"))
+Description: CATFISH provides an R interface to MAGMA (Multi-marker Analysis of
+    GenoMic Annotation) for post-GWAS pathway enrichment analysis. It implements
+    multiple p-value combination methods (ACAT, Fisher, Stouffer, minP, adaptive
+    soft TFisher) and combines them into an omnibus test with optional
+    permutation-based or Westfall-Young calibration that accounts for gene-gene
+    correlations and controls the family-wise error rate. Built-in support for Plant Metabolic Network (PMN) pathways
+    for maize, sorghum, arabidopsis, and general plant species.
+License: MIT + file LICENSE
+URL: https://github.com/nirwan1265/CATFISH
+BugReports: https://github.com/nirwan1265/CATFISH/issues
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+Imports:
+    stats,
+    utils,
+    ACAT,
+    TFisher,
+    data.table
+Suggests:
+    GenomicRanges,
+    S4Vectors,
+    pkgload,
+    metap,
+    evir,
+    qvalue,
+    IHW,
+    rtracklayer,
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
+Remotes:
+    github::yaowuliu/ACAT
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.1.0

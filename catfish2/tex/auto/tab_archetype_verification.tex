@@ -1,0 +1,28 @@
+\begin{table*}[!t]
+\centering
+\caption{Archetype verification under the family-wise decision rule. For each archetype and pathway size, the component achieving the highest family-wise power most often across effect scales, against the set predicted in Table~\ref{tab:archetype_summary}. Cells in which no component or every component fires are excluded as uninformative. Worst regret is the largest gap in a single cell between the best component and the omnibus.}
+\label{tab:archverify}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llllcr}
+\hline
+\textbf{Archetype} & \textbf{$m$} & \textbf{Predicted} & \textbf{Observed winner} & \textbf{In set} & \textbf{Worst regret} \\
+\hline
+SSS & 5 & ACAT, minP & minP & \checkmark & 0.108 \\
+SSS & 20 & ACAT, minP & ACAT & \checkmark & 0.131 \\
+SSS & 50 & ACAT, minP & minP & \checkmark & 0.039 \\
+MDS & 5 & Fisher, Stouffer, TFisher & Fisher & \checkmark & 0.050 \\
+MDS & 20 & Fisher, Stouffer, TFisher & Fisher & \checkmark & 0.012 \\
+MDS & 50 & Fisher, Stouffer, TFisher & Fisher & \checkmark & 0.029 \\
+WDE & 5 & Stouffer, Fisher & Fisher & \checkmark & 0.032 \\
+WDE & 20 & Stouffer, Fisher & Stouffer & \checkmark & 0.020 \\
+WDE & 50 & Stouffer, Fisher & Stouffer & \checkmark & 0.021 \\
+MSA & 5 & TFisher, Fisher, ACAT & Fisher & \checkmark & 0.042 \\
+MSA & 20 & TFisher, Fisher, ACAT & Fisher & \checkmark & 0.009 \\
+MSA & 50 & TFisher, Fisher, ACAT & Fisher & \checkmark & 0.021 \\
+SGP & 5 & minP, ACAT & ACAT & \checkmark & 0.137 \\
+SGP & 20 & minP, ACAT & minP & \checkmark & 0.355 \\
+SGP & 50 & minP, ACAT & minP & \checkmark & 0.476 \\
+\hline
+\end{tabular}}
+\end{table*}

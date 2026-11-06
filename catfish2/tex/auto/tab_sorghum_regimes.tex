@@ -1,0 +1,24 @@
+\begin{table*}[!t]
+\centering
+\caption{The two real-data regimes. Correlated neighbours: mean number of other genes per gene whose MAGMA gene--gene correlation is $|r|\ge0.1$ (human values from the LDL-C run; the BAP traits share one genotype panel). $\lambda$: genomic-control factor from the median $p$-value. Pathways at $p<0.05$: share of tested pathways below $0.05$ under the uncalibrated analytic omnibus and under the per-pathway calibration against the correlated null of Section~2.3 (not stored for the lipid runs). FWER: pathways significant at family-wise $\alpha=0.05$.}
+\label{tab:sorghum_regimes}
+\small
+\begin{tabular}{lrrrr}
+\hline
+ & \textbf{LDL-C} & \textbf{HDL-C} & \textbf{Dry tons} & \textbf{Lignin} \\
+\hline
+Samples & \multicolumn{2}{c}{$\approx1.3$ million} & \multicolumn{2}{c}{330 lines} \\
+Correlated neighbours per gene & \multicolumn{2}{c}{17} & \multicolumn{2}{c}{833} \\
+Mean $|r|$ between listed gene pairs & \multicolumn{2}{c}{0.06} & \multicolumn{2}{c}{0.23} \\
+Pathway database & \multicolumn{2}{c}{Reactome} & \multicolumn{2}{c}{SorghumBicolorCyc} \\
+Pathways tested & 1{,}390 & 1{,}390 & 304 & 304 \\
+SNP-level $\lambda$ & -- & -- & 0.86 & 0.91 \\
+Median gene $p$ & 0.083 & 0.038 & 0.447 & 0.449 \\
+Gene-level $\lambda$ & 6.60 & 9.42 & 1.27 & 1.26 \\
+Pathways at $p<0.05$, uncalibrated & 99.9\% & 100.0\% & 22.0\% & 13.5\% \\
+Pathways at $p<0.05$, calibrated & -- & -- & 14.5\% & 8.2\% \\
+Pathways significant, FWER & 1{,}372 & 1{,}387 & 0 & 0 \\
+Validation & \multicolumn{2}{c}{two related traits converge} & \multicolumn{2}{c}{calibration under strong LD} \\
+\hline
+\end{tabular}
+\end{table*}

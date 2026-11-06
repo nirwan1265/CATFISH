@@ -1,0 +1,52 @@
+# ---- R ----------------------------------------------------------------------
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+*.Rproj
+*.tar.gz
+*.Rcheck/
+/doc/
+/Meta/
+vignettes/*.html
+
+# ---- OS / editors -----------------------------------------------------------
+.DS_Store
+Thumbs.db
+
+# ---- backups and old copies (kept locally only) -----------------------------
+*.bak
+*.bak*
+_old*/
+old_files/
+
+# ---- LaTeX by-products (Overleaf and pdflatex make these) --------------------
+*.aux
+*.log
+*.out
+*.blg
+*.bbl
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+/main.pdf
+
+# ---- data and results: kept off GitHub (Overleaf sync limits; >25 MB rule) --
+catfish2/results/
+catfish2/data/
+catfish2/logs/
+*.bed
+*.bim
+*.fam
+*.ped
+*.map
+*.vcf
+*.vcf.gz
+*.genes.raw
+*.genes.annot
+*.pval.txt
+*.snp.loc.txt
+*.assoc.txt
+*cor_pairs*.txt
+inst/extdata/pathway/Ensembl2Reactome_All_Levels.txt

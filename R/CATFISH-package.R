@@ -1,0 +1,80 @@
+#' @keywords internal
+#' @importFrom stats setNames
+#' @importFrom utils tail
+"_PACKAGE"
+
+#' CATFISH: MAGMA-Based Gene and Pathway Analysis with ACAT Aggregation
+#'
+#' CATFISH provides an R interface to MAGMA (Multi-marker Analysis of
+#' GenoMic Annotation) for post-GWAS pathway enrichment analysis. It implements
+#' multiple p-value combination methods and combines them into an omnibus test
+#' with optional permutation-based or Westfall--Young calibration that accounts
+#' for gene-gene correlations and controls the family-wise error rate.
+#'
+#' @section Main Function Families:
+#'
+#' \strong{Pathway Testing Methods:}
+#' \itemize{
+#'   \item \code{\link{catfish_acat_pathways}} - ACAT (Cauchy combination)
+#'   \item \code{\link{catfish_fisher_pathways}} - Fisher's method
+#'   \item \code{\link{catfish_minp_pathways}} - Minimum p-value (Tippett/Wilkinson)
+#'   \item \code{\link{catfish_stoufferZ_pathways}} - Stouffer's Z-score method
+#'   \item \code{\link{catfish_soft_tfisher_adaptive_pathways}} - Adaptive soft TFisher
+#' }
+#'
+#' \strong{Omnibus Testing:}
+#' \itemize{
+#'   \item \code{\link{catfish_omni2_pathways}} - Omnibus combination of multiple methods
+#'     with optional Westfall--Young calibration (correlation-aware, family-wise)
+#'   \item \code{\link{catfish_wy_pathways}} - Stand-alone Westfall--Young pathway testing
+#' }
+#'
+#' \strong{Candidate Genes:}
+#' \itemize{
+#'   \item \code{\link{gene_prioritize}} - Rank genes by GWAS, MAGMA and pathway evidence
+#' }
+#'
+#' \strong{MAGMA Interface:}
+#' \itemize{
+#'   \item \code{\link{magma_path}} - Locate MAGMA binary
+#'   \item \code{\link{magma_gene}} - Run MAGMA gene analysis
+#' }
+#'
+#' \strong{Data Preparation:}
+#' \itemize{
+#'   \item \code{\link{catfish_load_pathways}} - Load built-in PMN pathway definitions
+#'   \item \code{\link{gff3_to_geneloc}} - Convert GFF3 to MAGMA gene location file
+#'   \item \code{\link{get_gene_lengths}} - Extract gene lengths from GFF3
+#'   \item \code{\link{catfish_adjust_gene_p}} - Adjust gene p-values for gene length/NSNPS
+#' }
+#'
+#' @section Built-in Pathway Databases:
+#' CATFISH includes Plant Metabolic Network (PMN) pathway definitions for:
+#' \itemize{
+#'   \item Maize (CornCyc)
+#'   \item Sorghum (SorghumBicolorCyc)
+#'   \item Arabidopsis (AraCyc)
+#'   \item General plant species (PlantCyc)
+#' }
+#'
+#' @section Typical Workflow:
+#' \enumerate{
+#'   \item Prepare gene location file from GFF3 using \code{\link{gff3_to_geneloc}}
+#'   \item Run MAGMA gene analysis using \code{\link{magma_gene}}
+#'   \item (Optional) Adjust gene p-values using \code{\link{catfish_adjust_gene_p}}
+#'   \item Run pathway analysis using one or more pathway testing methods
+#'   \item (Optional) Combine results using \code{\link{catfish_omni2_pathways}}
+#' }
+#'
+#' @author Nirwan Tandukar \email{tandukar.nirwan@@gmail.com}
+#'
+#' @seealso
+#' Useful links:
+#' \itemize{
+#'   \item \url{https://github.com/nirwan1265/CATFISH}
+#'   \item Report bugs at \url{https://github.com/nirwan1265/CATFISH/issues}
+#' }
+#'
+#' @name CATFISH-package
+#' @aliases CATFISH
+NULL
