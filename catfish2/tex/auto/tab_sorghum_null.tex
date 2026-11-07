@@ -1,0 +1,12 @@
+\begin{tabular}{lccc}
+\toprule
+ & no GC & GC & GC + null r \\
+\midrule
+Shuffles & 100 & 98 & 100 \\
+$\lambda$, calibrated $p$ & 0.84 & 1.01 & 1.01 \\
+Type I error, $\alpha = 0.05$ & 0.072 & 0.052 & 0.055 \\
+Type I error, $\alpha = 0.01$ & 0.023 & 0.013 & 0.014 \\
+Type I error, $\alpha = 0.001$ & 0.0050 & 0.0018 & 0.0024 \\
+Family-wise error (95\% CI) & 0.18 (0.11--0.27) & 0.12 (0.06--0.20) & 0.15 (0.09--0.24) \\
+\bottomrule
+\end{tabular}

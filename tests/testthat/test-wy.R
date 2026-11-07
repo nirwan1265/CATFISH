@@ -130,3 +130,83 @@ test_that("omni2 analytic path is unchanged by the Westfall-Young columns", {
   expect_equal(a$omni_p_final, a$omni_p_analytic)
   expect_true(all(a$calib_mode == "analytic"))
 })
+
+test_that("genomic control: shift removed, invariant to a genome-wide shift, idempotent", {
+  skip_if_not_installed("TFisher")
+  m <- wy_mock()
+  ## keep every p representable in double precision so that shifted copies of
+  ## the input are exact (the mock's z = 40 gene underflows to 0 otherwise)
+  m$g$P <- pmax(m$g$P, 1e-200)
+  run <- function(g) suppressMessages(catfish_wy_pathways(
+    g, pathways = m$pw, cor_pairs = m$cp, B = 200, min_genes = 10, seed = 3,
+    verbose = FALSE))
+  r0 <- run(m$g)
+  ## the removed shift is the median gene z over the genes analysed
+  ok <- is.finite(m$g$P) & !duplicated(m$g$GENE)
+  z  <- qnorm(log(m$g$P[ok]), lower.tail = FALSE, log.p = TRUE)
+  expect_equal(attr(r0, "gc_shift"), median(z))
+  expect_true(all(r0$gc_shift == attr(r0, "gc_shift")))
+  ## shifting every gene z by the same constant changes nothing but gc_shift
+  g1 <- m$g; g1$P <- pnorm(qnorm(m$g$P, lower.tail = FALSE) + 0.5, lower.tail = FALSE)
+  r1 <- run(g1)
+  expect_equal(r1$pathway_id, r0$pathway_id)
+  expect_equal(r1$z_std, r0$z_std, tolerance = 1e-6)
+  expect_equal(r1$p_fwer_std, r0$p_fwer_std)
+  expect_equal(attr(r1, "gc_shift"), attr(r0, "gc_shift") + 0.5, tolerance = 1e-6)
+  ## centred input: nothing left to remove
+  g2 <- m$g; g2$P[ok] <- pnorm(z - median(z), lower.tail = FALSE)
+  r2 <- run(g2)
+  expect_lt(abs(attr(r2, "gc_shift")), 1e-8)
+  expect_equal(r2$z_std, r0$z_std, tolerance = 1e-6)
+})
+
+test_that("gc = FALSE turns genomic control off and reports the median it left in", {
+  skip_if_not_installed("TFisher")
+  m <- wy_mock(); m$g$P <- pmax(m$g$P, 1e-200)
+  run <- function(g, gc) suppressMessages(catfish_wy_pathways(
+    g, pathways = m$pw, cor_pairs = m$cp, B = 200, min_genes = 10, seed = 3,
+    gc = gc, verbose = FALSE))
+  r_on <- run(m$g, TRUE)
+  ok <- is.finite(m$g$P) & !duplicated(m$g$GENE)
+  z  <- qnorm(log(m$g$P[ok]), lower.tail = FALSE, log.p = TRUE)
+  ## off on centred input == on on raw input
+  g2 <- m$g; g2$P[ok] <- pnorm(z - median(z), lower.tail = FALSE)
+  r_off <- run(g2, FALSE)
+  expect_equal(r_off$pathway_id, r_on$pathway_id)
+  expect_equal(r_off$z_std, r_on$z_std, tolerance = 1e-6)
+  expect_equal(attr(r_off, "gc_shift"), 0)
+  expect_true(all(r_off$gc_shift == 0))
+  ## off on raw input keeps the shift, and says so
+  r_raw <- run(m$g, FALSE)
+  expect_equal(attr(r_raw, "median_gene_z"), median(z))
+  expect_equal(attr(r_raw, "gc_shift"), 0)
+  expect_message(catfish_wy_pathways(m$g, pathways = m$pw, cor_pairs = m$cp, B = 50,
+                                     min_genes = 10, seed = 3, gc = FALSE),
+                 "genomic control off")
+})
+
+test_that("a large median gene z prints the competitive-test note", {
+  skip_if_not_installed("TFisher")
+  m <- wy_mock(); m$g$P <- pmax(m$g$P, 1e-200)
+  g1 <- m$g; g1$P <- pnorm(qnorm(m$g$P, lower.tail = FALSE) + 1, lower.tail = FALSE)
+  expect_message(catfish_wy_pathways(g1, pathways = m$pw, cor_pairs = m$cp, B = 50,
+                                     min_genes = 10, seed = 3),
+                 "closer to a competitive test")
+  expect_false(grepl("note", .catfish_gc_message(0.1, TRUE, "WY")))
+  expect_true(grepl("deflated", .catfish_gc_message(-0.8, TRUE, "WY")))
+})
+
+test_that("omni2 applies the same genomic control", {
+  m <- wy_mock()
+  om <- suppressWarnings(catfish_omni2_pathways(
+    m$g, pathways = m$pw, gene_col = "GENE", p_raw_col = "P", min_genes = 10,
+    perm_mode = "none", tau_grid = c(0.01, 0.05, 0.5)))
+  ok <- is.finite(m$g$P) & !duplicated(m$g$GENE)
+  expect_equal(attr(om, "gc_shift"),
+               median(qnorm(log(m$g$P[ok]), lower.tail = FALSE, log.p = TRUE)))
+  om0 <- suppressMessages(suppressWarnings(catfish_omni2_pathways(
+    m$g, pathways = m$pw, gene_col = "GENE", p_raw_col = "P", min_genes = 10,
+    perm_mode = "none", tau_grid = c(0.01, 0.05, 0.5), gc = FALSE)))
+  expect_equal(attr(om0, "gc_shift"), 0)
+  expect_equal(attr(om0, "median_gene_z"), attr(om, "gc_shift"))
+})

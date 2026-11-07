@@ -420,14 +420,19 @@ wy_res <- catfish_wy_pathways(
 
 ### How the Westfall--Young calibration works
 
-1. Each pathway is scored by the omnibus: ACAT across ACAT, Fisher, Stouffer,
+1. By default (`gc = TRUE`) the gene z-scores are centred at their median
+   (gene-level genomic control), which removes a genome-wide shift that a GWAS
+   can carry and that the correlated null does not contain. The order of genes
+   is unchanged. Use `gc = FALSE` for the strict self-contained test, for gene
+   results that do not cover the whole genome, or to reproduce uncentred results.
+2. Each pathway is scored by the omnibus: ACAT across ACAT, Fisher, Stouffer,
    minP and (optionally) soft TFisher, all computed in log space so that gene
    p-values far below `1e-300` keep their order.
-2. Each of `B` null replicates draws one genome-wide vector of gene z-scores
+3. Each of `B` null replicates draws one genome-wide vector of gene z-scores
    from N(0, R), with R built from the MAGMA gene-gene correlations, chromosome
    by chromosome, and re-scores every pathway on that same draw. Pathways that
    share genes are therefore perturbed together.
-3. Read column-wise, this null bank gives each pathway a calibrated p-value
+4. Read column-wise, this null bank gives each pathway a calibrated p-value
    (`omni_p_cal`). Read row-wise, the minimum across pathways in each replicate
    gives the Westfall--Young family-wise p-value (`omni_p_fwer_wy_std`, after
    standardising each pathway against its own null).

@@ -500,7 +500,8 @@ catfish_omni2_prepare <- function(gene_results,
                                 min_p = 1e-50,
                                 min_genes = 2L,
                                 max_genes = Inf,
-                                seed = NULL) {
+                                seed = NULL,
+                                gc = TRUE) {
 
   if (!is.null(seed)) set.seed(seed)
 
@@ -577,6 +578,20 @@ catfish_omni2_prepare <- function(gene_results,
   if (!is.null(z_use)) z_use <- z_use[keep1]
   if (!is.null(w_use)) w_use <- w_use[keep1]
   if (!is.null(chr_use)) chr_use <- chr_use[keep1]
+
+  # gene-level genomic control, as in catfish_wy_pathways(): each p column, and
+  # the z column if given, is centred at its median over all genes supplied
+  gc0      <- .catfish_gc(log(pmin(pmax(p_use, 1e-320), 1)), apply = gc)
+  gc_shift <- gc0$shift
+  message(.catfish_gc_message(gc0$median_z, gc, "omni2"))
+  if (isTRUE(gc)) {
+    p_use <- exp(gc0$lp)
+    if (!is.null(p_raw_vec)) {
+      okr <- is.finite(p_raw_vec)
+      if (any(okr)) p_raw_vec[okr] <- exp(.catfish_gc(log(pmin(pmax(p_raw_vec[okr], 1e-320), 1)))$lp)
+    }
+    if (!is.null(z_use)) z_use <- z_use - stats::median(z_use, na.rm = TRUE)
+  }
 
   gene_map <- stats::setNames(g_raw, g_norm)
   gene_p <- stats::setNames(p_use, g_norm)
@@ -674,6 +689,7 @@ catfish_omni2_prepare <- function(gene_results,
       w_list       = w_list,
 
       gene_p_all_use = p_use,
+      gene_lp_all_use = gc0$lp,
       gene_p_all_raw = p_raw_vec,
       gene_z_all     = z_use,
       gene_w_all     = w_use,
@@ -693,6 +709,8 @@ catfish_omni2_prepare <- function(gene_results,
       min_genes  = min_genes,
       max_genes  = max_genes,
       seed       = seed,
+      gc_shift   = gc_shift,
+      median_gene_z = gc0$median_z,
 
       gene_results_core  = gene_results_core,
       pathways_list_raw  = pathways_list_raw
@@ -1057,7 +1075,7 @@ if (!is.null(prep$z_col)) {
               call. = FALSE)
 
     gid_wy <- prep$gene_id_all
-    glp_wy <- log(pmin(pmax(suppressWarnings(as.numeric(prep$gene_p_all_use)), 1e-320), 1))
+    glp_wy <- prep$gene_lp_all_use   # centred log p, as in catfish_wy_pathways()
     idx_of <- stats::setNames(seq_along(gid_wy), gid_wy)
     paths_wy <- lapply(prep$g_list_norm[res$pathway_id], function(g) as.integer(idx_of[g]))
     names(paths_wy) <- res$pathway_id
@@ -1199,6 +1217,8 @@ if (!is.null(prep$z_col)) {
     attr(res, "wy_B")            <- wy_info$B
     attr(res, "wy_tau_grid")     <- wy_info$tau_grid
   }
+  attr(res, "gc_shift") <- prep$gc_shift
+  attr(res, "median_gene_z") <- prep$median_gene_z
   return(res)
 
 }
@@ -1242,6 +1262,13 @@ if (!is.null(prep$z_col)) {
 #' \strong{Which gene-level p-values are used?}
 #' P-based methods use \code{p_adj_col} if you provide it \emph{and} it exists in \code{gene_results};
 #' otherwise they use \code{p_raw_col}. The Westfall--Young omnibus uses the same column.
+#'
+#' \strong{Genomic control.} By default (\code{gc = TRUE}) gene-level genomic control
+#' is applied, as in \code{\link{catfish_wy_pathways}}: the gene \eqn{p}-values (and
+#' the \code{z_col} values, if given) are centred at their median over all genes
+#' supplied before any test. The median \eqn{z} removed is attached as attribute
+#' \code{gc_shift} (0 when \code{gc = FALSE}), and the median before centring as
+#' \code{median_gene_z}.
 #'
 #' \strong{Westfall--Young omnibus (\code{perm_mode = "wy"} or \code{"both"})}
 #' The statistic calibrated by the null bank is ACAT-O across ACAT, Fisher, Stouffer
@@ -1322,6 +1349,9 @@ if (!is.null(prep$z_col)) {
 #'   If provided, it overrides \code{magma_cor_file}.
 #'
 #' @param seed Integer or NULL. Random seed.
+#' @param gc Gene-level genomic control (default \code{TRUE}): centre the gene
+#'   \eqn{p}-values (and \code{z_col}) at their median before testing. See
+#'   \code{\link{catfish_wy_pathways}} for when to set it to \code{FALSE}.
 #' @param output Logical. If TRUE, writes CSV to \code{out_dir} and attaches \code{"file"} attribute. Default FALSE.
 #' @param out_dir Character. Output directory. Default \code{"catfish_omni2"}.
 #' @param use_tfisher Logical. Include the adaptive soft-TFisher component. Default TRUE.
@@ -1453,6 +1483,7 @@ catfish_omni2_pathways <- function(gene_results,
                                  magma_cor_file = NULL,
                                  magma_cor_pairs = NULL,
                                  seed = NULL,
+                                 gc = TRUE,
                                  output = FALSE,
                                  out_dir = "catfish_omni2") {
 
@@ -1543,7 +1574,8 @@ catfish_omni2_pathways <- function(gene_results,
     min_p = min_p,
     min_genes = min_genes,
     max_genes = max_genes,
-    seed = seed
+    seed = seed,
+    gc = gc
   )
 
   # ---- run (components analytic; calibration ONLY for omnibus) ----

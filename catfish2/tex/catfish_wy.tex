@@ -323,7 +323,7 @@ A threshold is informative mainly when \(m\tau\) is not far below one, so which 
 
 \smallskip\noindent\textit{Undefined components.} When no gene in a pathway falls below any threshold in the grid, the soft TFisher statistic is zero at every \(\tau\) and its one-sided \(p\)-value is exactly one. We treat this as \emph{undefined} rather than as evidence against enrichment, and the omnibus for that pathway is formed from the components that are defined. The distinction is not cosmetic. The ACAT operator maps each component \(p\)-value through \(\tan\{(1/2-p)\pi\}\), so a value at the upper boundary contributes a large negative term; a component that could not be computed would otherwise vote against the pathway and bias the omnibus toward the null. The rule is applied per pathway rather than by set size, because a large pathway in which no gene is individually strong is equally uncomputable. It does condition the component on having at least one gene below a threshold, so where TFisher does contribute its \(p\)-values are stochastically small; because the resampling null is generated under the identical rule, that conditioning appears in the null distribution and is absorbed by the calibration. An analytic omnibus \(p\)-value under this rule would be anti-conservative, whereas the resampled one is not.
 
-\smallskip\noindent\textit{Precision limit.} The soft TFisher implementation returns the null distribution function of the soft-thresholding statistic, so the one-sided \(p\)-value is formed as one minus that value. In double precision the difference is exactly zero once the distribution function exceeds \(1-10^{-16}\), and a strongly enriched pathway would then report \(p=0\). We cap the soft TFisher \(p\)-value at \(10^{-16}\), the smallest value the computation can resolve, rather than at the general lower floor applied to components whose tails are computed in closed form. A cap below the precision limit asserts resolution the statistic does not have; Section~4.5 shows what that does to the family-wise threshold.
+\smallskip\noindent\textit{Precision limit.} The soft TFisher implementation returns the null distribution function of the soft-thresholding statistic, so the one-sided \(p\)-value is formed as one minus that value. In double precision the difference is exactly zero once the distribution function exceeds \(1-10^{-16}\), and a strongly enriched pathway would then report \(p=0\). We cap the soft TFisher \(p\)-value at \(10^{-16}\), the smallest value the computation can resolve, rather than at the general lower floor applied to components whose tails are computed in closed form. A cap below the precision limit asserts resolution the statistic does not have; Section~4.6 shows what that does to the family-wise threshold.
 
 \begin{table*}[!t]
 \centering
@@ -426,7 +426,7 @@ and compare each observed statistic with the resulting distribution. This gives 
 \tilde p^{\mathrm{WY}}_k \;=\;
 \frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(M^{(b)}\le q^{\mathrm{obs}}_k\right)}{B+1},
 \]
-Rejecting all pathways with $\tilde p^{\mathrm{WY}}_k\le\alpha$ controls the family-wise error rate at level $\alpha$ under the complete null, whatever the dependence among pathways, because a false rejection anywhere in the family requires the family minimum to cross the threshold. Three further points apply. First, the control is in the strong sense, not only under the complete null. Westfall--Young procedures control the family-wise error rate strongly when the joint distribution of the statistics for the true null hypotheses does not depend on which other hypotheses are false---the condition of subset pivotality \citep{Westfall1993}. Two features of the construction give it. Each pathway statistic is a deterministic function of its own genes' $z$-scores only; and under the model of Step~1, with association represented as a shift in the means of the associated genes, the genes of a pathway containing no associated gene are jointly $\mathcal{N}(0,R)$, restricted to those genes, whatever happens elsewhere. The observed statistics of the null pathways therefore have exactly their complete-null joint distribution, and because the minimum over any subset of pathways is never smaller than the minimum over the whole family, the probability that any null pathway crosses the threshold is at most $\alpha$. The argument requires the soft TFisher truncation grid to be fixed in advance: a grid chosen from the empirical distribution of all gene-level $p$-values, as in data-adaptive implementations, would make every pathway's statistic depend on genes outside it. Second, the null is parametric: it is generated from the multivariate normal model of Step~1 rather than by permuting phenotypes, so the procedure is Westfall--Young in construction but inherits the adequacy of that model. Third, the counting form of the adjusted $p$-value above, in which null minima equal to the observed value count as at least as extreme, is required rather than a matter of taste. A threshold taken as a quantile of $M$ and applied with an inclusive comparison rejects every observation tied at that quantile, and if the omnibus loses resolution in the tail so that many null minima coincide, the empirical family-wise error rate can approach one (Section~4.5).
+Rejecting all pathways with $\tilde p^{\mathrm{WY}}_k\le\alpha$ controls the family-wise error rate at level $\alpha$ under the complete null, whatever the dependence among pathways, because a false rejection anywhere in the family requires the family minimum to cross the threshold. Three further points apply. First, the control is in the strong sense, not only under the complete null. Westfall--Young procedures control the family-wise error rate strongly when the joint distribution of the statistics for the true null hypotheses does not depend on which other hypotheses are false---the condition of subset pivotality \citep{Westfall1993}. Two features of the construction give it. Each pathway statistic is a deterministic function of its own genes' $z$-scores only; and under the model of Step~1, with association represented as a shift in the means of the associated genes, the genes of a pathway containing no associated gene are jointly $\mathcal{N}(0,R)$, restricted to those genes, whatever happens elsewhere. The observed statistics of the null pathways therefore have exactly their complete-null joint distribution, and because the minimum over any subset of pathways is never smaller than the minimum over the whole family, the probability that any null pathway crosses the threshold is at most $\alpha$. The argument requires the soft TFisher truncation grid to be fixed in advance: a grid chosen from the empirical distribution of all gene-level $p$-values, as in data-adaptive implementations, would make every pathway's statistic depend on genes outside it. Second, the null is parametric: it is generated from the multivariate normal model of Step~1 rather than by permuting phenotypes, so the procedure is Westfall--Young in construction but inherits the adequacy of that model. Third, the counting form of the adjusted $p$-value above, in which null minima equal to the observed value count as at least as extreme, is required rather than a matter of taste. A threshold taken as a quantile of $M$ and applied with an inclusive comparison rejects every observation tied at that quantile, and if the omnibus loses resolution in the tail so that many null minima coincide, the empirical family-wise error rate can approach one (Section~4.6).
 
 Between-pathway correlation is never explicitly estimated or modelled. Because all $K$ pathways are evaluated on the same draw in Step~2, genes shared across pathways perturb them jointly, as in the observed data, and this dependence is reflected in the distribution of $M$. The threshold $\hat t_\alpha=\mathrm{quantile}_\alpha(M)$ is the family-wise significance cutoff implied by the pathway database in use; its ratio to the Bonferroni cutoff $\alpha/K$ quantifies the database’s departure from independence at no extra cost, provided it is read on calibrated statistics; on the analytic scale the ratio also absorbs any miscalibration of the per-pathway statistic (Section~4.1).
 
@@ -455,7 +455,7 @@ The output a biologist acts on is a short list of genes, so CATFISH ranks genes 
 Each layer enters by rank rather than by its raw statistic,
 $S_\bullet(g)=-\log_{10}\!\left(r_\bullet(g)/N_\bullet\right)$, where
 $r_{\mathrm{GWAS}}$ is the gene's rank by minimum SNP-level $p$-value,
-$r_{\mathrm{MAGMA}}$ its rank by gene-level $p$-value, and $r_{\mathrm{PATH}}$ the rank of its best pathway by the size-standardised Westfall--Young statistic $z_k$ of Section~2.3; rank one is the strongest evidence. The hub term $B_{\mathrm{hub}}(g)=\log_{10}(n_{\mathrm{path}}(g)+1)$ rewards membership in several pathways. Genes missing a layer score zero for it, so an absent layer neither helps nor penalises.
+$r_{\mathrm{MAGMA}}$ its rank by gene-level $p$-value, and $r_{\mathrm{PATH}}$ the rank of its best pathway by the size-standardised Westfall--Young statistic $z_k$ of Section~2.3; rank one is the strongest evidence. We rank pathways on $z_k$ for two reasons. It is the statistic the family-wise test is computed on, so the gene score uses the same pathway ordering that is reported; and it measures each pathway against its own correlated null, whereas the analytic omnibus assumes independent genes and overstates pathways whose genes are in LD (Section~3.4). The family-wise $p$-value gives the same ordering but is floored at $1/(B+1)$, which ties the strongest pathways. The hub term $B_{\mathrm{hub}}(g)=\log_{10}(n_{\mathrm{path}}(g)+1)$ rewards membership in several pathways. Genes missing a layer score zero for it, so an absent layer neither helps nor penalises.
 
 We use ranks instead of $-\log_{10}p$ to make layers with different tail behaviour comparable and to avoid the $p$-value floors in Section~2.4. Pathway evidence is halved because the pathway $p$-value is a set-level statistic shared across member genes; the hub term is intentionally secondary. We fixed the weights \emph{a priori} and assessed them afterwards over a grid, $w_{\mathrm{path}}\in\{0,0.25,0.5,0.75,1\}$ and $w_{\mathrm{hub}}\in\{0,0.1,\dots,0.5\}$, in a truth-planted simulation and in the real analyses of Section~3.9 (Supplementary Figure~\ref{fig:weights}). The simulation draws $400$ replicate datasets of $500$ genes and $50$ pathways, plants causal genes concentrated in five pathways, and generates correlated GWAS-, MAGMA- and pathway-level evidence for them \citep{Tandukar2025Thesis}. Rankings were stable across the grid: the Spearman correlation of each full ranking with the default ranking was at least $0.986$, and the top twenty genes overlapped the default top twenty by at least $88\%$. Recovery of planted causal genes in the top twenty rose steadily with the pathway weight, from $0.71$ to $0.85$, and was $0.80$ at the defaults, so the defaults are not the optimum of that simulation. They are a deliberately conservative middle value: the pathway layer is set-level evidence shared by every member gene and, in curated databases, partly encodes prior knowledge, so it should not outweigh direct genetic evidence. We did not re-tune the weights on the validation genes of Section~3.9.
 
@@ -593,6 +593,42 @@ three cloned brown-midrib genes \textit{bmr2}/4CL \citep{Saballos2012bmr2},
 flowering-time and height genes is in any tested pathway, while all three
 \textit{bmr} genes are; the two sets therefore test the score with and without
 a contribution from the pathway layer.
+
+\emph{Phenotype-permutation null.} The simulations of Section~2.6 draw gene
+$z$-scores from the same correlation model that generates the null, so they
+test the procedure given its model. To test the model as well, dry biomass was
+permuted among the $330$ phenotyped lines $100$ times. A permutation removes
+any association while keeping the genotypes, their LD, the kinship among lines
+and the distribution of the phenotype. Each permuted phenotype was analysed
+with the whole pipeline of the real analysis: the GEMMA mixed model, MAGMA per
+chromosome with the same windows and SNP-wise mean model, and Westfall--Young
+calibration with the same pathways and settings. MAGMA's gene--gene
+correlations depend only on the genotypes, so one correlation file served all
+permutations. Every pathway is null in every permutation; the calibrated
+$p$-values should therefore be uniform, and a permutation with any pathway at a
+family-wise $p$-value of $0.05$ or less should occur in at most $5\%$ of
+permutations.
+
+\textbf{Gene-level genomic control.} In all real analyses (the ten lipid
+trait--ancestry sets and both sorghum traits), gene $p$-values were centred
+before the pathway test. Each gene $p$-value was converted to a $z$-score,
+$z_g=\Phi^{-1}(1-p_g)$, computed from $\log p_g$ so that values below
+$10^{-300}$ keep their order (Section~2.4); the median over all genes of the
+GWAS, $\hat\delta$, was subtracted; and the centred score was converted back,
+$p^{\mathrm{GC}}_g=1-\Phi(z_g-\hat\delta)$. This is the location form of
+genomic control \citep{Devlin1999}: one constant per GWAS, which leaves the
+order of genes, the gene--gene correlations and the null draws of Section~2.3
+unchanged and moves the median gene $p$-value to $0.5$. We added it because
+the permutation null showed that each GWAS carries its own genome-wide shift in
+gene $z$-scores, which a self-contained test reads as pathway signal and which
+the correlated null does not contain (Section~3.8). In a GWAS without such a
+shift, centring changes nothing. In a saturated GWAS the median gene is itself
+associated, and centring removes part of the real polygenic signal: the test
+then asks whether a pathway's genes are more associated than the median gene of
+the genome, which moves it towards the competitive question (Section~4.2). The
+shift $\hat\delta$ was $0.15$--$0.33$ in the eight non-European lipid sets,
+$1.38$ (LDL-C) and $1.77$ (HDL-C) in the European ones, and $0.13$ for both
+sorghum traits.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{3 Results}
@@ -1211,19 +1247,20 @@ type~I error more than doubles.}{fig:missing}
 
 \subsection*{3.7 Across five ancestry groups, human blood lipids yield the same leading pathway and a stronger candidate gene lists}
 
-We analysed LDL-C and HDL-C using GLGC 2021 meta-analyses \citep{Graham2021GLGC} across five ancestry groups. European (EUR, $n\approx1.32$ million), African/African American (AFR, $n\approx99{,}400$), East Asian (EAS, $n\approx146{,}500$), South Asian (SAS, $n\approx41{,}000$) and Hispanic (HIS, $n\approx48{,}100$). Each ancestry file is an independent meta-analysis with distinct allele frequencies and LD. The four non-European samples are 9--32$\times$ smaller than EUR. All ten trait--ancestry sets were processed identically, with LD from 1000 Genomes Phase 3 panels matched to each group (AMR for HIS), variant-to-gene mapping over a $10\,\mathrm{kb}$ window using NCBI37.3 that yielded $18{,}429$--$18{,}563$ genes per set, and pre-specified settings ($1{,}390$ Reactome pathways, $B=10{,}000$, five components, candidate-gene score and weights, and established-gene lists, Section~2.7). No dataset-specific tuning was performed, so sets differ only by phenotype and population.
+We analysed LDL-C and HDL-C using GLGC 2021 meta-analyses \citep{Graham2021GLGC} across five ancestry groups. European (EUR, $n\approx1.32$ million), African/African American (AFR, $n\approx99{,}400$), East Asian (EAS, $n\approx146{,}500$), South Asian (SAS, $n\approx41{,}000$) and Hispanic (HIS, $n\approx48{,}100$). Each ancestry file is an independent meta-analysis with distinct allele frequencies and LD. The four non-European samples are 9--32$\times$ smaller than EUR. All ten trait--ancestry sets were processed identically, with LD from 1000 Genomes Phase 3 panels matched to each group (AMR for HIS), variant-to-gene mapping over a $10\,\mathrm{kb}$ window using NCBI37.3 that yielded $18{,}429$--$18{,}563$ genes per set, and pre-specified settings ($1{,}390$ Reactome pathways, $B=10{,}000$, five components, gene-level genomic control, candidate-gene score and weights, and established-gene lists, Section~2.7). No dataset-specific tuning was performed, so sets differ only by phenotype and population.
 
 In the European data, significance no longer discriminates between pathways. At the gene level, $44.1\%$ of genes had $p<0.05$ for LDL-C and $11.2\%$ were genome-wide significant. For HDL-C the figures were $52.7\%$ and $14.8\%$. Thus, a random set of 50 genes contains on average $5.6$ (LDL-C) and $7.4$ (HDL-C) genome-wide significant genes, so the self-contained null is false for most sets. Accordingly, $\nLipSigLDL$ (LDL-C) and $\nLipSigHDL$ (HDL-C) of the $\nLipNpw$ pathways were significant under Westfall--Young family-wise control at $\alpha=0.05$. The correction, however, is not the issue. In a saturated genome, large sets accumulate evidence simply because they are large. The 20 top-ranked pathways had median sizes of $\nLipTopTwentyMedSizeLDL$ (LDL-C) and $\nLipTopTwentyMedSizeHDL$ (HDL-C) genes versus $\nLipMedSizeAll$ overall, and the Spearman correlation between set size and $z_{\mathrm{std}}$ was $\nLipSizeRhoLDL$ and $\nLipSizeRhoHDL$. Table~\ref{tab:density} shows that this size dependence tracks gene-level signal density.
 
-Plasma lipoprotein metabolism is the top pathway across populations. The Reactome plasma lipoprotein assembly, remodeling and clearance pathway (including the LDL receptor and apolipoproteins) ranked 1 of $1{,}390$ in all eight non-European sets for both traits (Figure~\ref{fig:replication}A,B). In Europeans it ranked 1 for LDL-C and 3 for HDL-C, leading 9 of 10 trait--ancestry sets. Related sub-pathways were also consistently highly ranked. In the plasma-lipoprotein subtree, five or six of nine pathways placed in the top ten in every non-European set, including plasma lipoprotein clearance/remodeling, LDL clearance (LDL-C), and HDL/chylomicron remodeling (HDL-C). Two LXR-mediated pathways regulating \textit{ABCA1} and other lipoprotein genes also ranked in the top ten in most groups.
+Plasma lipoprotein metabolism is the top pathway across populations. The Reactome plasma lipoprotein assembly, remodeling and clearance pathway (including the LDL receptor and apolipoproteins) ranked 1 of $1{,}390$ in all ten trait--ancestry sets (Figure~\ref{fig:replication}A,B). Related sub-pathways were also consistently highly ranked. In the plasma-lipoprotein subtree, five or six of nine pathways placed in the top ten in every non-European set, including plasma lipoprotein clearance/remodeling, LDL clearance (LDL-C), and HDL/chylomicron remodeling (HDL-C). Two LXR-mediated pathways regulating \textit{ABCA1} and other lipoprotein genes also ranked in the top ten in most groups.
 
-Below the very top, Europeans differed because many pathways were near-saturated. The smaller lipoprotein sets ranked $51$ to $>500$, behind large generic sets (e.g., cellular response to chemical stress, SUMOylation), though they remained extreme relative to size-matched pathways (Figure~\ref{fig:lipid_size}). Among pathways within a factor of $1.25$ in gene count, the subtree’s median size-matched percentile was $\nLipFamPctMedLDL\%$ (LDL-C) and $\nLipFamPctMedHDL\%$ (HDL-C), versus $\nLipAllPctMedLipoFreeLDL\%$ and $\nLipAllPctMedLipoFreeHDL\%$ for all other pathways. In non-European sets, with only $118$--$700$ significant pathways, the background was sparse and lipoprotein pathways led without size adjustment. The same pathway ranking first under both saturated and sparse conditions, across five populations with different LD, supports a biological rather than dataset-driven ordering. Table~\ref{tab:lipid_pathways} lists the ten leading European pathways for each trait.
+Below the very top, Europeans differed because many pathways were near-saturated. The smaller lipoprotein sets ranked $7$--$342$ (LDL-C) and $8$--$853$ (HDL-C), behind large generic sets (e.g., interferon-$\gamma$ signalling, SUMOylation), though they remained extreme relative to size-matched pathways (Figure~\ref{fig:lipid_size}). Among pathways within a factor of $1.25$ in gene count, the subtree’s median size-matched percentile was $\nLipFamPctMedLDL\%$ (LDL-C) and $\nLipFamPctMedHDL\%$ (HDL-C), versus $\nLipAllPctMedLipoFreeLDL\%$ and $\nLipAllPctMedLipoFreeHDL\%$ for all other pathways. In non-European sets, with only $93$--$592$ significant pathways, the background was sparse and lipoprotein pathways led without size adjustment. The same pathway ranking first under both saturated and sparse conditions, across five populations with different LD, supports a biological rather than dataset-driven ordering. Table~\ref{tab:lipid_pathways} lists the ten leading European pathways for each trait.
 
 Furthermore, LDL-C and HDL-C converge on the same pathway via different genes. At the gene level, the traits disagree. The Spearman correlation of gene-level $Z$ statistics was $\nLipGeneRho$, 13 of the top 100 genes overlapped, and the Jaccard overlap of genome-wide significant genes was 0.208 (Figure~\ref{fig:convergence}A). In the lipoprotein pathway, LDL-C is driven by receptor uptake (\textit{LDLR}, \textit{PCSK9}, \textit{LDLRAP1}, \textit{APOB}, \textit{APOE}), whereas HDL-C is driven by reverse transport and lipolysis (\textit{ABCA1}, \textit{LIPC}, \textit{SCARB1}, \textit{LPL}, \textit{CETP}). Only four of the 12 top drivers per trait are shared (Figure~\ref{fig:convergence}B). Thus, two GWAS with different driver genes map to the same process because it contains both arms. Across pathways, trait ranks are correlated ($\nLipCrossRho$; Figure~\ref{fig:convergence}C). This largely reflects a shared size-dependent background, so the evidence for convergence comes from driver-level overlap instead.
 
-Replication occurs at the locus level, with the pathway layer selecting the gene. Seven genes ranked in the top twenty across all five groups for each trait (Figure~\ref{fig:replication}C,D): for LDL-C, established \textit{LDLR}, \textit{APOE}, \textit{PCSK9} and \textit{APOB}, plus \textit{APOC1}, \textit{PVRL2} and \textit{TOMM40}; for HDL-C, established \textit{ABCA1}, \textit{CETP}, \textit{LPL} and \textit{LIPC}, plus \textit{NLRC5}, \textit{SLC12A3} and \textit{HERPUD1}. In Europeans, the three-layer score (Section~2.5) ranked \textit{LDLR} first for LDL-C and \textit{ABCA1} first for HDL-C (Table~\ref{tab:lipid_candidates}). The non-established genes neighbour established ones—either in the chromosome~19 \textit{APOE} cluster or near \textit{CETP} on chromosome~16—and rank highly because they share the lead variant; \textit{APOE}, \textit{APOC1} and \textit{TOMM40} have tied GWAS ranks (Table~\ref{tab:replication_genes}).
+Replication occurs at the locus level, with the pathway layer selecting the gene. Seven genes for LDL-C and eight for HDL-C ranked in the top twenty in all five groups (Figure~\ref{fig:replication}C,D): for LDL-C, established \textit{LDLR}, \textit{APOE}, \textit{PCSK9} and \textit{APOB}, plus \textit{APOC1}, \textit{PVRL2} and \textit{TOMM40}; for HDL-C, established \textit{ABCA1}, \textit{CETP}, \textit{LPL}, \textit{LIPC} and \textit{APOA5}, plus \textit{NLRC5}, \textit{SLC12A3} and \textit{HERPUD1}. In Europeans, the three-layer score (Section~2.5) ranked \textit{LDLR} first for LDL-C and \textit{ABCA1} first for HDL-C (Table~\ref{tab:lipid_candidates}). The non-established genes neighbour established ones—either in the chromosome~19 \textit{APOE} cluster or near \textit{CETP} on chromosome~16—and rank highly because they share the lead variant; \textit{APOE}, \textit{APOC1} and \textit{TOMM40} have tied GWAS ranks (Table~\ref{tab:replication_genes}).
 
-The pathway layer resolves this tie. GWAS cannot distinguish genes that share a lead variant, but curated pathway membership often can: \textit{APOE} and \textit{CETP} are in the leading pathway, whereas \textit{TOMM40}, \textit{PVRL2}, \textit{HERPUD1}, \textit{NLRC5} and \textit{SLC12A3} are not. Accordingly, \textit{APOE} ranks above \textit{TOMM40} in all five groups and above \textit{PVRL2} in four; \textit{CETP} ranks above \textit{HERPUD1} and \textit{SLC12A3} in all groups and above \textit{NLRC5} in four. This relies on size-standardised pathway ordering: the raw omnibus statistic favours large pathways, and the European top ten then includes only $3$ (LDL-C) and $5$ (HDL-C) established genes. The approach has limits: genes tied across all three layers cannot be separated (e.g., \textit{APOC1} shares both lead variant and pathway with \textit{APOE} and ranks just behind it), and the layers are complementary rather than individually reliable (e.g., \textit{CETP} has the strongest variant in all groups but MAGMA rank $3$--$72$, while \textit{APOB} is MAGMA first in South Asians and $185$th in Europeans).
+The pathway layer resolves this tie. GWAS cannot distinguish genes that share a lead variant, but curated pathway membership often can: \textit{APOE} and \textit{CETP} are in the leading pathway, whereas \textit{TOMM40}, \textit{PVRL2}, \textit{HERPUD1}, \textit{NLRC5} and \textit{SLC12A3} are not. Accordingly, \textit{APOE} ranks above \textit{TOMM40} in all five groups and above \textit{PVRL2} in four; \textit{CETP} ranks above \textit{HERPUD1} and \textit{SLC12A3} in all groups and above \textit{NLRC5} in four. This relies on the pathway layer ranking pathways by the calibrated statistic $z_{\mathrm{std}}$ (Section~2.5).
+ The approach has limits: genes tied across all three layers cannot be separated (e.g., \textit{APOC1} shares both lead variant and pathway with \textit{APOE} and ranks just behind it), and the layers are complementary rather than individually reliable (e.g., \textit{CETP} has the strongest variant in all groups but MAGMA rank $3$--$72$, while \textit{APOB} is MAGMA first in South Asians and $185$th in Europeans).
 
 This result does not show the score recovers lipid biology: the “established” genes come from the same literature as curated pathways, so prior knowledge appears on both sides. It does show the score can resolve loci left ambiguous by GWAS by using prior knowledge to distinguish genes that association data rank equally. Practically, in replicated loci the combined score usually ranks the known trait gene first, aiding studies with limited validation, but identifying a causal gene still needs evidence not captured by the score (e.g., expression colocalisation or fine-mapping; Section~4.3).
 
@@ -1252,7 +1289,7 @@ n.c., not computed.}
 Maize grain N (MLM)        & 0.00\%  & 0.468 & $-0.179$ \\
 Sorghum stem volume        & 0.86\%  & 0.440 & n.c.     \\
 Maize grain N (GLM)        & 1.15\%  & 0.185 & $-0.667$ \\
-Human LDL-C (GLGC, EUR)    & 11.2\%  & 0.083 & $-0.807$ \\
+Human LDL-C (GLGC, EUR)    & 11.2\%  & 0.083 & $-0.736$ \\
 Sorghum dry biomass (BAP)  & \nSorDryGeneGW\% & \nSorDryGeneMed & $\nSorDrySizeRho$ \\
 Sorghum lignin (BAP)       & \nSorLigGeneGW\% & \nSorLigGeneMed & $\nSorLigSizeRho$ \\
 \hline
@@ -1981,6 +2018,116 @@ CATFISH score. Lines join the same gene; black bars are medians.}{fig:lipid_reco
 % candidate whose rice relative affects stem growth and lignification, not a
 % lignin association.
 
+\subsection*{3.8 A permutation null on sorghum genotypes: genomic control calibrates each pathway, and family-wise error stays above nominal}
+
+The simulations of Sections~3.2--3.6 show that the procedure is calibrated when
+gene $z$-scores follow its correlation model. The permutation null of
+Section~2.7 asks whether real GWAS output does. The BAP is a demanding case:
+with $330$ lines signal is sparse, and LD extends far (each gene has on average
+$\nSorNeighbours$ other genes with $|r|\ge0.1$, against $\nLipNeighbours$ in
+the human panel). Table~\ref{tab:sorghum_null} and
+Figure~\ref{fig:sorghum_null} summarise $30{,}400$ null pathway tests ($304$
+pathways in each of $100$ permutations).
+
+Without genomic control the calibrated $p$-values were not uniform. The
+inflation factor was $0.84$, yet $7.2\%$ of null pathways fell below $0.05$ and
+$2.3\%$ below $0.01$ (Figure~\ref{fig:sorghum_null}A), and $18$ of the $100$
+permutations had at least one pathway significant under family-wise control
+(family-wise error $0.18$, $95\%$ CI $0.11$--$0.27$;
+Figure~\ref{fig:sorghum_null}D). The excess grew with pathway size, from
+$6.1\%$ for pathways of $5$--$9$ genes to $12.7\%$ for $50$--$200$ genes
+(Figure~\ref{fig:sorghum_null}C). A deflated median with an inflated tail is
+the mark of a mixture, and here the mixture is over permutations.
+
+Each permutation shifts all of its gene $z$-scores together. The mean gene
+$z$-score of a permutation had a standard deviation of $0.24$ across
+permutations (range $-0.66$ to $0.66$), against $0.075$ expected under the
+correlated null built from MAGMA's correlations and $0.005$ if the $33{,}907$
+genes were independent. The shift was shared by all chromosomes: per-chromosome
+means were correlated at $0.80$, and genes on different chromosomes, which share
+no LD, were correlated at $0.06$ across permutations, a correlation that
+disappeared once each permutation's genome-wide mean was removed. The
+correlated null cannot reproduce this, because it treats chromosomes as
+independent and centres every gene at zero. A self-contained test reads the
+shift as signal, and the signal accumulates with pathway size: the number of
+pathways below $0.05$ in a permutation tracked its mean gene $z$-score (Pearson
+$0.77$, Spearman $0.90$), and $16$ of the $18$ permutations with a family-wise
+false positive had a positive shift (Figure~\ref{fig:sorghum_null}B). The shift
+is a property of each GWAS as a whole, not of linkage disequilibrium; we did not
+identify its source within the mixed model.
+
+Genomic control removes it. With gene $z$-scores centred at their median
+(Section~2.7), the inflation factor was $1.01$, $5.2\%$ of null pathways fell
+below $0.05$ and $1.3\%$ below $0.01$, and the dependence on pathway size
+disappeared ($5.0\%$ to $6.0\%$ across the four size classes). The family-wise
+error rate fell to $0.12$ ($12$ of $98$ permutations; $95\%$ CI
+$0.06$--$0.20$). %% TODO: 100 permutations once the last two GC runs finish.
+The $21$ family-wise false positives were $21$ different pathways, so no pathway
+is a recurrent false positive in this panel.
+
+The remaining excess is in the extreme tail. After centring, calibrated
+$p$-values below $0.01$ were $1.3$ times as frequent as expected and those below
+$0.001$ $1.8$ times; gene $p$-values below $10^{-3}$, $10^{-4}$ and $10^{-5}$
+were $1.7$, $3.2$ and $6.7$ times as frequent. The family minimum is a tail
+statistic, so a modest excess per pathway becomes a larger one family-wise. We
+examined two sources. The first is the correlation matrix. Across permutations,
+gene pairs that MAGMA reports at $r=0.22$ were almost uncorrelated ($0.03$),
+pairs at $r=0.52$ were correlated at $0.32$, and the two agreed only above
+about $0.8$ (Figure~\ref{fig:sorghum_null}E). MAGMA computes the correlations
+from the raw genotypes, which carry the population structure that the mixed
+model removes, so moderate correlations are overstated. Overstated correlation
+widens the null and should make the test conservative, and replacing MAGMA's
+correlations with those observed across permutations did not lower the
+family-wise error rate ($0.15$, $95\%$ CI $0.09$--$0.24$; inflation factor
+$1.01$; type I error $0.055$ at $0.05$). The second source is the variant-level
+test. In five permutations, variant $p$-values below $10^{-4}$ were $4.5$ times
+as frequent as expected: $11.5$ times at minor allele frequency $0.01$--$0.02$,
+$4.8$ times at $0.02$--$0.05$, and $2.0$ and $1.7$ times at $0.05$--$0.10$ and
+above (Figure~\ref{fig:sorghum_null}F). The mixed-model Wald test is
+heavy-tailed in this panel, most of all for rare variants, and a multivariate
+normal null has Gaussian tails by construction. We did not remove variants to
+correct this: a filter chosen because it calibrates the null is tuned on the
+outcome.
+
+In this panel, then, CATFISH with genomic control gives calibrated per-pathway
+$p$-values, and its family-wise $p$-values are anti-conservative by a factor of
+about two and a half ($0.12$ against $0.05$). The excess comes from the tail of
+the variant-level test, upstream of the pathway procedure.
+
+\begin{table}[!t]
+\centering
+\caption{CATFISH under the sorghum phenotype-permutation null ($304$
+SorghumBicolorCyc pathways in each permutation of dry biomass). $\lambda$ is the
+inflation factor of the per-pathway calibrated $p$-values; type I error is the
+fraction of null pathway tests with calibrated $p\le\alpha$; family-wise error
+is the fraction of permutations with at least one pathway at a Westfall--Young
+family-wise $p$-value $\le0.05$, with a Clopper--Pearson interval. GC,
+gene-level genomic control (Section~2.7).}
+\label{tab:sorghum_null}
+\small
+\maybeinput{auto/tab_sorghum_null.tex}
+\end{table}
+
+\begin{figure*}[!t]
+\centering
+\maybefig{Fig20_sorghum_null.png}{\textwidth}{CATFISH under the sorghum
+phenotype-permutation null: $100$ permutations of dry biomass, each analysed
+with the full GWAS--MAGMA--Westfall--Young pipeline. \textbf{A}~Quantile--quantile
+plot of the per-pathway calibrated $p$-values over all permutations, without
+gene-level genomic control (no GC), with it (GC), and with it and the gene--gene
+correlations replaced by those observed across permutations (GC + null $r$). \textbf{B}~Each point is one permutation
+(no GC): its mean gene $z$-score against the number of its $304$ pathways with
+calibrated $p<0.05$; filled points are permutations with at least one pathway
+significant under family-wise control. \textbf{C}~Type I error at $\alpha=0.05$
+by pathway size. \textbf{D}~Family-wise error rate with $95\%$ Clopper--Pearson
+interval; the dashed line is the nominal $0.05$. \textbf{E}~Correlation of gene
+$z$-scores across permutations against the correlation MAGMA reports for the
+same gene pairs, with pairs binned by MAGMA $r$; the dashed line is the
+identity. \textbf{F}~Observed over expected number of variant $p$-values below
+$10^{-4}$, by minor allele frequency, in five permutations (chromosomes 1--9);
+the dashed line is one.}{fig:sorghum_null}
+\end{figure*}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{4 Discussion}
 
@@ -2123,7 +2270,60 @@ Candidates whose rank depends on the pathway layer should have that annotation
 checked; the score makes this straightforward because each layer is reported
 separately.
 
-\subsection*{4.5 Numerical precision is a correctness issue}
+\subsection*{4.5 Calibration on real genotypes}
+
+The simulations and the permutation null answer different questions. The
+simulations draw gene $z$-scores from the correlation model that the null is
+built on, and there the per-pathway and family-wise error rates were nominal
+for every LD structure we examined (Sections~3.2--3.6). The permutation null
+pushes real genotypes through the whole pipeline (Section~3.8), and it found
+two departures from that model. Neither is a failure to model LD.
+
+The first is a genome-wide shift in gene $z$-scores that differs between GWAS
+of the same panel. It is shared across chromosomes, so no gene--gene
+correlation matrix, however accurate, contains it; and it is one number per
+GWAS, so centring the gene $z$-scores at their median removes it. Centring
+brought the per-pathway calibration to nominal (inflation factor $1.01$, type I
+error $0.052$) and removed the dependence of false positives on pathway size.
+It does not alter the data or the order of genes, and it costs nothing, so we
+apply it to every real analysis and recommend it by default. Its cost is in a
+saturated GWAS, where the median gene is associated and centring removes real
+polygenic signal. There it turns the self-contained question part of the way
+towards the competitive one, which Section~4.2 argues is the better question in
+that regime.
+
+The second is the tail of the variant-level test. After centring, the
+family-wise error rate was $0.12$, and the excess traced to variant $p$-values
+far more extreme than their nominal distribution, most of all at minor allele
+frequencies below $0.05$. A natural explanation for residual miscalibration in
+a densely linked panel is that MAGMA's gene correlations are wrong, and they
+are: correlations computed from raw genotypes overstate moderate correlation
+once a mixed model has removed population structure. But replacing them did not
+lower the family-wise error, and overstated correlation errs in the
+conservative direction. The residual is in the input, not in the correlation
+model, and a null that is Gaussian by construction cannot absorb it. Removing
+rare variants until the null looked right would tune the input to the outcome,
+so we report the excess instead. In a panel like the BAP the per-pathway
+calibrated $p$-value is the reliable output, and a family-wise $p$-value near
+$0.05$ should be read as weaker evidence than its nominal level.
+
+Neither departure changes the conclusions of the real analyses, which use
+centred gene $p$-values throughout. In sorghum, no pathway was significant under
+family-wise control for either trait. Centring halved the share of pathways with
+calibrated $p<0.05$, from $14.5\%$ to $7.2\%$ for dry biomass and from $8.2\%$
+to $2.6\%$ for lignin, close to the nominal rate the permutation null predicts;
+and a test that errs towards false positives and still declares nothing
+supports that conclusion. In the lipid data the ordering is robust to centring.
+The plasma lipoprotein pathway ranked first in all ten trait--ancestry sets with
+centring and in nine without (European HDL-C, where it ranked third); the
+Spearman correlation of pathway statistics with and without centring was
+$0.96$--$0.99$; and the number of family-wise significant pathways fell by
+$11$--$24\%$. The sets that lost most were the large generic ones that a
+saturated genome favours: in the European data the median size of the twenty
+leading pathways fell from $159$ to $118$ genes for LDL-C and from $172$ to
+$120$ for HDL-C.
+
+\subsection*{4.6 Numerical precision is a correctness issue}
 
 Section~2.4 reads like an implementation note and is not one. Had we not moved
 to log space, this paper would have reported a top-pathway list that was
@@ -2161,7 +2361,7 @@ that point is not meaningful. For a family-wise procedure the corresponding
 check is the number of distinct values taken by the null family minimum; a
 threshold drawn from a distribution with a large atom is not a threshold.
 
-\subsection*{4.6 Practical recommendations}
+\subsection*{4.7 Practical recommendations}
 
 For users, our recommendations are as follows. Inspect the gene-level null
 before running any pathway analysis: a median gene-level $p$-value far from
@@ -2170,7 +2370,12 @@ these require different responses (the former argues for competitive testing,
 the latter for a mixed model). Check also that the gene-level null does not
 drift with gene size; under strong LD, MAGMA's top-variant and multi-model
 $p$-values can be inflated in proportion to the number of variants in a gene
-(Section~3.10.1). Calibrate against the correlated null whenever
+(Section~3.10.1). Centre the gene $z$-scores at their median before the
+pathway test (Section~2.7); it removes the per-GWAS shift that otherwise
+inflates self-contained tests in proportion to pathway size. Where genotypes
+are available, a phenotype-permutation null shows whether the family-wise
+$p$-values can be taken at face value in that panel (Section~3.8). Calibrate
+against the correlated null whenever
 gene--gene correlations are available, and verify that the correlation file
 covers all chromosomes; in one of our own runs only chromosome~1
 correlations had been parsed, and $85\%$ of the genome was silently treated as
@@ -2250,7 +2455,14 @@ results.
 \textbf{Parametric null.} The null draws come from a multivariate normal model
 of gene--gene correlation rather than from permuting phenotypes. The procedure
 is Westfall--Young in construction, but its validity is that of the correlation
-model, which Section~3.7 makes concrete.
+model, which Section~3.7 makes concrete. The sorghum permutation null
+(Section~3.8) tests that model directly: after genomic control the per-pathway
+calibration was nominal, but the family-wise error rate was $0.12$, because the
+variant-level tests are heavier-tailed than a Gaussian null. We tested one
+panel and one trait. Panels with less LD or larger samples, and association
+tests with better-calibrated tails, may behave differently, and a permutation
+null is the check we recommend before relying on family-wise $p$-values in a
+new panel.
 
 \textbf{Soft TFisher resolution.} With the current implementation the soft
 TFisher $p$-value cannot be resolved below about $10^{-16}$, so among strongly

@@ -10,9 +10,8 @@
 ## =============================================================================
 getcfg <- function(k) { v <- Sys.getenv(k); if (v == "") stop("config missing: ", k); v }
 B_PERM   <- as.integer(commandArgs(trailingOnly = TRUE)[1]); BPAD <- sprintf("%03d", B_PERM)
-CATFISH_REPO <- getcfg("CATFISH_REPO")
-suppressMessages(devtools::load_all(CATFISH_REPO, quiet = TRUE))
-if (!exists("catfish_wy_pathways")) stop("catfish_wy_pathways() not in ", CATFISH_REPO, " -- git pull it")
+suppressPackageStartupMessages(library(CATFISH))   # installed in the R these jobs use
+if (!exists("catfish_wy_pathways")) stop("this CATFISH has no catfish_wy_pathways(); reinstall it from GitHub")
 MAGMA_OUT <- getcfg("MAGMA_OUT"); WY_OUT <- getcfg("WY_OUT"); CORPAIRS <- getcfg("CORPAIRS")
 GENE_MODEL <- getcfg("GENE_MODEL"); CHROMS <- strsplit(trimws(getcfg("CHROMS")), "\\s+")[[1]]
 model_tag <- gsub("[^A-Za-z0-9]+", "_", GENE_MODEL)
@@ -29,6 +28,17 @@ g <- do.call(rbind, lapply(files, function(f)
 g <- g[!duplicated(g$GENE), ]
 P_COL <- if ("P_SNPWISE_MEAN" %in% names(g)) "P_SNPWISE_MEAN" else "P"
 if (!file.exists(CORPAIRS)) stop("missing ", CORPAIRS, " (run step 4)")
+## GC=1: gene-level genomic control -- this permutation's gene z-scores are
+## centred at their median before testing (z from P on the log scale)
+GC <- Sys.getenv("GC", "0") == "1"
+P_USE <- P_COL; gc_shift <- 0
+if (GC) {
+  z <- stats::qnorm(log(pmax(g[[P_COL]], 1e-320)), lower.tail = FALSE, log.p = TRUE)
+  gc_shift <- stats::median(z)
+  g$P_GC <- stats::pnorm(z - gc_shift, lower.tail = FALSE)
+  P_USE <- "P_GC"
+  cat(sprintf("[wy] GC: median gene z %.3f removed\n", gc_shift))
+}
 cat(sprintf("[wy] perm %d: %d genes, column %s, median gene p %.3f\n",
             B_PERM, nrow(g), P_COL, stats::median(g[[P_COL]], na.rm = TRUE)))
 
@@ -38,11 +48,12 @@ pw <- unique(data.frame(pathway_id = pw_raw[["Pathway-id"]], gene_id = pw_raw[["
 pw <- pw[nzchar(pw$gene_id) & pw$gene_id != "unknown", ]
 
 res <- catfish_wy_pathways(
-  gene_results = g, pathways = pw, gene_col = "GENE", p_col = P_COL, chr_col = "CHR",
+  gene_results = g, pathways = pw, gene_col = "GENE", p_col = P_USE, chr_col = "CHR",
   cor_file = CORPAIRS, B = WY_B, use_tfisher = TRUE, tau_grid = TAU_GRID,
   min_genes = MIN_GENES, max_genes = MAX_GENES, seed = SEED, verbose = FALSE)
 res$perm <- B_PERM
-res$median_gene_p <- stats::median(g[[P_COL]], na.rm = TRUE)
+res$median_gene_p <- stats::median(g[[P_COL]], na.rm = TRUE)   # before any GC
+res$gc_shift <- gc_shift
 dir.create(WY_OUT, recursive = TRUE, showWarnings = FALSE)
 out <- file.path(WY_OUT, sprintf("perm_%s_wy.csv", BPAD))
 utils::write.csv(res, out, row.names = FALSE)

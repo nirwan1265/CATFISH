@@ -61,6 +61,20 @@ export GWAS_DIR="${RUN_ROOT}/gwas"
 export MAGMA_OUT="${RUN_ROOT}/magma"
 export WY_OUT="${RUN_ROOT}/wy"
 export FINAL_DIR="${RUN_ROOT}/final"
+## GC=1 (gene-level genomic control in step 5): results go to separate folders,
+## so the uncorrected run is kept
+if [ "${GC:-0}" = "1" ]; then
+  export WY_OUT="${RUN_ROOT}/wy_gc"
+  export FINAL_DIR="${RUN_ROOT}/final_gc"
+fi
+## NULLCAL=1 (proof-of-concept check only): the Westfall-Young null uses gene
+## correlations calibrated to the shuffles' own null correlations
+## (gene_cor_pairs_NULLCAL.txt) instead of MAGMA's; separate folders again
+if [ "${NULLCAL:-0}" = "1" ]; then
+  export WY_OUT="${WY_OUT}_nullcal"
+  export FINAL_DIR="${FINAL_DIR}_nullcal"
+fi
 export NTOTAL_FILE="${RUN_ROOT}/N_TOTAL.txt"
 export CORPAIRS="${RUN_ROOT}/gene_cor_pairs_CONSTANT.txt"
+if [ "${NULLCAL:-0}" = "1" ]; then export CORPAIRS="${RUN_ROOT}/gene_cor_pairs_NULLCAL.txt"; fi
 mkdir -p "$INPUT_DIR" "$REF_DIR" "$PHENO_DIR" "$GWAS_DIR" "$MAGMA_OUT" "$WY_OUT" "$FINAL_DIR" "$WORKING_DIR/logs"

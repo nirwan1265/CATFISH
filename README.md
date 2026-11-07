@@ -7,6 +7,7 @@
 - Runs five pathway tests on gene-level GWAS statistics (ACAT, Fisher, adaptive soft TFisher, minP, Stouffer) and combines them with ACAT into an omnibus.
 - Calibrates the omnibus against a genome-wide correlated null: each null replicate draws one vector of gene z-scores, chromosome by chromosome, from the MAGMA gene--gene correlations, and scores every pathway on that same draw. This gives each pathway a calibrated p-value and a Westfall--Young family-wise p-value.
 - Works in log space, so gene p-values far below 1e-300 keep their order.
+- Applies gene-level genomic control: the gene z-scores of each GWAS are centred at their median before testing, because a GWAS can carry a genome-wide shift that the correlated null does not contain.
 - Wraps MAGMA (annotation and gene analysis, per chromosome) and reads its output back.
 - Ships pathways for maize, sorghum, arabidopsis, PlantCyc, *Drosophila* and human (HumanCyc, Reactome), and reads GMT, BioCyc and PMN files.
 - Ranks candidate genes with `gene_prioritize()`.
@@ -142,6 +143,10 @@ On a cluster, run one chromosome per array job with `chroms = <that chromosome>`
 
 **Gene model.** Westfall--Young calibration assumes gene p-values are uniform where there is no association. MAGMA's SNP-wise mean model meets this when the GWAS is well calibrated; the SNP-wise top model, and `multi=snp-wise` which includes it, are often inflated in panels with long-range LD, and that inflation is then read as pathway signal. `magma_read_genes()` prints the median of every gene p-value column (about 0.5 expected) so this can be checked.
 
+**Genomic control.** By default (`gc = TRUE`), `catfish_wy_pathways()`, `catfish_omni2_pathways()` and `catfish_run()` centre the gene z-scores at their median (z from log P, minus the median over all genes supplied, back to P). This removes a genome-wide shift that a GWAS can carry, which a self-contained pathway test would otherwise read as signal. It changes neither the order of genes nor the gene--gene correlations; the shift removed is reported as `gc_shift`. It does not remove inflation that grows with gene size, so the choice of gene model above still matters. Supply the whole genome's gene results, not a subset, because the median is taken over the genes supplied.
+
+Centring cannot tell a technical shift from real polygenic signal. In a highly polygenic, well-powered GWAS the median gene is itself associated, and centring then asks whether a pathway is more associated than the median gene, which is closer to a competitive test; CATFISH prints a note when the median gene z exceeds 0.5. Set `gc = FALSE` for the strict self-contained test, for gene results that do not cover the whole genome, for gene p-values already corrected in another way, or to reproduce uncentred results.
+
 ### 4. Read all chromosomes back
 
 ```r
@@ -219,6 +224,7 @@ One row per pathway, sorted by `z_std`:
 | `z_std` | Observed omnibus standardised against the pathway's own null (more negative = stronger) |
 | `p_fwer_std` | Westfall--Young family-wise p-value; the headline result |
 | `p_calibrated` | Per-pathway calibrated p-value |
+| `gc_shift` | Median gene z removed by genomic control (same in every row; 0 with `gc = FALSE`) |
 | `n_genes` | Genes of the pathway present in the gene results |
 | `log10_p_omnibus`, `p_omnibus` | Analytic (uncalibrated) omnibus |
 | `p_fwer_wy` | Family-wise p-value on the raw omnibus scale |

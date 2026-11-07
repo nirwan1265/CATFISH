@@ -309,6 +309,22 @@ gene p-values would make each pathway's statistic depend on genes outside it and
 break the family-wise control. Without `cor_file` (or `cor_pairs`) every gene is
 treated as independent, and CATFISH warns.
 
+Before testing, the gene z-scores are centred at their median (gene-level
+genomic control; `gc = TRUE` by default). A GWAS can carry a genome-wide shift in its gene
+z-scores, shared across chromosomes, that the correlated null does not contain
+and that a self-contained test would read as pathway signal. Centring is one
+constant per GWAS: the order of genes and the gene--gene correlations are
+unchanged, and the shift removed is returned as `gc_shift`. Pass the whole
+genome's gene results, because the median is taken over the genes supplied.
+
+Centring cannot tell a technical shift from real polygenic signal. When the
+median gene is itself associated (a highly polygenic, well-powered GWAS),
+centring asks whether a pathway is more associated than the median gene, which
+is closer to a competitive test, and CATFISH prints a note when the median gene
+z exceeds 0.5. Use `gc = FALSE` for the strict self-contained test, for gene
+results that do not cover the whole genome, for gene p-values already corrected
+in another way, or to reproduce uncentred results.
+
 ## 5.8 Components and calibration together: `catfish_omni2_pathways()`
 
 The same Westfall--Young calibration, with the component p-values, multiple
@@ -390,6 +406,7 @@ per gene.
 | `log10_p_omnibus`, `p_omnibus` | analytic (uncalibrated) omnibus |
 | `p_fwer_wy` | family-wise p-value on the raw omnibus scale |
 | `p_bonferroni` | Bonferroni on the analytic omnibus, for comparison |
+| `gc_shift` | median gene z removed by genomic control (same in every row; 0 with `gc = FALSE`) |
 | `acat_p`, `fisher_p`, `tfisher_p`, `minp_p`, `stouffer_p` | analytic component p-values (`catfish_run()` only) |
 
 ## `catfish_omni2_pathways()`

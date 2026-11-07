@@ -235,6 +235,41 @@
   cp
 }
 
+## Gene-level genomic control: centre the gene z-scores of one GWAS at their
+## median. A GWAS can carry a genome-wide shift in its gene z-scores that differs
+## from one GWAS to another and is shared across chromosomes, so the correlated
+## null, which centres every gene at zero, does not contain it; a self-contained
+## test would read it as pathway signal. z is taken from log p, so p-values below
+## 1e-300 keep their order, and the centred p-value is returned on the log scale.
+## The order of genes is unchanged.
+.catfish_gc <- function(lp, apply = TRUE) {
+  z <- stats::qnorm(lp, lower.tail = FALSE, log.p = TRUE)
+  med <- stats::median(z)
+  if (!isTRUE(apply)) return(list(lp = lp, shift = 0, median_z = med))
+  list(lp = stats::pnorm(z - med, lower.tail = FALSE, log.p = TRUE), shift = med,
+       median_z = med)
+}
+
+## What to tell the user about the centring. A large positive median z usually
+## means the median gene is itself associated (a saturated, highly polygenic
+## GWAS), and centring then turns the self-contained question part of the way
+## into a competitive one; a large negative one means deflated gene p-values.
+.catfish_gc_message <- function(med, gc, tag) {
+  if (!isTRUE(gc))
+    return(sprintf("[%s] genomic control off (gc = FALSE): median gene z %.3f left in", tag, med))
+  msg <- sprintf("[%s] genomic control: median gene z %.3f removed", tag, med)
+  if (med > 0.5)
+    msg <- paste0(msg, sprintf(paste0(
+      "\n[%s] note: a median gene z of %.2f suggests the median gene is itself associated. ",
+      "Centring compares each pathway with the median gene, which is closer to a ",
+      "competitive test; use gc = FALSE for the strict self-contained test."), tag, med))
+  if (med < -0.5)
+    msg <- paste0(msg, sprintf(paste0(
+      "\n[%s] note: a median gene z of %.2f means the gene p-values are deflated; ",
+      "check the calibration of the GWAS."), tag, med))
+  msg
+}
+
 ## --------------------------------------------------------------- exported ---
 
 #' Pathway testing with Westfall--Young family-wise calibration
@@ -261,6 +296,25 @@
 #' requires \code{tau_grid} to be fixed in advance rather than estimated from
 #' the gene-level \eqn{p}-values.
 #'
+#' By default (\code{gc = TRUE}) gene-level genomic control is applied. Each gene
+#' \eqn{p}-value is converted to \eqn{z_g = \Phi^{-1}(1 - p_g)} (from
+#' \eqn{\log p_g}), the median over all genes analysed is subtracted, and the
+#' result is converted back. A GWAS can carry a genome-wide shift in its gene
+#' \eqn{z}-scores that is shared across chromosomes; the correlated null does not
+#' contain it, and a self-contained test would read it as pathway signal.
+#' Centring is one constant per GWAS: it leaves the order of genes and the
+#' gene--gene correlations unchanged and moves the median gene \eqn{p}-value to
+#' 0.5. Pass the results of the whole genome, not a subset, because the median is
+#' taken over the genes supplied.
+#'
+#' Centring cannot tell a technical shift from real polygenic signal. In a highly
+#' polygenic, well-powered GWAS the median gene is itself associated, and
+#' centring then asks whether a pathway is more associated than the median gene,
+#' which is closer to a competitive test; a note is printed when the median gene
+#' \eqn{z} exceeds 0.5. Set \code{gc = FALSE} for the strict self-contained test,
+#' for gene results that do not cover the whole genome, for gene \eqn{p}-values
+#' already corrected in another way, or to reproduce uncentred results.
+#'
 #' @param gene_results data.frame of gene-level results (e.g. MAGMA
 #'   \code{.genes.out}), with columns for gene ID, \eqn{p}-value and chromosome.
 #' @param pathways Named list of gene-ID vectors, or a data.frame with
@@ -284,6 +338,8 @@
 #' @param min_genes,max_genes Pathway size limits, counted over genes present
 #'   in \code{gene_results}.
 #' @param seed Random seed for the null draws (\code{NULL} leaves it unset).
+#' @param gc Gene-level genomic control: centre the gene \eqn{z}-scores at their
+#'   median before testing (default \code{TRUE}). See Details.
 #' @param verbose Print progress.
 #' @param output If \code{TRUE}, write a CSV to \code{out_dir}.
 #' @param out_dir Output directory when \code{output = TRUE}.
@@ -304,8 +360,12 @@
 #'   \item{p_bonferroni}{Bonferroni applied to the analytic omnibus, for
 #'     comparison}
 #'   \item{p_calibrated}{Per-pathway calibrated \eqn{p}-value}
+#'   \item{gc_shift}{Median gene \eqn{z}-score removed by genomic control
+#'     (the same for every row; 0 when \code{gc = FALSE})}
 #' }
-#' Attributes \code{wy_threshold_05}, \code{B} and \code{tau_grid} are attached.
+#' Attributes \code{wy_threshold_05}, \code{B}, \code{tau_grid},
+#' \code{gc_shift} and \code{median_gene_z} (the median gene \eqn{z} before
+#' any centring) are attached.
 #'
 #' @examples
 #' ## Toy GWAS: 300 genes on 3 chromosomes, neighbouring genes correlated
@@ -355,6 +415,7 @@ catfish_wy_pathways <- function(gene_results,
                                 min_genes    = 10L,
                                 max_genes    = 200L,
                                 seed         = 20260706L,
+                                gc           = TRUE,
                                 verbose      = TRUE,
                                 output       = FALSE,
                                 out_dir      = "catfish_wy") {
@@ -392,11 +453,14 @@ catfish_wy_pathways <- function(gene_results,
   P   <- P[keep]
   first <- !duplicated(gid)
   gid <- gid[first]; chr <- chr[first]; P <- P[first]
-  gene_lp <- log(pmin(pmax(P, 1e-320), 1))
+  gcr     <- .catfish_gc(log(pmin(pmax(P, 1e-320), 1)), apply = gc)
+  gene_lp <- gcr$lp
   idx_of  <- stats::setNames(seq_along(gid), gid)
-  if (isTRUE(verbose))
+  if (isTRUE(verbose)) {
     message(sprintf("[WY] genes: %d across %d chromosomes", length(gid),
                     length(unique(chr))))
+    message(.catfish_gc_message(gcr$median_z, gc, "WY"))
+  }
 
   ## ---- pathways
   if (is.null(pathways)) {
@@ -433,6 +497,7 @@ catfish_wy_pathways <- function(gene_results,
     p_fwer_wy       = eng$p_fwer_wy,
     p_bonferroni    = pmin(exp(eng$obs_log) * NP, 1),
     p_calibrated    = eng$p_cal,
+    gc_shift        = gcr$shift,
     stringsAsFactors = FALSE
   )
   res <- res[order(res$z_std), , drop = FALSE]
@@ -440,6 +505,8 @@ catfish_wy_pathways <- function(gene_results,
   attr(res, "wy_threshold_05") <- exp(stats::quantile(eng$minp_null, 0.05, names = FALSE))
   attr(res, "B") <- B
   attr(res, "tau_grid") <- tau_grid
+  attr(res, "gc_shift") <- gcr$shift
+  attr(res, "median_gene_z") <- gcr$median_z
 
   if (isTRUE(output)) {
     if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)

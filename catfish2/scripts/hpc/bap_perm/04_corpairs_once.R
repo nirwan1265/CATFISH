@@ -2,11 +2,9 @@ suppressMessages({ library(CATFISH) })
 getcfg <- function(k){ v<-Sys.getenv(k); if(v=="") stop(paste("config missing:",k)); v }
 MAGMA_OUT    <- getcfg("MAGMA_OUT")
 CORPAIRS     <- getcfg("CORPAIRS")
-CATFISH_REPO <- getcfg("CATFISH_REPO")
 GENE_MODEL   <- getcfg("GENE_MODEL")
 CHROMS       <- strsplit(trimws(getcfg("CHROMS")), "\\s+")[[1]]
 model_tag    <- gsub("[^A-Za-z0-9]+", "_", GENE_MODEL)   # multi_snp_wise
-suppressMessages(devtools::load_all(CATFISH_REPO, quiet = TRUE))
 
 # --- find the first permutation that has all 10 .genes.raw (genotype-only,
 #     so correlations are identical across perms) ---

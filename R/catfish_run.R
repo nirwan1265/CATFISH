@@ -75,6 +75,8 @@
 #' @param tau_grid Fixed soft TFisher grid (also used for the component table).
 #' @param min_genes,max_genes Pathway size limits (genes present).
 #' @param seed Seed for the null draws.
+#' @param gc Gene-level genomic control (default \code{TRUE}); passed to
+#'   \code{\link{catfish_wy_pathways}} and the component tests.
 #' @param components Add the five analytic component \eqn{p}-values to the
 #'   pathway table.
 #' @param prioritize Rank candidate genes.
@@ -107,7 +109,9 @@
 #'   \item{candidates}{\code{\link{gene_prioritize}} table, or \code{NULL}}
 #'   \item{genes}{gene-level results used}
 #'   \item{pathway_sets}{pathway memberships used}
-#'   \item{settings}{\code{p_col}, \code{gene_regex}, \code{B}, \code{tau_grid}, ...}
+#'   \item{settings}{\code{p_col}, \code{gene_regex}, \code{B}, \code{tau_grid}, ...,
+#'     and \code{gc_shift}, the median gene \eqn{z} removed by genomic control
+#'     (see \code{\link{catfish_wy_pathways}})}
 #'   \item{files}{paths of everything written}
 #' }
 #'
@@ -161,6 +165,7 @@ catfish_run <- function(gwas_file      = NULL,
                         min_genes      = 10L,
                         max_genes      = 200L,
                         seed           = 20260706L,
+                        gc             = TRUE,
                         components     = TRUE,
                         prioritize     = TRUE,
                         targets        = NULL,
@@ -264,7 +269,7 @@ catfish_run <- function(gwas_file      = NULL,
                             p_col = p_col, chr_col = "CHR", cor_file = cor_file,
                             B = B, use_tfisher = use_tfisher, tau_grid = tau_grid,
                             min_genes = min_genes, max_genes = max_genes,
-                            seed = seed, verbose = verbose)
+                            seed = seed, gc = gc, verbose = verbose)
 
   ## ---- 5. component tests -------------------------------------------------
   if (isTRUE(components)) {
@@ -272,10 +277,10 @@ catfish_run <- function(gwas_file      = NULL,
     g2 <- genes
     pp <- pmin(pmax(as.numeric(g2[[p_col]]), 1e-300), 1)
     g2$CATFISH_Z <- stats::qnorm(pp, lower.tail = FALSE)   # z of the same p column
-    om <- suppressWarnings(catfish_omni2_pathways(
+    om <- suppressMessages(suppressWarnings(catfish_omni2_pathways(
       gene_results = g2, pathways = pw, gene_col = "GENE", p_raw_col = p_col,
       z_col = "CATFISH_Z", tau_grid = tau_grid, use_tfisher = use_tfisher,
-      min_genes = min_genes, max_genes = max_genes, perm_mode = "none"))
+      min_genes = min_genes, max_genes = max_genes, perm_mode = "none", gc = gc)))
     take <- c(acat_p = "acat_p", fisher_p = "fisher_p", tfisher_p = "tfisher_p_analytic",
               minp_p = "minp_p_analytic", stouffer_p = "stouffer_p_analytic")
     m <- match(wy$pathway_id, om$pathway_id)
@@ -326,7 +331,8 @@ catfish_run <- function(gwas_file      = NULL,
        settings = list(p_col = p_col, gene_regex = gene_regex, gene_model =
                          if (run_magma) gene_model else NA_character_,
                        B = B, tau_grid = tau_grid, use_tfisher = use_tfisher,
-                       min_genes = min_genes, max_genes = max_genes, seed = seed),
+                       min_genes = min_genes, max_genes = max_genes, seed = seed,
+                       gc = gc, gc_shift = attr(wy, "gc_shift")),
        files = files)
 }
 
