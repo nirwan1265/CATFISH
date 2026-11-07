@@ -42,6 +42,7 @@ catfish_omni2_pathways(
   magma_cor_file = NULL,
   magma_cor_pairs = NULL,
   seed = NULL,
+  gc = TRUE,
   output = FALSE,
   out_dir = "catfish_omni2"
 )
@@ -149,6 +150,10 @@ If provided, it overrides \code{magma_cor_file}.}
 
 \item{seed}{Integer or NULL. Random seed.}
 
+\item{gc}{Gene-level genomic control (default \code{TRUE}): centre the gene
+\eqn{p}-values (and \code{z_col}) at their median before testing. See
+\code{\link{catfish_wy_pathways}} for when to set it to \code{FALSE}.}
+
 \item{output}{Logical. If TRUE, writes CSV to \code{out_dir} and attaches \code{"file"} attribute. Default FALSE.}
 
 \item{out_dir}{Character. Output directory. Default \code{"catfish_omni2"}.}
@@ -207,6 +212,13 @@ stand-alone version.
 \strong{Which gene-level p-values are used?}
 P-based methods use \code{p_adj_col} if you provide it \emph{and} it exists in \code{gene_results};
 otherwise they use \code{p_raw_col}. The Westfall--Young omnibus uses the same column.
+
+\strong{Genomic control.} By default (\code{gc = TRUE}) gene-level genomic control
+is applied, as in \code{\link{catfish_wy_pathways}}: the gene \eqn{p}-values (and
+the \code{z_col} values, if given) are centred at their median over all genes
+supplied before any test. The median \eqn{z} removed is attached as attribute
+\code{gc_shift} (0 when \code{gc = FALSE}), and the median before centring as
+\code{median_gene_z}.
 
 \strong{Westfall--Young omnibus (\code{perm_mode = "wy"} or \code{"both"})}
 The statistic calibrated by the null bank is ACAT-O across ACAT, Fisher, Stouffer

@@ -21,6 +21,7 @@ catfish_wy_pathways(
   min_genes = 10L,
   max_genes = 200L,
   seed = 20260706L,
+  gc = TRUE,
   verbose = TRUE,
   output = FALSE,
   out_dir = "catfish_wy"
@@ -63,6 +64,9 @@ in \code{gene_results}.}
 
 \item{seed}{Random seed for the null draws (\code{NULL} leaves it unset).}
 
+\item{gc}{Gene-level genomic control: centre the gene \eqn{z}-scores at their
+median before testing (default \code{TRUE}). See Details.}
+
 \item{verbose}{Print progress.}
 
 \item{output}{If \code{TRUE}, write a CSV to \code{out_dir}.}
@@ -86,8 +90,12 @@ scale (valid when pathways share one marginal null)}
 \item{p_bonferroni}{Bonferroni applied to the analytic omnibus, for
 comparison}
 \item{p_calibrated}{Per-pathway calibrated \eqn{p}-value}
+\item{gc_shift}{Median gene \eqn{z}-score removed by genomic control
+(the same for every row; 0 when \code{gc = FALSE})}
 }
-Attributes \code{wy_threshold_05}, \code{B} and \code{tau_grid} are attached.
+Attributes \code{wy_threshold_05}, \code{B}, \code{tau_grid},
+\code{gc_shift} and \code{median_gene_z} (the median gene \eqn{z} before
+any centring) are attached.
 }
 \description{
 Scores every pathway with the CATFISH omnibus (ACAT across ACAT, Fisher,
@@ -112,6 +120,25 @@ Family-wise control holds in the strong sense under the multivariate normal
 model, because each pathway's statistic depends only on its own genes. This
 requires \code{tau_grid} to be fixed in advance rather than estimated from
 the gene-level \eqn{p}-values.
+
+By default (\code{gc = TRUE}) gene-level genomic control is applied. Each gene
+\eqn{p}-value is converted to \eqn{z_g = \Phi^{-1}(1 - p_g)} (from
+\eqn{\log p_g}), the median over all genes analysed is subtracted, and the
+result is converted back. A GWAS can carry a genome-wide shift in its gene
+\eqn{z}-scores that is shared across chromosomes; the correlated null does not
+contain it, and a self-contained test would read it as pathway signal.
+Centring is one constant per GWAS: it leaves the order of genes and the
+gene--gene correlations unchanged and moves the median gene \eqn{p}-value to
+0.5. Pass the results of the whole genome, not a subset, because the median is
+taken over the genes supplied.
+
+Centring cannot tell a technical shift from real polygenic signal. In a highly
+polygenic, well-powered GWAS the median gene is itself associated, and
+centring then asks whether a pathway is more associated than the median gene,
+which is closer to a competitive test; a note is printed when the median gene
+\eqn{z} exceeds 0.5. Set \code{gc = FALSE} for the strict self-contained test,
+for gene results that do not cover the whole genome, for gene \eqn{p}-values
+already corrected in another way, or to reproduce uncentred results.
 }
 \examples{
 ## Toy GWAS: 300 genes on 3 chromosomes, neighbouring genes correlated

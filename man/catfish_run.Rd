@@ -31,6 +31,7 @@ catfish_run(
   min_genes = 10L,
   max_genes = 200L,
   seed = 20260706L,
+  gc = TRUE,
   components = TRUE,
   prioritize = TRUE,
   targets = NULL,
@@ -113,6 +114,9 @@ present (a \code{multi=snp-wise} run), otherwise \code{P}.}
 
 \item{seed}{Seed for the null draws.}
 
+\item{gc}{Gene-level genomic control (default \code{TRUE}); passed to
+\code{\link{catfish_wy_pathways}} and the component tests.}
+
 \item{components}{Add the five analytic component \eqn{p}-values to the
 pathway table.}
 
@@ -139,7 +143,9 @@ A list:
 \item{candidates}{\code{\link{gene_prioritize}} table, or \code{NULL}}
 \item{genes}{gene-level results used}
 \item{pathway_sets}{pathway memberships used}
-\item{settings}{\code{p_col}, \code{gene_regex}, \code{B}, \code{tau_grid}, ...}
+\item{settings}{\code{p_col}, \code{gene_regex}, \code{B}, \code{tau_grid}, ...,
+and \code{gc_shift}, the median gene \eqn{z} removed by genomic control
+(see \code{\link{catfish_wy_pathways}})}
 \item{files}{paths of everything written}
 }
 }
