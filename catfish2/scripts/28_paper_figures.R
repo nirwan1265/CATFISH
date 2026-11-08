@@ -489,7 +489,8 @@ if (has("22_weight_sensitivity_sim_summary.csv")) {
 }
 
 ## ======================================= Supplementary: sorghum gene-p QQ ===
-STR <- c("Dry_tons_per_acre", "Lignin_DM_perc")
+## the paper analyses dry biomass only; SORGHUM_TRAITS=Dry_tons_per_acre,Lignin_DM_perc for both
+STR <- strsplit(Sys.getenv("SORGHUM_TRAITS", "Dry_tons_per_acre"), ",")[[1]]
 sf <- file.path(SORG, rep(STR, each = 10),
                 sprintf("%s_chr%02d.multi_snp_wise.genes.out", rep(STR, each = 10), 1:10))
 if (all(file.exists(sf))) {

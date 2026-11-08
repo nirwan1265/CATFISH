@@ -127,14 +127,14 @@ exposed a regime in which the self-contained null is false almost everywhere:
 11.2\% of genes reach genome-wide significance for LDL-C and essentially every
 pathway is significant, so significance no longer discriminates. The ordering
 still does: plasma lipoprotein assembly, remodeling and clearance ranked first
-of $\nLipNpw$ Reactome pathways for LDL-C and third for HDL-C, and the combined
+of $\nLipNpw$ Reactome pathways for both LDL-C and HDL-C, and the combined
 gene score ranked \textit{LDLR} and \textit{ABCA1} first and recovered
 established lipid genes better than ranking by GWAS association alone. In a
 sorghum bioenergy panel of 330 lines, where gene--gene correlation is far
-denser than in the human data, the correlated null reduced the excess
-rejection of the independence-based omnibus, no pathway was declared
-significant, and the pathway layer raised all three pre-specified lignin genes
-in the gene ranking. We argue
+denser than in the human data, no pathway was significant for dry biomass, and
+a phenotype-permutation null showed that centring the gene $z$-scores of each
+GWAS calibrates every pathway, while the family-wise error stays above nominal
+because the variant-level tests are heavy-tailed. We argue
 that the saturation is a property of self-contained testing at very large $n$,
 not a failure of multiple-testing correction.\\
 \textbf{Availability:} CATFISH is an R package available at
@@ -553,9 +553,9 @@ twelve with established roles in HDL-C biology---\textit{CETP},
 prioritization was run and are used to assess it. They are a
 validation set, not a discovery; the score has no access to them.
 
-\textbf{Sorghum bioenergy traits.} We analysed dry biomass yield (dry tons per
-acre) and lignin content (\% of dry matter) in the sorghum Bioenergy
-Association Panel (BAP) \citep{Brenton2016}: $330$ phenotyped lines, with
+\textbf{Sorghum dry biomass.} We analysed dry biomass yield (dry tons per
+acre) in the sorghum Bioenergy Association Panel (BAP) \citep{Brenton2016}:
+$327$ lines with a measurement, with
 variant--gene LD taken from the panel's own genotypes ($363$ lines; variants
 with minor allele frequency $\ge0.01$). Association was tested with the
 univariate linear mixed model of GEMMA \citep{Zhou2012GEMMA}, giving
@@ -567,8 +567,9 @@ $25\,\mathrm{kb}$ upstream and downstream window. MAGMA computes gene--gene
 correlations only between nearby genes on the same chromosome, so the ten
 per-chromosome \texttt{.genes.raw} files together carry the complete
 correlation structure. Of MAGMA's gene models we used the SNP-wise mean, the
-model also used for the lipid traits; Section~3.10.1 shows why the SNP-wise
-top and multi-model $p$-values were not used.
+model also used for the lipid traits; the SNP-wise top and multi-model
+$p$-values were inflated in proportion to gene size and were not used
+(Supplementary Figure~\ref{fig:sorghum_pcol}).
 
 \emph{Pathways and calibration.} Pathways were taken from SorghumBicolorCyc
 \citep{Hawkins2021CornCyc}, restricted to $5$--$200$ genes, giving
@@ -579,25 +580,21 @@ the other analyses ($B=10{,}000$; same truncation grid and seed).
 itself analysed and assigns them to genes by MAGMA's own gene windows, so that,
 as for the lipid traits, the GWAS and gene layers see identical variant sets.
 
-\emph{Positive controls.} Eleven cloned genes were named before the analysis
-was run. For dry biomass, eight genes controlling flowering time and plant
-height, the main determinants of biomass in this photoperiod-sensitive panel:
+\emph{Positive controls.} Eight cloned genes were named before the analysis
+was run: genes controlling flowering time and plant height, the main
+determinants of biomass in this photoperiod-sensitive panel:
 \textit{Ma1}/\textit{PRR37} \citep{Murphy2011PRR37}, \textit{Ma3}/\textit{PHYB}
 \citep{Childs1997PHYB}, \textit{Ma5}/\textit{PHYC}, %% TODO: add the Ma5/PHYC citation
 \textit{Ma6}/\textit{GHD7} \citep{Murphy2014Ghd7}, \textit{Ma2}
 \citep{Casto2019Ma2}, \textit{Dw1} \citep{Hilley2016Dw1}, \textit{Dw2}
-\citep{Hilley2017Dw2} and \textit{Dw3} \citep{Multani2003Dw3}. For lignin, the
-three cloned brown-midrib genes \textit{bmr2}/4CL \citep{Saballos2012bmr2},
-\textit{bmr6}/CAD \citep{Saballos2009bmr6} and \textit{bmr12}/COMT
-\citep{Bout2003bmr12}. SorghumBicolorCyc describes metabolism, so none of the
-flowering-time and height genes is in any tested pathway, while all three
-\textit{bmr} genes are; the two sets therefore test the score with and without
-a contribution from the pathway layer.
+\citep{Hilley2017Dw2} and \textit{Dw3} \citep{Multani2003Dw3}.
+SorghumBicolorCyc describes metabolism, so none of them is in any tested
+pathway, and they test the score through its GWAS and MAGMA layers only.
 
 \emph{Phenotype-permutation null.} The simulations of Section~2.6 draw gene
 $z$-scores from the same correlation model that generates the null, so they
 test the procedure given its model. To test the model as well, dry biomass was
-permuted among the $330$ phenotyped lines $100$ times. A permutation removes
+permuted among the $327$ lines $100$ times. A permutation removes
 any association while keeping the genotypes, their LD, the kinship among lines
 and the distribution of the phenotype. Each permuted phenotype was analysed
 with the whole pipeline of the real analysis: the GEMMA mixed model, MAGMA per
@@ -610,7 +607,7 @@ family-wise $p$-value of $0.05$ or less should occur in at most $5\%$ of
 permutations.
 
 \textbf{Gene-level genomic control.} In all real analyses (the ten lipid
-trait--ancestry sets and both sorghum traits), gene $p$-values were centred
+trait--ancestry sets and sorghum dry biomass), gene $p$-values were centred
 before the pathway test. Each gene $p$-value was converted to a $z$-score,
 $z_g=\Phi^{-1}(1-p_g)$, computed from $\log p_g$ so that values below
 $10^{-300}$ keep their order (Section~2.4); the median over all genes of the
@@ -627,8 +624,8 @@ associated, and centring removes part of the real polygenic signal: the test
 then asks whether a pathway's genes are more associated than the median gene of
 the genome, which moves it towards the competitive question (Section~4.2). The
 shift $\hat\delta$ was $0.15$--$0.33$ in the eight non-European lipid sets,
-$1.38$ (LDL-C) and $1.77$ (HDL-C) in the European ones, and $0.13$ for both
-sorghum traits.
+$1.38$ (LDL-C) and $1.77$ (HDL-C) in the European ones, and $0.13$ for sorghum
+dry biomass.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{3 Results}
@@ -1291,7 +1288,6 @@ Sorghum stem volume        & 0.86\%  & 0.440 & n.c.     \\
 Maize grain N (GLM)        & 1.15\%  & 0.185 & $-0.667$ \\
 Human LDL-C (GLGC, EUR)    & 11.2\%  & 0.083 & $-0.736$ \\
 Sorghum dry biomass (BAP)  & \nSorDryGeneGW\% & \nSorDryGeneMed & $\nSorDrySizeRho$ \\
-Sorghum lignin (BAP)       & \nSorLigGeneGW\% & \nSorLigGeneMed & $\nSorLigSizeRho$ \\
 \hline
 \end{tabular}
 \end{table}
@@ -2018,25 +2014,60 @@ CATFISH score. Lines join the same gene; black bars are medians.}{fig:lipid_reco
 % candidate whose rice relative affects stem growth and lignification, not a
 % lignin association.
 
-\subsection*{3.8 A permutation null on sorghum genotypes: genomic control calibrates each pathway, and family-wise error stays above nominal}
+\subsection*{3.8 Sorghum dry biomass: no pathway is significant, the gene score selects cycloartenol synthase, and a permutation null tests the calibration}
 
-The simulations of Sections~3.2--3.6 show that the procedure is calibrated when
-gene $z$-scores follow its correlation model. The permutation null of
-Section~2.7 asks whether real GWAS output does. The BAP is a demanding case:
-with $330$ lines signal is sparse, and LD extends far (each gene has on average
-$\nSorNeighbours$ other genes with $|r|\ge0.1$, against $\nLipNeighbours$ in
-the human panel). Table~\ref{tab:sorghum_null} and
-Figure~\ref{fig:sorghum_null} summarise $30{,}400$ null pathway tests ($304$
+The sorghum BAP is the opposite regime from the lipid data. With $327$ lines,
+signal is sparse, and LD extends far: each gene has on average
+$\nSorNeighbours$ other genes with $|r|\ge0.1$ in MAGMA's gene--gene
+correlation, against $\nLipNeighbours$ in the human panel. Here the question is
+whether the procedure stays calibrated, and whether the gene score still
+produces a useful ranking.
+
+No pathway was significant under family-wise control. The leading pathway was
+proanthocyanidin biosynthesis from flavanols (family-wise $p=\nSorTopFwerDry$),
+and $\nSorDryCalFive\%$ of the $\nSorDryNpw$ pathways had a calibrated $p$-value
+below $0.05$, close to the nominal rate, against $\nSorDryOmniFive\%$ for the
+uncalibrated analytic omnibus (Figure~\ref{fig:sorghum_dry}A).
+
+The gene ranking is organised by locus (Figure~\ref{fig:sorghum_dry}B). The
+first-ranked gene, Sobic.004G014400 on chromosome~4, encodes cycloartenol
+synthase, the first committed step of plant sterol biosynthesis, and it is one
+of two genes in the top ten with evidence in all three layers: its strongest variant has
+$p=\nSorCasGwasP$, its MAGMA $p$-value is $\nSorCasMagmaP$ (rank
+$\nSorCasMagmaRank$), and cycloartenol biosynthesis ranked $\nSorCycloRank$ of
+$\nSorDryNpw$ pathways. It shares its lead variant with seven neighbouring genes
+and leads them on its MAGMA evidence; the pathway layer lifts it from rank
+$\nSorCasRankNp$ without that layer to first. We found no earlier report linking this gene or
+region to biomass in sorghum. In \textit{Arabidopsis}, loss of cycloartenol
+synthase is lethal and weak alleles disrupt plastid development
+\citep{Babiychuk2008}, and sterol-deficient mutants are impaired in cellulose
+synthesis \citep{Schrick2012}, which offers a route from sterol supply to biomass
+that remains to be tested. The other, the fourth-ranked Sobic.008G029200, carries a
+WRKY DNA-binding domain, but its pathway evidence comes from a SorghumBicolorCyc
+entry that assigns it acyl-ACP thioesterase activity, which a WRKY transcription
+factor does not have; without the pathway layer it ranks $\nSorWrkyRankNp$.
+Here the pathway layer rewards an annotation error. The pre-specified
+flowering-time and height genes are in no tested pathway; the two with
+detectable signal in this panel, \textit{Ma1}/\textit{PRR37} and \textit{Dw1},
+ranked $879$ and $2{,}956$ of $\nSorDryNgenes$, above their ranks by GWAS alone
+($929$ and $6{,}028$), and the other six carry little evidence at any layer.
+
+Real data cannot show whether the procedure is calibrated, because no pathway
+is known to be null. We therefore permuted the phenotype $100$ times
+(Section~2.7): each permutation is a GWAS of the same lines, genotypes and LD in
+which every pathway is null, so every rejection is a false positive.
+Figure~\ref{fig:sorghum_dry}C,D, Figure~\ref{fig:sorghum_null} and
+Table~\ref{tab:sorghum_null} summarise $30{,}400$ null pathway tests ($304$
 pathways in each of $100$ permutations).
 
 Without genomic control the calibrated $p$-values were not uniform. The
 inflation factor was $0.84$, yet $7.2\%$ of null pathways fell below $0.05$ and
-$2.3\%$ below $0.01$ (Figure~\ref{fig:sorghum_null}A), and $18$ of the $100$
+$2.3\%$ below $0.01$ (Figure~\ref{fig:sorghum_dry}C), and $18$ of the $100$
 permutations had at least one pathway significant under family-wise control
 (family-wise error $0.18$, $95\%$ CI $0.11$--$0.27$;
-Figure~\ref{fig:sorghum_null}D). The excess grew with pathway size, from
+Figure~\ref{fig:sorghum_dry}D). The excess grew with pathway size, from
 $6.1\%$ for pathways of $5$--$9$ genes to $12.7\%$ for $50$--$200$ genes
-(Figure~\ref{fig:sorghum_null}C). A deflated median with an inflated tail is
+(Figure~\ref{fig:sorghum_null}B). A deflated median with an inflated tail is
 the mark of a mixture, and here the mixture is over permutations.
 
 Each permutation shifts all of its gene $z$-scores together. The mean gene
@@ -2052,14 +2083,14 @@ independent and centres every gene at zero. A self-contained test reads the
 shift as signal, and the signal accumulates with pathway size: the number of
 pathways below $0.05$ in a permutation tracked its mean gene $z$-score (Pearson
 $0.77$, Spearman $0.90$), and $16$ of the $18$ permutations with a family-wise
-false positive had a positive shift (Figure~\ref{fig:sorghum_null}B). The shift
+false positive had a positive shift (Figure~\ref{fig:sorghum_null}A). The shift
 is a property of each GWAS as a whole, not of linkage disequilibrium; we did not
 identify its source within the mixed model.
 
 Genomic control removes it. With gene $z$-scores centred at their median
 (Section~2.7), the inflation factor was $1.01$, $5.2\%$ of null pathways fell
 below $0.05$ and $1.3\%$ below $0.01$, and the dependence on pathway size
-disappeared ($5.0\%$ to $6.0\%$ across the four size classes). The family-wise
+disappeared ($5.0\%$ to $6.0\%$ across the four size classes; Figure~\ref{fig:sorghum_null}B). The family-wise
 error rate fell to $0.12$ ($12$ of $98$ permutations; $95\%$ CI
 $0.06$--$0.20$). %% TODO: 100 permutations once the last two GC runs finish.
 The $21$ family-wise false positives were $21$ different pathways, so no pathway
@@ -2073,17 +2104,17 @@ statistic, so a modest excess per pathway becomes a larger one family-wise. We
 examined two sources. The first is the correlation matrix. Across permutations,
 gene pairs that MAGMA reports at $r=0.22$ were almost uncorrelated ($0.03$),
 pairs at $r=0.52$ were correlated at $0.32$, and the two agreed only above
-about $0.8$ (Figure~\ref{fig:sorghum_null}E). MAGMA computes the correlations
+about $0.8$ (Figure~\ref{fig:sorghum_null}D). MAGMA computes the correlations
 from the raw genotypes, which carry the population structure that the mixed
 model removes, so moderate correlations are overstated. Overstated correlation
 widens the null and should make the test conservative, and replacing MAGMA's
 correlations with those observed across permutations did not lower the
-family-wise error rate ($0.15$, $95\%$ CI $0.09$--$0.24$; inflation factor
+family-wise error rate ($0.15$, $95\%$ CI $0.09$--$0.24$; Figure~\ref{fig:sorghum_null}C; inflation factor
 $1.01$; type I error $0.055$ at $0.05$). The second source is the variant-level
 test. In five permutations, variant $p$-values below $10^{-4}$ were $4.5$ times
 as frequent as expected: $11.5$ times at minor allele frequency $0.01$--$0.02$,
 $4.8$ times at $0.02$--$0.05$, and $2.0$ and $1.7$ times at $0.05$--$0.10$ and
-above (Figure~\ref{fig:sorghum_null}F). The mixed-model Wald test is
+above (Figure~\ref{fig:sorghum_null}E). The mixed-model Wald test is
 heavy-tailed in this panel, most of all for rare variants, and a multivariate
 normal null has Gaussian tails by construction. We did not remove variants to
 correct this: a filter chosen because it calibrates the null is tuned on the
@@ -2093,6 +2124,26 @@ In this panel, then, CATFISH with genomic control gives calibrated per-pathway
 $p$-values, and its family-wise $p$-values are anti-conservative by a factor of
 about two and a half ($0.12$ against $0.05$). The excess comes from the tail of
 the variant-level test, upstream of the pathway procedure.
+
+\begin{figure*}[!t]
+\centering
+\maybefig{Fig21_sorghum_dry_tons.png}{\textwidth}{Sorghum dry biomass.
+\textbf{A}~The ten leading SorghumBicolorCyc pathways: per-pathway calibrated
+$p$-value, with the number of genes in parentheses and the Westfall--Young
+family-wise $p$-value at the end of each bar; the dashed line is $p=0.05$.
+\textbf{B}~The ten highest-ranked genes of the combined score (Sobic IDs, with
+the SorghumBicolorCyc enzyme name where there is one; the WRKY gene is listed in
+SorghumBicolorCyc as an acyl-ACP thioesterase), and each gene's rank in the
+GWAS, MAGMA and pathway layers (pathway: rank among pathway-annotated genes);
+lines join the layers of one gene. \textbf{C},~\textbf{D}~The permutation null:
+$100$ permutations of the phenotype, each analysed with the full
+GWAS--MAGMA--Westfall--Young pipeline. \textbf{C}~Quantile--quantile plot of the
+per-pathway calibrated $p$-values over all permutations, without and with
+gene-level genomic control (GC), with the inflation factor $\lambda$ and the
+family-wise error rate. \textbf{D}~Family-wise error rate (fraction of
+permutations with any pathway at a family-wise $p$-value $\le0.05$) with its
+$95\%$ Clopper--Pearson interval; the dashed line is the nominal $0.05$.}{fig:sorghum_dry}
+\end{figure*}
 
 \begin{table}[!t]
 \centering
@@ -2110,20 +2161,19 @@ gene-level genomic control (Section~2.7).}
 
 \begin{figure*}[!t]
 \centering
-\maybefig{Fig20_sorghum_null.png}{\textwidth}{CATFISH under the sorghum
-phenotype-permutation null: $100$ permutations of dry biomass, each analysed
-with the full GWAS--MAGMA--Westfall--Young pipeline. \textbf{A}~Quantile--quantile
-plot of the per-pathway calibrated $p$-values over all permutations, without
+\maybefig{Fig20_sorghum_null.png}{\textwidth}{Diagnostics of the sorghum
+phenotype-permutation null ($100$ permutations of dry biomass): without
 gene-level genomic control (no GC), with it (GC), and with it and the gene--gene
-correlations replaced by those observed across permutations (GC + null $r$). \textbf{B}~Each point is one permutation
+correlations replaced by those observed across permutations (GC + null $r$).
+\textbf{A}~Each point is one permutation
 (no GC): its mean gene $z$-score against the number of its $304$ pathways with
 calibrated $p<0.05$; filled points are permutations with at least one pathway
-significant under family-wise control. \textbf{C}~Type I error at $\alpha=0.05$
-by pathway size. \textbf{D}~Family-wise error rate with $95\%$ Clopper--Pearson
-interval; the dashed line is the nominal $0.05$. \textbf{E}~Correlation of gene
+significant under family-wise control. \textbf{B}~Type I error at $\alpha=0.05$
+by pathway size. \textbf{C}~Family-wise error rate with $95\%$ Clopper--Pearson
+interval; the dashed line is the nominal $0.05$. \textbf{D}~Correlation of gene
 $z$-scores across permutations against the correlation MAGMA reports for the
 same gene pairs, with pairs binned by MAGMA $r$; the dashed line is the
-identity. \textbf{F}~Observed over expected number of variant $p$-values below
+identity. \textbf{E}~Observed over expected number of variant $p$-values below
 $10^{-4}$, by minor allele frequency, in five permutations (chromosomes 1--9);
 the dashed line is one.}{fig:sorghum_null}
 \end{figure*}
@@ -2252,10 +2302,11 @@ The lipid traits have abundant signal and short-range LD, and the evidence that
 the ordering is meaningful is convergence: two traits whose gene-level signals
 are largely disjoint reach the same pathway through different arms of it. They
 say little about false positives, because there the null is false nearly
-everywhere. The sorghum traits have sparse signal and far denser LD
-(Table~\ref{tab:sorghum_regimes}), and the evidence there is calibration: the
-independence-based omnibus over-rejected, the correlated null brought it much
-closer to nominal, and family-wise control declared nothing. A method that
+everywhere. The sorghum trait has sparse signal and far denser LD, and the
+evidence there is calibration: the independence-based omnibus over-rejected,
+the calibrated per-pathway $p$-values were close to nominal, family-wise
+control declared nothing, and a permutation null measured the error rates
+directly (Section~3.8). A method that
 reported pathway discoveries in this panel would be suspect; this one ranked
 pathways and genes without claiming significance it could not support.
 
@@ -2264,8 +2315,9 @@ checked before any pathway output is read. In the BAP, MAGMA's multi-model
 output was inflated in proportion to gene size, and a correlated pathway null,
 however well it models LD, would have passed that inflation through as pathway
 signal. Second, curated annotation cuts both ways. It is what let the pathway
-layer lift all three lignin genes, and it is also what lifted a WRKY
-transcription factor through an enzymatic annotation it should not carry.
+layer lift cycloartenol synthase to the top of the ranking, and it is also what lifted
+a WRKY transcription factor through an enzymatic annotation it should not
+carry.
 Candidates whose rank depends on the pathway layer should have that annotation
 checked; the score makes this straightforward because each layer is reported
 separately.
@@ -2309,9 +2361,9 @@ $0.05$ should be read as weaker evidence than its nominal level.
 
 Neither departure changes the conclusions of the real analyses, which use
 centred gene $p$-values throughout. In sorghum, no pathway was significant under
-family-wise control for either trait. Centring halved the share of pathways with
-calibrated $p<0.05$, from $14.5\%$ to $7.2\%$ for dry biomass and from $8.2\%$
-to $2.6\%$ for lignin, close to the nominal rate the permutation null predicts;
+family-wise control. Centring halved the share of pathways with calibrated
+$p<0.05$, from $14.5\%$ to $7.2\%$, close to the nominal rate the permutation
+null predicts;
 and a test that errs towards false positives and still declares nothing
 supports that conclusion. In the lipid data the ordering is robust to centring.
 The plasma lipoprotein pathway ranked first in all ten trait--ancestry sets with
@@ -2370,7 +2422,7 @@ these require different responses (the former argues for competitive testing,
 the latter for a mixed model). Check also that the gene-level null does not
 drift with gene size; under strong LD, MAGMA's top-variant and multi-model
 $p$-values can be inflated in proportion to the number of variants in a gene
-(Section~3.10.1). Centre the gene $z$-scores at their median before the
+(Supplementary Figure~\ref{fig:sorghum_pcol}). Centre the gene $z$-scores at their median before the
 pathway test (Section~2.7); it removes the per-GWAS shift that otherwise
 inflates self-contained tests in proportion to pathway size. Where genotypes
 are available, a phenotype-permutation null shows whether the family-wise
@@ -2482,7 +2534,7 @@ original CATFISH paper could not be re-analysed under the new calibration
 because the MAGMA \texttt{.genes.raw} file, which the genome-wide correlated
 draw requires, was not available in the archived results; its signal-density
 summary in Table~\ref{tab:density} is reported from the gene-level output alone.
-The sorghum analyses of Section~3.10 use a different panel, the BAP, and with
+The sorghum analysis of Section~3.8 uses a different panel, the BAP, and with
 $330$ lines they are underpowered for pathway discovery; they test calibration
 and gene ranking, not the detection of new pathways.
 
@@ -2527,9 +2579,10 @@ lipoprotein assembly, remodeling and clearance led the LDL-C ordering, the
 lipoprotein pathways were extreme for their size in both LDL-C and HDL-C, and
 the gene prioritization recovered established lipid genes better than GWAS
 association alone. In a sorghum panel with far denser LD and little power, the
-same procedure declared no pathway significant and still raised the
-established lignin genes through the pathway layer, which is the behaviour a
-calibrated method should show when the data are weak. CATFISH, and self-contained pathway testing generally, is best
+same procedure declared no pathway significant, which is the behaviour a
+calibrated method should show when the data are weak, and a permutation null
+on its genotypes showed that centring the gene $z$-scores calibrates each
+pathway while the family-wise error stays above nominal. CATFISH, and self-contained pathway testing generally, is best
 suited to the low-signal polygenic regime, where the maize grain-nitrogen
 analysis recovered L-homoserine biosynthesis as the leading pathway and a known
 aspartate kinase isozyme as the leading gene out of $34{,}873$, in agreement
@@ -2740,12 +2793,11 @@ pathway weight in both the simulation and the real data.}{fig:weights}
 \begin{figure*}[!t]
 \centering
 \maybefig{Supp_sorghum_pcol_qq.png}{\textwidth}{Gene-level calibration of the
-three MAGMA $p$-values for the sorghum BAP traits: quantile--quantile plots of
+three MAGMA $p$-values for sorghum dry biomass: quantile--quantile plots of
 the SNP-wise mean model, the SNP-wise top model and MAGMA's multi-model
-combination for dry biomass (left) and lignin (right), with the median gene
-$p$-value of each. The mean model follows the null; the top-variant and
-multi-model $p$-values are inflated, and their inflation increases with the
-number of variants in the gene (Section~3.10.1).}{fig:sorghum_pcol}
+combination, with the median gene $p$-value of each. The mean model follows the
+null; the top-variant and multi-model $p$-values are inflated, and their
+inflation increases with the number of variants in the gene.}{fig:sorghum_pcol}
 \end{figure*}
 
 \clearpage

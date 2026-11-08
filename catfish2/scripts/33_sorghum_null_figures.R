@@ -1,7 +1,17 @@
 #!/usr/bin/env Rscript
 ## =============================================================================
-## 33_sorghum_null_figures.R -- figure and table for the BAP permutation null:
-## dry biomass yield shuffled among the 327 lines 100 times, each shuffle run
+## 33_sorghum_null_figures.R -- sorghum BAP figures and table.
+##   Fig21_sorghum_dry_tons.png  main figure for dry biomass: (A) top ten
+##     SorghumBicolorCyc pathways, (B) top ten genes of the combined score and
+##     their rank in each evidence layer, (C, D) the permutation null: QQ of the
+##     per-pathway calibrated p over all shuffles, and the family-wise error,
+##     without and with GC
+##   Fig20_sorghum_null.png      diagnostics of the permutation null
+##   tex/auto/tab_sorghum_null.tex
+## Real-data inputs: <TRAIT>_P_SNPWISE_MEAN_5comp_westfall_young.csv (23 / the
+## gc_real rerun) and 25_<TRAIT>_gene_prioritize.csv (25), both in RES_DIR.
+##
+## Permutation null: dry biomass yield shuffled among the 327 lines 100 times, each shuffle run
 ## through the full pipeline (vcf2gwas LMM per chromosome with genome-wide
 ## kinship and 3 PCs, MAGMA snp-wise=mean, Westfall-Young B = 10000;
 ## catfish2/scripts/hpc/bap_perm). Three Westfall-Young versions:
@@ -12,13 +22,18 @@
 ## Also reads null_perm/perm_gene_z.tsv.gz (gene z of every shuffle),
 ## null_perm/nullcal_check/rmap.tsv (MAGMA r -> null r) and
 ## null_perm/snp_tail_by_maf.csv (SNP-level tail, counted on the server).
-## Writes ../figures/Fig20_sorghum_null.png and ../tex/auto/tab_sorghum_null.tex
+## Writes ../figures/Fig21_sorghum_dry_tons.png, ../figures/Fig20_sorghum_null.png
+##        and ../tex/auto/tab_sorghum_null.tex
 ## =============================================================================
 suppressPackageStartupMessages({ library(data.table); library(ggplot2); library(patchwork) })
 BASE <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/MAGCAT"))
 RES  <- Sys.getenv("RES_DIR", file.path(BASE, "catfish2/results/sorghum_bap"))
 FIG  <- Sys.getenv("FIG_DIR", file.path(BASE, "catfish2/figures"))
 TEX  <- Sys.getenv("TEX_AUTO", file.path(BASE, "catfish2/tex/auto"))
+TRAIT <- Sys.getenv("TRAIT", "Dry_tons_per_acre")
+PATHWAY_FILE <- Sys.getenv("PATHWAY_FILE",
+                  file.path(BASE, "inst/extdata/pathway/sorghumbicolorcyc_pathways.20230103.SORBI"))
+N_TOP <- 10L
 dir.create(FIG, showWarnings = FALSE, recursive = TRUE); dir.create(TEX, showWarnings = FALSE, recursive = TRUE)
 
 ## ---- plot_theme: verbatim from scripts/all_figs.R ---------------------------
@@ -103,9 +118,82 @@ pF <- ggplot(st, aes(maf_bin, ratio)) + geom_col(fill = "black", width = 0.7) +
   geom_hline(yintercept = 1, linetype = "dashed", colour = "grey30") +
   labs(x = "Minor allele frequency", y = expression(bold(Observed / expected ~ (p < 10^-4)))) + plot_theme
 
-p <- (pA | pB | pC) / (pD | pE | pF) +
+## the QQ plot (pA) is panel C of the main figure below; Fig20 holds the diagnostics
+p <- (pB | pC | pD) / (pE | pF | plot_spacer()) +
   plot_annotation(tag_levels = "A") & theme(plot.tag = element_text(size = 30, face = "bold")) & NOTITLE
 ggsave(file.path(FIG, "Fig20_sorghum_null.png"), p, width = 30, height = 18, dpi = 300, bg = "white")
+
+## =============================================================================
+## Main sorghum figure (dry biomass)
+## =============================================================================
+clean <- function(x) { x <- gsub("<[^>]+>", "", x); x <- gsub("&alpha;", "alpha", x, fixed = TRUE)
+                       x <- gsub("&beta;", "beta", x, fixed = TRUE); gsub("&[a-z]+;", "", x) }
+
+## ---- A: top pathways ------------------------------------------------------------
+wy <- fread(file.path(RES, sprintf("%s_P_SNPWISE_MEAN_5comp_westfall_young.csv", TRAIT)))
+wy <- wy[order(z_std)][seq_len(N_TOP)]
+wy[, lab := sprintf("%s (%d)", clean(pathway_name), n_genes)]
+wy[, lab := factor(lab, levels = rev(lab))]
+mA <- ggplot(wy, aes(-log10(p_calibrated), lab)) +
+  geom_col(fill = "black", width = 0.7) +
+  geom_vline(xintercept = -log10(0.05), linetype = "dashed", colour = "grey30") +
+  geom_text(aes(label = sprintf("FWER %.2f", p_fwer_std)), hjust = -0.1, size = 7) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.3))) +
+  labs(x = expression(bold(-log[10] ~ calibrated ~ italic(p))), y = NULL) + plot_theme +
+  theme(panel.grid.major.y = element_blank())
+
+## ---- B: top genes and their rank in each layer ----------------------------------
+## annotations as in 26_sorghum_results.R: SorghumBicolorCyc enzyme names, with
+## the one override for the WRKY gene that the database lists as a thioesterase
+ANNOT_OVERRIDE <- c(SORBI_3008G029200 = "WRKY transcription factor")
+pwf <- fread(PATHWAY_FILE, sep = "\t", quote = "", showProgress = FALSE)
+pwf <- pwf[nzchar(`Protein-name`)]
+enz <- pwf[, .(name = `Protein-name`[1]), by = `Gene-name`]
+annot <- function(id) {
+  a <- if (id %in% names(ANNOT_OVERRIDE)) ANNOT_OVERRIDE[[id]] else enz$name[match(id, enz$`Gene-name`)]
+  if (is.na(a) || !nzchar(a)) "" else clean(a)
+}
+gp <- fread(file.path(RES, sprintf("25_%s_gene_prioritize.csv", TRAIT)))
+gp <- gp[order(rank)][seq_len(N_TOP)]
+gp[, ann := vapply(gene, annot, "")]
+gp[, lab := sprintf("%d  %s%s", rank, sub("^SORBI_", "", gene), ifelse(nzchar(ann), paste0(" (", ann, ")"), ""))]
+gp[, lab := factor(lab, levels = rev(lab))]
+lay <- melt(gp[, .(lab, GWAS = gwas_rank, MAGMA = magma_rank, Pathway = pathway_rank)],
+            id.vars = "lab", variable.name = "layer", value.name = "r")
+lay <- lay[is.finite(r)]
+mB <- ggplot(lay, aes(r, lab)) +
+  geom_line(aes(group = lab), colour = "grey70", linewidth = 0.8) +
+  geom_point(aes(colour = layer, shape = layer), size = 6) +
+  scale_x_log10(limits = c(1, 10^ceiling(log10(max(lay$r)))), expand = expansion(mult = c(0.02, 0.05))) +
+  scale_colour_viridis_d(end = 0.85) +
+  labs(x = "Rank within layer (1 = strongest)", y = NULL) + plot_theme +
+  theme(panel.grid.major.y = element_blank())
+
+## ---- C: the permutation null -----------------------------------------------------
+lam1 <- function(p) { p <- p[is.finite(p) & p > 0 & p <= 1]; qchisq(median(p), 1, lower.tail = FALSE) / qchisq(0.5, 1) }
+two <- runs[names(runs) %in% c("nogc", "gc")]
+lab_run <- vapply(two, function(r) {
+  f <- per[run == r]; sprintf("%s: \u03bb %.2f, FWER %.2f", r, lam1(pw[run == r]$p_calibrated),
+                              mean(f$any_fwer_05)) }, "")
+qc <- qq[run %in% two][, run := factor(lab_run[match(as.character(run), two)], levels = lab_run)]
+mC <- ggplot(qc, aes(exp, obs, colour = run)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", colour = "grey30") +
+  geom_line(linewidth = 1.5) + scale_colour_manual(values = setNames(c("black", "grey60"), lab_run)) +
+  guides(colour = guide_legend(ncol = 1)) +
+  labs(x = expression(bold(Expected ~ -log[10](p))), y = expression(bold(Observed ~ -log[10](p)))) +
+  plot_theme
+
+fw2 <- fw[run %in% two]
+mD <- ggplot(fw2, aes(run, fwer, colour = run)) +
+  geom_hline(yintercept = 0.05, linetype = "dashed", colour = "grey30") +
+  geom_pointrange(aes(ymin = lo, ymax = hi), linewidth = 1.5, size = 1.4, show.legend = FALSE) +
+  scale_colour_manual(values = setNames(c("black", "grey60"), two)) +
+  scale_y_continuous(limits = c(0, NA)) +
+  labs(x = NULL, y = "Family-wise error") + plot_theme
+
+m <- (mA | mB) / (free(mC) | mD) + plot_layout(heights = c(1, 1)) +
+  plot_annotation(tag_levels = "A") & theme(plot.tag = element_text(size = 30, face = "bold")) & NOTITLE
+ggsave(file.path(FIG, "Fig21_sorghum_dry_tons.png"), m, width = 32, height = 20, dpi = 300, bg = "white")
 
 ## ---- table --------------------------------------------------------------------
 lam <- function(p) { p <- p[is.finite(p) & p > 0 & p <= 1]; qchisq(median(p), 1, lower.tail = FALSE) / qchisq(0.5, 1) }
@@ -125,4 +213,5 @@ lines <- c("\\begin{tabular}{l" , paste(rep("c", nrow(tab)), collapse = ""), "}"
 lines <- c(paste0(lines[1], lines[2], lines[3]), lines[-(1:3)])
 writeLines(lines, file.path(TEX, "tab_sorghum_null.tex"))
 print(tab)
-cat("wrote", file.path(FIG, "Fig20_sorghum_null.png"), "and", file.path(TEX, "tab_sorghum_null.tex"), "\n")
+cat("wrote", file.path(FIG, "Fig21_sorghum_dry_tons.png"), file.path(FIG, "Fig20_sorghum_null.png"),
+    "and", file.path(TEX, "tab_sorghum_null.tex"), "\n")
