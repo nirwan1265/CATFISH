@@ -188,6 +188,17 @@
       message(sprintf("    %d/%d (%.0f%%)", b, B, 100 * b / B))
   }
 
+  rd <- .wy_read_null(obs_log, null_mat, minp_null)
+  list(obs_log = obs_log, z_std = rd$z_std, p_cal = rd$p_cal,
+       p_fwer_wy_std = rd$p_fwer_std, p_fwer_wy = rd$p_fwer,
+       minp_null = minp_null, null_mat = null_mat, chol = ch)
+}
+
+## Both readings of a B x K null matrix of pathway log p-values: each pathway's
+## own column (calibrated p) and the family minimum in each replicate
+## (Westfall--Young), on the standardised and on the raw scale.
+.wy_read_null <- function(obs_log, null_mat, minp_null) {
+  B <- nrow(null_mat); NP <- ncol(null_mat)
   ## per-pathway standardisation against each pathway's own null, so the
   ## family minimum compares pathways of different size on a common scale
   mu  <- colMeans(null_mat)
@@ -208,10 +219,48 @@
     v <- null_mat[, k]; v <- v[is.finite(v)]
     (1 + sum(v <= obs_log[k])) / (length(v) + 1)
   }, numeric(1))
+  list(z_std = z_obs, p_fwer_std = p_fwer_std, p_fwer = p_fwer, p_cal = p_cal)
+}
 
-  list(obs_log = obs_log, z_std = z_obs, p_cal = p_cal,
-       p_fwer_wy_std = p_fwer_std, p_fwer_wy = p_fwer,
-       minp_null = minp_null, null_mat = null_mat, chol = ch)
+## Competitive null by circular genomic permutation. Genes are laid out in
+## genome order and, in each replicate, every gene takes the observed score of
+## the gene s places further along (wrapping at the end), for one random shift s
+## shared by all pathways. A pathway's genes therefore keep their spacing, so
+## neighbouring genes in LD stay together, while their scores come from a random
+## place in the genome. The question is whether the pathway's genes score higher
+## than genes elsewhere in the same GWAS: genome-wide polygenic signal is in the
+## null as well as in the observed statistic. Shifts are drawn without
+## replacement, so at most (number of genes - 1) replicates exist.
+.wy_competitive <- function(gene_lp, ord, paths, obs_log, B, use_tfisher, tau_grid,
+                            seed, verbose) {
+  NG <- length(gene_lp); NP <- length(paths)
+  if (NG < 3L) stop("the competitive test needs at least 3 genes.", call. = FALSE)
+  B_eff <- min(as.integer(B), NG - 1L)
+  if (isTRUE(verbose)) {
+    message(sprintf("[WY competitive] circular genomic shift: %d replicates over %d genes",
+                    B_eff, NG))
+    if (B_eff < B)
+      message(sprintf("[WY competitive] only %d distinct shifts exist; B reduced from %d",
+                      B_eff, B))
+  }
+  lp_ord <- gene_lp[ord]                       # scores in genome order
+  pos <- integer(NG); pos[ord] <- seq_len(NG)  # genome position of each gene
+  if (!is.null(seed)) set.seed(seed + 1L)      # a different stream from the MVN null
+  shifts <- sample.int(NG - 1L, B_eff)
+  minp_null <- numeric(B_eff)
+  null_mat  <- matrix(NA_real_, nrow = B_eff, ncol = NP)
+  at <- max(1L, B_eff %/% 20L)
+  for (b in seq_len(B_eff)) {
+    lpn <- lp_ord[((pos - 1L + shifts[b]) %% NG) + 1L]
+    st <- vapply(paths, function(ii)
+      .wy_omni_log(lpn[ii], use_tfisher, tau_grid), numeric(1))
+    minp_null[b] <- min(st, na.rm = TRUE)
+    null_mat[b, ] <- st
+    if (isTRUE(verbose) && b %% at == 0L)
+      message(sprintf("    %d/%d (%.0f%%)", b, B_eff, 100 * b / B_eff))
+  }
+  rd <- .wy_read_null(obs_log, null_mat, minp_null)
+  c(rd, list(B = B_eff, minp_null = minp_null))
 }
 
 ## Read a gene-pair correlation table (gene1 gene2 r) from a file or data.frame.
@@ -315,6 +364,23 @@
 #' for gene results that do not cover the whole genome, for gene \eqn{p}-values
 #' already corrected in another way, or to reproduce uncentred results.
 #'
+#' \strong{Competitive test.} The test above is self-contained: it asks whether
+#' a pathway carries any association. With \code{competitive = TRUE} a second,
+#' competitive test asks whether the pathway's genes are more associated than
+#' genes elsewhere in the same GWAS. It uses the same omnibus statistic and the
+#' same two readings (calibrated and Westfall--Young family-wise), with a
+#' different null: genes are put in genome order (\code{chr_col}, then
+#' \code{pos_col}) and in each replicate every gene takes the observed score of
+#' the gene a random number of places further along the genome, wrapping at the
+#' end, with one shift shared by all pathways (circular genomic permutation). A
+#' pathway's genes keep their spacing, so genes in LD with each other stay
+#' together, and genome-wide polygenic signal is present in the null as well
+#' as in the observed statistic. It uses the gene \eqn{p}-values the
+#' self-contained test uses (after genomic control when \code{gc = TRUE}). There
+#' are at most (number of genes \eqn{-} 1) distinct shifts, which caps the
+#' number of replicates and the resolution of the competitive \eqn{p}-values.
+#' The null does not match genes on size or SNP count.
+#'
 #' @param gene_results data.frame of gene-level results (e.g. MAGMA
 #'   \code{.genes.out}), with columns for gene ID, \eqn{p}-value and chromosome.
 #' @param pathways Named list of gene-ID vectors, or a data.frame with
@@ -340,6 +406,14 @@
 #' @param seed Random seed for the null draws (\code{NULL} leaves it unset).
 #' @param gc Gene-level genomic control: centre the gene \eqn{z}-scores at their
 #'   median before testing (default \code{TRUE}). See Details.
+#' @param competitive Also run the competitive test (default \code{FALSE}).
+#'   See Details.
+#' @param pos_col Column of \code{gene_results} with the gene position (e.g.
+#'   MAGMA \code{START}), used to put genes in genome order for the competitive
+#'   test. If \code{NULL}, genes are taken in the order supplied within each
+#'   chromosome, and a message says so.
+#' @param B_comp Replicates of the competitive null (default \code{B}); at most
+#'   the number of genes minus one.
 #' @param verbose Print progress.
 #' @param output If \code{TRUE}, write a CSV to \code{out_dir}.
 #' @param out_dir Output directory when \code{output = TRUE}.
@@ -362,10 +436,13 @@
 #'   \item{p_calibrated}{Per-pathway calibrated \eqn{p}-value}
 #'   \item{gc_shift}{Median gene \eqn{z}-score removed by genomic control
 #'     (the same for every row; 0 when \code{gc = FALSE})}
+#'   \item{z_std_comp, p_fwer_comp, p_calibrated_comp}{With
+#'     \code{competitive = TRUE}: the standardised statistic, family-wise
+#'     \eqn{p}-value and calibrated \eqn{p}-value of the competitive test}
 #' }
 #' Attributes \code{wy_threshold_05}, \code{B}, \code{tau_grid},
 #' \code{gc_shift} and \code{median_gene_z} (the median gene \eqn{z} before
-#' any centring) are attached.
+#' any centring) are attached, and \code{B_comp} with \code{competitive = TRUE}.
 #'
 #' @examples
 #' ## Toy GWAS: 300 genes on 3 chromosomes, neighbouring genes correlated
@@ -416,12 +493,16 @@ catfish_wy_pathways <- function(gene_results,
                                 max_genes    = 200L,
                                 seed         = 20260706L,
                                 gc           = TRUE,
+                                competitive  = FALSE,
+                                pos_col      = NULL,
+                                B_comp       = B,
                                 verbose      = TRUE,
                                 output       = FALSE,
                                 out_dir      = "catfish_wy") {
   if (!is.data.frame(gene_results)) stop("gene_results must be a data.frame.", call. = FALSE)
-  for (cl in c(gene_col, p_col, chr_col))
+  for (cl in c(gene_col, p_col, chr_col, pos_col))
     if (!cl %in% names(gene_results)) stop("gene_results is missing column: ", cl, call. = FALSE)
+  force(B_comp)
   if (!is.null(pathways) && !is.null(species))
     stop("Provide either 'pathways' OR 'species', not both.", call. = FALSE)
   if (is.null(pathways) && is.null(species))
@@ -450,9 +531,11 @@ catfish_wy_pathways <- function(gene_results,
   }
   gid <- tolower(trimws(as.character(g[[gene_col]])))[keep]
   chr <- as.character(g[[chr_col]])[keep]
+  pos <- if (is.null(pos_col)) seq_along(gid) else
+    suppressWarnings(as.numeric(g[[pos_col]]))[keep]
   P   <- P[keep]
   first <- !duplicated(gid)
-  gid <- gid[first]; chr <- chr[first]; P <- P[first]
+  gid <- gid[first]; chr <- chr[first]; P <- P[first]; pos <- pos[first]
   gcr     <- .catfish_gc(log(pmin(pmax(P, 1e-320), 1)), apply = gc)
   gene_lp <- gcr$lp
   idx_of  <- stats::setNames(seq_along(gid), gid)
@@ -486,6 +569,20 @@ catfish_wy_pathways <- function(gene_results,
   eng <- .wy_engine(gid, gene_lp, chr, paths, cp, B, use_tfisher, tau_grid,
                     seed, verbose)
 
+  ## ---- competitive test (circular genomic permutation)
+  comp <- NULL
+  if (isTRUE(competitive)) {
+    if (is.null(pos_col) && isTRUE(verbose))
+      message("[WY competitive] pos_col not given: genes taken in the order supplied within each chromosome")
+    if (!is.null(pos_col) && any(!is.finite(pos)))
+      warning(sprintf("%d genes have no position in '%s' and are placed at the end of their chromosome.",
+                      sum(!is.finite(pos)), pos_col), call. = FALSE)
+    chr_num <- suppressWarnings(as.numeric(chr))
+    ord <- order(is.na(chr_num), chr_num, chr, pos, seq_along(gid), na.last = TRUE)
+    comp <- .wy_competitive(gene_lp, ord, paths, eng$obs_log, B_comp, use_tfisher,
+                            tau_grid, seed, verbose)
+  }
+
   res <- data.frame(
     pathway_id      = names(paths),
     pathway_name    = unname(as.character(pw$p_names[names(paths)])),
@@ -500,6 +597,11 @@ catfish_wy_pathways <- function(gene_results,
     gc_shift        = gcr$shift,
     stringsAsFactors = FALSE
   )
+  if (!is.null(comp)) {
+    res$z_std_comp        <- comp$z_std
+    res$p_fwer_comp       <- comp$p_fwer_std
+    res$p_calibrated_comp <- comp$p_cal
+  }
   res <- res[order(res$z_std), , drop = FALSE]
   rownames(res) <- NULL
   attr(res, "wy_threshold_05") <- exp(stats::quantile(eng$minp_null, 0.05, names = FALSE))
@@ -507,6 +609,7 @@ catfish_wy_pathways <- function(gene_results,
   attr(res, "tau_grid") <- tau_grid
   attr(res, "gc_shift") <- gcr$shift
   attr(res, "median_gene_z") <- gcr$median_z
+  if (!is.null(comp)) attr(res, "B_comp") <- comp$B
 
   if (isTRUE(output)) {
     if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)

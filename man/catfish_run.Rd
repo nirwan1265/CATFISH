@@ -32,6 +32,7 @@ catfish_run(
   max_genes = 200L,
   seed = 20260706L,
   gc = TRUE,
+  competitive = FALSE,
   components = TRUE,
   prioritize = TRUE,
   targets = NULL,
@@ -116,6 +117,10 @@ present (a \code{multi=snp-wise} run), otherwise \code{P}.}
 
 \item{gc}{Gene-level genomic control (default \code{TRUE}); passed to
 \code{\link{catfish_wy_pathways}} and the component tests.}
+
+\item{competitive}{Also run the competitive test of
+\code{\link{catfish_wy_pathways}} (circular genomic permutation, genes in
+the order of MAGMA's \code{CHR} and \code{START}); default \code{FALSE}.}
 
 \item{components}{Add the five analytic component \eqn{p}-values to the
 pathway table.}

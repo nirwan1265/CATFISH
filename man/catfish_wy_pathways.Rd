@@ -22,6 +22,9 @@ catfish_wy_pathways(
   max_genes = 200L,
   seed = 20260706L,
   gc = TRUE,
+  competitive = FALSE,
+  pos_col = NULL,
+  B_comp = B,
   verbose = TRUE,
   output = FALSE,
   out_dir = "catfish_wy"
@@ -67,6 +70,17 @@ in \code{gene_results}.}
 \item{gc}{Gene-level genomic control: centre the gene \eqn{z}-scores at their
 median before testing (default \code{TRUE}). See Details.}
 
+\item{competitive}{Also run the competitive test (default \code{FALSE}).
+See Details.}
+
+\item{pos_col}{Column of \code{gene_results} with the gene position (e.g.
+MAGMA \code{START}), used to put genes in genome order for the competitive
+test. If \code{NULL}, genes are taken in the order supplied within each
+chromosome, and a message says so.}
+
+\item{B_comp}{Replicates of the competitive null (default \code{B}); at most
+the number of genes minus one.}
+
 \item{verbose}{Print progress.}
 
 \item{output}{If \code{TRUE}, write a CSV to \code{out_dir}.}
@@ -92,10 +106,13 @@ comparison}
 \item{p_calibrated}{Per-pathway calibrated \eqn{p}-value}
 \item{gc_shift}{Median gene \eqn{z}-score removed by genomic control
 (the same for every row; 0 when \code{gc = FALSE})}
+\item{z_std_comp, p_fwer_comp, p_calibrated_comp}{With
+\code{competitive = TRUE}: the standardised statistic, family-wise
+\eqn{p}-value and calibrated \eqn{p}-value of the competitive test}
 }
 Attributes \code{wy_threshold_05}, \code{B}, \code{tau_grid},
 \code{gc_shift} and \code{median_gene_z} (the median gene \eqn{z} before
-any centring) are attached.
+any centring) are attached, and \code{B_comp} with \code{competitive = TRUE}.
 }
 \description{
 Scores every pathway with the CATFISH omnibus (ACAT across ACAT, Fisher,
@@ -139,6 +156,23 @@ which is closer to a competitive test; a note is printed when the median gene
 \eqn{z} exceeds 0.5. Set \code{gc = FALSE} for the strict self-contained test,
 for gene results that do not cover the whole genome, for gene \eqn{p}-values
 already corrected in another way, or to reproduce uncentred results.
+
+\strong{Competitive test.} The test above is self-contained: it asks whether
+a pathway carries any association. With \code{competitive = TRUE} a second,
+competitive test asks whether the pathway's genes are more associated than
+genes elsewhere in the same GWAS. It uses the same omnibus statistic and the
+same two readings (calibrated and Westfall--Young family-wise), with a
+different null: genes are put in genome order (\code{chr_col}, then
+\code{pos_col}) and in each replicate every gene takes the observed score of
+the gene a random number of places further along the genome, wrapping at the
+end, with one shift shared by all pathways (circular genomic permutation). A
+pathway's genes keep their spacing, so genes in LD with each other stay
+together, and genome-wide polygenic signal is present in the null as well
+as in the observed statistic. It uses the gene \eqn{p}-values the
+self-contained test uses (after genomic control when \code{gc = TRUE}). There
+are at most (number of genes \eqn{-} 1) distinct shifts, which caps the
+number of replicates and the resolution of the competitive \eqn{p}-values.
+The null does not match genes on size or SNP count.
 }
 \examples{
 ## Toy GWAS: 300 genes on 3 chromosomes, neighbouring genes correlated

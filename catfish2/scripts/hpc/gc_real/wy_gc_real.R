@@ -11,15 +11,29 @@
 ##            per-chromosome multi=snp-wise run, SorghumBicolorCyc (SORBI), 5-200
 ## all: catfish_wy_pathways(), B = 10000, 5 components, tau {0.01, 0.05, 0.5},
 ## seed 20260706. GC=0 reruns without centring (reproduces the original files).
+## DEV_WY=<file> uses the catfish_wy_pathways() in that file (see below).
+## COMP=1 also runs the competitive test (circular genomic permutation, genes in
+## CHR/START order, B_comp = B) and writes to out_comp/ (out_comp_noGC/ with GC=0).
 ##   Rscript wy_gc_real.R <analysis>    e.g. ldl_eur, hdl_afr, Dry_tons_per_acre
 ## Reads/writes under GC_ROOT (default: this folder's parent of inputs/, out/).
 ## =============================================================================
 suppressPackageStartupMessages(library(CATFISH))
+## DEV_WY=<path to a westfall_young.R> runs that file's catfish_wy_pathways()
+## on top of the installed package, to test a change before reinstalling
+DEV <- Sys.getenv("DEV_WY", "")
+if (nzchar(DEV)) {
+  dev_env <- new.env(parent = asNamespace("CATFISH"))
+  sys.source(DEV, envir = dev_env)
+  catfish_wy_pathways <- dev_env$catfish_wy_pathways
+  cat("using catfish_wy_pathways() from", DEV, "\n")
+}
 A    <- commandArgs(trailingOnly = TRUE)[1]
 ROOT <- Sys.getenv("GC_ROOT", "/share/maize/ntanduk/CATFISH/gc_real")
 GC   <- Sys.getenv("GC", "1") == "1"
+COMP <- Sys.getenv("COMP", "0") == "1"
 B    <- as.integer(Sys.getenv("WY_B", "10000"))
-IN   <- file.path(ROOT, "inputs"); OUT <- file.path(ROOT, if (GC) "out" else "out_noGC")
+IN   <- file.path(ROOT, "inputs")
+OUT  <- file.path(ROOT, paste0(if (COMP) "out_comp" else "out", if (GC) "" else "_noGC"))
 dir.create(OUT, recursive = TRUE, showWarnings = FALSE)
 SEED <- 20260706L; TAU <- c(0.01, 0.05, 0.5)
 sorghum <- A %in% c("Dry_tons_per_acre", "Lignin_DM_perc")
@@ -64,7 +78,8 @@ t0 <- Sys.time()
 res <- catfish_wy_pathways(g, pathways = pw, gene_col = "GENE", p_col = P_USE, chr_col = "CHR",
                            z_col = if (sorghum) NULL else "ZSTAT", cor_file = cor_file, B = B,
                            use_tfisher = TRUE, tau_grid = TAU, min_genes = MIN, max_genes = 200L,
-                           seed = SEED, verbose = FALSE)
+                           seed = SEED, verbose = FALSE,
+                           competitive = COMP, pos_col = if (COMP) "START" else NULL)
 if (!is.null(pw_name)) res$pathway_name <- unname(pw_name[res$pathway_id])
 res$gc_shift <- shift
 write.csv(res, file.path(OUT, out_name), row.names = FALSE)

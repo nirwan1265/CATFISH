@@ -77,6 +77,9 @@
 #' @param seed Seed for the null draws.
 #' @param gc Gene-level genomic control (default \code{TRUE}); passed to
 #'   \code{\link{catfish_wy_pathways}} and the component tests.
+#' @param competitive Also run the competitive test of
+#'   \code{\link{catfish_wy_pathways}} (circular genomic permutation, genes in
+#'   the order of MAGMA's \code{CHR} and \code{START}); default \code{FALSE}.
 #' @param components Add the five analytic component \eqn{p}-values to the
 #'   pathway table.
 #' @param prioritize Rank candidate genes.
@@ -166,6 +169,7 @@ catfish_run <- function(gwas_file      = NULL,
                         max_genes      = 200L,
                         seed           = 20260706L,
                         gc             = TRUE,
+                        competitive    = FALSE,
                         components     = TRUE,
                         prioritize     = TRUE,
                         targets        = NULL,
@@ -269,7 +273,9 @@ catfish_run <- function(gwas_file      = NULL,
                             p_col = p_col, chr_col = "CHR", cor_file = cor_file,
                             B = B, use_tfisher = use_tfisher, tau_grid = tau_grid,
                             min_genes = min_genes, max_genes = max_genes,
-                            seed = seed, gc = gc, verbose = verbose)
+                            seed = seed, gc = gc, competitive = competitive,
+                            pos_col = if ("START" %in% names(genes)) "START" else NULL,
+                            verbose = verbose)
 
   ## ---- 5. component tests -------------------------------------------------
   if (isTRUE(components)) {
@@ -325,6 +331,9 @@ catfish_run <- function(gwas_file      = NULL,
   if (isTRUE(verbose)) {
     message(sprintf("\nCATFISH: %d pathways tested; %d with Westfall-Young FWER <= 0.05",
                     nrow(wy), sum(wy$p_fwer_std <= 0.05, na.rm = TRUE)))
+    if (isTRUE(competitive))
+      message(sprintf("CATFISH: %d with competitive FWER <= 0.05",
+                      sum(wy$p_fwer_comp <= 0.05, na.rm = TRUE)))
     message("  ", paste(unlist(files), collapse = "\n  "))
   }
   list(pathways = wy, candidates = cand, genes = genes, pathway_sets = pw,
@@ -332,7 +341,8 @@ catfish_run <- function(gwas_file      = NULL,
                          if (run_magma) gene_model else NA_character_,
                        B = B, tau_grid = tau_grid, use_tfisher = use_tfisher,
                        min_genes = min_genes, max_genes = max_genes, seed = seed,
-                       gc = gc, gc_shift = attr(wy, "gc_shift")),
+                       gc = gc, gc_shift = attr(wy, "gc_shift"),
+                       competitive = competitive),
        files = files)
 }
 

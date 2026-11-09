@@ -210,3 +210,74 @@ test_that("omni2 applies the same genomic control", {
   expect_equal(attr(om0, "gc_shift"), 0)
   expect_equal(attr(om0, "median_gene_z"), attr(om, "gc_shift"))
 })
+
+test_that("competitive = FALSE leaves the output unchanged", {
+  skip_if_not_installed("TFisher")
+  m <- wy_mock()
+  run <- function(...) suppressMessages(catfish_wy_pathways(
+    m$g, pathways = m$pw, cor_pairs = m$cp, B = 100, min_genes = 10, seed = 3,
+    verbose = FALSE, ...))
+  r0 <- run(); r1 <- run(competitive = TRUE, B_comp = 50)
+  expect_false(any(c("z_std_comp", "p_fwer_comp", "p_calibrated_comp") %in% names(r0)))
+  expect_null(attr(r0, "B_comp"))
+  ## the self-contained columns do not depend on the competitive run
+  cols <- setdiff(names(r0), "pathway_name")
+  expect_equal(r1[, cols], r0[, cols])
+})
+
+test_that("competitive test: valid p-values, replicates capped at genes - 1", {
+  skip_if_not_installed("TFisher")
+  m <- wy_mock()
+  m$g$START <- ave(seq_len(nrow(m$g)), m$g$CHR, FUN = seq_along) * 1000
+  r <- suppressMessages(catfish_wy_pathways(
+    m$g, pathways = m$pw, cor_pairs = m$cp, B = 100, min_genes = 10, seed = 3,
+    competitive = TRUE, pos_col = "START", B_comp = 5000, verbose = FALSE))
+  ng <- sum(is.finite(m$g$P) & !duplicated(m$g$GENE))
+  expect_equal(attr(r, "B_comp"), ng - 1L)
+  for (cl in c("p_fwer_comp", "p_calibrated_comp")) {
+    expect_true(all(r[[cl]] > 0 & r[[cl]] <= 1, na.rm = TRUE))
+    expect_true(all(r[[cl]] >= 1 / ng))
+  }
+  ## family-wise p is never below the pathway's own calibrated p
+  expect_true(all(r$p_fwer_comp >= r$p_calibrated_comp - 1e-12))
+  expect_error(catfish_wy_pathways(m$g, pathways = m$pw, cor_pairs = m$cp, B = 10,
+                                   competitive = TRUE, pos_col = "NOPE"),
+               "missing column")
+})
+
+test_that("competitive test ignores a genome-wide shift that the self-contained test reads as signal", {
+  skip_if_not_installed("TFisher")
+  set.seed(11)
+  NG <- 600
+  g <- data.frame(GENE = paste0("g", 1:NG), CHR = rep(1:3, each = NG / 3),
+                  START = rep(seq_len(NG / 3), 3) * 1000)
+  z <- rnorm(NG) + 1                       # every gene shifted: polygenic background
+  z[1:12] <- z[1:12] + 4                   # one real pathway on top of it
+  g$P <- pnorm(z, lower.tail = FALSE)
+  pw <- c(list(REAL = g$GENE[seq(1, 12)]),
+          setNames(lapply(1:40, function(i) sample(g$GENE[-(1:12)], 12)), paste0("RND", 1:40)))
+  r <- suppressWarnings(suppressMessages(catfish_wy_pathways(
+    g, pathways = pw, B = 300, min_genes = 10, seed = 5, gc = FALSE,
+    competitive = TRUE, pos_col = "START", B_comp = 300, verbose = FALSE)))
+  rnd <- r[r$pathway_id != "REAL", ]
+  ## self-contained, uncentred: the shift makes random pathways significant
+  expect_gt(mean(rnd$p_fwer_std <= 0.05), 0.5)
+  ## competitive: random pathways are null, the real one is found
+  expect_lte(mean(rnd$p_calibrated_comp <= 0.05), 0.15)
+  expect_lte(r$p_fwer_comp[r$pathway_id == "REAL"], 0.05)
+})
+
+test_that("circular shift keeps a pathway's genes together", {
+  ## a pathway of adjacent genes gets, in every replicate, a block of adjacent
+  ## scores from somewhere else in the genome
+  lp <- log(seq(0.01, 0.99, length.out = 50))
+  ord <- c(26:50, 1:25)                     # genome order differs from input order
+  paths <- list(A = 30:34)
+  pos <- integer(50); pos[ord] <- seq_len(50)
+  lp_ord <- lp[ord]
+  for (s in c(1L, 7L, 49L)) {
+    lpn <- lp_ord[((pos - 1L + s) %% 50) + 1L]
+    got <- match(lpn[paths$A], lp_ord)
+    expect_true(all(diff(got) == 1L | diff(got) == -49L))
+  }
+})
