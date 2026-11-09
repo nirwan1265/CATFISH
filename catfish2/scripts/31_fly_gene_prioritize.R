@@ -23,7 +23,7 @@
 ##        ../results/dgrp/31_established_genes.csv         (all traits)
 ## =============================================================================
 suppressPackageStartupMessages({ library(CATFISH); library(data.table) })
-BASE      <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/MAGCAT"))
+BASE      <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/CATFISH"))
 MAGMA_DIR <- Sys.getenv("MAGMA_DIR", file.path(BASE, "dgrp_bw_tg/magma"))
 GWAS_DIR  <- Sys.getenv("GWAS_DIR",  file.path(BASE, "dgrp_bw_tg/gwas/output"))
 PHENO_TSV <- Sys.getenv("PHENO_TSV", file.path(BASE, "dgrp_bw_tg/geno/pheno.tsv"))

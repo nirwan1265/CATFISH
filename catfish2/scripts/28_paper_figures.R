@@ -25,7 +25,7 @@ suppressPackageStartupMessages({
   library(ggplot2); library(patchwork); library(data.table)
 })
 
-BASE    <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/MAGCAT"))
+BASE    <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/CATFISH"))
 DATA_D  <- Sys.getenv("CATFISH_DATA", path.expand("~/Documents/Github/MAGCAT_data"))
 RES     <- Sys.getenv("RES_DIR", file.path(BASE, "catfish2/results"))
 FIG     <- Sys.getenv("FIG_DIR", file.path(BASE, "catfish2/figures"))

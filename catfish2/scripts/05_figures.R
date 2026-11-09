@@ -328,7 +328,7 @@ if (file.exists(LDLWY)) {
 ## disagreement, panel B shows which genes drive the shared pathway in each
 ## trait, panel C shows the pathway-level agreement at the top.
 DATA_D <- Sys.getenv("CATFISH_DATA", path.expand("~/Documents/Github/MAGCAT_data"))
-HUM    <- Sys.getenv("HUMAN_RES", path.expand("~/Documents/Github/MAGCAT/results/human_LDL"))
+HUM    <- Sys.getenv("HUMAN_RES", path.expand("~/Documents/Github/CATFISH/results/human_LDL"))
 f_ldl  <- file.path(HUM, "magma/ldl_eur.genes.out")
 f_hdl  <- file.path(HUM, "magma_hdl/hdl_eur.genes.out")
 f_wl   <- file.path(HUM, "catfish/ldl_eur_reactome_5comp_westfall_young.csv")

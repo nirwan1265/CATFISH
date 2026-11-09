@@ -45,7 +45,7 @@ TAU_GRID    <- c(0.01, 0.05, 0.5)             # same grid as 18
 TRAIT      <- Sys.getenv("TRAIT", "Dry_tons_per_acre")
 MAGMA_ROOT <- Sys.getenv("MAGMA_ROOT",
                 path.expand("~/Documents/Research/results/CATFISH/MAGMA"))
-BASE       <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/MAGCAT"))
+BASE       <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/CATFISH"))
 PATHWAY_FILE <- Sys.getenv("PATHWAY_FILE",
                   file.path(BASE, "inst/extdata/pathway/sorghumbicolorcyc_pathways.20230103.SORBI"))
 ## pathway size window: the same as the maize (PMN) branch of 18

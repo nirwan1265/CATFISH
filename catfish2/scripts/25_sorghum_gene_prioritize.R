@@ -29,7 +29,7 @@
 suppressPackageStartupMessages({ library(CATFISH); library(data.table) })
 
 MAGMA_ROOT <- Sys.getenv("MAGMA_ROOT", path.expand("~/Documents/Research/results/CATFISH/MAGMA"))
-BASE       <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/MAGCAT"))
+BASE       <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/CATFISH"))
 PATHWAY_FILE <- Sys.getenv("PATHWAY_FILE",
                   file.path(BASE, "inst/extdata/pathway/sorghumbicolorcyc_pathways.20230103.SORBI"))
 RES_DIR    <- Sys.getenv("RES_DIR", "../results/sorghum_bap")

@@ -17,7 +17,7 @@
 ##   size_*     Spearman correlation of pathway evidence with pathway size
 ## =============================================================================
 suppressPackageStartupMessages(library(data.table))
-BASE <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/MAGCAT"))
+BASE <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/CATFISH"))
 MG <- Sys.getenv("MAGMA_GSA_DIR", file.path(BASE, "catfish2/results/magma_gsa"))
 CF <- Sys.getenv("LIPID_WY_DIR", file.path(BASE, "results/human_LDL/catfish"))
 TEX <- Sys.getenv("TEX_AUTO", file.path(BASE, "catfish2/tex/auto"))

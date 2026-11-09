@@ -26,7 +26,7 @@
 ##        ../figures/Supp_sorghum_pcol_qq.png
 ## =============================================================================
 MAGMA_ROOT <- Sys.getenv("MAGMA_ROOT", path.expand("~/Documents/Research/results/CATFISH/MAGMA"))
-BASE       <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/MAGCAT"))
+BASE       <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/CATFISH"))
 LIPID_ROOT <- Sys.getenv("LIPID_ROOT", file.path(BASE, "results/human_LDL"))
 OUT_DIR    <- Sys.getenv("OUT_DIR", "../results/sorghum_bap")
 FIG_DIR    <- Sys.getenv("FIG_DIR", "../figures")

@@ -55,7 +55,7 @@ SPECIES     <- if (length(args) >= 3) args[[3]] else "human"
 SEED        <- 20260706
 MAX_GENES   <- 200L
 
-BASE   <- path.expand("~/Documents/Github/MAGCAT")
+BASE   <- path.expand("~/Documents/Github/CATFISH")
 DATA_D <- path.expand("~/Documents/Github/MAGCAT_data")
 RES    <- path.expand("~/Documents/Research/results/MAGMA/MAGCAT")
 

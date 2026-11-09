@@ -30,7 +30,7 @@ if (!ROUTE %in% c("wy", "omni2", "both")) stop("route must be wy, omni2 or both"
 SEED      <- 20260706
 MIN_GENES <- 10L
 MAX_GENES <- 200L
-BASE   <- path.expand("~/Documents/Github/MAGCAT")
+BASE   <- path.expand("~/Documents/Github/CATFISH")
 DATA_D <- path.expand("~/Documents/Github/MAGCAT_data")
 TRAIT  <- tolower(Sys.getenv("TRAIT", "ldl"))
 MDIR <- if (TRAIT == "ldl") file.path(BASE, "results/human_LDL/magma") else

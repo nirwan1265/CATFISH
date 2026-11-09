@@ -15,9 +15,9 @@
 # =============================================================================
 suppressPackageStartupMessages({ library(CATFISH) })
 
-MAGMA_DIR <- path.expand("~/Documents/Github/MAGCAT/results/human_LDL/magma")
+MAGMA_DIR <- path.expand("~/Documents/Github/CATFISH/results/human_LDL/magma")
 DATA_DIR  <- path.expand("~/Documents/Github/MAGCAT_data")
-OUT_DIR   <- path.expand("~/Documents/Github/MAGCAT/results/human_LDL/catfish")
+OUT_DIR   <- path.expand("~/Documents/Github/CATFISH/results/human_LDL/catfish")
 
 GENES_RAW <- file.path(MAGMA_DIR, "ldl_eur.genes.raw")
 GENES_OUT <- file.path(MAGMA_DIR, "ldl_eur.genes.out")

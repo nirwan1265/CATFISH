@@ -7,7 +7,7 @@
 set -euo pipefail
 
 LOCAL_DATA="$HOME/Documents/Github/MAGCAT_data"
-LOCAL_REPO="$HOME/Documents/Github/MAGCAT"
+LOCAL_REPO="$HOME/Documents/Github/CATFISH"
 
 SERVER="${SERVER:-ntanduk@login.hpc.ncsu.edu}"          # <-- set your login
 REMOTE="${REMOTE:-/share/maize/ntanduk/CATFISH}"

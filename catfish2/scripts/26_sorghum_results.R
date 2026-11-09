@@ -22,7 +22,7 @@
 suppressPackageStartupMessages(library(data.table))
 
 MAGMA_ROOT <- Sys.getenv("MAGMA_ROOT", path.expand("~/Documents/Research/results/CATFISH/MAGMA"))
-BASE       <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/MAGCAT"))
+BASE       <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/CATFISH"))
 LIPID_ROOT <- Sys.getenv("LIPID_ROOT", file.path(BASE, "results/human_LDL"))
 RES_DIR    <- Sys.getenv("RES_DIR", "../results/sorghum_bap")
 TEX_DIR    <- Sys.getenv("TEX_DIR", "../tex/auto")

@@ -21,7 +21,7 @@
 ## =============================================================================
 suppressPackageStartupMessages({ library(data.table) })
 
-BASE <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/MAGCAT"))
+BASE <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/CATFISH"))
 RES  <- Sys.getenv("CATFISH_RESULTS",
                    path.expand("~/Documents/Research/results/MAGMA/MAGCAT"))
 MD   <- file.path(RES, "magma_multi_snp_wise_genes_by_chr_N_maize")

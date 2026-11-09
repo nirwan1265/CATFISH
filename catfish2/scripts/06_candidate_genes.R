@@ -33,7 +33,7 @@ if (!SPECIES %in% c("maize", "human"))
 ## only the summary statistics and the WY result differ.
 TRAIT <- tolower(Sys.getenv("TRAIT", if (SPECIES == "human") "ldl" else SPECIES))
 TAG   <- if (SPECIES == "human") TRAIT else SPECIES
-BASE <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/MAGCAT"))
+BASE <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/CATFISH"))
 DATA_D <- Sys.getenv("CATFISH_DATA", path.expand("~/Documents/Github/MAGCAT_data"))
 RES  <- Sys.getenv("CATFISH_RESULTS",
                    path.expand("~/Documents/Research/results/MAGMA/MAGCAT"))

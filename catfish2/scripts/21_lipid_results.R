@@ -21,7 +21,7 @@
 ##   ../tex/auto/lipids.tex                   \renewcommand numbers for the text
 ## =============================================================================
 
-BASE   <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/MAGCAT"))
+BASE   <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/CATFISH"))
 RES    <- "../results"
 FIG    <- "../figures"
 AUT    <- "../tex/auto"

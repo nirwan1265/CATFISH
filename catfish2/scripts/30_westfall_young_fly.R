@@ -29,7 +29,7 @@ TAU_GRID    <- c(0.01, 0.05, 0.5)             # same grid as 18 and 23
 P_COL       <- "P"                            # SNP-wise mean: the only model run
 
 TRAIT <- Sys.getenv("TRAIT", "BW_control_female")
-BASE  <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/MAGCAT"))
+BASE  <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/CATFISH"))
 MAGMA_DIR    <- Sys.getenv("MAGMA_DIR", file.path(BASE, "dgrp_bw_tg/magma"))
 PATHWAY_FILE <- Sys.getenv("PATHWAY_FILE",
                   file.path(BASE, "inst/extdata/pathway/dme_reactome_all_levels.tsv"))

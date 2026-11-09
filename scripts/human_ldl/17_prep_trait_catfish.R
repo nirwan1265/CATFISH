@@ -16,7 +16,7 @@ suppressPackageStartupMessages({ library(CATFISH) })
 
 TRAIT <- tolower(Sys.getenv("TRAIT", "hdl"))
 ANC   <- tolower(Sys.getenv("ANC", "eur"))
-BASE  <- path.expand(Sys.getenv("CATFISH_BASE", "~/Documents/Github/MAGCAT"))
+BASE  <- path.expand(Sys.getenv("CATFISH_BASE", "~/Documents/Github/CATFISH"))
 MDIR  <- Sys.getenv("MAGMA_DIR",
                     file.path(BASE, "results/human_LDL",
                               if (ANC == "eur") paste0("magma_", TRAIT) else paste0("magma_", TRAIT, "_", ANC)))

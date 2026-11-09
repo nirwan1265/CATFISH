@@ -26,7 +26,7 @@
 ##        and ../tex/auto/tab_sorghum_null.tex
 ## =============================================================================
 suppressPackageStartupMessages({ library(data.table); library(ggplot2); library(patchwork) })
-BASE <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/MAGCAT"))
+BASE <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/CATFISH"))
 RES  <- Sys.getenv("RES_DIR", file.path(BASE, "catfish2/results/sorghum_bap"))
 FIG  <- Sys.getenv("FIG_DIR", file.path(BASE, "catfish2/figures"))
 TEX  <- Sys.getenv("TEX_AUTO", file.path(BASE, "catfish2/tex/auto"))

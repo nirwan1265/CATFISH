@@ -34,6 +34,7 @@ old_files/
 
 # ---- data and results: kept off GitHub (Overleaf sync limits; >25 MB rule) --
 catfish2/results/
+/results/
 catfish2/data/
 catfish2/logs/
 *.bed

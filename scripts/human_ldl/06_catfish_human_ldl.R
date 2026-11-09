@@ -24,7 +24,7 @@ if (!requireNamespace("evir", quietly = TRUE))
 ## R/pathway_loaders_generic.R but may not be in the INSTALLED package yet.
 ## Source them directly if missing, so this runs without a reinstall.
 if (!exists("catfish_load_gmt")) {
-  .gen <- path.expand("~/Documents/Github/MAGCAT/R/pathway_loaders_generic.R")
+  .gen <- path.expand("~/Documents/Github/CATFISH/R/pathway_loaders_generic.R")
   if (file.exists(.gen)) {
     source(.gen)
     message("sourced generic loaders from ", .gen)
@@ -35,9 +35,9 @@ if (!exists("catfish_load_gmt")) {
   }
 }
 
-MAGMA_DIR <- path.expand("~/Documents/Github/MAGCAT/results/human_LDL/magma")
+MAGMA_DIR <- path.expand("~/Documents/Github/CATFISH/results/human_LDL/magma")
 DATA_DIR  <- path.expand("~/Documents/Github/MAGCAT_data")
-OUT_DIR   <- path.expand("~/Documents/Github/MAGCAT/results/human_LDL/catfish")
+OUT_DIR   <- path.expand("~/Documents/Github/CATFISH/results/human_LDL/catfish")
 dir.create(OUT_DIR, recursive = TRUE, showWarnings = FALSE)
 
 GENES_OUT <- file.path(MAGMA_DIR, "ldl_eur.genes.out")
