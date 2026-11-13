@@ -34,7 +34,7 @@ mkdir -p "${ROOT}/inputs/lipids" "${ROOT}/inputs/sorghum" "${OUT}/magma_dry_mean
 ## installed under usrapps; every job activates this env and adds the C++ libs
 export PASCALX_ENV=/usr/local/usrapps/maize/ntanduk/pascalx
 export PASCALX_DIR=/usr/local/usrapps/maize/ntanduk/PascalX
-export PLINK="${PLINK:-plink}"                     # PLINK 1.9, used once to write the reference panels as .tped
+export PLINK="${HPC_TOOLS}/plink"                     # PLINK 1.9, used once to write the reference panels as .tped
 export LIPID_ROOT=/share/maize/ntanduk/CATFISH       # g1000_<panel> PLINK panels and lipids/<ta>.magma.pval, as in 14_magma_trait_LSF.sh
 export GENE_LOC_37="${LIPID_ROOT}/NCBI37.3.gene.loc" # the gene locations MAGMA used for the lipids
 export PASCALX_REF="${ROOT}/inputs/pascalx_ref"      # g1000_<panel>.chr<N>.tped.gz and PascalX's imported .db files

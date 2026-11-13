@@ -435,6 +435,30 @@ Steps~3 and~4 use the same matrix $Q$ and require no additional resampling. Thei
 \paragraph{Size standardisation.}
 A minimum across tests is meaningful only when the tests share a scale. The raw omnibus does not: Fisher’s statistic increases with $m$, so the Step~4 family minimum would mechanically favor the largest sets. We therefore also report a variant that first standardizes each observed value within its own column of $Q$ as a $z$-score, $z_k=(q^{\mathrm{obs}}_k-\mu_k)/\sigma_k$, where $\mu_k$ and $\sigma_k$ are that column’s mean and standard deviation, and then takes the row minimum. This rescales values for the minimum operation; it is not a pathway-size bias correction, and Section~4.1 shows it does not behave as one. In the simulations of Section~2.6 every pathway in a configuration has the same size and dependence structure, so the pathways are exchangeable, share one marginal null, and the row minimum is taken on the raw scale; standardisation is needed only when pathway sizes differ, as in real data. We standardise by location and scale rather than by each pathway's empirical null distribution function. The latter would put pathways on an exactly common scale, but would resolve each to only $1/(B+1)$, which is coarser than the family minimum requires and would reintroduce ties.
 
+\paragraph{Competitive test.}
+The Westfall--Young test above is self-contained: its null hypothesis is that no
+gene in the pathway is associated with the trait. CATFISH also tests the
+competitive hypothesis that the genes of a pathway are no more associated than
+genes elsewhere in the same GWAS. The omnibus statistic and both readings of the
+null matrix (each pathway's calibrated $p$-value and the family-wise
+$p$-value from the minimum of the standardised statistics) are unchanged; only
+the null replicates differ. Genes are placed in genome order (chromosome, then
+start position) and joined end to end. In each replicate every gene takes the
+observed score of the gene $s$ places further along this order, wrapping at the
+end, for one random shift $s$ shared by all pathways, and every pathway is
+rescored. A pathway's genes therefore keep their spacing, so genes in linkage
+disequilibrium with one another move together, while their scores come from a
+random position in the genome; the genome-wide distribution of gene scores,
+including any polygenic signal, is present in the null as well as in the
+observed statistic. Because one shift is applied to all pathways, overlap
+between pathways is preserved within each replicate and the minimum over
+pathways gives strong family-wise control. Shifts are drawn without replacement,
+so at most $G-1$ replicates exist for $G$ genes. The null does not match genes
+on size or SNP count. A pathway is called by both tests when
+$\max(p_{\mathrm{FWER}}^{\mathrm{self}}, p_{\mathrm{FWER}}^{\mathrm{comp}})\le\alpha$,
+an intersection--union test that controls the family-wise error of the joint
+claim at $\alpha$ without further correction \citep{Berger1982}.
+
 \subsection*{2.4 Numerical implementation in log space}
 
 The omnibus statistic must be computed entirely in log space. This is a correctness requirement, not an optimisation, and it prevents silent failure.
@@ -487,6 +511,55 @@ Unless stated otherwise, each configuration uses $B$ null draws for the
 calibration bank and a separate set of replicate datasets for evaluation, with
 both values set at the top of each script so that a reduced smoke-test
 configuration can be run with \texttt{bash run\_all.sh quick}.
+
+\paragraph{Simulation with known truth on real linkage disequilibrium.}
+We compared CATFISH with MAGMA's gene-set analysis on GWAS summary statistics
+simulated on real linkage disequilibrium
+(\texttt{scripts/hpc/simulation\_check\_catfish}), so that both methods analysed
+the same SNP statistics and the same MAGMA gene scores. Genotypes were taken
+from a reference panel of $n$ individuals, restricted to a subset of
+chromosomes and of SNPs, and standardised to $X$ ($n\times M$). For
+$u=e/\sqrt{n}$ with $e\sim\mathcal{N}(0,I_n)$, the SNP statistics $z=X^\top u$
+have exactly the panel's correlation matrix as their covariance. Signal was
+added at causal SNPs: each causal SNP $k$ was given an expected statistic
+$\lambda_k$ of random sign, which was carried to every SNP $j$ within 1~Mb as
+$r_{jk}\lambda_k$, with $r_{jk}$ the panel correlation; spreading signal only
+through local LD avoids the chance correlations between unlinked SNPs in a
+finite panel, which would otherwise inflate every SNP. Each causal gene received
+one causal SNP chosen at random among the SNPs assigned to it. Two null
+scenarios were simulated: no causal SNPs, and a polygenic background in which a
+fixed proportion of all genes carried one causal SNP of modest effect, with no
+pathway favoured. In the remaining scenarios one target pathway carried signal
+on top of that background, following the five archetypes of
+Table~\ref{tab:archetype_summary}: a proportion of its genes was made causal,
+with $|\lambda|$ equal to the archetype's effect $\delta$ times a common effect
+scale. Background genes were drawn from outside the target pathway. Target
+pathways of three sizes were fixed in advance and chosen among pathways
+unrelated to the trait being mimicked. Each replicate was analysed with MAGMA's
+gene analysis (SNP-wise mean model), then with CATFISH (self-contained,
+competitive and both) and with MAGMA's gene-set analysis (competitive, and
+self-contained with \texttt{--model self-contained}). CATFISH calls used the
+Westfall--Young family-wise $p\le0.05$; MAGMA calls used Bonferroni,
+$p\le0.05/K$ over the $K$ pathways tested. Power was the proportion of
+replicates in which the target pathway was called. An error was a call of a
+pathway none of whose genes lies within 1~Mb of a target causal SNP; without a
+target pathway every call is an error. The family-wise error is the proportion
+of replicates with at least one error. In the polygenic background the
+self-contained tests are expected to call pathways that contain background
+genes, which are truly associated, so there the error is read for the
+competitive tests and for the joint call only.
+
+The simulation used the 1000 Genomes EUR panel of the lipid analyses (503
+individuals), chromosomes 1--10 and HapMap3 SNPs with minor allele frequency
+$\ge0.01$ in the panel (748,822 SNPs). Genes were annotated with MAGMA's
+$\pm10$~kb windows, giving 9,645 genes, and the Reactome sets were restricted to
+these genes, leaving $K=1{,}021$ pathways of 10--200 genes. The background made
+2\% of genes causal with $|\lambda|=3$. The effect scale was 3, chosen in a pilot
+(effect scales 2, 4 and 6) as the value at which detection was neither absent
+nor saturated. The target pathways had 13, 36 and 97 genes. Each of the 17
+scenario--size combinations had 50 replicates (850 in all). CATFISH used
+$B=2{,}000$ null replicates for each test, the five components with
+$\tau\in\{0.01,0.05,0.5\}$ and gene-level genomic control.
 
 \subsection*{2.7 Real-data analyses}
 
@@ -2216,8 +2289,9 @@ remodeling and clearance first in all ten sets, MAGMA's self-contained test in
 six, and second in the other four. In the non-European sets CATFISH declared
 more pathways significant ($93$--$592$ against $35$--$469$). Real data cannot
 show whether that difference is power or false positives; the permutation null
-of Section~3.8 measures the error rates of CATFISH, and the same comparison for
-MAGMA remains to be made.
+of Section~3.8 measures the error rates of CATFISH, and the simulation of
+Section~3.10 compares the error rates of both methods on statistics with known
+truth.
 
 MAGMA's competitive test does not saturate. It declared between $2$ and $12$
 pathways significant in every set, $5$ (LDL-C) and $12$ (HDL-C) in the European
@@ -2232,6 +2306,64 @@ was moderate (Spearman $0.30$--$0.52$), as expected of tests that ask different
 questions.
 
 \maybeinput{auto/tab_magma_compare.tex}
+
+\subsection*{3.10 On simulated statistics with known truth, CATFISH controls the family-wise error where MAGMA's self-contained test does not, and is more powerful when few genes carry the signal}
+
+With no signal, CATFISH's self-contained test made no false call in 50
+replicates, against 8 of 50 for MAGMA's self-contained test (family-wise error
+0.16, 95\% CI 0.07--0.29; Figure~\ref{fig:sim_compare}A,
+Table~\ref{tab:sim_compare}). Both competitive tests were at 0.06, and the
+joint call at 0.00. In the polygenic background, where no pathway is enriched
+but many contain associated genes, the competitive tests should still call
+nothing: CATFISH's competitive test and the joint call erred in 4 of 50
+replicates (0.08, 95\% CI 0.02--0.19) and MAGMA's competitive test in none.
+
+For the self-contained question, CATFISH was more powerful than MAGMA whenever
+a few genes carried strong signal (Figure~\ref{fig:sim_compare}B). For a small
+target pathway with strong sparse signal (SSS), CATFISH found it in 98\% of
+replicates and MAGMA in 34\%; with a single strongly associated gene (SGP),
+CATFISH found it in 92--100\% across the three pathway sizes and MAGMA in 0\%,
+18\% and 78\%. For moderate dense (MDS) and mixed (MSA) signal the two were
+equivalent, and for weak diffuse signal (WDE) MAGMA was slightly more powerful
+at the medium size (76\% against 68\%).
+
+For the competitive question the same pattern held
+(Figure~\ref{fig:sim_compare}C). With strong sparse signal CATFISH called the
+target in 66\%, 76\% and 100\% of replicates for small, medium and large
+pathways, and MAGMA in 4\%, 12\% and 36\%. For moderate dense, weak diffuse and
+mixed signal the two were close, MAGMA ahead for small pathways (MDS 36\%
+against 20\%; MSA 50\% against 42\%). Neither competitive test called a pathway
+driven by a single gene in more than 4\% of replicates, as expected: one
+associated gene does not make a pathway stand out from the rest of the genome,
+which is the case the self-contained test is there for. The joint call matched
+the competitive test in every scenario with signal, while removing the
+competitive test's false calls when there was none.
+
+\begin{figure*}[!t]
+\centering
+\maybefig{Fig22_simulation_catfish_magma.png}{\textwidth}{CATFISH and MAGMA's
+gene-set analysis on GWAS statistics simulated on real linkage disequilibrium
+(50 replicates per setting; points, bars and intervals: proportion and exact
+95\% binomial interval). \textbf{A}~Family-wise error with no pathway enriched:
+no signal (all tests) and a polygenic background only (competitive tests and
+the joint call); the dashed line is $0.05$. \textbf{B}~Power of the
+self-contained tests to call the enriched pathway, by signal architecture and
+pathway size. \textbf{C}~Power of the competitive tests. SSS, strong sparse
+signal; MDS, moderate dense signal; WDE, weak diffuse enrichment; MSA, mixed
+signal architecture; SGP, single-gene proxy.}{fig:sim_compare}
+\end{figure*}
+
+\begin{table*}[!t]
+\centering
+\caption{Family-wise error and power of CATFISH and MAGMA in the simulation
+(50 replicates per row). CATFISH: Westfall--Young family-wise $p\le0.05$;
+MAGMA: Bonferroni over $1{,}021$ pathways. Both: called by CATFISH's
+self-contained and competitive tests.}
+\label{tab:sim_compare}
+\small
+\IfFileExists{auto/tab_simulation_compare.tex}{\input{auto/tab_simulation_compare.tex}}%
+{\textcolor{red}{\textbf{Table pending:} \texttt{auto/tab\_simulation\_compare.tex}}}
+\end{table*}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{4 Discussion}
@@ -2585,11 +2717,11 @@ this and determine the omnibus ordering there; a log-scale implementation of
 the soft-thresholding tail would remove the limitation.
 
 \textbf{The comparison with other methods is partial.} We compared CATFISH with
-MAGMA's gene-set analysis on the lipid data (Section~3.9). That comparison is on
-real data, where no pathway is known to be null, so it speaks to ranking and
-saturation but not to calibration. Running MAGMA, and other gene-set methods
-such as Pascal \citep{Lamparter2016}, on the sorghum permutation null would
-compare false-positive rates directly; that is in progress.
+MAGMA's gene-set analysis on the lipid data (Section~3.9), where no pathway is
+known to be null, and on simulated statistics with known truth
+(Section~3.10), which measure calibration and power. The simulation used one
+linkage-disequilibrium panel, ten chromosomes and five signal architectures, and
+other gene-set methods were not included.
 
 \textbf{Incomplete cross-species replication.} The Westfall--Young analysis was
 run on maize, sorghum and human data. The sorghum stem-volume dataset used in the
