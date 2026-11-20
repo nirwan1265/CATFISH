@@ -46,6 +46,8 @@
 \IfFileExists{auto/lipids.tex}{\input{auto/lipids.tex}}{}
 \input{auto/sorghum_stub.tex}
 \IfFileExists{auto/sorghum.tex}{\input{auto/sorghum.tex}}{}
+\input{auto/bap_chr4_stub.tex}
+\IfFileExists{auto/bap_chr4.tex}{\input{auto/bap_chr4.tex}}{}
 
 %% \maybefig{file}{width}{caption}{label} -- draws the figure if the PNG has
 %% been generated, otherwise a visible reminder box, so the manuscript
@@ -483,6 +485,20 @@ $r_{\mathrm{MAGMA}}$ its rank by gene-level $p$-value, and $r_{\mathrm{PATH}}$ t
 
 We use ranks instead of $-\log_{10}p$ to make layers with different tail behaviour comparable and to avoid the $p$-value floors in Section~2.4. Pathway evidence is halved because the pathway $p$-value is a set-level statistic shared across member genes; the hub term is intentionally secondary. We fixed the weights \emph{a priori} and assessed them afterwards over a grid, $w_{\mathrm{path}}\in\{0,0.25,0.5,0.75,1\}$ and $w_{\mathrm{hub}}\in\{0,0.1,\dots,0.5\}$, in a truth-planted simulation and in the real analyses of Section~3.9 (Supplementary Figure~\ref{fig:weights}). The simulation draws $400$ replicate datasets of $500$ genes and $50$ pathways, plants causal genes concentrated in five pathways, and generates correlated GWAS-, MAGMA- and pathway-level evidence for them \citep{Tandukar2025Thesis}. Rankings were stable across the grid: the Spearman correlation of each full ranking with the default ranking was at least $0.986$, and the top twenty genes overlapped the default top twenty by at least $88\%$. Recovery of planted causal genes in the top twenty rose steadily with the pathway weight, from $0.71$ to $0.85$, and was $0.80$ at the defaults, so the defaults are not the optimum of that simulation. They are a deliberately conservative middle value: the pathway layer is set-level evidence shared by every member gene and, in curated databases, partly encodes prior knowledge, so it should not outweigh direct genetic evidence. We did not re-tune the weights on the validation genes of Section~3.9.
 
+\emph{Where the gain comes from.} Two checks separate the contribution of the
+pathway layer from that of the association layers. First, genes are ranked with
+the pathway weight set to zero, so the score reduces to the GWAS and MAGMA
+layers. Second, a gene's own association contributes to the evidence of every
+pathway that contains it, so a gene could be raised by its own signal passing
+through its pathway. The pathway evidence of each positive-control gene is
+therefore recomputed with that gene left out: for each tested pathway $P$
+containing gene $g$, $P$ and $P$ without $g$ are scored in one Westfall--Young
+run on the same null draws, the change in $z_k$ is added to $P$'s statistic from
+the full analysis, the strongest of these becomes $g$'s pathway evidence, and
+its pathway rank, score and overall rank are recomputed with every other gene
+unchanged (\texttt{wy\_logo.R}, \texttt{39\_logo\_recovery.R}). If the gene
+keeps its rank, its lift comes from the other genes of its pathways.
+
 The score is a heuristic ranking metric, not an inferential model: it has no null distribution or $p$-value. We also report per-layer ranks, because the GWAS and MAGMA layers use the same variants and are not independent evidence.
 
 \subsection*{2.6 Simulation design}
@@ -537,9 +553,14 @@ scale. Background genes were drawn from outside the target pathway. Target
 pathways of three sizes were fixed in advance and chosen among pathways
 unrelated to the trait being mimicked. Each replicate was analysed with MAGMA's
 gene analysis (SNP-wise mean model), then with CATFISH (self-contained,
-competitive and both) and with MAGMA's gene-set analysis (competitive, and
-self-contained with \texttt{--model self-contained}). CATFISH calls used the
-Westfall--Young family-wise $p\le0.05$; MAGMA calls used Bonferroni,
+competitive and both), with MAGMA's gene-set analysis (competitive, and
+self-contained with \texttt{--model self-contained}), and with a two-stage ACAT
+test \citep{Liu2019ACATV,Liu2020ACAT}: the $p$-values of the SNPs assigned to
+each gene were combined by the Cauchy combination into a gene $p$-value, and the
+gene $p$-values of each pathway into a pathway $p$-value, with equal weights.
+ACAT is self-contained and, because the Cauchy combination is valid under
+dependence in the tail, needs no correction for LD. CATFISH calls used the
+Westfall--Young family-wise $p\le0.05$; MAGMA and ACAT calls used Bonferroni,
 $p\le0.05/K$ over the $K$ pathways tested. Power was the proportion of
 replicates in which the target pathway was called. An error was a call of a
 pathway none of whose genes lies within 1~Mb of a target causal SNP; without a
@@ -691,8 +712,43 @@ $p$-values should therefore be uniform, and a permutation with any pathway at a
 family-wise $p$-value of $0.05$ or less should occur in at most $5\%$ of
 permutations.
 
+\textbf{Sorghum stem composition.} To ask whether the gene score points to new
+biology, and not only whether the procedure is calibrated, we analysed three
+stem-composition traits of the same panel \citep{Brenton2016}: Brix at
+physiological maturity, the soluble solids of the stem juice ($\nBapNBrix$
+genotyped lines with a value), and two fractions of dry matter, neutral
+detergent fibre (NDF; cellulose, hemicellulose and lignin) and non-fibre
+carbohydrate (NFC; mainly sugars and starch), with $\nBapNNDF$ and
+$\nBapNNFC$ lines. Each trait was tested with the univariate linear mixed model
+of GEMMA \citep{Zhou2012GEMMA} (Wald test), run through vcf2gwas v0.8.9
+\citep{Vogt2022vcf2gwas} on the panel's genotypes ($\nBapNlines$ lines), with
+the centred relatedness matrix from all chromosomes, the first three genotype
+principal components as covariates and variants with minor allele frequency
+$\ge0.05$. Gene analysis, pathways, Westfall--Young calibration (self-contained
+and competitive), genomic control and the gene score were as for dry biomass:
+MAGMA SNP-wise mean per chromosome with the same $25\,\mathrm{kb}$ windows and
+correlation structure, SorghumBicolorCyc pathways of $5$--$200$ genes,
+$B=10{,}000$ and the same seed (\texttt{hpc/bap\_gwas/01}--\texttt{04}). Genes
+were ranked by the gene score in each trait, and we looked for genes ranked
+among the top $100$ in all three. Gene ranks are reported among all genes and,
+as for dry biomass, among the genes with evidence in all three layers.
+
+\emph{The chromosome~4 locus.} For the locus the three traits share
+(Section~3.12), the strongest variant of each trait between $63.85$ and
+$64.10\,\mathrm{Mb}$ was taken as its lead variant, and linkage disequilibrium
+between lead variants ($r^2$) was computed from the panel's genotypes with
+PLINK~1.9 \citep{Chang2015PLINK}. Allele effects at the Brix lead variant
+were taken from each trait's mixed model and expressed in units of the trait's
+standard deviation. To ask whether the allele's effect on fibre follows from
+the correlation between sugar and fibre, NDF was regressed on the allele count
+across lines with and without Brix as a covariate. This regression ignores
+relatedness and is descriptive; the association itself rests on the mixed
+model. The analysis is in \texttt{hpc/bap\_gwas/05\_chr4\_locus\_LSF.sh},
+\texttt{43\_bap\_chr4\_locus.R} and \texttt{44\_bap\_chr4\_numbers.R}.
+
 \textbf{Gene-level genomic control.} In all real analyses (the ten lipid
-trait--ancestry sets and sorghum dry biomass), gene $p$-values were centred
+trait--ancestry sets, sorghum dry biomass and the three stem-composition
+traits), gene $p$-values were centred
 before the pathway test. Each gene $p$-value was converted to a $z$-score,
 $z_g=\Phi^{-1}(1-p_g)$, computed from $\log p_g$ so that values below
 $10^{-300}$ keep their order (Section~2.4); the median over all genes of the
@@ -709,8 +765,42 @@ associated, and centring removes part of the real polygenic signal: the test
 then asks whether a pathway's genes are more associated than the median gene of
 the genome, which moves it towards the competitive question (Section~4.2). The
 shift $\hat\delta$ was $0.15$--$0.33$ in the eight non-European lipid sets,
-$1.38$ (LDL-C) and $1.77$ (HDL-C) in the European ones, and $0.13$ for sorghum
-dry biomass.
+$1.38$ (LDL-C) and $1.77$ (HDL-C) in the European ones, $0.13$ for sorghum
+dry biomass, and $\nBapGCBrix$, $\nBapGCNDF$ and $\nBapGCNFC$ for Brix, NDF and NFC.
+
+\textbf{Competitive test and the gene score.} In every real analysis the
+competitive test of Section~2.3 was run alongside the self-contained test, on
+the same centred gene $p$-values and pathways, with $B=10{,}000$ circular shifts
+(\texttt{wy\_gc\_real.R} with \texttt{COMP=1}). To see whether the choice of
+test matters for the candidate genes, the gene score of Section~2.5 was
+recomputed with the pathway layer ranked on the competitive standardised
+statistic $z_k^{\mathrm{comp}}$, and on the joint statistic
+$\max(z_k, z_k^{\mathrm{comp}})$, the weaker of the two, instead of $z_k$; the
+other layers, the weights and the pathway sets were unchanged
+(\texttt{36\_prioritize\_comp.R}). Recovery of the positive controls was
+compared across the three versions (\texttt{37\_prioritize\_comp\_recovery.R}).
+
+\textbf{Comparison with PoPS.} We compared the gene score with the polygenic
+priority score (PoPS v0.2) \citep{Weeks2023PoPS} in the European LDL-C and
+HDL-C data. PoPS was run with its default settings (ridge regression on its
+public set of gene features, MAGMA covariates and error covariance, feature
+selection at $p<0.05$, HLA region removed) on MAGMA gene statistics computed as
+above (same reference panel, $\pm10$~kb window and SNP-wise mean model) but with
+the Ensembl gene annotation that PoPS requires ($18{,}383$ protein-coding genes).
+Known genes were the Open Targets Genetics gold-standard genes of each trait
+\citep{Mountjoy2021L2G}, from the 2019 and 2023 releases (LDL-C: LDL cholesterol
+measurement and hypercholesterolaemia; HDL-C: HDL cholesterol measurement), $15$
+for LDL-C and $18$ for HDL-C, curated independently of this study. The genes
+scored by both methods ($17{,}736$; CATFISH genes matched to Ensembl IDs by
+unique symbol) were ranked by each method (PoPS score, CATFISH score, best SNP
+$p$-value of the gene and MAGMA gene $p$-value), and we counted the known genes
+among each method's top $10$, $20$, $50$, $100$ and $200$ genes, which is how a
+ranking is used to choose genes for functional follow-up. We also scored the
+methods at single loci: for each gold-standard lead variant the candidates were
+the genes with a transcription start site within $500$~kb, and the locus counted
+as solved when a method's top candidate was the gold-standard gene
+(\texttt{40\_gold\_standard\_lipids.py}, \texttt{41\_benchmark\_genes.R},
+\texttt{42\_benchmark\_topk.R}).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{3 Results}
@@ -1344,13 +1434,53 @@ Replication occurs at the locus level, with the pathway layer selecting the gene
 The pathway layer resolves this tie. GWAS cannot distinguish genes that share a lead variant, but curated pathway membership often can: \textit{APOE} and \textit{CETP} are in the leading pathway, whereas \textit{TOMM40}, \textit{PVRL2}, \textit{HERPUD1}, \textit{NLRC5} and \textit{SLC12A3} are not. Accordingly, \textit{APOE} ranks above \textit{TOMM40} in all five groups and above \textit{PVRL2} in four; \textit{CETP} ranks above \textit{HERPUD1} and \textit{SLC12A3} in all groups and above \textit{NLRC5} in four. This relies on the pathway layer ranking pathways by the calibrated statistic $z_{\mathrm{std}}$ (Section~2.5).
  The approach has limits: genes tied across all three layers cannot be separated (e.g., \textit{APOC1} shares both lead variant and pathway with \textit{APOE} and ranks just behind it), and the layers are complementary rather than individually reliable (e.g., \textit{CETP} has the strongest variant in all groups but MAGMA rank $3$--$72$, while \textit{APOB} is MAGMA first in South Asians and $185$th in Europeans).
 
-This result does not show the score recovers lipid biology: the “established” genes come from the same literature as curated pathways, so prior knowledge appears on both sides. It does show the score can resolve loci left ambiguous by GWAS by using prior knowledge to distinguish genes that association data rank equally. Practically, in replicated loci the combined score usually ranks the known trait gene first, aiding studies with limited validation, but identifying a causal gene still needs evidence not captured by the score (e.g., expression colocalisation or fine-mapping; Section~4.3).
+The gain over the association layers comes from the pathway layer, and not
+from each gene's own signal passing through its pathway
+(Table~\ref{tab:logo_recovery}). Ranked by the GWAS and MAGMA layers together,
+without pathway evidence, the established genes had median ranks of
+$8.5$--$267$ across the ten sets, in six sets no better than the GWAS layer
+alone; the full score placed them at $7$--$85$ and put more of them in the top
+20 in every set. With each established gene's pathway evidence recomputed
+without that gene (Section~2.5), the median rank changed little ($7.5$--$102$),
+and the number in the top 20 was unchanged or one lower in nine sets and two
+lower for LDL-C in Europeans. In $97$ of the $125$ gene--set pairs the gene
+still ranked higher than without pathway evidence. The genes that lost most
+were those with weak association of their own, such as \textit{LDLRAP1} in East
+Asians (rank $1{,}059$ with its own signal in the pathway, $1{,}300$ without it,
+and $6{,}352$ without pathway evidence), which is how the layer is meant to work:
+the other genes of an enriched pathway raise a gene whose own evidence is
+modest.
+
+Against PoPS, the gene score placed more of the independently curated
+gold-standard genes near the top of the genome-wide ranking
+(Table~\ref{tab:pops_topk}). For LDL-C, CATFISH ranked $4$, $6$, $9$ and $10$
+of the $15$ gold-standard genes within its top $10$, $20$, $50$ and $100$ genes,
+against $3$, $5$, $6$ and $7$ for PoPS, with a median rank of $37$ against
+$133$; for HDL-C it ranked $5$, $6$, $10$ and $12$ of $18$, against $3$, $5$,
+$10$ and $10$, with a median rank of $38.5$ against $40$. CATFISH matched or
+exceeded the GWAS and MAGMA rankings at every cutoff. PoPS's leading genes
+included broadly connected genes with no specific role in lipid metabolism
+(\textit{TP53}, \textit{UBC}, \textit{FN1}, \textit{RELA}), whereas CATFISH's
+included neighbouring genes of the same locus (\textit{PVRL2}, \textit{APOC1}
+and \textit{TOMM40} beside \textit{APOE}). When the known genes of any lipid
+trait were counted, the two methods were close ($10$ and $11$ in the top $20$
+for LDL-C, $11$ each for HDL-C): CATFISH's advantage lies in ranking the genes
+of the trait analysed. At single loci, PoPS more often chose the gold-standard
+gene among the genes near the lead variant ($24$ against $20$ of $29$ loci),
+mostly where CATFISH ranked it second. With $15$ and $18$ gold-standard genes
+these differences are modest, and the gold-standard genes are lipid genes that
+also lie in the Reactome lipoprotein pathways used by CATFISH's pathway layer
+and among PoPS's features.
+
+This result does not show the score recovers lipid biology: the “established” genes come from the same literature as curated pathways, so prior knowledge appears on both sides. Leaving each gene out of its pathways removes its own signal from the pathway layer, but not this shared prior knowledge. It does show the score can resolve loci left ambiguous by GWAS by using prior knowledge to distinguish genes that association data rank equally. Practically, in replicated loci the combined score usually ranks the known trait gene first, aiding studies with limited validation, but identifying a causal gene still needs evidence not captured by the score (e.g., expression colocalisation or fine-mapping; Section~4.3).
 
 CATFISH also reproduces the same top pathway and the same loci across two related phenotypes and five populations, despite up to 32-fold sample-size differences and differing linkage disequilibrium, using inputs with no overlapping individuals.
 
 \maybeinput{auto/tab_lipid_pathways.tex}
 \maybeinput{auto/tab_lipid_candidates.tex}
 \maybeinput{auto/tab_lipid_recovery.tex}
+\maybeinput{auto/tab_logo_recovery.tex}
+\maybeinput{auto/tab_pops_topk.tex}
 \maybeinput{auto/tab_replication_genes.tex}
 
 \begin{table}[!t]
@@ -2312,8 +2442,8 @@ questions.
 With no signal, CATFISH's self-contained test made no false call in 50
 replicates, against 8 of 50 for MAGMA's self-contained test (family-wise error
 0.16, 95\% CI 0.07--0.29; Figure~\ref{fig:sim_compare}A,
-Table~\ref{tab:sim_compare}). Both competitive tests were at 0.06, and the
-joint call at 0.00. In the polygenic background, where no pathway is enriched
+Table~\ref{tab:sim_compare}); the two-stage ACAT test erred in 1 of 50
+(0.02). Both competitive tests were at 0.06, and the joint call at 0.00. In the polygenic background, where no pathway is enriched
 but many contain associated genes, the competitive tests should still call
 nothing: CATFISH's competitive test and the joint call erred in 4 of 50
 replicates (0.08, 95\% CI 0.02--0.19) and MAGMA's competitive test in none.
@@ -2325,7 +2455,16 @@ replicates and MAGMA in 34\%; with a single strongly associated gene (SGP),
 CATFISH found it in 92--100\% across the three pathway sizes and MAGMA in 0\%,
 18\% and 78\%. For moderate dense (MDS) and mixed (MSA) signal the two were
 equivalent, and for weak diffuse signal (WDE) MAGMA was slightly more powerful
-at the medium size (76\% against 68\%).
+at the medium size (76\% against 68\%). The two-stage ACAT test, whose
+combined $p$-value is dominated by the smallest gene $p$-values, matched or exceeded
+CATFISH when one or a few genes carried the signal (SSS and SGP: 100\% at every
+size), but lost most of its power when the signal was spread over many genes:
+for weak diffuse signal it found the target in $2$--$28\%$ of replicates,
+against $12$--$100\%$ for CATFISH, and for moderate dense signal in small and
+medium pathways in $36\%$ and $58\%$, against $78\%$ and $100\%$. This is
+the pattern of the archetype simulation (Section~3.3): a single component is
+best for the architecture it targets and poor for the others, while the
+calibrated omnibus stays close to the best test throughout.
 
 For the competitive question the same pattern held
 (Figure~\ref{fig:sim_compare}C). With strong sparse signal CATFISH called the
@@ -2346,9 +2485,8 @@ gene-set analysis on GWAS statistics simulated on real linkage disequilibrium
 (50 replicates per setting; points, bars and intervals: proportion and exact
 95\% binomial interval). \textbf{A}~Family-wise error with no pathway enriched:
 no signal (all tests) and a polygenic background only (competitive tests and
-the joint call); the dashed line is $0.05$. \textbf{B}~Power of the
-self-contained tests to call the enriched pathway, by signal architecture and
-pathway size. \textbf{C}~Power of the competitive tests. SSS, strong sparse
+the joint call); the dashed line is $0.05$. \textbf{B}~Power of the self-contained tests (CATFISH, MAGMA and two-stage
+ACAT) to call the enriched pathway, by signal architecture and pathway size. \textbf{C}~Power of the competitive tests. SSS, strong sparse
 signal; MDS, moderate dense signal; WDE, weak diffuse enrichment; MSA, mixed
 signal architecture; SGP, single-gene proxy.}{fig:sim_compare}
 \end{figure*}
@@ -2357,13 +2495,212 @@ signal architecture; SGP, single-gene proxy.}{fig:sim_compare}
 \centering
 \caption{Family-wise error and power of CATFISH and MAGMA in the simulation
 (50 replicates per row). CATFISH: Westfall--Young family-wise $p\le0.05$;
-MAGMA: Bonferroni over $1{,}021$ pathways. Both: called by CATFISH's
+MAGMA and two-stage ACAT: Bonferroni over $1{,}021$ pathways. Both: called by CATFISH's
 self-contained and competitive tests.}
 \label{tab:sim_compare}
 \small
 \IfFileExists{auto/tab_simulation_compare.tex}{\input{auto/tab_simulation_compare.tex}}%
 {\textcolor{red}{\textbf{Table pending:} \texttt{auto/tab\_simulation\_compare.tex}}}
 \end{table*}
+
+\subsection*{3.11 CATFISH's competitive test keeps a few lipid pathways out of the many its self-contained test calls}
+
+In the ten lipid sets CATFISH's competitive test declared $3$--$14$ pathways
+significant, against $93$--$1{,}238$ for its self-contained test, and every
+pathway it declared was also declared by the self-contained test, so the joint
+call equalled the competitive call (Table~\ref{tab:competitive_real}). The
+competitive test removed the dependence on pathway size: the Spearman
+correlation between size and evidence was $-0.13$ to $0.22$, against
+$0.21$--$0.73$ for the self-contained test. The two tests ordered pathways
+similarly (Spearman $0.73$--$0.91$), least so in the European data, where the
+GWAS is largest and the self-contained test most saturated. Both ranked plasma
+lipoprotein assembly, remodeling and clearance first in six sets; in the South
+Asian and Hispanic sets the competitive test ranked one of its sub-pathways
+first (lipoprotein clearance for LDL-C, lipoprotein remodeling for HDL-C) and
+the parent pathway second or third. In the European data its calls were lipid
+pathways with few exceptions: for LDL-C, six sets of the plasma-lipoprotein
+subtree, both LXR-regulated sets (NR1H2 and NR1H3) and interferon-$\gamma$
+signaling; for HDL-C, six sets of the subtree, the assembly of the LPL and LIPC
+lipase complexes, both LXR-regulated sets, regulation of lipid metabolism by
+PPAR$\alpha$, and four others. In sorghum dry biomass neither test declared
+any pathway and the two orderings were almost identical (Spearman $1.00$):
+after centring this GWAS carries no genome-wide signal, and the self-contained
+and competitive nulls coincide.
+
+The two tests answer different questions, and the simulation of Section~3.10
+shows where each is needed. A pathway whose signal comes from a single gene was
+found by CATFISH's self-contained test in $92$--$100\%$ of replicates at every
+pathway size, and almost never by either competitive test ($0$--$4\%$); MAGMA's
+self-contained test found it in $0\%$, $18\%$ and $78\%$ of replicates for
+small, medium and large pathways. Without any signal, CATFISH's self-contained
+test made no false call in 50 replicates, and its competitive test erred in
+$0.06$ of them, and in $0.08$ with a polygenic background only, both within
+sampling error of $0.05$. The self-contained test therefore says where there is
+signal, including pathways driven by one gene, and the competitive test says
+which of those pathways stand out from the rest of the genome.
+
+The choice of test did not change how the positive controls ranked among the
+candidate genes. With the pathway layer ranked on the competitive or on the
+joint statistic instead of the self-contained one, the median rank of the
+established genes moved by at most seven places in any lipid set and the
+number in the top ten by at most one, and the joint statistic gave the same
+ranks as the competitive one in every lipid set. The established genes lie in
+the lipoprotein pathway or its sub-pathways, which both tests rank at the top,
+so they receive the strongest pathway evidence under either test. In sorghum
+none of the eight established dry-biomass genes is in a SorghumBicolorCyc
+pathway, so the pathway layer cannot move them.
+
+\maybeinput{auto/tab_competitive_real.tex}
+
+\subsection*{3.12 Sorghum stem composition: the gene score points to a fatty aldehyde dehydrogenase at a new locus shared by stem sugar and fibre}
+
+Dry biomass showed that the procedure stays calibrated in this panel; it could
+not show that the gene score finds anything new, because no pathway was
+significant and the established biomass genes are in no pathway. We therefore
+analysed three stem-composition traits of the same lines (Section~2.7): Brix
+at maturity, the soluble solids of the stem juice, and two fractions of dry
+matter, neutral detergent fibre (NDF), which measures the cell wall, and
+non-fibre carbohydrate (NFC), mainly sugars and starch. The three are strongly
+correlated across lines. Brix correlated with NDF at $r=\nBapRBrixNDF$ and with
+NFC at $r=\nBapRBrixNFC$, and NDF with NFC at $r=\nBapRNDFNFC$; Brix also
+correlated negatively with acid detergent fibre ($r=\nBapRBrixADF$) and lignin
+($r=\nBapRBrixLig$). Lines that store more sugar in the stem have less cell
+wall: the trade-off between soluble and structural carbon that separates sweet
+from biomass sorghum.
+
+\emph{Variants and pathways.} The strongest associations of each trait were at
+loci the gene score cannot help with. For Brix the strongest variant
+($p=\nBapTopPBrix$) lay on \nBapTopLocBrix, in the region of chromosome~6 that
+carries \textit{Ma1} and \textit{Dw2}. For NDF and NFC it lay on
+\nBapTopLocNDF\ ($p=\nBapTopPNDF$ and $\nBapTopPNFC$), a region with none of
+the eight maturity and height genes of Section~2.7, whose leading genes are in
+no SorghumBicolorCyc pathway. Under family-wise control, CATFISH's
+self-contained test declared $\nBapSigBrix$ of the $\nBapNpw$ pathways for
+Brix, $\nBapSigNDF$ for NDF and $\nBapSigNFC$ for NFC, and its competitive test
+$\nBapCompBrix$, $\nBapCompNDF$ and $\nBapCompNFC$. The self-contained calls
+were, for Brix, \nBapSigListBrix; for NDF, \nBapSigListNDF; and for NFC,
+\nBapSigListNFC. Two of these are single-gene pathways in the sense of
+Section~1.1, and their gene is in the chromosome~4 locus described next. In
+$\beta$-alanine biosynthesis~I ($\nBapBalaN$ genes) the fatty aldehyde
+dehydrogenase Sobic.004G300800 has a MAGMA $p$-value of $\nBapAldhMagmaPBrix$
+for Brix, and the other nine genes $p=\nBapBalaOtherLo$ to $\nBapBalaOtherHi$;
+the thioredoxin pathway is carried for NDF and NFC by the thioredoxin
+reductase Sobic.004G300900 ($p=\nBapTrxMagmaPNDF$ and $\nBapTrxMagmaPNFC$).
+The self-contained test calls such pathways, as it did in the simulation
+(Section~3.10), and the competitive test does not (family-wise
+$p=\nBapBalaCompBrix$ for $\beta$-alanine biosynthesis~I with Brix, and
+$\nBapTrxPwCompNDF$ and $\nBapTrxPwCompNFC$ for the thioredoxin pathway with
+NDF and NFC). These two calls therefore restate the locus through its
+annotated genes; they are not independent evidence that $\beta$-alanine or
+thioredoxin metabolism matters for these traits.
+
+\emph{One locus, two annotated genes.} The gene score brought the three traits
+to a single locus. Of the $\nBapNgenes$ genes ranked, $\nBapNshared$ were among
+the top $100$ for all three traits, and all $\nBapNsharedLocus$ lie within
+$85\,\mathrm{kb}$ on chromosome~4, between $63.96$ and $64.04\,\mathrm{Mb}$
+(Table~\ref{tab:bap_chr4}, Figure~\ref{fig:bap_chr4}D). We found no earlier
+report of a sugar or fibre locus at this position. Two genes of the locus
+carry pathway evidence, and they lead it. Sobic.004G300800 is a fatty aldehyde
+dehydrogenase of the ALDH3 family, named \textit{SbALDH3E1} in the sorghum
+aldehyde dehydrogenase superfamily, where it is predicted to be
+chloroplast-localised and is a segmental duplicate of \textit{SbALDH3E2} on
+chromosome~6 \citep{Islam2022SbALDH}. It ranked $\nBapAldhBrix$ for Brix,
+$\nBapAldhNDF$ for NDF and $\nBapAldhNFC$ for NFC. Its neighbour
+Sobic.004G300900, an NADPH-dependent thioredoxin reductase, ranked
+$\nBapTrxBrix$, $\nBapTrxNDF$ and $\nBapTrxNFC$. Among the genes with evidence
+in all three layers (about $\nBapNthreeNDF$ in each trait), the dehydrogenase
+ranked $\nBapAldhTlBrix$, $\nBapAldhTlNDF$ and $\nBapAldhTlNFC$, and the
+reductase $\nBapTrxTlBrix$, $\nBapTrxTlNDF$ and $\nBapTrxTlNFC$: the
+dehydrogenase is the leading gene of the whole genome for Brix, and the
+reductase the second for both fibre traits.
+
+Neither gene leads on its variants. For Brix the two share their best variant
+with four neighbours, all at GWAS-layer rank $\nBapAldhGwasBrix$. For NDF and
+NFC the strongest variants of the locus lie about $60\,\mathrm{kb}$ away, among
+Sobic.004G301200 to 301700 (GWAS-layer ranks $41$ and $26$), and the
+dehydrogenase and the reductase rank only $\nBapTrxGwasNDF$ and $\nBapTrxGwasNFC$
+on that layer (Table~\ref{tab:bap_chr4}). They move above these neighbours on
+two layers. Their MAGMA $p$-values are the two smallest of the locus in all
+three traits (for Brix $\nBapAldhMagmaPBrix$ and $\nBapTrxMagmaPBrix$, with the
+unannotated Sobic.004G301000 close behind), and they are the only two genes of
+the locus in any pathway.
+GWAS alone would put the fibre signal on Sobic.004G301200--301700, which carry
+no annotation; the gene score puts it on the two enzymes beside them
+(Figure~\ref{fig:bap_chr4}D).
+
+\emph{The same signal in all three traits.} The lead variants of the three
+traits are in strong linkage disequilibrium. The Brix lead at
+$\nBapLeadPosBrix\,\mathrm{Mb}$ ($p=\nBapLeadPBrix$), $6\,\mathrm{kb}$ from the
+start of the dehydrogenase, and the shared NDF and NFC lead at
+$\nBapLeadPosNDF\,\mathrm{Mb}$ ($p=\nBapLeadPNDF$ and $\nBapLeadPNFC$) have
+$r^2=\nBapLeadRsq$. Across all $\nBapNwin$ variants of the window, the
+association $z$-scores for Brix and NDF lie on one line (correlation
+$\nBapZcor$, with alleles aligned; Figure~\ref{fig:bap_chr4}C), as expected
+when one haplotype carries both signals. The three principal components moved
+the lead $p$-values by less than an order of magnitude (from
+$1.0\times10^{-7}$, $2.2\times10^{-10}$ and $1.4\times10^{-10}$ in the same
+model without them), so the signal is not the panel's broad population
+structure. The Brix-raising allele (\nBapUp) has a frequency of $\nBapFreqUp$:
+$\nBapNUpHom$ lines are homozygous for it, among them the sweet sorghum
+cultivar Rio, $\nBapNOtherHom$ for the other allele and $\nBapNHet$ are
+heterozygous. Per copy it raised Brix by $\nBapEffBrix$ and NFC by
+$\nBapEffNFC$ standard deviations and lowered NDF by $|\nBapEffNDF|$
+($p=\nBapEffPBrix$, $\nBapEffPNFC$ and $\nBapEffPNDF$;
+Figure~\ref{fig:bap_chr4}B). Homozygous lines for it had $\nBapDiffBrix$
+degrees Brix more than lines homozygous for the other allele and
+$\nBapDiffNDF$ percentage points less NDF. Part of the fibre difference follows
+from the sugar difference through the correlation between the traits, and part
+does not: with Brix in the model the difference in NDF was
+$\nBapAdjNDF$ points ($p=\nBapAdjP$; $\nBapNboth$ lines with both traits), and
+the genotype means of the allele lie below the line that relates NDF to Brix
+across all lines (Figure~\ref{fig:bap_chr4}A). On this descriptive analysis
+the sugar--fibre trade-off accounts for about $\nBapFracVia\%$ of the allele's
+effect on fibre.
+
+\emph{Not a maturity or height locus.} No cloned maturity or height gene of
+Section~2.7 is on chromosome~4. In GWAS of anthesis and harvest date in the same
+lines (the same mixed model, without principal components), the strongest
+variants of the locus had $p=1.1\times10^{-4}$ ($141$ lines with an anthesis
+date) and $p=8.6\times10^{-4}$ ($326$ lines), four to five orders of magnitude
+weaker than for the composition traits measured in the same lines. In the same
+models the Brix-raising allele had no detectable effect on stalk height
+($p=0.29$) or dry biomass ($p=0.09$). The locus changes what the stem is made of, not how large
+the plant is or when it matures.
+
+\emph{Expression and homologues.} In public RNA-seq data (Expression Atlas
+\citep{Moreno2022ExpressionAtlas}), \textit{SbALDH3E1} is expressed in leaf,
+shoot, root, stem and inflorescence tissues across nine experiments. Where
+expression is resolved by organ and stage, it is highest in the leaf sheath at
+flowering, in the seedling leaf lamina and in the vegetative shoot, and low in
+stem internodes (Supplementary Figure~\ref{fig:sbaldh_expression}). Of the
+characterised ALDH3 genes of other plants, a maize fatty aldehyde
+dehydrogenase (FALDH) was one of three candidates for kernel oil content
+supported jointly by GWAS, QTL mapping and RNA-seq \citep{Zhang2026FALDH}, and
+the \textit{Arabidopsis} ALDH3F1 supplies acetate for the acetyl-CoA used to
+acetylate histones at \textit{FLOWERING LOCUS C}, so that its loss advances
+flowering \citep{Xu2020ALDH3F1}.
+
+\begin{figure*}[!t]
+\centering
+\maybefig{Fig23_bap_chr4_locus.png}{\textwidth}{A locus on chromosome~4 shared
+by stem sugar and fibre in the sorghum BAP. \textbf{A}~Brix at maturity and NDF
+of each line homozygous at the Brix lead variant ($\nBapLeadPosBrix$~Mb), by
+genotype; large points, genotype means with $95\%$ confidence intervals; dashed
+line, least-squares line of NDF on Brix across all lines; $r$, their
+correlation. \textbf{B}~Effect of the Brix-raising allele on each trait in the
+mixed model with three principal components, in trait standard deviations,
+with $95\%$ confidence intervals and $p$-values. \textbf{C}~Every variant
+between $63.85$ and $64.10$~Mb: association $z$-score for NDF against the
+absolute $z$-score for Brix, with each variant's alleles oriented to raise
+Brix; triangle, the Brix lead variant; circle, the NDF and NFC lead variant.
+\textbf{D}~CATFISH gene-score rank among all genes of each gene of the locus,
+for Brix, NDF and NFC, genes in order of position; dashed line, rank $100$.
+\textit{SbALDH3E1}, the ALDH3 fatty aldehyde dehydrogenase Sobic.004G300800;
+TRXR, the thioredoxin reductase Sobic.004G300900; GATA, the GATA transcription
+factor Sobic.004G301100.}{fig:bap_chr4}
+\end{figure*}
+
+\maybeinput{auto/tab_bap_chr4.tex}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{4 Discussion}
@@ -2639,6 +2976,78 @@ have attempted to do with the maize, lipid and sorghum analyses. In a saturated
 analysis, compare each pathway with others of its size rather than reading its
 overall rank, and read a candidate-gene list as a ranking of loci. Check the
 annotation behind any candidate whose rank depends on the pathway layer.
+
+\subsection*{4.8 From a shared locus to candidate genes for validation}
+
+The stem-composition analyses show what the gene score is for. The GWAS of
+three correlated traits found one haplotype on chromosome~4, about
+$100\,\mathrm{kb}$ long and in strong linkage disequilibrium ($r^2\ge0.8$
+between the traits' lead variants), with some fifteen genes whose variant
+evidence is close to interchangeable. The GWAS cannot say which gene to test;
+for the two fibre traits its strongest variants point at genes with no
+annotation. The gene score asks a different question of the same data: which
+gene of the locus has the strongest gene-level test and a known function in
+metabolism? Two genes answer it in all three traits, the ALDH3 fatty aldehyde
+dehydrogenase \textit{SbALDH3E1} and an NADPH-dependent thioredoxin reductase.
+Both are in the top $35$ of the genome for every trait, and once evidence in
+all three layers is required one of them is first or second for each trait. For a laboratory choosing what to
+edit, that is the useful output: two genes, out of about $34{,}000$, for the
+locus that most clearly couples stem sugar and fibre in this panel.
+
+The biology the locus suggests is a shift in carbon allocation between the
+soluble and the structural pools of the stem. The Brix-raising haplotype
+raised sugar and non-fibre carbohydrate and lowered fibre by similar amounts
+in standard units, with at most weak effects on flowering and harvest date
+and none detectable on height or biomass. Lines carrying it are therefore not sweeter because they
+are later, taller or smaller, and about half of their lower fibre is not
+explained by their higher sugar. That points to a gene that acts on cell wall
+deposition, or on the partitioning of carbon upstream of both pools, rather
+than on sucrose accumulation alone. Both candidates fit such a role, by
+different routes. ALDH3 enzymes oxidise medium- and long-chain aldehydes to
+the corresponding acids, linking lipid turnover and aldehyde detoxification
+to the cell's pools of fatty acids and acetate \citep{Islam2022SbALDH}; in
+\textit{Arabidopsis} one of them, ALDH3F1, feeds the acetyl-CoA pool used for
+histone acetylation and through it the expression of a developmental
+regulator \citep{Xu2020ALDH3F1}, and in maize a FALDH gene is a candidate for
+kernel oil content \citep{Zhang2026FALDH}. Thioredoxin reductases keep the
+thioredoxins reduced, and thioredoxins regulate many enzymes of plastid
+carbon metabolism by reversible reduction of disulphide bonds. We found no
+report connecting either gene with stem sugar or cell walls, in sorghum or
+elsewhere, and we do not claim that either is causal.
+
+Four things qualify the result. First, the pathway evidence that lifts the two
+genes is largely their own. The two significant pathways that contain them,
+$\beta$-alanine biosynthesis~I and the thioredoxin pathway, owe their
+significance to these genes, and neither is significant in the competitive
+test. Here the pathway layer acts as an annotation prior: among genes that
+share a locus, it ranks those with a known enzymatic function above those
+without. That is what a laboratory needs from it, and it is also its bias,
+since the causal gene may be one of the unannotated genes under the fibre
+leads, which no annotation can lift (Section~4.4). A leave-one-gene-out
+version of the pathway layer (Section~2.5) would show how much of each gene's
+rank remains when its own contribution is removed. Second, the locus is one
+haplotype carried by $\nBapNUpHom$ of $\nBapNlines$ lines, including the sweet
+sorghum cultivar Rio. Adding three principal components to the
+mixed model barely changed its association, but a haplotype confined to a group of
+related lines remains a candidate for confounding by the history of that
+group, which a biparental population or near-isogenic lines would remove.
+Third, \textit{SbALDH3E1} is expressed weakly in stem internodes and most in
+leaves and leaf sheaths. If it is the causal gene, it may act through the
+leaf and sheath, which are part of the dry matter on which NDF and NFC are
+measured, or through the supply of carbon to the stem, rather than in the
+internode where the juice is sampled. Fourth, the descriptive regression that
+separates the fibre effect from the sugar effect ignores relatedness, and the
+effect sizes of a lead variant selected for its significance are biased
+upwards in a panel of this size.
+
+The next steps follow from these limits: allele-specific or
+haplotype-specific expression of the genes of the locus in stem, sheath and
+leaf; the coding and regulatory differences between the two haplotypes; and
+loss-of-function alleles of \textit{SbALDH3E1} and the thioredoxin reductase,
+by mutagenesis or genome editing, scored for Brix and fibre. The method's
+contribution is to have reduced the locus to two genes worth that work, and
+to report separately, for each of them, how much of its rank comes from the
+GWAS, the gene test and the pathway annotation.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{5 Limitations and future work}
@@ -2992,6 +3401,21 @@ the SNP-wise mean model, the SNP-wise top model and MAGMA's multi-model
 combination, with the median gene $p$-value of each. The mean model follows the
 null; the top-variant and multi-model $p$-values are inflated, and their
 inflation increases with the number of variants in the gene.}{fig:sorghum_pcol}
+\end{figure*}
+
+\begin{figure*}[!t]
+\centering
+\maybefig{SuppFig_SbALDH3E1_expression.png}{\textwidth}{Expression of
+\textit{SbALDH3E1} (Sobic.004G300800), the fatty aldehyde dehydrogenase at the
+chromosome~4 locus of Section~3.12, in public sorghum RNA-seq data, as
+summarised by Expression Atlas \citep{Moreno2022ExpressionAtlas}.
+\textbf{A}~Baseline expression across nine experiments and the tissues they
+sampled (Expression Atlas categories: below cutoff, low, medium, high).
+\textbf{B}~Expression in transcripts per million by organ and developmental
+stage in one experiment; hatched cells were not sampled. Expression is highest
+in the leaf sheath at flowering, in the seedling leaf lamina and in the
+vegetative shoot, and low in stem internodes. Screenshots of the Expression
+Atlas gene pages (\texttt{data/expression\_atlas/}).}{fig:sbaldh_expression}
 \end{figure*}
 
 \clearpage

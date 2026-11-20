@@ -1,0 +1,21 @@
+\begin{table}[!t]
+\centering
+\caption{Genome-wide gene prioritisation in the European lipid data: number of Open Targets gold-standard genes of the trait (LDL-C 15, HDL-C 18) among each method's top $k$ genes, and their median rank, with all methods ranked over the same 17{,}736 genes. GWAS: best SNP $p$-value of the gene; MAGMA: gene $p$-value; CATFISH: the gene score of Section~2.5; PoPS: polygenic priority score.}
+\label{tab:pops_topk}
+\small
+\begin{tabular}{llrrrrrr}
+\hline
+\textbf{Trait} & \textbf{Method} & Top 10 & Top 20 & Top 50 & Top 100 & Top 200 & Median rank \\
+\hline
+LDL-C & CATFISH & 4 & 6 & 9 & 10 & 12 & 37 \\
+ & PoPS & 3 & 5 & 6 & 7 & 10 & 133 \\
+ & GWAS & 2 & 3 & 5 & 8 & 12 & 97 \\
+ & MAGMA & 2 & 5 & 6 & 6 & 7 & 324 \\
+\hline
+HDL-C & CATFISH & 5 & 6 & 10 & 12 & 14 & 38.5 \\
+ & PoPS & 3 & 5 & 10 & 10 & 13 & 40 \\
+ & GWAS & 2 & 3 & 8 & 10 & 12 & 76 \\
+ & MAGMA & 3 & 4 & 4 & 6 & 8 & 361.5 \\
+\hline
+\end{tabular}
+\end{table}

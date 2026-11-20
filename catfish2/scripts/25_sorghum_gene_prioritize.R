@@ -22,7 +22,9 @@
 ## Usage (from catfish2/scripts):
 ##   Rscript 25_sorghum_gene_prioritize.R                     # both traits
 ##   TRAITS=Lignin_DM_perc Rscript 25_sorghum_gene_prioritize.R
-## Env: MAGMA_ROOT, CATFISH_BASE, PATHWAY_FILE, CHROMS (quick checks only)
+## Env: MAGMA_ROOT, CATFISH_BASE, PATHWAY_FILE, CHROMS (quick checks only),
+##      WY_DIR (Westfall-Young results; default RES_DIR), OUT_DIR (outputs;
+##      default RES_DIR), PATHWAY_STAT_COL (pathway layer statistic; default z_std)
 ## Writes ../results/sorghum_bap/25_<TRAIT>_gene_prioritize.csv   (all genes)
 ##        ../results/sorghum_bap/25_established_genes.csv         (both traits)
 ## =============================================================================
@@ -33,6 +35,10 @@ BASE       <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/CATFISH
 PATHWAY_FILE <- Sys.getenv("PATHWAY_FILE",
                   file.path(BASE, "inst/extdata/pathway/sorghumbicolorcyc_pathways.20230103.SORBI"))
 RES_DIR    <- Sys.getenv("RES_DIR", "../results/sorghum_bap")
+WY_DIR     <- Sys.getenv("WY_DIR", RES_DIR)
+OUT_DIR    <- Sys.getenv("OUT_DIR", RES_DIR)
+PSTAT      <- Sys.getenv("PATHWAY_STAT_COL", "z_std")
+dir.create(OUT_DIR, showWarnings = FALSE, recursive = TRUE)
 TRAITS     <- strsplit(Sys.getenv("TRAITS", "Dry_tons_per_acre,Lignin_DM_perc"), ",")[[1]]
 CHROMS     <- as.integer(strsplit(Sys.getenv("CHROMS", "1,2,3,4,5,6,7,8,9,10"), ",")[[1]])
 P_COL      <- "P_SNPWISE_MEAN"
@@ -62,7 +68,7 @@ for (TRAIT in TRAITS) {
   tdir <- file.path(MAGMA_ROOT, TRAIT)
   gfiles <- file.path(tdir, sprintf("%s_chr%02d.multi_snp_wise.genes.out", TRAIT, CHROMS))
   pfiles <- file.path(tdir, sprintf("%s_chr%02d.pval.txt", TRAIT, CHROMS))
-  wy_file <- file.path(RES_DIR, sprintf("%s_%s_5comp_westfall_young.csv", TRAIT, P_COL))
+  wy_file <- file.path(WY_DIR, sprintf("%s_%s_5comp_westfall_young.csv", TRAIT, P_COL))
   miss <- c(gfiles, pfiles, wy_file)[!file.exists(c(gfiles, pfiles, wy_file))]
   if (length(miss)) stop("missing input files:\n  ", paste(miss, collapse = "\n  "), call. = FALSE)
 
@@ -80,7 +86,7 @@ for (TRAIT in TRAITS) {
 
   cand <- gene_prioritize(
     magma = as.data.frame(mg), magma_gene_col = "GENE", magma_p_col = P_COL,
-    pathway_results = wy_file, pathway_stat_col = "z_std",
+    pathway_results = wy_file, pathway_stat_col = PSTAT,
     pathways = pw,
     gwas = as.data.frame(gw), gwas_snp_col = "SNP", gwas_p_col = "P",
     gwas_chr_col = "CHR", gwas_pos_col = "BP",
@@ -91,7 +97,7 @@ for (TRAIT in TRAITS) {
   ## readable pathway names
   wy <- fread(wy_file, showProgress = FALSE)
   cand$best_pathway_name <- wy$pathway_name[match(cand$best_pathway, wy$pathway_id)]
-  out <- file.path(RES_DIR, sprintf("25_%s_gene_prioritize.csv", TRAIT))
+  out <- file.path(OUT_DIR, sprintf("25_%s_gene_prioritize.csv", TRAIT))
   fwrite(cand, out)
 
   cat("\ntop 20 candidates:\n")
@@ -126,5 +132,5 @@ for (TRAIT in TRAITS) {
   cat(sprintf("wrote %s (%.1f min)\n", out, as.numeric(difftime(Sys.time(), t0, units = "mins"))))
 }
 est <- do.call(rbind, est_all)
-fwrite(est, file.path(RES_DIR, "25_established_genes.csv"))
-cat(sprintf("\nwrote %s\n", file.path(RES_DIR, "25_established_genes.csv")))
+fwrite(est, file.path(OUT_DIR, "25_established_genes.csv"))
+cat(sprintf("\nwrote %s\n", file.path(OUT_DIR, "25_established_genes.csv")))

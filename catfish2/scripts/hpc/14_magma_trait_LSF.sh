@@ -65,7 +65,11 @@ if [ -z "${PVAL:-}" ]; then
   exit 1
 fi
 
-if [ "$ANC" = "EUR" ]; then OUTDIR=$ROOT/magma_$TRAIT; else OUTDIR=$ROOT/magma_${TRAIT}_$a; fi
+# ANNOT_OVERRIDE=<file> uses another gene annotation (e.g. the Ensembl one for
+# PoPS, scripts/hpc/pops) and OUT_SUFFIX=<s> writes to magma_<trait>[_<anc>]<s>/,
+# so the paper's runs are untouched. Unset: exactly as before.
+ANNOT="${ANNOT_OVERRIDE:-$ANNOT}"
+if [ "$ANC" = "EUR" ]; then OUTDIR=$ROOT/magma_$TRAIT${OUT_SUFFIX:-}; else OUTDIR=$ROOT/magma_${TRAIT}_$a${OUT_SUFFIX:-}; fi
 PREFIX=$OUTDIR/${TRAIT}_${a}
 
 mkdir -p "$OUTDIR" logs

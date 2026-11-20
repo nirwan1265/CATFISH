@@ -26,8 +26,9 @@ MAGMA=/rsstu/users/r/rrellan/sara/nirwan_backup/ntanduk/magma_v1.10/magma
 #   ANC=AFR TRAIT=ldl bsub -J merge_ldl_afr < 15_magma_merge_trait_LSF.sh
 ANC="$(echo "${ANC:-EUR}" | tr '[:lower:]' '[:upper:]')"
 a="$(echo "$ANC" | tr '[:upper:]' '[:lower:]')"
-if [ "$ANC" = "EUR" ]; then PREFIX=$ROOT/magma_$TRAIT/${TRAIT}_eur
-else PREFIX=$ROOT/magma_${TRAIT}_$a/${TRAIT}_$a; fi
+# OUT_SUFFIX as in 14 (unset: exactly as before)
+if [ "$ANC" = "EUR" ]; then PREFIX=$ROOT/magma_$TRAIT${OUT_SUFFIX:-}/${TRAIT}_eur
+else PREFIX=$ROOT/magma_${TRAIT}_$a${OUT_SUFFIX:-}/${TRAIT}_$a; fi
 
 mkdir -p logs
 

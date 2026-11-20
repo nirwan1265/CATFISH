@@ -149,7 +149,9 @@ WINDOW       <- as.integer(Sys.getenv("GWAS_WINDOW", "10000"))
 ## WY statistic, the default), log10_p_omnibus (raw omnibus), or a p-value column
 PCOL <- Sys.getenv("PATHWAY_P_COL", "z_std")
 
-OUT_DIR <- file.path(BASE, "catfish2/results")
+## CANDIDATE_OUT_DIR writes the output elsewhere (e.g. the competitive-layer
+## runs of 36_prioritize_comp.R), so the paper's files are not overwritten
+OUT_DIR <- Sys.getenv("CANDIDATE_OUT_DIR", file.path(BASE, "catfish2/results"))
 dir.create(OUT_DIR, showWarnings = FALSE, recursive = TRUE)
 
 ## ---------------------------------------------------------------- helpers ---

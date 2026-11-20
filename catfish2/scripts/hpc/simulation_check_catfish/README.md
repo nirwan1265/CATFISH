@@ -74,6 +74,7 @@ and 00b / 07b with the PascalX env active.
 | 06 | 06_magma_gsa_LSF.sh | MAGMA gene-set, one element per replicate |
 | 07a | 07a_pascalx_pval_LSF.sh | PascalX input p-values (R env), one element per replicate |
 | 07b | 07b_pascalx_LSF.sh | PascalX (PascalX env), one element per replicate |
+| 07c | 07c_acat_LSF.sh | two-stage ACAT (SNP -> gene -> pathway; R env), one element per design cell |
 | 08 | 08_aggregate_LSF.sh (+ .R) | power and off-target rates |
 
 The simulated statistics (02) and MAGMA (03) are separate submissions. Steps 03
@@ -118,6 +119,7 @@ MODE=full bsub -J "sim_catfish[1-850]" < 05_catfish_LSF.sh
 MODE=full bsub -J "sim_gsa[1-850]" < 06_magma_gsa_LSF.sh
 MODE=full bsub -J "sim_pxpval[1-850]" < 07a_pascalx_pval_LSF.sh
 MODE=full bsub -J "sim_pascalx[1-850]" < 07b_pascalx_LSF.sh
+MODE=full bsub -J "sim_acat[1-17]" < 07c_acat_LSF.sh           # R env
 MODE=full bsub < 08_aggregate_LSF.sh
 ```
 Step 04 is not rerun: the gene correlations depend only on the panel.
