@@ -46,6 +46,8 @@
 \IfFileExists{auto/lipids.tex}{\input{auto/lipids.tex}}{}
 \input{auto/sorghum_stub.tex}
 \IfFileExists{auto/sorghum.tex}{\input{auto/sorghum.tex}}{}
+\input{auto/bench_all_stub.tex}
+\IfFileExists{auto/bench_all.tex}{\input{auto/bench_all.tex}}{}
 \input{auto/bap_chr4_stub.tex}
 \IfFileExists{auto/bap_chr4.tex}{\input{auto/bap_chr4.tex}}{}
 
@@ -465,7 +467,7 @@ claim at $\alpha$ without further correction \citep{Berger1982}.
 
 The omnibus statistic must be computed entirely in log space. This is a correctness requirement, not an optimisation, and it prevents silent failure.
 
-The smallest positive normalized double is $\approx2.2\times10^{-308}$. In a GWAS with $n\approx1.3$ million, gene-level $p<10^{-300}$ is common: in the GLGC LDL-cholesterol data (Section~3.9), the published $p$-value is exactly zero for 473 chromosome~1 variants, including the \textit{SORT1} lead rs12740374 at $-\log_{10}p=1725$. Combining even a few such genes with Fisher’s method yields a pathway statistic whose double-precision $p$-value underflows to zero. All affected pathways then share the same floor value, ties are broken by storage order, and the ranking the analysis aims to produce is silently corrupted. In our first implementation, the top-ranked pathways were (on inspection) alphabetical.
+The smallest positive normalized double is $\approx2.2\times10^{-308}$. In a GWAS with $n\approx1.3$ million, gene-level $p<10^{-300}$ is common: in the GLGC LDL-cholesterol data (Section~3.5), the published $p$-value is exactly zero for 473 chromosome~1 variants, including the \textit{SORT1} lead rs12740374 at $-\log_{10}p=1725$. Combining even a few such genes with Fisher’s method yields a pathway statistic whose double-precision $p$-value underflows to zero. All affected pathways then share the same floor value, ties are broken by storage order, and the ranking the analysis aims to produce is silently corrupted. In our first implementation, the top-ranked pathways were (on inspection) alphabetical.
 
 Five changes are needed. (i) Compute all component statistics on $\ell_g=\log p_g$ and return log $p$-values via \texttt{stats::pchisq(\dots,\,log.p=TRUE)} and \texttt{stats::qnorm(\dots,\,log.p=TRUE)}. (ii) Evaluate the ACAT sum using the small-$p$ asymptote: for $p<10^{-15}$, use $\tan\{\pi(\tfrac12-p)\}\approx 1/(p\pi)$, accumulating those terms as a log-sum-exp of $-\ell_g-\log\pi$; use the trigonometric form for the rest. (iii) Replace $p=\tfrac12-\arctan(T)/\pi$ with $p\approx1/(T\pi)$ for $T>10^{6}$, where cancellation near $\tfrac12$ dominates truncation error. (iv) Since ACAT can be negative when most inputs exceed $0.5$, handle that case in a separate branch computing $\tfrac12-\arctan(T)/\pi$ directly; clamping would set $p=0.5$ and destroy ordering in the upper half. (v) The minP inversion $1-(1-q)^m$ underflows for $q\lesssim10^{-16}/m$, causing minP to drop out; use the $m q$ asymptote whenever $\log m+\ell_{\min}<\log 10^{-8}$.
 
@@ -481,9 +483,9 @@ The output a biologist acts on is a short list of genes, so CATFISH ranks genes 
 Each layer enters by rank rather than by its raw statistic,
 $S_\bullet(g)=-\log_{10}\!\left(r_\bullet(g)/N_\bullet\right)$, where
 $r_{\mathrm{GWAS}}$ is the gene's rank by minimum SNP-level $p$-value,
-$r_{\mathrm{MAGMA}}$ its rank by gene-level $p$-value, and $r_{\mathrm{PATH}}$ the rank of its best pathway by the size-standardised Westfall--Young statistic $z_k$ of Section~2.3; rank one is the strongest evidence. We rank pathways on $z_k$ for two reasons. It is the statistic the family-wise test is computed on, so the gene score uses the same pathway ordering that is reported; and it measures each pathway against its own correlated null, whereas the analytic omnibus assumes independent genes and overstates pathways whose genes are in LD (Section~3.4). The family-wise $p$-value gives the same ordering but is floored at $1/(B+1)$, which ties the strongest pathways. The hub term $B_{\mathrm{hub}}(g)=\log_{10}(n_{\mathrm{path}}(g)+1)$ rewards membership in several pathways. Genes missing a layer score zero for it, so an absent layer neither helps nor penalises.
+$r_{\mathrm{MAGMA}}$ its rank by gene-level $p$-value, and $r_{\mathrm{PATH}}$ the rank of its best pathway by the size-standardised Westfall--Young statistic $z_k$ of Section~2.3; rank one is the strongest evidence. We rank pathways on $z_k$ for two reasons. It is the statistic the family-wise test is computed on, so the gene score uses the same pathway ordering that is reported; and it measures each pathway against its own correlated null, whereas the analytic omnibus assumes independent genes and overstates pathways whose genes are in LD (Section~3.3). The family-wise $p$-value gives the same ordering but is floored at $1/(B+1)$, which ties the strongest pathways. The hub term $B_{\mathrm{hub}}(g)=\log_{10}(n_{\mathrm{path}}(g)+1)$ rewards membership in several pathways. Genes missing a layer score zero for it, so an absent layer neither helps nor penalises.
 
-We use ranks instead of $-\log_{10}p$ to make layers with different tail behaviour comparable and to avoid the $p$-value floors in Section~2.4. Pathway evidence is halved because the pathway $p$-value is a set-level statistic shared across member genes; the hub term is intentionally secondary. We fixed the weights \emph{a priori} and assessed them afterwards over a grid, $w_{\mathrm{path}}\in\{0,0.25,0.5,0.75,1\}$ and $w_{\mathrm{hub}}\in\{0,0.1,\dots,0.5\}$, in a truth-planted simulation and in the real analyses of Section~3.9 (Supplementary Figure~\ref{fig:weights}). The simulation draws $400$ replicate datasets of $500$ genes and $50$ pathways, plants causal genes concentrated in five pathways, and generates correlated GWAS-, MAGMA- and pathway-level evidence for them \citep{Tandukar2025Thesis}. Rankings were stable across the grid: the Spearman correlation of each full ranking with the default ranking was at least $0.986$, and the top twenty genes overlapped the default top twenty by at least $88\%$. Recovery of planted causal genes in the top twenty rose steadily with the pathway weight, from $0.71$ to $0.85$, and was $0.80$ at the defaults, so the defaults are not the optimum of that simulation. They are a deliberately conservative middle value: the pathway layer is set-level evidence shared by every member gene and, in curated databases, partly encodes prior knowledge, so it should not outweigh direct genetic evidence. We did not re-tune the weights on the validation genes of Section~3.9.
+We use ranks instead of $-\log_{10}p$ to make layers with different tail behaviour comparable and to avoid the $p$-value floors in Section~2.4. Pathway evidence is halved because the pathway $p$-value is a set-level statistic shared across member genes; the hub term is intentionally secondary. We fixed the weights \emph{a priori} and assessed them afterwards over a grid, $w_{\mathrm{path}}\in\{0,0.25,0.5,0.75,1\}$ and $w_{\mathrm{hub}}\in\{0,0.1,\dots,0.5\}$, in a truth-planted simulation and in the real analyses of Section~3.7 (Supplementary Figure~\ref{fig:weights}). The simulation draws $400$ replicate datasets of $500$ genes and $50$ pathways, plants causal genes concentrated in five pathways, and generates correlated GWAS-, MAGMA- and pathway-level evidence for them \citep{Tandukar2025Thesis}. Rankings were stable across the grid: the Spearman correlation of each full ranking with the default ranking was at least $0.986$, and the top twenty genes overlapped the default top twenty by at least $88\%$. Recovery of planted causal genes in the top twenty rose steadily with the pathway weight, from $0.71$ to $0.85$, and was $0.80$ at the defaults, so the defaults are not the optimum of that simulation. They are a deliberately conservative middle value: the pathway layer is set-level evidence shared by every member gene and, in curated databases, partly encodes prior knowledge, so it should not outweigh direct genetic evidence. We did not re-tune the weights on the validation genes of Section~3.7.
 
 \emph{Where the gain comes from.} Two checks separate the contribution of the
 pathway layer from that of the association layers. First, genes are ranked with
@@ -611,8 +613,7 @@ floor is far beyond any gene-level resolution it reports. The candidate-gene
 GWAS layer is affected, because it ranks genes by their minimum variant
 $p$-value and the floor collapses the strongest genes into a single tie. That
 layer therefore reads an unfloored $-\log_{10}p$ file written by
-\texttt{11\_munge\_neglog10.sh}; Section~3.9 reports what the floor costs when
-it is not removed.
+\texttt{11\_munge\_neglog10.sh}.
 
 \emph{Gene analysis.} Variants were assigned to genes with a $10\,\mathrm{kb}$
 upstream and downstream window using the NCBI37.3 gene locations. MAGMA gene
@@ -734,7 +735,7 @@ among the top $100$ in all three. Gene ranks are reported among all genes and,
 as for dry biomass, among the genes with evidence in all three layers.
 
 \emph{The chromosome~4 locus.} For the locus the three traits share
-(Section~3.12), the strongest variant of each trait between $63.85$ and
+(Section~3.10), the strongest variant of each trait between $63.85$ and
 $64.10\,\mathrm{Mb}$ was taken as its lead variant, and linkage disequilibrium
 between lead variants ($r^2$) was computed from the panel's genotypes with
 PLINK~1.9 \citep{Chang2015PLINK}. Allele effects at the Brix lead variant
@@ -759,7 +760,7 @@ order of genes, the gene--gene correlations and the null draws of Section~2.3
 unchanged and moves the median gene $p$-value to $0.5$. We added it because
 the permutation null showed that each GWAS carries its own genome-wide shift in
 gene $z$-scores, which a self-contained test reads as pathway signal and which
-the correlated null does not contain (Section~3.8). In a GWAS without such a
+the correlated null does not contain (Section~3.9). In a GWAS without such a
 shift, centring changes nothing. In a saturated GWAS the median gene is itself
 associated, and centring removes part of the real polygenic signal: the test
 then asks whether a pathway's genes are more associated than the median gene of
@@ -802,21 +803,49 @@ as solved when a method's top candidate was the gold-standard gene
 (\texttt{40\_gold\_standard\_lipids.py}, \texttt{41\_benchmark\_genes.R},
 \texttt{42\_benchmark\_topk.R}).
 
+\textbf{Benchmark across nine traits.} To test the gene score beyond the
+lipids, we added seven European GWAS of traits with Open Targets
+gold-standard genes \citep{Mountjoy2021L2G} and genome-wide summary statistics
+in the GWAS Catalog harmonised format: coronary artery disease
+\citep{vanderHarst2018CAD}, breast cancer \citep{Michailidou2017BRCA}, Crohn's
+disease and ulcerative colitis \citep{deLange2017IBD}, atrial fibrillation
+\citep{Nielsen2018AF}, systemic lupus erythematosus \citep{Bentham2015SLE} and
+asthma in UK Biobank \citep{Valette2021Asthma}. Variants were restricted to
+rsIDs in the 1000 Genomes European panel, with the per-variant sample size
+where the file gives one and the study's total sample size otherwise. MAGMA,
+CATFISH (self-contained test with gene-level genomic control; Reactome) and the
+gene score were run exactly as for the European lipid traits, and PoPS as
+above (\texttt{hpc/benchmark/01}--\texttt{04}, \texttt{hpc/pops}). Type~2
+diabetes was not used because only a subset of variants of the large European
+meta-analysis is in the GWAS Catalog, and schizophrenia and rheumatoid
+arthritis because no European genome-wide file was available there. Known
+genes were each trait's Open Targets gold-standard genes from the 2019 and 2023
+releases (LDL-C and HDL-C as above). Six rankings were compared: the CATFISH
+score; the same score without its pathway layer (pathway and hub weights $0$,
+GWAS+MAGMA); the best variant; the MAGMA gene $p$-value; PoPS; and the mean of
+the CATFISH and PoPS ranks. Each was ranked within the genes scored by both
+CATFISH and PoPS, and the known genes among each ranking's top $10$--$200$ were
+counted. The main analysis excludes the extended MHC (chromosome~6,
+$25$--$34$~Mb, GRCh37): PoPS removes the HLA region from fitting by default,
+and its long-range linkage disequilibrium fills the top of every ranking in
+immune traits. We also report all genes, and the genes in a tested pathway
+(\texttt{45\_benchmark\_topk\_all.R}).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{3 Results}
 
-\subsection*{3.1 Five pathway signal archetypes, and their component tests}
+\subsection*{3.1 Five pathway signal archetypes, each detected by the component built for it}
+
 
 Consider a pathway-level working null and alternative hypotheses. Under the null, the gene-level evidence within a pathway matches the background distribution after accounting for dependence, with no systematic excess of small $p$-values. Under the alternative, the pathway carries excess evidence, However, that evidence can be distributed among its genes in many ways. We define five archetypes based on specific profiles (Figure~\ref{fig:archetypes}; Table~\ref{tab:archetype_summary}). These are templates for how pathways might behave. However, real pathways may fall between archetypes or combine features, and the archetype is not known in advance. Where each archetype is expected, Table~\ref{tab:archetype_summary} lists each profile shape and its predicted component. We describe the biological contexts where each is expected, with details in Supplementary Note~S1.
 
 SSS is expected when pathway output is constrained by a bottleneck such as a committed-step enzyme, rate-limiting regulator, or essential transporter \citep{MorenoSanchez2008,Naz2023,Tanner2018,Song2020}. Aspartokinase catalyzes the entry step of the aspartate-derived pathway, producing lysine, threonine, methionine, and isoleucine \citep{Galili2011,Hasenoehrl2019}, so the signal can be strong and localized there while downstream genes are near null. SGP is the limiting case, where a pathway is effectively one gene, typically in small or highly overlapping annotations. \textit{PAH} is the rate-limiting enzyme converting phenylalanine to tyrosine and the main cause of phenylketonuria \citep{Flydal2013PAH,Elhawary2022PKU}, so any signal in a broader phenylalanine-metabolism set would largely reflect it. Such pathways add little beyond gene-level association and should be interpreted as gene-centric.
 
-MDS is expected when pathway output depends on many interacting components rather than a single effector, as in TNF$\alpha$/IL-1$\beta$ cytokine signaling to NF-$\kappa$B via receptor engagement, adaptor recruitment, kinase cascades, feedback, and transcriptional control \citep{Jiang2021CytoSig,Megha2021Inflammation,Verstrepen2008NFkB,vanLoo2011NFkB,Cargnello2011MAPK}. WDE reflects a highly polygenic architecture. The human height is the canonical example \citep{Guo2018HeightGWAS,Yengo2022HeightSaturation}, where coherent processes (e.g., TGF-$\beta$, Hedgehog, growth-plate extracellular matrix) may be detectable only in aggregate \citep{LangoAllen2010Height}. MSA is expected when a few pathway-defining genes with large effects sit within a broader network of auxiliary components. LDL-cholesterol metabolism (Section~3.9, explained as a biological example) illustrates this. Rare high-effect variants in \textit{LDLR}, \textit{APOB}, and \textit{PCSK9} cause familial hypercholesterolaemia, while common variants in \textit{ABCA1}, \textit{LIPC}, \textit{CETP}, \textit{PLTP}, \textit{ANGPTL3}, and \textit{SORT1} shape population LDL-C \citep{Chasman2009LipoproteinProfiles,Peloso2022WGSbloodlipids,Umlai2025LDLC}.
+MDS is expected when pathway output depends on many interacting components rather than a single effector, as in TNF$\alpha$/IL-1$\beta$ cytokine signaling to NF-$\kappa$B via receptor engagement, adaptor recruitment, kinase cascades, feedback, and transcriptional control \citep{Jiang2021CytoSig,Megha2021Inflammation,Verstrepen2008NFkB,vanLoo2011NFkB,Cargnello2011MAPK}. WDE reflects a highly polygenic architecture. The human height is the canonical example \citep{Guo2018HeightGWAS,Yengo2022HeightSaturation}, where coherent processes (e.g., TGF-$\beta$, Hedgehog, growth-plate extracellular matrix) may be detectable only in aggregate \citep{LangoAllen2010Height}. MSA is expected when a few pathway-defining genes with large effects sit within a broader network of auxiliary components. LDL-cholesterol metabolism (Section~3.5, explained as a biological example) illustrates this. Rare high-effect variants in \textit{LDLR}, \textit{APOB}, and \textit{PCSK9} cause familial hypercholesterolaemia, while common variants in \textit{ABCA1}, \textit{LIPC}, \textit{CETP}, \textit{PLTP}, \textit{ANGPTL3}, and \textit{SORT1} shape population LDL-C \citep{Chasman2009LipoproteinProfiles,Peloso2022WGSbloodlipids,Umlai2025LDLC}.
 
 % The five components interpret the ranked profile differently (Table~\ref{tab:components}). minP uses only the top gene. ACAT averages Cauchy-transformed $p$-values; its heavy tail makes the smallest few dominate, so it is head-driven like minP but also rewards a second or third strong gene. Fisher sums $-2\log p_g$ across genes; because contributions grow only logarithmically, it favors many moderately small $p$-values over a few extreme ones. Stouffer averages $Z_g$ with equal weights; since $Z_g$ grows even more slowly, small shared shifts accumulate with pathway size, while a single extreme gene is diluted by $1/\sqrt{m}$. Soft TFisher drops genes with $p>\tau$ and sums the remaining excess evidence, shifting from minP-like at small $\tau$ toward Fisher as $\tau\to1$; adapting over $\tau$ lets it track the profile up to its shoulder. These properties predict which components are sensitive to each archetype (Table~\ref{tab:archetype_summary}, fourth column).
 
 
-\subsection*{3.2 Each component detects the archetype predicted for it}
 
 We next ran a simulation to check whether each component test detects the archetype predicted for it. The archetype--component mapping in Table~\ref{tab:archetype_summary} is a prediction testable only by simulation, since real pathway archetypes are unknown. We embedded one pathway per archetype, carrying its ranked signal shape, in $149$ null pathways from the same correlated gene set, scaled effects from undetectable to saturated, and recorded how often it exceeded the family-wise Westfall--Young threshold (Section~2.6, item~6).
 
@@ -952,20 +981,36 @@ sizes and effect scales; crosses mark the worst single cell. The dashed line
 marks a regret of $0.05$.}{fig:archregret}
 \end{figure}
 
-\subsection*{3.3 Combining the components into the CATFISH omnibus}
+\subsection*{3.2 The omnibus combines the components, and no single component is load-bearing}
+
 
 Because no single component dominates and the true pathway archetype is unknown, users must either pick a component and risk mis-specification or combine them. CATFISH combines all five component $p$-values using an ACAT-type cross-method operator to produce one omnibus statistic per pathway.
 
 This statistic lacks a usable analytic null. The components are deterministic functions of the same gene-level $p$-values, and those $p$-values are correlated via LD. Thus, independence-based reference distributions are incorrect and often anti-conservative. CATFISH therefore calibrates by resampling. It generates genome-wide null draws from the gene--gene correlation matrix (MAGMA output, preserving estimated LD), scores all pathways at once, and repeats this $B$ times, giving $B$ null values for each of the $K$ pathways, i.e., one row per replicate and one column per pathway.
 
-These values address different questions. Fix a pathway and use its $B$ null scores to form its null distribution; the fraction at least as extreme as the observed statistic is the calibrated marginal $p$-value. For a fixed replicate, the minimum across all $K$ pathways is recorded, and these per-replicate minima constitute the null distribution of the family minimum. The fraction at least as extreme as a pathway’s observed statistic is its Westfall--Young FWER-adjusted $p$-value (the Section~3.2 threshold). Because all pathways are scored on the same draw, shared genes perturb them jointly as in the observed data, so between-pathway dependence is inherited, not modeled.
+These values address different questions. Fix a pathway and use its $B$ null scores to form its null distribution; the fraction at least as extreme as the observed statistic is the calibrated marginal $p$-value. For a fixed replicate, the minimum across all $K$ pathways is recorded, and these per-replicate minima constitute the null distribution of the family minimum. The fraction at least as extreme as a pathway’s observed statistic is its Westfall--Young FWER-adjusted $p$-value (the Section~3.1 threshold). Because all pathways are scored on the same draw, shared genes perturb them jointly as in the observed data, so between-pathway dependence is inherited, not modeled.
 
-Figure~\ref{fig:archpower} shows the cost of combining across Section~3.2 cells. The omnibus usually matches the best component, falling behind mainly for single-gene signals. The practical issue is how much is lost when the best component is unknown. We quantify this as \emph{regret}, the gap between the best component and the omnibus within a cell. Mean regret ranges from $\nArchRegretBest$ for $\nArchRegretBestA$ to $\nArchRegretWorst$ for $\nArchRegretWorstA$ (Table~\ref{tab:archregret}), while the best--worst component gap in the same cells is often $>0.5$ in power. Pre-committing to one component risks the full gap, while the omnibus risks only the regret.
+Figure~\ref{fig:archpower} shows the cost of combining across Section~3.1 cells. The omnibus usually matches the best component, falling behind mainly for single-gene signals. The practical issue is how much is lost when the best component is unknown. We quantify this as \emph{regret}, the gap between the best component and the omnibus within a cell. Mean regret ranges from $\nArchRegretBest$ for $\nArchRegretBestA$ to $\nArchRegretWorst$ for $\nArchRegretWorstA$ (Table~\ref{tab:archregret}), while the best--worst component gap in the same cells is often $>0.5$ in power. Pre-committing to one component risks the full gap, while the omnibus risks only the regret.
 
 An exception is the single-gene case, where the omnibus can lose up to $\nArchMaxRegret$ in one cell. Here, minP and ACAT detect the pathway, Fisher and Stouffer are near null, and averaging dilutes a signal present in only two components. Thus, this reflects the combination method, not any component, and suggests using a gene-level rather than pathway-level test.
 
 
-\subsection*{3.4 Independence-based calibration is anti-conservative; calibration against the correlated null is not}
+
+An omnibus is useful only if no misbehaving component can dominate it, and a family-wise procedure only if that robustness persists at the family level. We tested both on the overlapping pathway universe (Methods), where each gene belongs to $\nBrkMembership$ pathways on average, by deliberately corrupting components and by removing them.
+
+For corruption, we replaced the $p$-value of each of $k$ selected components with $p^{\gamma}$: conservative at $\gamma=0.7$ and anti-conservative at $\gamma=1.4$ (Table~\ref{tab:breakage}, Figure~\ref{fig:breakage}). With $k=0$, the analytic omnibus had mean marginal type~I error $\nBrkAnKzero$ and the calibrated omnibus $\nBrkMvnKzero$, while family-wise rates were $\nBrkWyKzero$ (Westfall--Young) and $\nBrkBonfKzero$ (Bonferroni). Anti-conservative corruption of four of five components increased error for the analytic omnibus to $\nBrkAnKfour$ and for Bonferroni to $\nBrkBonfKfour$, while calibrated marginal and Westfall--Young rates remained stable at $\nBrkMvnKfour$ and $\nBrkWyKfour$. Conservative corruption shifted the analytic omnibus to $\nBrkConsAnKfour$ (loss of power), but calibrated rates again held at $\nBrkConsMvnKfour$ and $\nBrkConsWyKfour$. Across all settings, the family-wise rate stayed within $[\nBrkWyRangeLo,\nBrkWyRangeHi]$ and the marginal rate within $[\nBrkMvnRangeLo,\nBrkMvnRangeHi]$.
+
+Removal is a harsher test than corruption because the component is absent. Dropping each component in turn and rebuilding the null bank, marginal calibration, and family-wise threshold (Table~\ref{tab:loo}, Figure~\ref{fig:loo}) kept marginal type~I error within $[\nLooMvnMin,\nLooMvnMax]$ vs.\ $\nLooFullMvn$ and the Westfall--Young rate within $[\nLooWyMin,\nLooWyMax]$ vs.\ $\nLooFullWy$. The largest change was from removing \texttt{\nLooWorst} ($\nLooWorstVal$). Genomic-control inflation stayed near one for all deletions and both corruption directions (Figures~\ref{fig:breakage_lambda} and~\ref{fig:loo}).
+
+Both findings share the same explanation. Resampling calibration applies the same corruption to null replicates and observed data, so uniform miscalibration largely cancels, and the family-wise threshold (a quantile of the corrupted null) shifts accordingly. Under deletion, the null bank is recomputed for the remaining components, so both $p$-values remain valid for any subset. Neither approach handles data-dependent component error, which would not cancel and was not tested. Analytic calibration offers neither safeguard and therefore inherits corruption directly.
+
+The leave-one-out table shows the clearest contrast between the two family-wise procedures. Averaged over pathway sizes and variants, Westfall--Young stayed at nominal across LD regimes ($\nLooWyInd$, $\nLooWyMod$, $\nLooWyStr$), while Bonferroni rose from $\nLooBonfInd$ to $\nLooBonfMod$ to $\nLooBonfStr$, reaching $\nLooBonfMax$ at worst. Here Bonferroni corrects an analytic $p$-value that is anti-conservative under LD (Section~3.3), so it compounds an uncalibrated per-test statistic with a correction that cannot fix it. Under independence, where the analytic $p$-value is valid, Bonferroni was near nominal. The overlap of $\nBrkMembership$ pathways per gene is not enough to make it noticeably conservative. Family-wise correction inherits per-test miscalibration, while the Westfall--Young threshold, based on the same null as the statistic, does not.
+
+The removed component affects Bonferroni predictably. Dropping Stouffer, Fisher, or soft TFisher lowers the rate, while dropping ACAT or minP raises it. Stouffer and Fisher are inflated by within-pathway correlation (Section~3.3), and soft TFisher is stochastically small because it takes a minimum over thresholds without calibration. ACAT and minP stay near nominal, so removing them makes the omnibus more dominated by inflated components. These choices affect sensitivity, not validity, so users can drop a component they distrust (e.g., minP when gene-level $p$-values are floored), at a power cost for architectures where it performs best. The default should therefore be to run all five. The archetype of a real pathway is unknown in advance, and carrying every component costs only the small regret mentioned above, whereas dropping the one that happens to be sensitive forfeits its power entirely. Dropping a component is a decision for a particular dataset with a stated reason, not a default.
+
+
+\subsection*{3.3 Calibration against the correlated null controls error where independence-based calibration fails}
+
 
 Here, we examine the type I error. With no signal, how often does each statistic reject? We adopt the exchangeable setup in Section~2.6, item~1 to separate dependence. The pathways are mutually independent, whereas the $m$ genes within a pathway share a common correlation $\rho$ with higher than standard block LD and therefore serving as a stress test. We vary $\rho\in\{0,0.3,0.6\}$ and $m\in\{5,20,50\}$, simulate $500$ families per setting, and compare four rules: the analytic independence-based $p$-value; per-pathway calibration under the correlated null; Bonferroni on the analytic $p$-value; and the Westfall--Young adjusted $p$-value (Section~2.3, Step~4). The first two are per-pathway (evaluated by marginal type I error), while the last two are family-wise (evaluated by the probability any pathway is rejected) (Table~\ref{tab:null_calibration}; Figure~\ref{fig:type1}).
 
@@ -977,22 +1022,6 @@ The family-wise columns evaluate the Westfall--Young procedure using sample spli
 
 None of this is visible in the genomic-control factor $\lambda$, which points the wrong way (Figure~\ref{fig:lambda}). For the analytic omnibus, $\lambda$ was $\nLamAnInd$ at $\rho=0$, $m=50$ and dropped to $\nLamAnStr$ at $\rho=0.6$, $m=50$, well below one, in the same setting where analytic type I error was largest. There is no contradiction. The $\lambda$ reflects the median null $p$-value, whereas type I error depends on the lower tail. Under strong within-pathway correlation, the analytic null is reshaped rather than shifted, with extra mass in the lower tail and a median above one half, so $\lambda$ can suggest conservatism while the tail is anti-conservative. After per-pathway calibration, $\lambda$ lay in $[\nLamMvnMin,\nLamMvnMax]$. Thus, $\lambda$ near or below one is not evidence that the tail is calibrated.
 
-\subsection*{3.5 No single component test is load-bearing}
-
-An omnibus is useful only if no misbehaving component can dominate it, and a family-wise procedure only if that robustness persists at the family level. We tested both on the overlapping pathway universe (Methods), where each gene belongs to $\nBrkMembership$ pathways on average, by deliberately corrupting components and by removing them.
-
-For corruption, we replaced the $p$-value of each of $k$ selected components with $p^{\gamma}$: conservative at $\gamma=0.7$ and anti-conservative at $\gamma=1.4$ (Table~\ref{tab:breakage}, Figure~\ref{fig:breakage}). With $k=0$, the analytic omnibus had mean marginal type~I error $\nBrkAnKzero$ and the calibrated omnibus $\nBrkMvnKzero$, while family-wise rates were $\nBrkWyKzero$ (Westfall--Young) and $\nBrkBonfKzero$ (Bonferroni). Anti-conservative corruption of four of five components increased error for the analytic omnibus to $\nBrkAnKfour$ and for Bonferroni to $\nBrkBonfKfour$, while calibrated marginal and Westfall--Young rates remained stable at $\nBrkMvnKfour$ and $\nBrkWyKfour$. Conservative corruption shifted the analytic omnibus to $\nBrkConsAnKfour$ (loss of power), but calibrated rates again held at $\nBrkConsMvnKfour$ and $\nBrkConsWyKfour$. Across all settings, the family-wise rate stayed within $[\nBrkWyRangeLo,\nBrkWyRangeHi]$ and the marginal rate within $[\nBrkMvnRangeLo,\nBrkMvnRangeHi]$.
-
-Removal is a harsher test than corruption because the component is absent. Dropping each component in turn and rebuilding the null bank, marginal calibration, and family-wise threshold (Table~\ref{tab:loo}, Figure~\ref{fig:loo}) kept marginal type~I error within $[\nLooMvnMin,\nLooMvnMax]$ vs.\ $\nLooFullMvn$ and the Westfall--Young rate within $[\nLooWyMin,\nLooWyMax]$ vs.\ $\nLooFullWy$. The largest change was from removing \texttt{\nLooWorst} ($\nLooWorstVal$). Genomic-control inflation stayed near one for all deletions and both corruption directions (Figures~\ref{fig:breakage_lambda} and~\ref{fig:loo}).
-
-Both findings share the same explanation. Resampling calibration applies the same corruption to null replicates and observed data, so uniform miscalibration largely cancels, and the family-wise threshold (a quantile of the corrupted null) shifts accordingly. Under deletion, the null bank is recomputed for the remaining components, so both $p$-values remain valid for any subset. Neither approach handles data-dependent component error, which would not cancel and was not tested. Analytic calibration offers neither safeguard and therefore inherits corruption directly.
-
-The leave-one-out table shows the clearest contrast between the two family-wise procedures. Averaged over pathway sizes and variants, Westfall--Young stayed at nominal across LD regimes ($\nLooWyInd$, $\nLooWyMod$, $\nLooWyStr$), while Bonferroni rose from $\nLooBonfInd$ to $\nLooBonfMod$ to $\nLooBonfStr$, reaching $\nLooBonfMax$ at worst. Here Bonferroni corrects an analytic $p$-value that is anti-conservative under LD (Section~3.4), so it compounds an uncalibrated per-test statistic with a correction that cannot fix it. Under independence, where the analytic $p$-value is valid, Bonferroni was near nominal. The overlap of $\nBrkMembership$ pathways per gene is not enough to make it noticeably conservative. Family-wise correction inherits per-test miscalibration, while the Westfall--Young threshold, based on the same null as the statistic, does not.
-
-The removed component affects Bonferroni predictably. Dropping Stouffer, Fisher, or soft TFisher lowers the rate, while dropping ACAT or minP raises it. Stouffer and Fisher are inflated by within-pathway correlation (Section~3.6), and soft TFisher is stochastically small because it takes a minimum over thresholds without calibration. ACAT and minP stay near nominal, so removing them makes the omnibus more dominated by inflated components. These choices affect sensitivity, not validity, so users can drop a component they distrust (e.g., minP when gene-level $p$-values are floored), at a power cost for architectures where it performs best. The default should therefore be to run all five. The archetype of a real pathway is unknown in advance, and carrying every component costs only the small regret mentioned in Section~3.3, whereas dropping the one that happens to be sensitive forfeits its power entirely. Dropping a component is a decision for a particular dataset with a stated reason, not a default.
-
-
-\subsection*{3.6 What the calibration needs from the correlation structure}
 
 The omnibus obscures which input fails. Calibrating components separately (Table~\ref{tab:components_cal}, Figure~\ref{fig:components}) shows that LD damage is concentrated in two of five components, and which two can be predicted from what each statistic measures.
 
@@ -1006,7 +1035,7 @@ Scaled by each procedure’s own nominal level (the only fair comparison between
 
 Although it does affect reporting. A Westfall–Young $p$-value is only as reliable as the correlation file, whose completeness can be measured. The check is specific. MAGMA correlation matrices are expected to be sparse because only nearby gene pairs sharing LD are correlated, so zeros for distant genes are appropriate. What matters is the fraction of within-pathway gene pairs that are on the same chromosome and close enough to be correlated for which a value is actually reported.
 
-As in Section~3.4, $\lambda$ flagged none of this. Across the missingness sweep it ranged from $\nMissLamLo$ to $\nMissLamHi$ and drifted \emph{below} one as correlation information was removed, even as the marginal type~I error more than doubled. This is the second independent case where $\lambda \le 1$ coincides with an inflated tail, showing that $\lambda$ should not be the only calibration diagnostic in pathway analysis.
+As in the comparison above, $\lambda$ flagged none of this. Across the missingness sweep it ranged from $\nMissLamLo$ to $\nMissLamHi$ and drifted \emph{below} one as correlation information was removed, even as the marginal type~I error more than doubled. This is the second independent case where $\lambda \le 1$ coincides with an inflated tail, showing that $\lambda$ should not be the only calibration diagnostic in pathway analysis.
 %TOCHECK:(i)soft TFisher truncation grid is now referenced nowhere in Results (ii) The λ closing says “second independent setting.” That was correct when §3.3 and §3.7 were the two. After your merge the settings are §3.4 and this one — still two, so the count holds. Just don’t let it drift if you add another.
 
 
@@ -1417,7 +1446,41 @@ type~I error more than doubles.}{fig:missing}
 % the agreement as encouraging evidence that the ordering is meaningful in the
 % low-signal regime, and we do not claim more than that.
 
-\subsection*{3.7 Across five ancestry groups, human blood lipids yield the same leading pathway and a stronger candidate gene lists}
+\subsection*{3.4 With known truth on real linkage disequilibrium, CATFISH controls family-wise error and is more powerful than MAGMA and ACAT for sparse signal}
+
+
+With no signal, CATFISH’s self-contained test made 0 false calls in 50 replicates, versus 8/50 for MAGMA (FWER 0.16, 95\% CI 0.07–0.29; Figure~\ref{fig:sim_compare}A, Table~\ref{tab:sim_compare}); the two-stage ACAT test erred in 1/50 (0.02). Both competitive tests had error 0.06, and the joint call 0.00. Under a polygenic background (no enriched pathways but many with associated genes), competitive tests should make no calls: CATFISH’s competitive test and the joint call erred in 4/50 (0.08, 95\% CI 0.02–0.19), while MAGMA’s competitive test made none.
+
+In the self-contained setting, CATFISH outperformed MAGMA when signal was carried by a few genes (Figure~\ref{fig:sim_compare}B). For strong sparse signal (SSS), CATFISH detected the target in 98\% of replicates versus 34\% for MAGMA; for a single-gene signal (SGP), CATFISH achieved 92--100\% across pathway sizes versus 0\%, 18\% and 78\% for MAGMA. The methods were similar for moderate dense (MDS) and mixed (MSA) signal, while for weak diffuse signal (WDE) MAGMA was slightly better at medium size (76\% vs 68\%). The two-stage ACAT, driven by the smallest gene $p$-values, matched or exceeded CATFISH when one or a few genes carried the signal (SSS/SGP: 100\% at all sizes) but lost power when signal was spread across many genes: for WDE it detected the target in 2--28\% versus 12--100\% for CATFISH, and for MDS in small/medium pathways in 36\% and 58\% versus 78\% and 100\%. This matches the archetype simulation (Section~3.2): single components excel only for their targeted architecture, whereas the calibrated omnibus remains near the best test across settings.
+
+For the competitive question the same pattern held (Figure~\ref{fig:sim_compare}C). With strong sparse signal, CATFISH called the target in 66\%, 76\% and 100\% of replicates for small, medium and large pathways, versus 4\%, 12\% and 36\% for MAGMA. For moderate dense, weak diffuse and mixed signal, results were similar, with MAGMA leading for small pathways (MDS 36\% vs 20\%; MSA 50\% vs 42\%). As expected, neither competitive test called pathways driven by a single gene in >4\% of replicates, since one gene does not distinguish a pathway from the rest of the genome; this is what the self-contained test is for. The joint call matched the competitive test whenever signal was present and removed the competitive test’s false calls when none was present.
+
+\begin{figure*}[!t]
+\centering
+\maybefig{Fig22_simulation_catfish_magma.png}{\textwidth}{CATFISH and MAGMA's
+gene-set analysis on GWAS statistics simulated on real linkage disequilibrium
+(50 replicates per setting; points, bars and intervals: proportion and exact
+95\% binomial interval). \textbf{A}~Family-wise error with no pathway enriched:
+no signal (all tests) and a polygenic background only (competitive tests and
+the joint call); the dashed line is $0.05$. \textbf{B}~Power of the self-contained tests (CATFISH, MAGMA and two-stage
+ACAT) to call the enriched pathway, by signal architecture and pathway size. \textbf{C}~Power of the competitive tests. SSS, strong sparse
+signal; MDS, moderate dense signal; WDE, weak diffuse enrichment; MSA, mixed
+signal architecture; SGP, single-gene proxy.}{fig:sim_compare}
+\end{figure*}
+
+\begin{table*}[!t]
+\centering
+\caption{Family-wise error and power of CATFISH and MAGMA in the simulation
+(50 replicates per row). CATFISH: Westfall--Young family-wise $p\le0.05$;
+MAGMA and two-stage ACAT: Bonferroni over $1{,}021$ pathways. Both: called by CATFISH's
+self-contained and competitive tests.}
+\label{tab:sim_compare}
+\small
+\IfFileExists{auto/tab_simulation_compare.tex}{\input{auto/tab_simulation_compare.tex}}%
+{\textcolor{red}{\textbf{Table pending:} \texttt{auto/tab\_simulation\_compare.tex}}}
+\end{table*}
+
+\subsection*{3.5 Five ancestry groups reach the same leading lipid pathway}
 
 We analysed LDL-C and HDL-C using GLGC 2021 meta-analyses \citep{Graham2021GLGC} across five ancestry groups. European (EUR, $n\approx1.32$ million), African/African American (AFR, $n\approx99{,}400$), East Asian (EAS, $n\approx146{,}500$), South Asian (SAS, $n\approx41{,}000$) and Hispanic (HIS, $n\approx48{,}100$). Each ancestry file is an independent meta-analysis with distinct allele frequencies and LD. The four non-European samples are 9--32$\times$ smaller than EUR. All ten trait--ancestry sets were processed identically, with LD from 1000 Genomes Phase 3 panels matched to each group (AMR for HIS), variant-to-gene mapping over a $10\,\mathrm{kb}$ window using NCBI37.3 that yielded $18{,}429$--$18{,}563$ genes per set, and pre-specified settings ($1{,}390$ Reactome pathways, $B=10{,}000$, five components, gene-level genomic control, candidate-gene score and weights, and established-gene lists, Section~2.7). No dataset-specific tuning was performed, so sets differ only by phenotype and population.
 
@@ -1429,25 +1492,7 @@ Below the very top, Europeans differed because many pathways were near-saturated
 
 Furthermore, LDL-C and HDL-C converge on the same pathway via different genes. At the gene level, the traits disagree. The Spearman correlation of gene-level $Z$ statistics was $\nLipGeneRho$, 13 of the top 100 genes overlapped, and the Jaccard overlap of genome-wide significant genes was 0.208 (Figure~\ref{fig:convergence}A). In the lipoprotein pathway, LDL-C is driven by receptor uptake (\textit{LDLR}, \textit{PCSK9}, \textit{LDLRAP1}, \textit{APOB}, \textit{APOE}), whereas HDL-C is driven by reverse transport and lipolysis (\textit{ABCA1}, \textit{LIPC}, \textit{SCARB1}, \textit{LPL}, \textit{CETP}). Only four of the 12 top drivers per trait are shared (Figure~\ref{fig:convergence}B). Thus, two GWAS with different driver genes map to the same process because it contains both arms. Across pathways, trait ranks are correlated ($\nLipCrossRho$; Figure~\ref{fig:convergence}C). This largely reflects a shared size-dependent background, so the evidence for convergence comes from driver-level overlap instead.
 
-Replication occurs at the locus level, with the pathway layer selecting the gene. Seven genes for LDL-C and eight for HDL-C ranked in the top twenty in all five groups (Figure~\ref{fig:replication}C,D): for LDL-C, established \textit{LDLR}, \textit{APOE}, \textit{PCSK9} and \textit{APOB}, plus \textit{APOC1}, \textit{PVRL2} and \textit{TOMM40}; for HDL-C, established \textit{ABCA1}, \textit{CETP}, \textit{LPL}, \textit{LIPC} and \textit{APOA5}, plus \textit{NLRC5}, \textit{SLC12A3} and \textit{HERPUD1}. In Europeans, the three-layer score (Section~2.5) ranked \textit{LDLR} first for LDL-C and \textit{ABCA1} first for HDL-C (Table~\ref{tab:lipid_candidates}). The non-established genes neighbour established ones—either in the chromosome~19 \textit{APOE} cluster or near \textit{CETP} on chromosome~16—and rank highly because they share the lead variant; \textit{APOE}, \textit{APOC1} and \textit{TOMM40} have tied GWAS ranks (Table~\ref{tab:replication_genes}).
-
-The pathway layer resolves this tie. GWAS cannot distinguish genes that share a lead variant, but curated pathway membership often can: \textit{APOE} and \textit{CETP} are in the leading pathway, whereas \textit{TOMM40}, \textit{PVRL2}, \textit{HERPUD1}, \textit{NLRC5} and \textit{SLC12A3} are not. Accordingly, \textit{APOE} ranks above \textit{TOMM40} in all five groups and above \textit{PVRL2} in four; \textit{CETP} ranks above \textit{HERPUD1} and \textit{SLC12A3} in all groups and above \textit{NLRC5} in four. This relies on the pathway layer ranking pathways by the calibrated statistic $z_{\mathrm{std}}$ (Section~2.5).
- The approach has limits: genes tied across all three layers cannot be separated (e.g., \textit{APOC1} shares both lead variant and pathway with \textit{APOE} and ranks just behind it), and the layers are complementary rather than individually reliable (e.g., \textit{CETP} has the strongest variant in all groups but MAGMA rank $3$--$72$, while \textit{APOB} is MAGMA first in South Asians and $185$th in Europeans).
-
-The improved performance over the association layers comes from the pathway layer, not from a gene’s own signal being routed through its pathway (Table~\ref{tab:logo_recovery}). Using only GWAS+MAGMA, established genes had median ranks of $8.5$--$267$ across the ten sets, and in six sets performed no better than GWAS alone; the full score improved this to $7$--$85$ and placed more established genes in the top 20 in every set. When each gene’s pathway evidence was recomputed excluding that gene (Section~2.5), median ranks changed little ($7.5$--$102$), and the number in the top 20 was unchanged or one lower in nine sets and two lower for LDL-C in Europeans. In $97$ of $125$ gene--set pairs, genes still ranked higher than without pathway evidence. The largest drops were for genes with weak direct association, e.g., \textit{LDLRAP1} in East Asians (rank $1{,}059$ with its own signal included, $1{,}300$ excluded, and $6{,}352$ with no pathway evidence), consistent with the intended effect: other genes in an enriched pathway can elevate a gene with modest individual evidence.
-
-Compared with PoPS, CATFISH placed more independently curated gold-standard genes near the top of the genome-wide ranking (Table~\ref{tab:pops_topk}). For LDL-C, CATFISH captured $4$, $6$, $9$ and $10$ of $15$ gold-standard genes in its top $10$, $20$, $50$ and $100$ (vs $3$, $5$, $6$ and $7$ for PoPS), with a better median rank ($37$ vs $133$). For HDL-C, it captured $5$, $6$, $10$ and $12$ of $18$ (vs $3$, $5$, $10$ and $10$), with similar median ranks ($38.5$ vs $40$). CATFISH matched or exceeded GWAS and MAGMA at all cutoffs. PoPS’s top genes tended to be broadly connected and not lipid-specific (\textit{TP53}, \textit{UBC}, \textit{FN1}, \textit{RELA}), whereas CATFISH highlighted locus-neighbouring genes (\textit{PVRL2}, \textit{APOC1}, \textit{TOMM40} near \textit{APOE}). Counting known genes for any lipid trait gave similar totals (LDL-C: $10$ vs $11$ in the top $20$; HDL-C: $11$ each), suggesting CATFISH’s gain is trait-specific prioritisation. At individual loci, PoPS more often selected the gold-standard gene among candidates near the lead variant ($24$ vs $20$ of $29$ loci), typically when CATFISH ranked it second. Given the small sets ($15$ and $18$ genes) and overlap with the Reactome lipoprotein pathways used by CATFISH and PoPS features, these differences are modest.
-
-This result does not show the score “recovers” lipid biology: the “established” genes come from the same literature as curated pathways, so prior knowledge appears on both sides. Leaving each gene out of its pathways removes its own pathway signal, but not the shared prior knowledge. The score can, however, resolve GWAS-ambiguous loci by using prior knowledge to separate genes that association data rank equally. In replicated loci, the combined score often ranks the known trait gene first, helping studies with limited validation, but causal inference still requires evidence not captured by the score (e.g., expression colocalisation or fine-mapping; Section~4.3).
-
-CATFISH also reproduces the same top pathway and the same loci across two related phenotypes and five populations, despite up to 32-fold sample-size differences and differing linkage disequilibrium, using inputs with no overlapping individuals.
-
 \maybeinput{auto/tab_lipid_pathways.tex}
-\maybeinput{auto/tab_lipid_candidates.tex}
-\maybeinput{auto/tab_lipid_recovery.tex}
-\maybeinput{auto/tab_logo_recovery.tex}
-\maybeinput{auto/tab_pops_topk.tex}
-\maybeinput{auto/tab_replication_genes.tex}
 
 \begin{table}[!t]
 \centering
@@ -1493,18 +1538,6 @@ groups in which the gene is in the top twenty.}{fig:replication}
 
 \begin{figure*}[!t]
 \centering
-\maybefig{SuppFig_replication_established.png}{\textwidth}{Established lipid
-genes under the combined candidate score and under each single layer, in the
-five GLGC 2021 ancestry groups. \textbf{A}~Median rank, among about $18{,}500$
-genes, of the $13$ LDL-C and $12$ HDL-C established genes named before the
-analysis (log scale; lower is better). \textbf{B}~Number of those genes in the
-top twenty. The combined score has the best median rank in all ten
-trait--ancestry sets and places at least as many established genes in the top
-twenty as GWAS association alone in every set.}{fig:replication_established}
-\end{figure*}
-
-\begin{figure*}[!t]
-\centering
 \maybefig{Fig14_lipid_pathway_size.png}{\textwidth}{Pathway evidence against
 pathway size in the European data for LDL-C (\textbf{A}) and HDL-C (\textbf{B}).
 Each point is one of the $\nLipNpw$ Reactome pathways; lower values of the
@@ -1532,6 +1565,61 @@ for HDL-C. The broad agreement away from the top reflects the size-dependent
 background they share rather than shared leading signal.}{fig:convergence}
 \end{figure*}
 
+\subsection*{3.6 Self-contained tests saturate; the competitive test picks out the lipid pathways}
+
+
+We ran MAGMA gene-set analysis on the same gene-level statistics and $1{,}390$ Reactome pathways as CATFISH across ten lipid sets (Table~\ref{tab:magma_compare}; Section~2.7).
+
+A like-for-like comparison uses MAGMA’s self-contained test. In European data it declared $1{,}358$ (LDL-C) and $1{,}383$ (HDL-C) pathways significant—more than CATFISH ($\nLipSigLDL$, $\nLipSigHDL$)—showing that saturation is inherent to the self-contained hypothesis, not CATFISH; centring (absent in MAGMA) also contributes. The two self-contained tests gave similar pathway rankings (Spearman $0.70$--$0.94$ across sets), but MAGMA depended more on pathway size: size–evidence Spearman was $0.85$ and $0.86$ in European data and $0.38$--$0.62$ elsewhere, versus $0.72$, $0.73$ and $0.21$--$0.41$ for CATFISH. CATFISH ranked plasma lipoprotein assembly, remodeling and clearance first in all ten sets; MAGMA did so in six and ranked it second in four. In non-European sets CATFISH declared more pathways significant ($93$--$592$ vs $35$--$469$). Real data cannot distinguish power from false positives; Section~3.9 (permutation null) assesses CATFISH error rates, and Section~3.4 (simulation) compares error rates of both methods under known truth.
+
+MAGMA’s competitive test did not saturate, calling $2$–$12$ pathways significant per set ($5$ for LDL-C, $12$ for HDL-C in Europeans). Evidence was unrelated to pathway size (Spearman $-0.12$ to $0.11$). It ranked the lipoprotein pathway first in six sets and top five in all ten. In Europeans, its top pathways were lipid-focused: for LDL-C, six of its top ten were in the plasma-lipoprotein subtree (vs. two for CATFISH); for HDL-C, its top ten included three, both LXR-regulated sets, and the LPL/LIPC lipase-complex assembly, while CATFISH’s top ten still contained large generic sets. Agreement with CATFISH was moderate (Spearman $0.30$–$0.52$), consistent with the tests addressing different questions.
+
+\maybeinput{auto/tab_magma_compare.tex}
+
+
+Across the ten lipid sets, CATFISH’s competitive test called $3$--$14$ pathways significant versus $93$--$1{,}238$ for the self-contained test; all competitive calls were also self-contained, so the joint call matched the competitive call (Table~\ref{tab:competitive_real}). The competitive test largely removed pathway-size dependence (Spearman size–evidence $-0.13$ to $0.22$ vs $0.21$--$0.73$ self-contained). The two tests gave similar rankings (Spearman $0.73$--$0.91$), least so in Europeans, where the GWAS is largest and the self-contained test most saturated. Both ranked plasma lipoprotein assembly, remodeling and clearance first in six sets; in South Asian and Hispanic sets, the competitive test ranked a sub-pathway first (LDL-C: lipoprotein clearance; HDL-C: lipoprotein remodeling) and the parent pathway second or third. In Europeans, competitive calls were mostly lipid pathways: for LDL-C, six plasma-lipoprotein subtree sets, both LXR-regulated sets (NR1H2/NR1H3), and interferon-$\gamma$ signaling; for HDL-C, six subtree sets, LPL/LIPC lipase-complex assembly, both LXR-regulated sets, PPAR$\alpha$ lipid-metabolism regulation, and four others. In sorghum dry biomass, neither test called any pathway and rankings were identical (Spearman $1.00$): after centring, the GWAS has no genome-wide signal, so the self-contained and competitive nulls coincide.
+
+The two tests address different questions, as the Section~3.4 simulation shows. For a pathway driven by a single gene, CATFISH’s self-contained test detected it in $92$--$100\%$ of replicates across pathway sizes, while competitive tests almost never did ($0$--$4\%$); MAGMA’s self-contained test detected it in $0\%$, $18\%$, and $78\%$ of replicates for small, medium, and large pathways. With no signal, CATFISH’s self-contained test made no false calls in 50 replicates; its competitive test erred in $0.06$ of replicates, and $0.08$ with only a polygenic background, both consistent with the nominal $0.05$. Thus, the self-contained test indicates whether a pathway has signal (even if driven by one gene), whereas the competitive test identifies which significant pathways stand out relative to the rest of the genome.
+
+Test choice did not affect the ranking of positive controls among candidate genes. Ranking pathways by the competitive or joint statistic instead of the self-contained one shifted established-gene median ranks by no more than seven places in any lipid set and changed the count in the top ten by at most one; the joint and competitive statistics produced identical ranks in every lipid set. Because the established genes are in the lipoprotein pathway or its sub-pathways, both tests rank these pathways highest, giving the genes the strongest pathway evidence either way. In sorghum, none of the eight established dry-biomass genes is in a SorghumBicolorCyc pathway, so the pathway layer cannot move them.
+
+\maybeinput{auto/tab_competitive_real.tex}
+
+\subsection*{3.7 The gene score recovers known lipid genes and picks the functional gene within a locus}
+
+Replication occurs at the locus level, with the pathway layer selecting the gene. Seven genes for LDL-C and eight for HDL-C ranked in the top twenty in all five groups (Figure~\ref{fig:replication}C,D): for LDL-C, established \textit{LDLR}, \textit{APOE}, \textit{PCSK9} and \textit{APOB}, plus \textit{APOC1}, \textit{PVRL2} and \textit{TOMM40}; for HDL-C, established \textit{ABCA1}, \textit{CETP}, \textit{LPL}, \textit{LIPC} and \textit{APOA5}, plus \textit{NLRC5}, \textit{SLC12A3} and \textit{HERPUD1}. In Europeans, the three-layer score (Section~2.5) ranked \textit{LDLR} first for LDL-C and \textit{ABCA1} first for HDL-C (Table~\ref{tab:lipid_candidates}). The non-established genes neighbour established ones—either in the chromosome~19 \textit{APOE} cluster or near \textit{CETP} on chromosome~16—and rank highly because they share the lead variant; \textit{APOE}, \textit{APOC1} and \textit{TOMM40} have tied GWAS ranks (Table~\ref{tab:replication_genes}).
+
+The pathway layer resolves this tie. GWAS cannot distinguish genes that share a lead variant, but curated pathway membership often can: \textit{APOE} and \textit{CETP} are in the leading pathway, whereas \textit{TOMM40}, \textit{PVRL2}, \textit{HERPUD1}, \textit{NLRC5} and \textit{SLC12A3} are not. Accordingly, \textit{APOE} ranks above \textit{TOMM40} in all five groups and above \textit{PVRL2} in four for LDL-C, and above \textit{TOMM40} in nine of the ten trait--ancestry sets overall (Table~\ref{tab:apoe_locus}); \textit{CETP} ranks above \textit{HERPUD1} and \textit{SLC12A3} in all groups and above \textit{NLRC5} in four. This relies on the pathway layer ranking pathways by the calibrated statistic $z_{\mathrm{std}}$ (Section~2.5).
+ The approach has limits: genes tied across all three layers cannot be separated (e.g., \textit{APOC1} shares both lead variant and pathway with \textit{APOE} and ranks just behind it), and the layers are complementary rather than individually reliable (e.g., \textit{CETP} has the strongest variant in all groups but MAGMA rank $3$--$72$, while \textit{APOB} is MAGMA first in South Asians and $185$th in Europeans).
+
+The improved performance over the association layers comes from the pathway layer, not from a gene’s own signal being routed through its pathway (Table~\ref{tab:logo_recovery}). Using only GWAS+MAGMA, established genes had median ranks of $8.5$--$267$ across the ten sets, and in six sets performed no better than GWAS alone; the full score improved this to $7$--$85$ and placed more established genes in the top 20 in every set. When each gene’s pathway evidence was recomputed excluding that gene (Section~2.5), median ranks changed little ($7.5$--$102$), and the number in the top 20 was unchanged or one lower in nine sets and two lower for LDL-C in Europeans. In $97$ of $125$ gene--set pairs, genes still ranked higher than without pathway evidence. The largest drops were for genes with weak direct association, e.g., \textit{LDLRAP1} in East Asians (rank $1{,}059$ with its own signal included, $1{,}300$ excluded, and $6{,}352$ with no pathway evidence), consistent with the intended effect: other genes in an enriched pathway can elevate a gene with modest individual evidence.
+
+Compared with PoPS, CATFISH placed more independently curated gold-standard genes near the top of the genome-wide ranking (Table~\ref{tab:pops_topk}). For LDL-C, CATFISH captured $4$, $6$, $9$ and $10$ of $15$ gold-standard genes in its top $10$, $20$, $50$ and $100$ (vs $3$, $5$, $6$ and $7$ for PoPS), with a better median rank ($37$ vs $133$). For HDL-C, it captured $5$, $6$, $10$ and $12$ of $18$ (vs $3$, $5$, $10$ and $10$), with similar median ranks ($38.5$ vs $40$). CATFISH matched or exceeded GWAS and MAGMA at all cutoffs. PoPS’s top genes tended to be broadly connected and not lipid-specific (\textit{TP53}, \textit{UBC}, \textit{FN1}, \textit{RELA}), whereas CATFISH highlighted locus-neighbouring genes (\textit{PVRL2}, \textit{APOC1}, \textit{TOMM40} near \textit{APOE}). Counting known genes for any lipid trait gave similar totals (LDL-C: $10$ vs $11$ in the top $20$; HDL-C: $11$ each), suggesting CATFISH’s gain is trait-specific prioritisation. At individual loci, PoPS more often selected the gold-standard gene among candidates near the lead variant ($24$ vs $20$ of $29$ loci), typically when CATFISH ranked it second. Given the small sets ($15$ and $18$ genes) and overlap with the Reactome lipoprotein pathways used by CATFISH and PoPS features, these differences are modest.
+
+This result does not show the score “recovers” lipid biology: the “established” genes come from the same literature as curated pathways, so prior knowledge appears on both sides. Leaving each gene out of its pathways removes its own pathway signal, but not the shared prior knowledge. The score can, however, resolve GWAS-ambiguous loci by using prior knowledge to separate genes that association data rank equally. In replicated loci, the combined score often ranks the known trait gene first, helping studies with limited validation, but causal inference still requires evidence not captured by the score (e.g., expression colocalisation or fine-mapping; Section~4.3).
+
+CATFISH also reproduces the same top pathway and the same loci across two related phenotypes and five populations, despite up to 32-fold sample-size differences and differing linkage disequilibrium, using inputs with no overlapping individuals.
+
+\maybeinput{auto/tab_lipid_candidates.tex}
+\maybeinput{auto/tab_lipid_recovery.tex}
+\maybeinput{auto/tab_logo_recovery.tex}
+\maybeinput{auto/tab_pops_topk.tex}
+\maybeinput{auto/tab_replication_genes.tex}
+
+\maybeinput{auto/tab_apoe_locus.tex}
+
+\begin{figure*}[!t]
+\centering
+\maybefig{SuppFig_replication_established.png}{\textwidth}{Established lipid
+genes under the combined candidate score and under each single layer, in the
+five GLGC 2021 ancestry groups. \textbf{A}~Median rank, among about $18{,}500$
+genes, of the $13$ LDL-C and $12$ HDL-C established genes named before the
+analysis (log scale; lower is better). \textbf{B}~Number of those genes in the
+top twenty. The combined score has the best median rank in all ten
+trait--ancestry sets and places at least as many established genes in the top
+twenty as GWAS association alone in every set.}{fig:replication_established}
+\end{figure*}
+
 \begin{figure*}[!t]
 \centering
 \maybefig{Fig15_lipid_gene_recovery.png}{\textwidth}{Ranks of the
@@ -1540,6 +1628,197 @@ data for LDL-C (\textbf{A}) and HDL-C (\textbf{B}), ranked by the strongest
 assigned variant (GWAS), by the MAGMA gene-level $p$-value, and by the combined
 CATFISH score. Lines join the same gene; black bars are medians.}{fig:lipid_recovery}
 \end{figure*}
+
+\subsection*{3.8 Across nine traits, pathway evidence improves candidate genes}
+
+The lipid analyses test the gene score on two traits that share one curated
+pathway. To ask whether pathway evidence improves candidate genes more
+generally, we repeated the genome-wide comparison of Section~3.7 in seven more
+European GWAS whose genes have been curated independently (Section~2.7):
+coronary artery disease, breast cancer, atrial fibrillation, Crohn's disease,
+ulcerative colitis, systemic lupus erythematosus and asthma. With LDL-C and
+HDL-C these give $\nBenchNtraits$ traits and $\nBenchNgold$ Open Targets
+gold-standard genes, all analysed with the same MAGMA, CATFISH and PoPS
+pipelines. The leading pathways followed each trait's biology: plasma
+lipoprotein assembly, remodeling and clearance for coronary artery disease;
+SUMOylation and homology-directed repair for breast cancer; muscle contraction
+and cardiac conduction for atrial fibrillation; interferon-$\gamma$ signalling
+for Crohn's disease, ulcerative colitis and lupus; and T-cell differentiation
+and interleukin-1 family signalling for asthma.
+
+\emph{Pathway evidence.} The direct test of the hypothesis compares the gene
+score with and without its pathway layer, on the same genes and the same GWAS
+and MAGMA evidence (Table~\ref{tab:pathway_gain_all}). Without the pathway
+layer, the score placed $\nBenchNpTwenty$, $\nBenchNpFifty$ and
+$\nBenchNpHundred$ gold-standard genes in its genome-wide top $20$, $50$ and
+$100$; with it, $\nBenchCatTwenty$, $\nBenchCatFifty$ and $\nBenchCatHundred$,
+that is $\nBenchGainTwenty\%$, $\nBenchGainFifty\%$ and $\nBenchGainHundred\%$
+more. The full score matched or exceeded the score without pathways in all
+nine traits at every cutoff, and exceeded it at one cutoff or more in every
+trait, including the four immune traits. Either association layer alone did
+worse still: ranking by the best variant placed $\nBenchGwTwenty$,
+$\nBenchGwFifty$ and $\nBenchGwHundred$ gold-standard genes in the top $20$,
+$50$ and $100$, and ranking by the MAGMA gene $p$-value $\nBenchMgTwenty$,
+$\nBenchMgFifty$ and $\nBenchMgHundred$.
+
+\emph{Comparison with PoPS.} With its pathway layer, CATFISH matched PoPS
+across the nine traits (Table~\ref{tab:benchmark_topk_all}): $\nBenchCatTwenty$
+against $\nBenchPopsTwenty$ gold-standard genes in the top $20$,
+$\nBenchCatFifty$ against $\nBenchPopsFifty$ in the top $50$ and
+$\nBenchCatHundred$ against $\nBenchPopsHundred$ in the top $100$. The two
+methods differed by trait. CATFISH was ahead or level at every cutoff for
+LDL-C, HDL-C, coronary artery disease, breast cancer and atrial fibrillation,
+where the relevant biology is metabolism, signalling and ion transport, which
+Reactome curates well. PoPS was ahead for the four immune traits, where its
+57{,}543 gene features, which include immune-cell expression, mark the
+relevant genes better than pathway membership does. CATFISH reaches this level
+without training a model or using any gene feature beyond pathway membership.
+Keeping the MHC in the gene universe changed the totals little (top $20$:
+$\nBenchAllCatTwenty$ against $\nBenchAllPopsTwenty$; top $50$:
+$\nBenchAllCatFifty$ against $\nBenchAllPopsFifty$).
+
+The two rankings find different genes. Of the gold-standard genes in either
+method's top $20$, $\nBenchBothTwenty$ were in both, $\nBenchOnlyCatTwenty$
+only in CATFISH's and $\nBenchOnlyPopsTwenty$ only in PoPS's. Averaging each
+gene's two ranks placed $\nBenchCombTwenty$, $\nBenchCombFifty$ and
+$\nBenchCombHundred$ gold-standard genes in the top $20$, $50$ and $100$, more
+than either method alone.
+
+\emph{Annotated genes.} The pathway layer can lift only genes that are in a
+tested pathway. Restricted to those genes ($\nBenchAnnGenesLo$--$\nBenchAnnGenesHi$
+per trait, with PoPS ranked within the same genes), CATFISH's lead over PoPS
+widened to $\nBenchAnnCatTwenty$ against $\nBenchAnnPopsTwenty$ in the top
+$20$, $\nBenchAnnCatFifty$ against $\nBenchAnnPopsFifty$ in the top $50$ and
+$\nBenchAnnCatHundred$ against $\nBenchAnnPopsHundred$ in the top $100$. This
+restriction favours a pathway method, so we report it beside the comparison
+over all genes rather than in its place.
+
+The caveat of Section~3.7 applies here too: curated pathways and gold-standard
+genes both draw on the published literature, so part of the gain may reflect
+prior knowledge on both sides. For the lipids, leaving each gene out of its own
+pathways changed little (Table~\ref{tab:logo_recovery}); for the seven other
+traits that check has not yet been run.
+
+\maybeinput{auto/tab_pathway_gain_all.tex}
+\maybeinput{auto/tab_benchmark_topk_all.tex}
+
+
+\subsection*{3.9 Sorghum dry biomass: a permutation null tests the calibration in a structured panel}
+
+
+In sorghum BAP, unlike the lipid data, the $327$ lines yield sparse signal and long-range LD: each gene averages $\nSorNeighbours$ neighbours with $|r|\ge0.1$ in MAGMA’s gene--gene correlation, versus $\nLipNeighbours$ in humans. We therefore test whether the method remains calibrated and whether the gene score provides a useful ranking.
+
+No pathway reached family-wise significance. The top pathway was proanthocyanidin biosynthesis from flavanols (family-wise $p=\nSorTopFwerDry$). Calibrated $p$-values fell below $0.05$ for $\nSorDryCalFive\%$ of $\nSorDryNpw$ pathways, close to nominal, compared with $\nSorDryOmniFive\%$ for the uncalibrated analytic omnibus (Figure~\ref{fig:sorghum_dry}A).
+
+Gene ranking is organised by locus (Figure~\ref{fig:sorghum_dry}B). The top gene, Sobic.004G014400 (chr4), encodes cycloartenol synthase, the first committed step in sterol biosynthesis, and is one of two top-ten genes supported by all three layers: its strongest variant has $p=\nSorCasGwasP$, its MAGMA $p$-value is $\nSorCasMagmaP$ (rank $\nSorCasMagmaRank$), and cycloartenol biosynthesis ranked $\nSorCycloRank$ of $\nSorDryNpw$ pathways. It shares its lead variant with seven nearby genes but leads them by MAGMA evidence; the pathway layer elevates it from rank $\nSorCasRankNp$ (without pathways) to first. We found no prior link between this gene/region and sorghum biomass. In \textit{Arabidopsis}, cycloartenol synthase loss is lethal and weak alleles disrupt plastid development \citep{Babiychuk2008}; sterol-deficient mutants are impaired in cellulose synthesis \citep{Schrick2012}. In bioenergy sorghum, cycloartenol synthase is highest in young, elongating internodes and declines with maturity alongside other sterol/brassinosteroid genes \citep{Kebrom2017}; a chr5 cycloartenol synthase was also a candidate for shoot biomass under salt stress \citep{Yamazaki2020}. Because sterols are brassinosteroid precursors that promote internode elongation, altered sterol supply could affect biomass, though this remains untested.
+
+The fourth-ranked gene, Sobic.008G029200, contains a WRKY DNA-binding domain, but its pathway support comes from a SorghumBicolorCyc entry misassigning acyl-ACP thioesterase activity; without pathways it ranks $\nSorWrkyRankNp$, indicating the pathway layer amplified an annotation error. Pre-specified flowering-time and height genes are not in any tested pathway; the two with detectable signal, \textit{Ma1}/\textit{PRR37} and \textit{Dw1}, ranked $879$ and $2{,}956$ of $\nSorDryNgenes$ (vs. GWAS-only ranks $929$ and $6{,}028$), while the other six show little evidence in any layer.
+
+Real data cannot assess calibration because no pathway is known to be null. We therefore permuted the phenotype $100$ times (Section~2.7). Each permutation is a GWAS with the same lines, genotypes and LD in which all pathways are null, so any rejection is a false positive. Figure~\ref{fig:sorghum_dry}C,D, Figure~\ref{fig:sorghum_null} and Table~\ref{tab:sorghum_null} summarise $30{,}400$ null tests ($304$ pathways across $100$ permutations).
+
+Without genomic control, calibrated $p$-values were non-uniform. Although the inflation factor was $0.84$, $7.2\%$ of null pathways had $p<0.05$ and $2.3\%$ had $p<0.01$ (Figure~\ref{fig:sorghum_dry}C). Moreover, $18/100$ permutations produced at least one family-wise significant pathway (FWER $0.18$, $95\%$ CI $0.11$--$0.27$; Figure~\ref{fig:sorghum_dry}D). The excess increased with pathway size, from $6.1\%$ for $5$--$9$ genes to $12.7\%$ for $50$--$200$ genes (Figure~\ref{fig:sorghum_null}B). The deflated median but inflated tail suggests a mixture across permutations.
+
+Each permutation shifted all gene $z$-scores together. Permutation mean gene $z$-scores had SD $0.24$ (range $-0.66$ to $0.66$), versus $0.075$ expected under MAGMA’s correlated null and $0.005$ assuming $33{,}907$ independent genes. The shift was genome-wide: per-chromosome means correlated $0.80$, and genes on different chromosomes (no LD) still correlated $0.06$ across permutations, vanishing after subtracting each permutation’s genome-wide mean. The correlated null cannot capture this because it centres genes at zero and treats chromosomes as independent. Self-contained tests interpret the shift as signal that grows with pathway size: the number of pathways with $p<0.05$ tracked the mean gene $z$-score (Pearson $0.77$, Spearman $0.90$), and $16/18$ permutations with a family-wise false positive had positive shifts (Figure~\ref{fig:sorghum_null}A). The shift reflects a GWAS-wide property, not LD, and its source in the mixed model remains unknown.
+
+Genomic control removed the inflation. With gene $z$-scores centred at their median (Section~2.7), the inflation factor was $1.01$; $5.2\%$ of null pathways were below $0.05$ and $1.3\%$ below $0.01$, with no remaining dependence on pathway size ($5.0\%$--$6.0\%$ across four size classes; Figure~\ref{fig:sorghum_null}B). The family-wise error rate dropped to $0.12$ ($12/98$ permutations; $95\%$ CI $0.06$--$0.20$). The $21$ family-wise false positives were all different pathways, so none recurred in this panel.
+
+The remaining excess lies in the extreme tail. After centring, calibrated $p$-values below $0.01$ were $1.3\times$ as frequent as expected and those below $0.001$ $1.8\times$; gene $p$-values below $10^{-3}$, $10^{-4}$ and $10^{-5}$ were $1.7$, $3.2$ and $6.7\times$ as frequent. Because the family minimum is a tail statistic, small per-pathway excesses amplify family-wise. We examined two causes. First, the correlation matrix: across permutations, gene pairs reported by MAGMA as $r=0.22$ were nearly uncorrelated ($0.03$), pairs at $r=0.52$ were $0.32$, and agreement appeared only above $\sim0.8$ (Figure~\ref{fig:sorghum_null}D). MAGMA estimates correlations from raw genotypes, retaining population structure removed by the mixed model, so moderate correlations are overstated. Overstating correlation should widen the null and make tests conservative, and substituting permutation-based correlations did not reduce the family-wise error rate ($0.15$, $95\%$ CI $0.09$--$0.24$; Figure~\ref{fig:sorghum_null}C; inflation factor $1.01$; type I error $0.055$ at $0.05$). Second, the variant-level test: in five permutations, variant $p$-values below $10^{-4}$ were $4.5\times$ too frequent—$11.5\times$ at MAF $0.01$--$0.02$, $4.8\times$ at $0.02$--$0.05$, and $2.0$ and $1.7\times$ at $0.05$--$0.10$ and above (Figure~\ref{fig:sorghum_null}E). The mixed-model Wald test is heavy-tailed here, especially for rare variants, whereas the multivariate normal null has Gaussian tails. We did not filter variants to “fix” this, since such a filter would be outcome-tuned.
+
+In this panel, CATFISH with genomic control yields calibrated per-pathway $p$-values, but its family-wise $p$-values are about 2.5× anti-conservative ($0.12$ vs $0.05$). This excess arises from the tail of the upstream variant-level test, not the pathway procedure.
+
+\begin{figure*}[!t]
+\centering
+\maybefig{Fig21_sorghum_dry_tons.png}{\textwidth}{Sorghum dry biomass.
+\textbf{A}~The ten leading SorghumBicolorCyc pathways: per-pathway calibrated
+$p$-value, with the number of genes in parentheses and the Westfall--Young
+family-wise $p$-value at the end of each bar; the dashed line is $p=0.05$.
+\textbf{B}~The ten highest-ranked genes of the combined score (Sobic IDs, with
+the SorghumBicolorCyc enzyme name where there is one; the WRKY gene is listed in
+SorghumBicolorCyc as an acyl-ACP thioesterase), and each gene's rank in the
+GWAS, MAGMA and pathway layers (pathway: rank among pathway-annotated genes);
+lines join the layers of one gene. \textbf{C},~\textbf{D}~The permutation null:
+$100$ permutations of the phenotype, each analysed with the full
+GWAS--MAGMA--Westfall--Young pipeline. \textbf{C}~Quantile--quantile plot of the
+per-pathway calibrated $p$-values over all permutations, without and with
+gene-level genomic control (GC), with the inflation factor $\lambda$ and the
+family-wise error rate. \textbf{D}~Family-wise error rate (fraction of
+permutations with any pathway at a family-wise $p$-value $\le0.05$) with its
+$95\%$ Clopper--Pearson interval; the dashed line is the nominal $0.05$.}{fig:sorghum_dry}
+\end{figure*}
+
+\begin{table}[!t]
+\centering
+\caption{CATFISH under the sorghum phenotype-permutation null ($304$
+SorghumBicolorCyc pathways in each permutation of dry biomass). $\lambda$ is the
+inflation factor of the per-pathway calibrated $p$-values; type I error is the
+fraction of null pathway tests with calibrated $p\le\alpha$; family-wise error
+is the fraction of permutations with at least one pathway at a Westfall--Young
+family-wise $p$-value $\le0.05$, with a Clopper--Pearson interval. GC,
+gene-level genomic control (Section~2.7).}
+\label{tab:sorghum_null}
+\small
+\maybeinput{auto/tab_sorghum_null.tex}
+\end{table}
+
+\begin{figure*}[!t]
+\centering
+\maybefig{Fig20_sorghum_null.png}{\textwidth}{Diagnostics of the sorghum
+phenotype-permutation null ($100$ permutations of dry biomass): without
+gene-level genomic control (no GC), with it (GC), and with it and the gene--gene
+correlations replaced by those observed across permutations (GC + null $r$).
+\textbf{A}~Each point is one permutation
+(no GC): its mean gene $z$-score against the number of its $304$ pathways with
+calibrated $p<0.05$; filled points are permutations with at least one pathway
+significant under family-wise control. \textbf{B}~Type I error at $\alpha=0.05$
+by pathway size. \textbf{C}~Family-wise error rate with $95\%$ Clopper--Pearson
+interval; the dashed line is the nominal $0.05$. \textbf{D}~Correlation of gene
+$z$-scores across permutations against the correlation MAGMA reports for the
+same gene pairs, with pairs binned by MAGMA $r$; the dashed line is the
+identity. \textbf{E}~Observed over expected number of variant $p$-values below
+$10^{-4}$, by minor allele frequency, in five permutations (chromosomes 1--9);
+the dashed line is one.}{fig:sorghum_null}
+\end{figure*}
+
+\subsection*{3.10 Sorghum stem composition: the gene score resolves a new sugar--fibre locus to two candidate genes}
+
+
+Dry biomass confirmed the procedure was calibrated in this panel, but could not show the gene score adding new findings because no pathway was significant and known biomass genes are not in any pathway. We therefore analysed three stem-composition traits in the same lines (Section~2.7): Brix at maturity (stem-juice soluble solids) and two dry-matter fractions, neutral detergent fibre (NDF; cell wall) and non-fibre carbohydrate (NFC; mainly sugars and starch). These traits were strongly correlated across lines: Brix correlated with NDF ($r=\nBapRBrixNDF$) and NFC ($r=\nBapRBrixNFC$), and NDF with NFC ($r=\nBapRNDFNFC$). Brix also correlated negatively with acid detergent fibre ($r=\nBapRBrixADF$) and lignin ($r=\nBapRBrixLig$). Thus, lines with more stem sugar have less cell wall, reflecting the soluble–structural carbon trade-off separating sweet from biomass sorghum.
+
+\emph{Variants and pathways.} For each trait, the top association was at loci the gene score cannot capture. For Brix, the strongest variant ($p=\nBapTopPBrix$) was on \nBapTopLocBrix, in the chromosome~6 region containing \textit{Ma1} and \textit{Dw2}. For NDF and NFC, it was on \nBapTopLocNDF\ ($p=\nBapTopPNDF$ and $\nBapTopPNFC$), a region containing none of the eight maturity/height genes (Section~2.7) and no leading genes in any SorghumBicolorCyc pathway.
+
+With family-wise control, CATFISH’s self-contained test called $\nBapSigBrix$ of the $\nBapNpw$ pathways for Brix, $\nBapSigNDF$ for NDF, and $\nBapSigNFC$ for NFC; the competitive test called $\nBapCompBrix$, $\nBapCompNDF$, and $\nBapCompNFC$. The self-contained significant pathways were \nBapSigListBrix (Brix), \nBapSigListNDF (NDF), and \nBapSigListNFC (NFC). Two are single-gene pathways (Section~1.1), with their gene in the chromosome~4 locus described next. In $\beta$-alanine biosynthesis~I ($\nBapBalaN$ genes), Sobic.004G300800 has MAGMA $p=\nBapAldhMagmaPBrix$ for Brix (others $p=\nBapBalaOtherLo$ to $\nBapBalaOtherHi$). For NDF and NFC, the thioredoxin pathway is driven by thioredoxin reductase Sobic.004G300900 ($p=\nBapTrxMagmaPNDF$ and $\nBapTrxMagmaPNFC$). As in the simulation (Section~3.4), the self-contained test flags such single-gene pathways, whereas the competitive test does not (family-wise $p=\nBapBalaCompBrix$, $\nBapTrxPwCompNDF$, $\nBapTrxPwCompNFC$). Thus these calls mainly restate the locus via its annotations, not independent evidence that $\beta$-alanine or thioredoxin metabolism affects the traits.
+
+\emph{One locus, two annotated genes.} Gene scores mapped the three traits to one locus. Of $\nBapNgenes$ ranked genes, $\nBapNshared$ were in the top 100 for all traits; all $\nBapNsharedLocus$ fall within an $85\,\mathrm{kb}$ interval on chromosome~4 ($63.96$--$64.04\,\mathrm{Mb}$; Table~\ref{tab:bap_chr4}, Figure~\ref{fig:bap_chr4}D). This region has not previously been reported for sugar or fibre. Two genes at the locus have pathway evidence and top the rankings. Sobic.004G300800, an ALDH3 fatty aldehyde dehydrogenase (\textit{SbALDH3E1}), is predicted to be chloroplast-localised and is a segmental duplicate of \textit{SbALDH3E2} on chromosome~6 \citep{Islam2022SbALDH}; it ranked $\nBapAldhBrix$ (Brix), $\nBapAldhNDF$ (NDF) and $\nBapAldhNFC$ (NFC). The neighbouring Sobic.004G300900, an NADPH-dependent thioredoxin reductase, ranked $\nBapTrxBrix$, $\nBapTrxNDF$ and $\nBapTrxNFC$. Among genes supported by all three evidence layers (about $\nBapNthreeNDF$ per trait), the dehydrogenase ranked $\nBapAldhTlBrix$, $\nBapAldhTlNDF$ and $\nBapAldhTlNFC$, and the reductase $\nBapTrxTlBrix$, $\nBapTrxTlNDF$ and $\nBapTrxTlNFC$; the dehydrogenase was the top genome-wide gene for Brix, and the reductase second for both fibre traits.
+
+Neither gene contains the top variants. For Brix, their best variant is shared with four neighbouring genes, all at GWAS-layer rank $\nBapAldhGwasBrix$. For NDF and NFC, the strongest locus variants are about $60\,\mathrm{kb}$ away in Sobic.004G301200--301700 (GWAS-layer ranks $41$ and $26$), while the dehydrogenase and reductase rank only $\nBapTrxGwasNDF$ and $\nBapTrxGwasNFC$ on that layer (Table~\ref{tab:bap_chr4}). However, they surpass these neighbours on two other layers: their MAGMA $p$-values are the two smallest in the locus for all three traits (Brix: $\nBapAldhMagmaPBrix$, $\nBapTrxMagmaPBrix$, with Sobic.004G301000 close behind), and they are the only two locus genes in any pathway. Thus, GWAS alone assigns the fibre signal to unannotated Sobic.004G301200--301700, whereas gene scoring shifts it to the adjacent enzymes (Figure~\ref{fig:bap_chr4}D).
+
+\emph{The same signal in all three traits.} The lead variants for the three traits are in strong LD. The Brix lead at $\nBapLeadPosBrix\,\mathrm{Mb}$ ($p=\nBapLeadPBrix$), $6\,\mathrm{kb}$ from the dehydrogenase start, and the shared NDF/NFC lead at $\nBapLeadPosNDF\,\mathrm{Mb}$ ($p=\nBapLeadPNDF$ and $\nBapLeadPNFC$) have $r^2=\nBapLeadRsq$. Across $\nBapNwin$ variants, Brix and NDF $z$-scores align (correlation $\nBapZcor$, alleles aligned; Figure~\ref{fig:bap_chr4}C), consistent with one haplotype carrying both signals. Adding three principal components changed lead $p$-values by <10× (vs. $1.0\times10^{-7}$, $2.2\times10^{-10}$ and $1.4\times10^{-10}$ without them), indicating the signal is not due to broad population structure. The Brix-increasing allele (\nBapUp) has frequency $\nBapFreqUp$: $\nBapNUpHom$ lines are homozygous (including Rio), $\nBapNOtherHom$ are homozygous for the other allele, and $\nBapNHet$ are heterozygous. Per copy it increased Brix by $\nBapEffBrix$ and NFC by $\nBapEffNFC$ SD and decreased NDF by $|\nBapEffNDF|$ ($p=\nBapEffPBrix$, $\nBapEffPNFC$, $\nBapEffPNDF$; Figure~\ref{fig:bap_chr4}B). Homozygotes differed by $\nBapDiffBrix$ degrees Brix and $\nBapDiffNDF$ NDF points vs. the other homozygotes. The NDF difference is partly mediated by Brix and partly independent: with Brix in the model, NDF still differed by $\nBapAdjNDF$ points ($p=\nBapAdjP$; $\nBapNboth$ lines), and genotype means fall below the overall NDF–Brix relationship (Figure~\ref{fig:bap_chr4}A). Thus, the sugar–fibre trade-off explains about $\nBapFracVia\%$ of the allele’s fibre effect.
+
+\emph{Not a maturity or height locus.} No cloned maturity or height gene from Section~2.7 lies on chromosome~4. In GWAS of anthesis and harvest date in these lines (same mixed model, no principal components), the top variants had $p=1.1\times10^{-4}$ ($141$ lines with anthesis date) and $p=8.6\times10^{-4}$ ($326$ lines), four to five orders of magnitude weaker than for composition traits in the same lines. In these models, the Brix-raising allele had no detectable effect on stalk height ($p=0.29$) or dry biomass ($p=0.09$). This locus affects stem composition, not plant size or maturity.
+
+\emph{Expression and homologues.} Public RNA-seq data (Expression Atlas \citep{Moreno2022ExpressionAtlas}) show \textit{SbALDH3E1} expression in leaf, shoot, root, stem and inflorescence across nine experiments. Where organ- and stage-resolved, expression is highest in the leaf sheath at flowering, seedling leaf lamina and vegetative shoot, and lowest in stem internodes (Supplementary Figure~\ref{fig:sbaldh_expression}). In other plants, a maize fatty aldehyde dehydrogenase (FALDH) is a candidate for kernel oil content supported by GWAS, QTL mapping and RNA-seq \citep{Zhang2026FALDH}, and \textit{Arabidopsis} ALDH3F1 provides acetate for acetyl-CoA used to acetylate histones at \textit{FLOWERING LOCUS C}; its loss accelerates flowering \citep{Xu2020ALDH3F1}.
+
+\begin{figure*}[!t]
+\centering
+\maybefig{Fig23_bap_chr4_locus.png}{\textwidth}{A locus on chromosome~4 shared
+by stem sugar and fibre in the sorghum BAP. \textbf{A}~Brix at maturity and NDF
+of each line homozygous at the Brix lead variant ($\nBapLeadPosBrix$~Mb), by
+genotype; large points, genotype means with $95\%$ confidence intervals; dashed
+line, least-squares line of NDF on Brix across all lines; $r$, their
+correlation. \textbf{B}~Effect of the Brix-raising allele on each trait in the
+mixed model with three principal components, in trait standard deviations,
+with $95\%$ confidence intervals and $p$-values. \textbf{C}~Every variant
+between $63.85$ and $64.10$~Mb: association $z$-score for NDF against the
+absolute $z$-score for Brix, with each variant's alleles oriented to raise
+Brix; triangle, the Brix lead variant; circle, the NDF and NFC lead variant.
+\textbf{D}~CATFISH gene-score rank among all genes of each gene of the locus,
+for Brix, NDF and NFC, genes in order of position; dashed line, rank $100$.
+\textit{SbALDH3E1}, the ALDH3 fatty aldehyde dehydrogenase Sobic.004G300800;
+TRXR, the thioredoxin reductase Sobic.004G300900; GATA, the GATA transcription
+factor Sobic.004G301100.}{fig:bap_chr4}
+\end{figure*}
+
+\maybeinput{auto/tab_bap_chr4.tex}
 
 % ==== previous version of Section 3.9 (3.9.1-3.9.7), kept for reference ====
 % \subsection*{3.9 Human blood lipids: every pathway is significant, but the
@@ -2195,174 +2474,6 @@ CATFISH score. Lines join the same gene; black bars are medians.}{fig:lipid_reco
 % candidate whose rice relative affects stem growth and lignification, not a
 % lignin association.
 
-\subsection*{3.8 Sorghum dry biomass: no pathway is significant, the gene score selects cycloartenol synthase, and a permutation null tests the calibration}
-
-In sorghum BAP, unlike the lipid data, the $327$ lines yield sparse signal and long-range LD: each gene averages $\nSorNeighbours$ neighbours with $|r|\ge0.1$ in MAGMA’s gene--gene correlation, versus $\nLipNeighbours$ in humans. We therefore test whether the method remains calibrated and whether the gene score provides a useful ranking.
-
-No pathway reached family-wise significance. The top pathway was proanthocyanidin biosynthesis from flavanols (family-wise $p=\nSorTopFwerDry$). Calibrated $p$-values fell below $0.05$ for $\nSorDryCalFive\%$ of $\nSorDryNpw$ pathways, close to nominal, compared with $\nSorDryOmniFive\%$ for the uncalibrated analytic omnibus (Figure~\ref{fig:sorghum_dry}A).
-
-Gene ranking is organised by locus (Figure~\ref{fig:sorghum_dry}B). The top gene, Sobic.004G014400 (chr4), encodes cycloartenol synthase, the first committed step in sterol biosynthesis, and is one of two top-ten genes supported by all three layers: its strongest variant has $p=\nSorCasGwasP$, its MAGMA $p$-value is $\nSorCasMagmaP$ (rank $\nSorCasMagmaRank$), and cycloartenol biosynthesis ranked $\nSorCycloRank$ of $\nSorDryNpw$ pathways. It shares its lead variant with seven nearby genes but leads them by MAGMA evidence; the pathway layer elevates it from rank $\nSorCasRankNp$ (without pathways) to first. We found no prior link between this gene/region and sorghum biomass. In \textit{Arabidopsis}, cycloartenol synthase loss is lethal and weak alleles disrupt plastid development \citep{Babiychuk2008}; sterol-deficient mutants are impaired in cellulose synthesis \citep{Schrick2012}. In bioenergy sorghum, cycloartenol synthase is highest in young, elongating internodes and declines with maturity alongside other sterol/brassinosteroid genes \citep{Kebrom2017}; a chr5 cycloartenol synthase was also a candidate for shoot biomass under salt stress \citep{Yamazaki2020}. Because sterols are brassinosteroid precursors that promote internode elongation, altered sterol supply could affect biomass, though this remains untested.
-
-The fourth-ranked gene, Sobic.008G029200, contains a WRKY DNA-binding domain, but its pathway support comes from a SorghumBicolorCyc entry misassigning acyl-ACP thioesterase activity; without pathways it ranks $\nSorWrkyRankNp$, indicating the pathway layer amplified an annotation error. Pre-specified flowering-time and height genes are not in any tested pathway; the two with detectable signal, \textit{Ma1}/\textit{PRR37} and \textit{Dw1}, ranked $879$ and $2{,}956$ of $\nSorDryNgenes$ (vs. GWAS-only ranks $929$ and $6{,}028$), while the other six show little evidence in any layer.
-
-Real data cannot assess calibration because no pathway is known to be null. We therefore permuted the phenotype $100$ times (Section~2.7). Each permutation is a GWAS with the same lines, genotypes and LD in which all pathways are null, so any rejection is a false positive. Figure~\ref{fig:sorghum_dry}C,D, Figure~\ref{fig:sorghum_null} and Table~\ref{tab:sorghum_null} summarise $30{,}400$ null tests ($304$ pathways across $100$ permutations).
-
-Without genomic control, calibrated $p$-values were non-uniform. Although the inflation factor was $0.84$, $7.2\%$ of null pathways had $p<0.05$ and $2.3\%$ had $p<0.01$ (Figure~\ref{fig:sorghum_dry}C). Moreover, $18/100$ permutations produced at least one family-wise significant pathway (FWER $0.18$, $95\%$ CI $0.11$--$0.27$; Figure~\ref{fig:sorghum_dry}D). The excess increased with pathway size, from $6.1\%$ for $5$--$9$ genes to $12.7\%$ for $50$--$200$ genes (Figure~\ref{fig:sorghum_null}B). The deflated median but inflated tail suggests a mixture across permutations.
-
-Each permutation shifted all gene $z$-scores together. Permutation mean gene $z$-scores had SD $0.24$ (range $-0.66$ to $0.66$), versus $0.075$ expected under MAGMA’s correlated null and $0.005$ assuming $33{,}907$ independent genes. The shift was genome-wide: per-chromosome means correlated $0.80$, and genes on different chromosomes (no LD) still correlated $0.06$ across permutations, vanishing after subtracting each permutation’s genome-wide mean. The correlated null cannot capture this because it centres genes at zero and treats chromosomes as independent. Self-contained tests interpret the shift as signal that grows with pathway size: the number of pathways with $p<0.05$ tracked the mean gene $z$-score (Pearson $0.77$, Spearman $0.90$), and $16/18$ permutations with a family-wise false positive had positive shifts (Figure~\ref{fig:sorghum_null}A). The shift reflects a GWAS-wide property, not LD, and its source in the mixed model remains unknown.
-
-Genomic control removed the inflation. With gene $z$-scores centred at their median (Section~2.7), the inflation factor was $1.01$; $5.2\%$ of null pathways were below $0.05$ and $1.3\%$ below $0.01$, with no remaining dependence on pathway size ($5.0\%$--$6.0\%$ across four size classes; Figure~\ref{fig:sorghum_null}B). The family-wise error rate dropped to $0.12$ ($12/98$ permutations; $95\%$ CI $0.06$--$0.20$). The $21$ family-wise false positives were all different pathways, so none recurred in this panel.
-
-The remaining excess lies in the extreme tail. After centring, calibrated $p$-values below $0.01$ were $1.3\times$ as frequent as expected and those below $0.001$ $1.8\times$; gene $p$-values below $10^{-3}$, $10^{-4}$ and $10^{-5}$ were $1.7$, $3.2$ and $6.7\times$ as frequent. Because the family minimum is a tail statistic, small per-pathway excesses amplify family-wise. We examined two causes. First, the correlation matrix: across permutations, gene pairs reported by MAGMA as $r=0.22$ were nearly uncorrelated ($0.03$), pairs at $r=0.52$ were $0.32$, and agreement appeared only above $\sim0.8$ (Figure~\ref{fig:sorghum_null}D). MAGMA estimates correlations from raw genotypes, retaining population structure removed by the mixed model, so moderate correlations are overstated. Overstating correlation should widen the null and make tests conservative, and substituting permutation-based correlations did not reduce the family-wise error rate ($0.15$, $95\%$ CI $0.09$--$0.24$; Figure~\ref{fig:sorghum_null}C; inflation factor $1.01$; type I error $0.055$ at $0.05$). Second, the variant-level test: in five permutations, variant $p$-values below $10^{-4}$ were $4.5\times$ too frequent—$11.5\times$ at MAF $0.01$--$0.02$, $4.8\times$ at $0.02$--$0.05$, and $2.0$ and $1.7\times$ at $0.05$--$0.10$ and above (Figure~\ref{fig:sorghum_null}E). The mixed-model Wald test is heavy-tailed here, especially for rare variants, whereas the multivariate normal null has Gaussian tails. We did not filter variants to “fix” this, since such a filter would be outcome-tuned.
-
-In this panel, CATFISH with genomic control yields calibrated per-pathway $p$-values, but its family-wise $p$-values are about 2.5× anti-conservative ($0.12$ vs $0.05$). This excess arises from the tail of the upstream variant-level test, not the pathway procedure.
-
-\begin{figure*}[!t]
-\centering
-\maybefig{Fig21_sorghum_dry_tons.png}{\textwidth}{Sorghum dry biomass.
-\textbf{A}~The ten leading SorghumBicolorCyc pathways: per-pathway calibrated
-$p$-value, with the number of genes in parentheses and the Westfall--Young
-family-wise $p$-value at the end of each bar; the dashed line is $p=0.05$.
-\textbf{B}~The ten highest-ranked genes of the combined score (Sobic IDs, with
-the SorghumBicolorCyc enzyme name where there is one; the WRKY gene is listed in
-SorghumBicolorCyc as an acyl-ACP thioesterase), and each gene's rank in the
-GWAS, MAGMA and pathway layers (pathway: rank among pathway-annotated genes);
-lines join the layers of one gene. \textbf{C},~\textbf{D}~The permutation null:
-$100$ permutations of the phenotype, each analysed with the full
-GWAS--MAGMA--Westfall--Young pipeline. \textbf{C}~Quantile--quantile plot of the
-per-pathway calibrated $p$-values over all permutations, without and with
-gene-level genomic control (GC), with the inflation factor $\lambda$ and the
-family-wise error rate. \textbf{D}~Family-wise error rate (fraction of
-permutations with any pathway at a family-wise $p$-value $\le0.05$) with its
-$95\%$ Clopper--Pearson interval; the dashed line is the nominal $0.05$.}{fig:sorghum_dry}
-\end{figure*}
-
-\begin{table}[!t]
-\centering
-\caption{CATFISH under the sorghum phenotype-permutation null ($304$
-SorghumBicolorCyc pathways in each permutation of dry biomass). $\lambda$ is the
-inflation factor of the per-pathway calibrated $p$-values; type I error is the
-fraction of null pathway tests with calibrated $p\le\alpha$; family-wise error
-is the fraction of permutations with at least one pathway at a Westfall--Young
-family-wise $p$-value $\le0.05$, with a Clopper--Pearson interval. GC,
-gene-level genomic control (Section~2.7).}
-\label{tab:sorghum_null}
-\small
-\maybeinput{auto/tab_sorghum_null.tex}
-\end{table}
-
-\begin{figure*}[!t]
-\centering
-\maybefig{Fig20_sorghum_null.png}{\textwidth}{Diagnostics of the sorghum
-phenotype-permutation null ($100$ permutations of dry biomass): without
-gene-level genomic control (no GC), with it (GC), and with it and the gene--gene
-correlations replaced by those observed across permutations (GC + null $r$).
-\textbf{A}~Each point is one permutation
-(no GC): its mean gene $z$-score against the number of its $304$ pathways with
-calibrated $p<0.05$; filled points are permutations with at least one pathway
-significant under family-wise control. \textbf{B}~Type I error at $\alpha=0.05$
-by pathway size. \textbf{C}~Family-wise error rate with $95\%$ Clopper--Pearson
-interval; the dashed line is the nominal $0.05$. \textbf{D}~Correlation of gene
-$z$-scores across permutations against the correlation MAGMA reports for the
-same gene pairs, with pairs binned by MAGMA $r$; the dashed line is the
-identity. \textbf{E}~Observed over expected number of variant $p$-values below
-$10^{-4}$, by minor allele frequency, in five permutations (chromosomes 1--9);
-the dashed line is one.}{fig:sorghum_null}
-\end{figure*}
-
-\subsection*{3.9 MAGMA's gene-set analysis on the same statistics: its self-contained test saturates too, and its competitive test does not}
-
-We ran MAGMA gene-set analysis on the same gene-level statistics and $1{,}390$ Reactome pathways as CATFISH across ten lipid sets (Table~\ref{tab:magma_compare}; Section~2.7).
-
-A like-for-like comparison uses MAGMA’s self-contained test. In European data it declared $1{,}358$ (LDL-C) and $1{,}383$ (HDL-C) pathways significant—more than CATFISH ($\nLipSigLDL$, $\nLipSigHDL$)—showing that saturation is inherent to the self-contained hypothesis, not CATFISH; centring (absent in MAGMA) also contributes. The two self-contained tests gave similar pathway rankings (Spearman $0.70$--$0.94$ across sets), but MAGMA depended more on pathway size: size–evidence Spearman was $0.85$ and $0.86$ in European data and $0.38$--$0.62$ elsewhere, versus $0.72$, $0.73$ and $0.21$--$0.41$ for CATFISH. CATFISH ranked plasma lipoprotein assembly, remodeling and clearance first in all ten sets; MAGMA did so in six and ranked it second in four. In non-European sets CATFISH declared more pathways significant ($93$--$592$ vs $35$--$469$). Real data cannot distinguish power from false positives; Section~3.8 (permutation null) assesses CATFISH error rates, and Section~3.10 (simulation) compares error rates of both methods under known truth.
-
-MAGMA’s competitive test did not saturate, calling $2$–$12$ pathways significant per set ($5$ for LDL-C, $12$ for HDL-C in Europeans). Evidence was unrelated to pathway size (Spearman $-0.12$ to $0.11$). It ranked the lipoprotein pathway first in six sets and top five in all ten. In Europeans, its top pathways were lipid-focused: for LDL-C, six of its top ten were in the plasma-lipoprotein subtree (vs. two for CATFISH); for HDL-C, its top ten included three, both LXR-regulated sets, and the LPL/LIPC lipase-complex assembly, while CATFISH’s top ten still contained large generic sets. Agreement with CATFISH was moderate (Spearman $0.30$–$0.52$), consistent with the tests addressing different questions.
-
-\maybeinput{auto/tab_magma_compare.tex}
-
-\subsection*{3.10 On simulated statistics with known truth, CATFISH controls the family-wise error where MAGMA's self-contained test does not, and is more powerful when few genes carry the signal}
-
-With no signal, CATFISH’s self-contained test made 0 false calls in 50 replicates, versus 8/50 for MAGMA (FWER 0.16, 95\% CI 0.07–0.29; Figure~\ref{fig:sim_compare}A, Table~\ref{tab:sim_compare}); the two-stage ACAT test erred in 1/50 (0.02). Both competitive tests had error 0.06, and the joint call 0.00. Under a polygenic background (no enriched pathways but many with associated genes), competitive tests should make no calls: CATFISH’s competitive test and the joint call erred in 4/50 (0.08, 95\% CI 0.02–0.19), while MAGMA’s competitive test made none.
-
-In the self-contained setting, CATFISH outperformed MAGMA when signal was carried by a few genes (Figure~\ref{fig:sim_compare}B). For strong sparse signal (SSS), CATFISH detected the target in 98\% of replicates versus 34\% for MAGMA; for a single-gene signal (SGP), CATFISH achieved 92--100\% across pathway sizes versus 0\%, 18\% and 78\% for MAGMA. The methods were similar for moderate dense (MDS) and mixed (MSA) signal, while for weak diffuse signal (WDE) MAGMA was slightly better at medium size (76\% vs 68\%). The two-stage ACAT, driven by the smallest gene $p$-values, matched or exceeded CATFISH when one or a few genes carried the signal (SSS/SGP: 100\% at all sizes) but lost power when signal was spread across many genes: for WDE it detected the target in 2--28\% versus 12--100\% for CATFISH, and for MDS in small/medium pathways in 36\% and 58\% versus 78\% and 100\%. This matches the archetype simulation (Section~3.3): single components excel only for their targeted architecture, whereas the calibrated omnibus remains near the best test across settings.
-
-For the competitive question the same pattern held (Figure~\ref{fig:sim_compare}C). With strong sparse signal, CATFISH called the target in 66\%, 76\% and 100\% of replicates for small, medium and large pathways, versus 4\%, 12\% and 36\% for MAGMA. For moderate dense, weak diffuse and mixed signal, results were similar, with MAGMA leading for small pathways (MDS 36\% vs 20\%; MSA 50\% vs 42\%). As expected, neither competitive test called pathways driven by a single gene in >4\% of replicates, since one gene does not distinguish a pathway from the rest of the genome; this is what the self-contained test is for. The joint call matched the competitive test whenever signal was present and removed the competitive test’s false calls when none was present.
-
-\begin{figure*}[!t]
-\centering
-\maybefig{Fig22_simulation_catfish_magma.png}{\textwidth}{CATFISH and MAGMA's
-gene-set analysis on GWAS statistics simulated on real linkage disequilibrium
-(50 replicates per setting; points, bars and intervals: proportion and exact
-95\% binomial interval). \textbf{A}~Family-wise error with no pathway enriched:
-no signal (all tests) and a polygenic background only (competitive tests and
-the joint call); the dashed line is $0.05$. \textbf{B}~Power of the self-contained tests (CATFISH, MAGMA and two-stage
-ACAT) to call the enriched pathway, by signal architecture and pathway size. \textbf{C}~Power of the competitive tests. SSS, strong sparse
-signal; MDS, moderate dense signal; WDE, weak diffuse enrichment; MSA, mixed
-signal architecture; SGP, single-gene proxy.}{fig:sim_compare}
-\end{figure*}
-
-\begin{table*}[!t]
-\centering
-\caption{Family-wise error and power of CATFISH and MAGMA in the simulation
-(50 replicates per row). CATFISH: Westfall--Young family-wise $p\le0.05$;
-MAGMA and two-stage ACAT: Bonferroni over $1{,}021$ pathways. Both: called by CATFISH's
-self-contained and competitive tests.}
-\label{tab:sim_compare}
-\small
-\IfFileExists{auto/tab_simulation_compare.tex}{\input{auto/tab_simulation_compare.tex}}%
-{\textcolor{red}{\textbf{Table pending:} \texttt{auto/tab\_simulation\_compare.tex}}}
-\end{table*}
-
-\subsection*{3.11 CATFISH's competitive test keeps a few lipid pathways out of the many its self-contained test calls}
-
-Across the ten lipid sets, CATFISH’s competitive test called $3$--$14$ pathways significant versus $93$--$1{,}238$ for the self-contained test; all competitive calls were also self-contained, so the joint call matched the competitive call (Table~\ref{tab:competitive_real}). The competitive test largely removed pathway-size dependence (Spearman size–evidence $-0.13$ to $0.22$ vs $0.21$--$0.73$ self-contained). The two tests gave similar rankings (Spearman $0.73$--$0.91$), least so in Europeans, where the GWAS is largest and the self-contained test most saturated. Both ranked plasma lipoprotein assembly, remodeling and clearance first in six sets; in South Asian and Hispanic sets, the competitive test ranked a sub-pathway first (LDL-C: lipoprotein clearance; HDL-C: lipoprotein remodeling) and the parent pathway second or third. In Europeans, competitive calls were mostly lipid pathways: for LDL-C, six plasma-lipoprotein subtree sets, both LXR-regulated sets (NR1H2/NR1H3), and interferon-$\gamma$ signaling; for HDL-C, six subtree sets, LPL/LIPC lipase-complex assembly, both LXR-regulated sets, PPAR$\alpha$ lipid-metabolism regulation, and four others. In sorghum dry biomass, neither test called any pathway and rankings were identical (Spearman $1.00$): after centring, the GWAS has no genome-wide signal, so the self-contained and competitive nulls coincide.
-
-The two tests address different questions, as the Section~3.10 simulation shows. For a pathway driven by a single gene, CATFISH’s self-contained test detected it in $92$--$100\%$ of replicates across pathway sizes, while competitive tests almost never did ($0$--$4\%$); MAGMA’s self-contained test detected it in $0\%$, $18\%$, and $78\%$ of replicates for small, medium, and large pathways. With no signal, CATFISH’s self-contained test made no false calls in 50 replicates; its competitive test erred in $0.06$ of replicates, and $0.08$ with only a polygenic background, both consistent with the nominal $0.05$. Thus, the self-contained test indicates whether a pathway has signal (even if driven by one gene), whereas the competitive test identifies which significant pathways stand out relative to the rest of the genome.
-
-Test choice did not affect the ranking of positive controls among candidate genes. Ranking pathways by the competitive or joint statistic instead of the self-contained one shifted established-gene median ranks by no more than seven places in any lipid set and changed the count in the top ten by at most one; the joint and competitive statistics produced identical ranks in every lipid set. Because the established genes are in the lipoprotein pathway or its sub-pathways, both tests rank these pathways highest, giving the genes the strongest pathway evidence either way. In sorghum, none of the eight established dry-biomass genes is in a SorghumBicolorCyc pathway, so the pathway layer cannot move them.
-
-\maybeinput{auto/tab_competitive_real.tex}
-
-\subsection*{3.12 Sorghum stem composition: the gene score points to a fatty aldehyde dehydrogenase at a new locus shared by stem sugar and fibre}
-
-Dry biomass confirmed the procedure was calibrated in this panel, but could not show the gene score adding new findings because no pathway was significant and known biomass genes are not in any pathway. We therefore analysed three stem-composition traits in the same lines (Section~2.7): Brix at maturity (stem-juice soluble solids) and two dry-matter fractions, neutral detergent fibre (NDF; cell wall) and non-fibre carbohydrate (NFC; mainly sugars and starch). These traits were strongly correlated across lines: Brix correlated with NDF ($r=\nBapRBrixNDF$) and NFC ($r=\nBapRBrixNFC$), and NDF with NFC ($r=\nBapRNDFNFC$). Brix also correlated negatively with acid detergent fibre ($r=\nBapRBrixADF$) and lignin ($r=\nBapRBrixLig$). Thus, lines with more stem sugar have less cell wall, reflecting the soluble–structural carbon trade-off separating sweet from biomass sorghum.
-
-\emph{Variants and pathways.} For each trait, the top association was at loci the gene score cannot capture. For Brix, the strongest variant ($p=\nBapTopPBrix$) was on \nBapTopLocBrix, in the chromosome~6 region containing \textit{Ma1} and \textit{Dw2}. For NDF and NFC, it was on \nBapTopLocNDF\ ($p=\nBapTopPNDF$ and $\nBapTopPNFC$), a region containing none of the eight maturity/height genes (Section~2.7) and no leading genes in any SorghumBicolorCyc pathway.
-
-With family-wise control, CATFISH’s self-contained test called $\nBapSigBrix$ of the $\nBapNpw$ pathways for Brix, $\nBapSigNDF$ for NDF, and $\nBapSigNFC$ for NFC; the competitive test called $\nBapCompBrix$, $\nBapCompNDF$, and $\nBapCompNFC$. The self-contained significant pathways were \nBapSigListBrix (Brix), \nBapSigListNDF (NDF), and \nBapSigListNFC (NFC). Two are single-gene pathways (Section~1.1), with their gene in the chromosome~4 locus described next. In $\beta$-alanine biosynthesis~I ($\nBapBalaN$ genes), Sobic.004G300800 has MAGMA $p=\nBapAldhMagmaPBrix$ for Brix (others $p=\nBapBalaOtherLo$ to $\nBapBalaOtherHi$). For NDF and NFC, the thioredoxin pathway is driven by thioredoxin reductase Sobic.004G300900 ($p=\nBapTrxMagmaPNDF$ and $\nBapTrxMagmaPNFC$). As in the simulation (Section~3.10), the self-contained test flags such single-gene pathways, whereas the competitive test does not (family-wise $p=\nBapBalaCompBrix$, $\nBapTrxPwCompNDF$, $\nBapTrxPwCompNFC$). Thus these calls mainly restate the locus via its annotations, not independent evidence that $\beta$-alanine or thioredoxin metabolism affects the traits.
-
-\emph{One locus, two annotated genes.} Gene scores mapped the three traits to one locus. Of $\nBapNgenes$ ranked genes, $\nBapNshared$ were in the top 100 for all traits; all $\nBapNsharedLocus$ fall within an $85\,\mathrm{kb}$ interval on chromosome~4 ($63.96$--$64.04\,\mathrm{Mb}$; Table~\ref{tab:bap_chr4}, Figure~\ref{fig:bap_chr4}D). This region has not previously been reported for sugar or fibre. Two genes at the locus have pathway evidence and top the rankings. Sobic.004G300800, an ALDH3 fatty aldehyde dehydrogenase (\textit{SbALDH3E1}), is predicted to be chloroplast-localised and is a segmental duplicate of \textit{SbALDH3E2} on chromosome~6 \citep{Islam2022SbALDH}; it ranked $\nBapAldhBrix$ (Brix), $\nBapAldhNDF$ (NDF) and $\nBapAldhNFC$ (NFC). The neighbouring Sobic.004G300900, an NADPH-dependent thioredoxin reductase, ranked $\nBapTrxBrix$, $\nBapTrxNDF$ and $\nBapTrxNFC$. Among genes supported by all three evidence layers (about $\nBapNthreeNDF$ per trait), the dehydrogenase ranked $\nBapAldhTlBrix$, $\nBapAldhTlNDF$ and $\nBapAldhTlNFC$, and the reductase $\nBapTrxTlBrix$, $\nBapTrxTlNDF$ and $\nBapTrxTlNFC$; the dehydrogenase was the top genome-wide gene for Brix, and the reductase second for both fibre traits.
-
-Neither gene contains the top variants. For Brix, their best variant is shared with four neighbouring genes, all at GWAS-layer rank $\nBapAldhGwasBrix$. For NDF and NFC, the strongest locus variants are ~60\,\mathrm{kb} away in Sobic.004G301200--301700 (GWAS-layer ranks $41$ and $26$), while the dehydrogenase and reductase rank only $\nBapTrxGwasNDF$ and $\nBapTrxGwasNFC$ on that layer (Table~\ref{tab:bap_chr4}). However, they surpass these neighbours on two other layers: their MAGMA $p$-values are the two smallest in the locus for all three traits (Brix: $\nBapAldhMagmaPBrix$, $\nBapTrxMagmaPBrix$, with Sobic.004G301000 close behind), and they are the only two locus genes in any pathway. Thus, GWAS alone assigns the fibre signal to unannotated Sobic.004G301200--301700, whereas gene scoring shifts it to the adjacent enzymes (Figure~\ref{fig:bap_chr4}D).
-
-\emph{The same signal in all three traits.} The lead variants for the three traits are in strong LD. The Brix lead at $\nBapLeadPosBrix\,\mathrm{Mb}$ ($p=\nBapLeadPBrix$), $6\,\mathrm{kb}$ from the dehydrogenase start, and the shared NDF/NFC lead at $\nBapLeadPosNDF\,\mathrm{Mb}$ ($p=\nBapLeadPNDF$ and $\nBapLeadPNFC$) have $r^2=\nBapLeadRsq$. Across $\nBapNwin$ variants, Brix and NDF $z$-scores align (correlation $\nBapZcor$, alleles aligned; Figure~\ref{fig:bap_chr4}C), consistent with one haplotype carrying both signals. Adding three principal components changed lead $p$-values by <10× (vs. $1.0\times10^{-7}$, $2.2\times10^{-10}$ and $1.4\times10^{-10}$ without them), indicating the signal is not due to broad population structure. The Brix-increasing allele (\nBapUp) has frequency $\nBapFreqUp$: $\nBapNUpHom$ lines are homozygous (including Rio), $\nBapNOtherHom$ are homozygous for the other allele, and $\nBapNHet$ are heterozygous. Per copy it increased Brix by $\nBapEffBrix$ and NFC by $\nBapEffNFC$ SD and decreased NDF by $|\nBapEffNDF|$ ($p=\nBapEffPBrix$, $\nBapEffPNFC$, $\nBapEffPNDF$; Figure~\ref{fig:bap_chr4}B). Homozygotes differed by $\nBapDiffBrix$ degrees Brix and $\nBapDiffNDF$ NDF points vs. the other homozygotes. The NDF difference is partly mediated by Brix and partly independent: with Brix in the model, NDF still differed by $\nBapAdjNDF$ points ($p=\nBapAdjP$; $\nBapNboth$ lines), and genotype means fall below the overall NDF–Brix relationship (Figure~\ref{fig:bap_chr4}A). Thus, the sugar–fibre trade-off explains about $\nBapFracVia\%$ of the allele’s fibre effect.
-
-\emph{Not a maturity or height locus.} No cloned maturity or height gene from Section~2.7 lies on chromosome~4. In GWAS of anthesis and harvest date in these lines (same mixed model, no principal components), the top variants had $p=1.1\times10^{-4}$ ($141$ lines with anthesis date) and $p=8.6\times10^{-4}$ ($326$ lines), four to five orders of magnitude weaker than for composition traits in the same lines. In these models, the Brix-raising allele had no detectable effect on stalk height ($p=0.29$) or dry biomass ($p=0.09$). This locus affects stem composition, not plant size or maturity.
-
-\emph{Expression and homologues.} Public RNA-seq data (Expression Atlas \citep{Moreno2022ExpressionAtlas}) show \textit{SbALDH3E1} expression in leaf, shoot, root, stem and inflorescence across nine experiments. Where organ- and stage-resolved, expression is highest in the leaf sheath at flowering, seedling leaf lamina and vegetative shoot, and lowest in stem internodes (Supplementary Figure~\ref{fig:sbaldh_expression}). In other plants, a maize fatty aldehyde dehydrogenase (FALDH) is a candidate for kernel oil content supported by GWAS, QTL mapping and RNA-seq \citep{Zhang2026FALDH}, and \textit{Arabidopsis} ALDH3F1 provides acetate for acetyl-CoA used to acetylate histones at \textit{FLOWERING LOCUS C}; its loss accelerates flowering \citep{Xu2020ALDH3F1}.
-
-\begin{figure*}[!t]
-\centering
-\maybefig{Fig23_bap_chr4_locus.png}{\textwidth}{A locus on chromosome~4 shared
-by stem sugar and fibre in the sorghum BAP. \textbf{A}~Brix at maturity and NDF
-of each line homozygous at the Brix lead variant ($\nBapLeadPosBrix$~Mb), by
-genotype; large points, genotype means with $95\%$ confidence intervals; dashed
-line, least-squares line of NDF on Brix across all lines; $r$, their
-correlation. \textbf{B}~Effect of the Brix-raising allele on each trait in the
-mixed model with three principal components, in trait standard deviations,
-with $95\%$ confidence intervals and $p$-values. \textbf{C}~Every variant
-between $63.85$ and $64.10$~Mb: association $z$-score for NDF against the
-absolute $z$-score for Brix, with each variant's alleles oriented to raise
-Brix; triangle, the Brix lead variant; circle, the NDF and NFC lead variant.
-\textbf{D}~CATFISH gene-score rank among all genes of each gene of the locus,
-for Brix, NDF and NFC, genes in order of position; dashed line, rank $100$.
-\textit{SbALDH3E1}, the ALDH3 fatty aldehyde dehydrogenase Sobic.004G300800;
-TRXR, the thioredoxin reductase Sobic.004G300900; GATA, the GATA transcription
-factor Sobic.004G301100.}{fig:bap_chr4}
-\end{figure*}
-
-\maybeinput{auto/tab_bap_chr4.tex}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{4 Discussion}
 
@@ -2378,28 +2489,30 @@ We were wrong about one aspect and correct it here. We expected the size-standar
 
 \subsection*{4.2 Saturation and the self-contained hypothesis}
 
-We believe the LDL-cholesterol result in Section~3.9 is this paper’s most consequential finding, and it is not about CATFISH. Self-contained gene-set tests ask whether genes in a set show more association than the null of no association \citep{Goeman2007,Maciejewski2014}. With $n\approx1.3$ million for a highly polygenic trait, the answer is yes for almost any gene set: $11.2\%$ of all genes are individually genome-wide significant, and a random set of fifty genes rejects the self-contained null with probability $0.997$. Nothing has malfunctioned; the hypothesis no longer discriminates.
+We believe the LDL-cholesterol result in Section~3.6 is this paper’s most consequential finding, and it is not about CATFISH. Self-contained gene-set tests ask whether genes in a set show more association than the null of no association \citep{Goeman2007,Maciejewski2014}. With $n\approx1.3$ million for a highly polygenic trait, the answer is yes for almost any gene set: $11.2\%$ of all genes are individually genome-wide significant, and a random set of fifty genes rejects the self-contained null with probability $0.997$. Nothing has malfunctioned; the hypothesis no longer discriminates.
 
-Three consequences follow. First, as GWAS sample sizes grow, self-contained tests will increasingly fail silently, yielding long lists of highly significant pathways that appear meaningful. Second, multiple-testing refinements do not fix this: even with strong family-wise control, $\nLipSigLDL$ of $\nLipNpw$ pathways remained significant for LDL-C ($\nLipSigHDL$ for HDL-C). A stricter threshold in a saturated analysis is simply a more carefully wrong answer. Third, the competitive hypothesis—whether genes in a set are \emph{more} associated than genes outside it—does not saturate the same way because it is benchmarked against the observed genome-wide background rather than no association. MAGMA’s competitive test on the same data supports this: in Europeans it found $5$ (LDL-C) and $12$ (HDL-C) significant pathways out of $1{,}390$, versus $1{,}358$ and $1{,}383$ under MAGMA’s self-contained test, and ranked plasma lipoprotein assembly, remodeling and clearance first for both traits (Section~3.9). Thus, for large, well-powered human GWAS, the competitive framing is appropriate. CATFISH’s self-contained framing is more natural when few genes are associated and the genome-wide background is near-null, as in sorghum, where it found no significant pathways and per-pathway $p$-values were near nominal (Section~3.8). We do not claim greater power than competitive tests in that regime; we show ranking and calibration, not a power advantage.
+Three consequences follow. First, as GWAS sample sizes grow, self-contained tests will increasingly fail silently, yielding long lists of highly significant pathways that appear meaningful. Second, multiple-testing refinements do not fix this: even with strong family-wise control, $\nLipSigLDL$ of $\nLipNpw$ pathways remained significant for LDL-C ($\nLipSigHDL$ for HDL-C). A stricter threshold in a saturated analysis is simply a more carefully wrong answer. Third, the competitive hypothesis—whether genes in a set are \emph{more} associated than genes outside it—does not saturate the same way because it is benchmarked against the observed genome-wide background rather than no association. MAGMA’s competitive test on the same data supports this: in Europeans it found $5$ (LDL-C) and $12$ (HDL-C) significant pathways out of $1{,}390$, versus $1{,}358$ and $1{,}383$ under MAGMA’s self-contained test, and ranked plasma lipoprotein assembly, remodeling and clearance first for both traits (Section~3.5). Thus, for large, well-powered human GWAS, the competitive framing is appropriate. CATFISH’s self-contained framing is more natural when few genes are associated and the genome-wide background is near-null, as in sorghum, where it found no significant pathways and per-pathway $p$-values were near nominal (Section~3.9). We do not claim greater power than competitive tests in that regime; we show ranking and calibration, not a power advantage.
 
-This bounds our method’s applicability, and we prefer to state it now rather than learn it in review. It also guides how to read the human results. In this regime, significance is uninformative, but ranking is: the top of both lists mixes lipoprotein pathways with large generic sets that accrue evidence simply because, in a saturated genome, any large set is enriched. When pathways are compared with others of similar size, lipoprotein pathways are extreme in both traits (Section~3.9). Thus, in a saturated analysis, a self-contained method should output a size-aware ranking and a gene list, not a list of significant sets.
+This bounds our method’s applicability, and we prefer to state it now rather than learn it in review. It also guides how to read the human results. In this regime, significance is uninformative, but ranking is: the top of both lists mixes lipoprotein pathways with large generic sets that accrue evidence simply because, in a saturated genome, any large set is enriched. When pathways are compared with others of similar size, lipoprotein pathways are extreme in both traits (Section~3.5). Thus, in a saturated analysis, a self-contained method should output a size-aware ranking and a gene list, not a list of significant sets.
 
 \subsection*{4.3 What the ranking and the gene score add when significance
 saturates}
 
 Lipid analyses show that saturation eliminates the significance list but preserves pathway ordering, which requires two inputs to interpret. First is pathway size: in a saturated genome, large sets accrue evidence and dominate the top ranks, while a relevant small set can be extreme for its size yet still rank in the hundreds. Comparing pathways only to others of similar size recovered the plasma-lipoprotein subtree for both traits (Figure~\ref{fig:lipid_size}). This size-matched comparison is descriptive; an inferential version would require a null distribution of size-matched ranks, potentially via the Section~2.3 resampling, which we have not implemented.
 
-Pathway results are most useful when mapped to genes. If genes are ranked by their strongest variant, they capture locus-wide evidence; if ranked by gene-level tests, strong signals from a few variants can be missed. A combined score recovered established genes for both traits better than either layer alone across the tested weights, because support from multiple layers lifts genes while single-layer support drops them. However, the improvement is modest and partly circular: pathway membership favours well-studied genes, so performance on established genes likely overstates performance for genes absent from pathway databases. The score also prioritizes loci, not genes—established genes often have LD neighbours with near-identical evidence, and only fine-mapping or functional data can distinguish them.
+Pathway results are most useful when mapped to genes. If genes are ranked by their strongest variant, they capture locus-wide evidence; if ranked by gene-level tests, strong signals from a few variants can be missed. A combined score recovered established genes for both traits better than either layer alone across the tested weights, because support from multiple layers lifts genes while single-layer support drops them. However, the improvement is modest and partly circular: pathway membership favours well-studied genes, so performance on established genes likely overstates performance for genes absent from pathway databases. The score ranks loci first, because established genes often have LD neighbours with near-identical association evidence. Within a locus, however, it does more: where the GWAS cannot separate genes, the score puts the gene with the relevant function ahead of its LD neighbours. \textit{APOE} ranked above \textit{TOMM40}, with which it shares its lead variant, in nine of the ten lipid sets (Table~\ref{tab:apoe_locus}), and in sorghum the gene score resolved a locus of some fifteen genes to a fatty aldehyde dehydrogenase and a thioredoxin reductase (Section~3.10). It cannot separate genes that are tied on all three layers, such as \textit{APOE} and \textit{APOC1}, and only fine-mapping or functional data can show which gene is causal.
+
+Across nine traits, pathway evidence improved the candidate list as a whole, not only at the lipid loci. Against the same score without its pathway layer, it placed $\nBenchGainTwenty\%$ more gold-standard genes in the genome-wide top $20$, and the gain held in every trait (Section~3.8). With it, CATFISH matched PoPS, a method trained on tens of thousands of gene features, leading where pathway curation is strong and trailing in immune traits, and the two rankings were complementary. This argues for treating curated pathways as a source of prior information on genes, not only as a unit of inference.
 
 \subsection*{4.4 Two regimes, two kinds of validation}
 
-The lipid and sorghum analyses validate different aspects of the method. Lipid traits have strong signal and short-range LD; meaningful ordering is supported by convergence, as two traits with largely disjoint gene-level signals implicate the same pathway via different branches. They say little about false positives because the null is rarely true. The sorghum trait has sparse signal and much denser LD; validation comes from calibration: the independence-based omnibus over-rejected, calibrated per-pathway $p$-values were near nominal, family-wise control found nothing, and permutations directly estimated error rates (Section~3.8). A method claiming pathway discoveries here would be suspect; this one only ranked pathways and genes without unsupported significance claims.
+The lipid and sorghum analyses validate different aspects of the method. Lipid traits have strong signal and short-range LD; meaningful ordering is supported by convergence, as two traits with largely disjoint gene-level signals implicate the same pathway via different branches. They say little about false positives because the null is rarely true. The sorghum trait has sparse signal and much denser LD; validation comes from calibration: the independence-based omnibus over-rejected, calibrated per-pathway $p$-values were near nominal, family-wise control found nothing, and permutations directly estimated error rates (Section~3.9). A method claiming pathway discoveries here would be suspect; this one only ranked pathways and genes without unsupported significance claims.
 
 Two lessons generalize. First, validate the gene-level model before interpreting pathway results: in the BAP, MAGMA’s multi-model output was inflated by gene size, and even an LD-aware correlated pathway null would have propagated that inflation as pathway signal. Second, curated annotation can help or mislead: it pushed cycloartenol synthase to the top, but also elevated a WRKY transcription factor via an inappropriate enzymatic annotation. For candidates whose rank relies on the pathway layer, verify the underlying annotation; the per-layer scoring makes this easy.
 
 \subsection*{4.5 Calibration on real genotypes}
 
-The simulations and permutation null address different questions. Simulations sample gene $z$-scores from the null correlation model and yielded nominal per-pathway and family-wise error rates across all LD structures tested (Sections~3.2--3.6). The permutation null runs real genotypes through the full pipeline (Section~3.8) and revealed two departures from the model, neither due to LD modeling.
+The simulations and permutation null address different questions. Simulations sample gene $z$-scores from the null correlation model and yielded nominal per-pathway and family-wise error rates across all LD structures tested (Sections~3.1--3.4). The permutation null runs real genotypes through the full pipeline (Section~3.9) and revealed two departures from the model, neither due to LD modeling.
 
 First, GWAS from the same panel can differ by a genome-wide shift in gene $z$-scores. Because this shift is shared across chromosomes, no gene--gene correlation matrix captures it. It is one value per GWAS, so median-centring the gene $z$-scores removes it. Centring restores nominal per-pathway calibration (inflation factor $1.01$, type I error $0.052$) and eliminates the dependence of false positives on pathway size. It does not change the data or gene ranking and is essentially free, so we use it in all real analyses and recommend it by default. The drawback is in saturated GWAS, where the median gene is truly associated and centring removes real polygenic signal; in that setting, it shifts the self-contained question toward the competitive one, which Section~4.2 argues is preferable.
 
@@ -2417,7 +2530,7 @@ We suggest that pathway methods for modern large-$n$ GWAS summary statistics exp
 
 \subsection*{4.7 Practical recommendations}
 
-Recommendations: Before any pathway analysis, inspect the gene-level null. A median gene-level $p$-value far from $0.5$ suggests either true saturation or population-structure inflation, which call for different remedies (competitive testing vs a mixed model). Also check that the null does not drift with gene size; under strong LD, MAGMA top-variant and multi-model $p$-values can inflate with the number of variants (Supplementary Figure~\ref{fig:sorghum_pcol}). Centre gene $z$-scores at their median before testing (Section~2.7) to remove per-GWAS shifts that otherwise inflate self-contained tests with pathway size. If genotypes are available, use a phenotype-permutation null to assess whether family-wise $p$-values are trustworthy (Section~3.8). When gene--gene correlations are available, calibrate to the correlated null and confirm the correlation file covers all chromosomes; we once parsed only chromosome~1, silently treating $85\%$ of the genome as independent. Report per-pathway calibrated and Westfall--Young family-wise $p$-values, plus the Bonferroni threshold and its ratio to the Westfall--Young threshold on calibrated statistics (Section~4.1), as the comparison is informative. Before trusting any family-wise threshold, count the number of distinct values in the null family minimum. With adaptive soft TFisher, use a truncation grid spanning small and large thresholds; a grid restricted to small $\tau$ leaves most small pathways with an empty statistic. Treat the ranking, not the significance list, as the main output, and validate against independent biology (as in our maize, lipid and sorghum analyses). In saturated settings, compare pathways to others of similar size, interpret candidate-gene lists as locus rankings, and check the annotation for any candidate whose rank depends on the pathway layer.
+Recommendations: Before any pathway analysis, inspect the gene-level null. A median gene-level $p$-value far from $0.5$ suggests either true saturation or population-structure inflation, which call for different remedies (competitive testing vs a mixed model). Also check that the null does not drift with gene size; under strong LD, MAGMA top-variant and multi-model $p$-values can inflate with the number of variants (Supplementary Figure~\ref{fig:sorghum_pcol}). Centre gene $z$-scores at their median before testing (Section~2.7) to remove per-GWAS shifts that otherwise inflate self-contained tests with pathway size. If genotypes are available, use a phenotype-permutation null to assess whether family-wise $p$-values are trustworthy (Section~3.9). When gene--gene correlations are available, calibrate to the correlated null and confirm the correlation file covers all chromosomes; we once parsed only chromosome~1, silently treating $85\%$ of the genome as independent. Report per-pathway calibrated and Westfall--Young family-wise $p$-values, plus the Bonferroni threshold and its ratio to the Westfall--Young threshold on calibrated statistics (Section~4.1), as the comparison is informative. Before trusting any family-wise threshold, count the number of distinct values in the null family minimum. With adaptive soft TFisher, use a truncation grid spanning small and large thresholds; a grid restricted to small $\tau$ leaves most small pathways with an empty statistic. Treat the ranking, not the significance list, as the main output, and validate against independent biology (as in our maize, lipid and sorghum analyses). In saturated settings, compare pathways to others of similar size, interpret candidate-gene lists as locus rankings, and check the annotation for any candidate whose rank depends on the pathway layer.
 
 \subsection*{4.8 From a shared locus to candidate genes for validation}
 
@@ -2436,13 +2549,13 @@ Several limitations constrain our conclusions.
 
 \textbf{No simulated GWAS.} The simulations in Section~2.6 model only the omnibus statistic and its null, using block-structured and exchangeable gene--gene correlation. We did not simulate genotypes, assign causal variants, generate phenotypes, or run the full GWAS--MAGMA--CATFISH pipeline. This natural next step would assess power under realistic genetic architectures rather than latent mean shifts and was intentionally omitted. Therefore, the power curves in Section~3.1 reflect stylised gene-level $z$-score signals, not realistic genetic architectures.
 
-\textbf{Unreported correlations are set to zero.} The correlation matrices in Section~2.3 are formed by inserting MAGMA-reported gene pairs into an identity matrix, so any unreported pair is treated as independent. This is usually reasonable for distant genes and yields a banded matrix, but nearby unreported pairs (e.g., crossing batch boundaries or involving a dropped gene) understate dependence and can be anti-conservative. Section~3.7 quantifies this effect and shows it is not shared equally: the family-wise reading degrades faster than the marginal one because the family minimum is a tail statistic, where correlation misspecification is most damaging. Chromosome-coverage checks catch gross failures; \texttt{10\_pair\_coverage.R} measures finer gaps, which we recommend reporting alongside any family-wise $p$-value.
+\textbf{Unreported correlations are set to zero.} The correlation matrices in Section~2.3 are formed by inserting MAGMA-reported gene pairs into an identity matrix, so any unreported pair is treated as independent. This is usually reasonable for distant genes and yields a banded matrix, but nearby unreported pairs (e.g., crossing batch boundaries or involving a dropped gene) understate dependence and can be anti-conservative. Section~3.3 quantifies this effect and shows it is not shared equally: the family-wise reading degrades faster than the marginal one because the family minimum is a tail statistic, where correlation misspecification is most damaging. Chromosome-coverage checks catch gross failures; \texttt{10\_pair\_coverage.R} measures finer gaps, which we recommend reporting alongside any family-wise $p$-value.
 
 \textbf{Simplified LD models.} True gene--gene correlation decays with distance. The shared-universe simulations approximate LD with independent exchangeable blocks, so pathways spanning blocks are mostly uncorrelated; the exchangeable design correlates all pathway members, exaggerating LD and serving only as a stress test. Neither captures gradual distance-based decay. Real-data analyses use empirical MAGMA correlations and avoid this limitation.
 
-\textbf{What strong control rests on.} The strong family-wise control in Section~2.3 is exact only under its model. It assumes association shifts mean gene $z$-scores while leaving correlations among unassociated genes unchanged, and it defines a null pathway as one with no associated genes. Under linkage disequilibrium, a gene may appear associated only because it tags a causal variant in a nearby gene; a pathway containing such a gene is non-null under the self-contained gene-level hypothesis even if it contains no causal gene. Rejecting it is therefore not a family-wise error, though it may be a biological false positive. Strong control also depends on an adequate correlation matrix; Section~3.7 shows family-wise calibration degrades quickly when the matrix is incomplete. We did not separately verify strong control by simulation; under the model it follows from the complete-null results.
+\textbf{What strong control rests on.} The strong family-wise control in Section~2.3 is exact only under its model. It assumes association shifts mean gene $z$-scores while leaving correlations among unassociated genes unchanged, and it defines a null pathway as one with no associated genes. Under linkage disequilibrium, a gene may appear associated only because it tags a causal variant in a nearby gene; a pathway containing such a gene is non-null under the self-contained gene-level hypothesis even if it contains no causal gene. Rejecting it is therefore not a family-wise error, though it may be a biological false positive. Strong control also depends on an adequate correlation matrix; Section~3.3 shows family-wise calibration degrades quickly when the matrix is incomplete. We did not separately verify strong control by simulation; under the model it follows from the complete-null results.
 
-\textbf{Parametric null.} Null draws use a multivariate normal correlation model rather than phenotype permutations. Although Westfall--Young in form, validity depends on the correlation model (Section~3.7). The sorghum permutation null (Section~3.8) directly checks this: after genomic control, per-pathway calibration was nominal but the family-wise error rate was $0.12$, likely because variant-level tests have heavier tails than a Gaussian null. We tested one panel and one trait; results may differ with weaker LD, larger samples, or better-calibrated association tests. We recommend a permutation null before relying on family-wise $p$-values in a new panel.
+\textbf{Parametric null.} Null draws use a multivariate normal correlation model rather than phenotype permutations. Although Westfall--Young in form, validity depends on the correlation model (Section~3.3). The sorghum permutation null (Section~3.9) directly checks this: after genomic control, per-pathway calibration was nominal but the family-wise error rate was $0.12$, likely because variant-level tests have heavier tails than a Gaussian null. We tested one panel and one trait; results may differ with weaker LD, larger samples, or better-calibrated association tests. We recommend a permutation null before relying on family-wise $p$-values in a new panel.
 
 \textbf{Soft TFisher resolution.} The current soft TFisher cannot resolve
 $p$-values below $\sim 10^{-16}$, creating ties among highly enriched pathways.
@@ -2450,8 +2563,8 @@ Other components resolve further and dominate the omnibus ranking; implementing
 the soft-threshold tail on the log scale would remove this limit.
 
 \textbf{Partial comparison with other methods.} We compared CATFISH with MAGMA
-gene-set analysis on lipid data (Section~3.9), where no pathway is known to be
-null, and on simulations with known truth (Section~3.10) evaluating calibration
+gene-set analysis on lipid data (Section~3.6), where no pathway is known to be
+null, and on simulations with known truth (Section~3.4) evaluating calibration
 and power. Simulations used one LD panel, ten chromosomes, and five signal
 architectures, and did not include additional gene-set methods.
 
@@ -2459,7 +2572,7 @@ architectures, and did not include additional gene-set methods.
 sorghum, and human data. The sorghum stem-volume dataset from the original
 CATFISH paper could not be re-analysed under the new calibration because the
 required MAGMA \texttt{.genes.raw} file was missing; Table~\ref{tab:density}
-therefore reports signal density from gene-level output only. The Section~3.8
+therefore reports signal density from gene-level output only. The Section~3.9
 sorghum analysis uses the BAP panel and, with $330$ lines, is underpowered for
 pathway discovery, emphasizing calibration and gene ranking rather than new
 pathway detection.
@@ -2543,7 +2656,7 @@ Aspartokinase catalyses the entry reaction, the phosphorylation of aspartate to
 aspartyl phosphate \citep{Hasenoehrl2019}. Variation at this entry-point enzyme
 can generate a strong localised signal while many downstream genes remain
 buffered or near null. The leading candidate gene of the maize grain-nitrogen
-analysis (Section~3.8) is an aspartate kinase isozyme, and the leading pathway,
+analysis (Section~2.7) is an aspartate kinase isozyme, and the leading pathway,
 L-homoserine biosynthesis, is the branch whose first step it catalyses.
 
 \subsubsection*{S1.2 Single-Gene Proxy (SGP)}
@@ -2632,7 +2745,7 @@ further implicate genes of lipoprotein metabolism and remodelling, including
 \textit{ABCA1}, \textit{LIPC}, \textit{CETP}, \textit{PLTP}, \textit{ANGPTL3}
 and \textit{SORT1} \citep{Chasman2009LipoproteinProfiles}. Several of these are
 among the established genes used to evaluate the candidate-gene score in
-Section~3.9.
+Section~3.7.
 
 \subsubsection*{S1.6 How the archetypes were simulated}
 
@@ -2676,7 +2789,7 @@ the hub weight $w_{\mathrm{hub}}$ ($y$-axis); the outlined cell marks the defaul
 in five pathways): mean fraction of planted causal genes among the top twenty
 (\textbf{A}) and mean Spearman correlation of the full ranking with the ranking
 at the defaults (\textbf{B}). \textbf{C},~\textbf{D}~The lipid analyses of
-Section~3.9: median rank, among all $\nLipNgenes$ genes, of the pre-specified
+Section~3.7: median rank, among all $\nLipNgenes$ genes, of the pre-specified
 established genes for LDL-C (\textbf{C}) and HDL-C (\textbf{D}); lower is
 better. Rankings are stable across the grid, and recovery improves with the
 pathway weight in both the simulation and the real data.}{fig:weights}
@@ -2699,7 +2812,7 @@ inflation increases with the number of variants in the gene.}{fig:sorghum_pcol}
 \centering
 \maybefig{SuppFig_SbALDH3E1_expression.png}{\textwidth}{Expression of
 \textit{SbALDH3E1} (Sobic.004G300800), the fatty aldehyde dehydrogenase at the
-chromosome~4 locus of Section~3.12, in public sorghum RNA-seq data, as
+chromosome~4 locus of Section~3.10, in public sorghum RNA-seq data, as
 summarised by Expression Atlas \citep{Moreno2022ExpressionAtlas}.
 \textbf{A}~Baseline expression across nine experiments and the tissues they
 sampled (Expression Atlas categories: below cutoff, low, medium, high).
