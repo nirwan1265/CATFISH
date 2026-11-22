@@ -611,7 +611,7 @@ stay in the top $100$ and their median ranks
 
 \subsection*{3.1 Each signal type is detected by the test built for it, and the omnibus stays close to the best test}
 
-CATFISH scores each pathway with five component tests, combines them into one omnibus statistic, and calibrates the per-pathway and family-wise $p$-values on one set of correlated null draws (Figure~\ref{fig:overview}a; Section~2.3). Under the alternative, a pathway carries excess gene-level evidence, but that evidence can be spread across its genes in many ways. We define five signal types by the shape of the ranked gene-level profile (Figure~\ref{fig:overview}b; Table~\ref{tab:archetype_summary}; Supplementary Note~S1). Strong sparse signal (SSS) is expected when a committed-step enzyme, rate-limiting regulator or essential transporter controls pathway output \citep{MorenoSanchez2008,Naz2023,Tanner2018,Song2020}, and single-gene proxy (SGP) is its limiting case, a pathway that is effectively one gene. Moderate dense signal (MDS) is expected when output depends on many interacting components, as in cytokine signalling to NF-$\kappa$B \citep{Jiang2021CytoSig,Verstrepen2008NFkB}; weak diffuse enrichment (WDE) reflects a highly polygenic trait such as height \citep{Yengo2022HeightSaturation}; and mixed signal architecture (MSA) combines a few large-effect genes with a broader set of modest ones, as in LDL-cholesterol metabolism (Section~3.4) \citep{Chasman2009LipoproteinProfiles,Peloso2022WGSbloodlipids}. Real pathways may fall between types, and the type of a real pathway is not known in advance.
+CATFISH scores each pathway with five component tests, combines them into one omnibus statistic, and calibrates the per-pathway and family-wise $p$-values on one set of correlated null draws (Figure~\ref{fig:overview}a; Algorithm~\ref{alg:catfish}; Section~2.3). Under the alternative, a pathway carries excess gene-level evidence, but that evidence can be spread across its genes in many ways. We define five signal types by the shape of the ranked gene-level profile (Figure~\ref{fig:overview}b; Table~\ref{tab:archetype_summary}; Supplementary Note~S1). Strong sparse signal (SSS) is expected when a committed-step enzyme, rate-limiting regulator or essential transporter controls pathway output \citep{MorenoSanchez2008,Naz2023,Tanner2018,Song2020}, and single-gene proxy (SGP) is its limiting case, a pathway that is effectively one gene. Moderate dense signal (MDS) is expected when output depends on many interacting components, as in cytokine signalling to NF-$\kappa$B \citep{Jiang2021CytoSig,Verstrepen2008NFkB}; weak diffuse enrichment (WDE) reflects a highly polygenic trait such as height \citep{Yengo2022HeightSaturation}; and mixed signal architecture (MSA) combines a few large-effect genes with a broader set of modest ones, as in LDL-cholesterol metabolism (Section~3.4) \citep{Chasman2009LipoproteinProfiles,Peloso2022WGSbloodlipids}. Real pathways may fall between types, and the type of a real pathway is not known in advance.
 
 The mapping from signal type to component is a prediction that only simulation can test. We embedded one pathway of each type among $149$ null pathways drawn from the same correlated genes, scaled the effect from undetectable to saturated, and recorded how often it passed the family-wise Westfall--Young threshold (Section~2.6, item~6). In $\nArchCellsIn$ of $\nArchCellsTot$ type-by-size cells, the component with the highest family-wise power was one of those predicted (Figure~\ref{fig:overview}c; Supplementary Table~\ref{tab:archverify}). Diffuse enrichment favoured Stouffer, with the extreme-value tests near null; sparse and single-gene signals favoured minP and ACAT, with Fisher and Stouffer nearly powerless; and dense or mixed signals favoured Fisher, with soft TFisher close behind. No component was best everywhere. Across the $\nArchInfCells$ informative cells, Fisher placed first $\nFisherFirst$ times but fourth or worse $\nFisherFourthPlus$ times, minP finished last $\nMinPLast$ times, and soft TFisher won only $\nTFFirst$ cell but never placed below third.
 
@@ -680,6 +680,45 @@ Dry biomass showed the procedure was calibrated in this panel but could not show
 Part of their pathway evidence is their own, since the two significant pathways that contain them owe their significance largely to them. When each pathway was rescored without the gene on the same null draws (Figure~\ref{fig:bap_chr4}e), \textit{SbALDH3E1} kept its place for Brix: rank $\nBapGmAldhBrix$ without the pathway layer, $\nBapAldhBrix$ with it and $\nBapLogoAldhBrix$ without its own contribution. TRXR kept most of its lift for the fibre traits, ranking $\nBapLogoTrxNDF$ (NDF) and $\nBapLogoTrxNFC$ (NFC) without its own contribution, against $\nBapTrxNDF$ and $\nBapTrxNFC$ with it and $\nBapGmTrxNDF$ and $\nBapGmTrxNFC$ without pathways. For the other trait of each gene, the lift was its own: TRXR fell back to rank $\nBapLogoTrxBrix$ for Brix, and \textit{SbALDH3E1} to $\nBapLogoAldhNDF$ and $\nBapLogoAldhNFC$ for the fibre traits. Across all pathway-supported genes in each trait's top 100, $\nBapLogoKeepBrix$ of $\nBapLogoNBrix$ (Brix), $\nBapLogoKeepNDF$ of $\nBapLogoNNDF$ (NDF) and $\nBapLogoKeepNFC$ of $\nBapLogoNNFC$ (NFC) stayed in the top 100 without their own contribution, and their median ranks lay between those with and without the pathway layer: in this panel, about half of the lift comes from the other genes of a gene's pathways.
 
 \emph{One haplotype, a composition effect.} The lead variants of the three traits are in strong LD: the Brix lead at $\nBapLeadPosBrix\,\mathrm{Mb}$, $6\,\mathrm{kb}$ from the dehydrogenase, and the shared NDF/NFC lead at $\nBapLeadPosNDF\,\mathrm{Mb}$ have $r^2=\nBapLeadRsq$, and across $\nBapNwin$ variants the Brix and NDF $z$-scores align (correlation $\nBapZcor$; Figure~\ref{fig:bap_chr4}c). The signal survived three principal components. Per copy, the Brix-raising allele (\nBapUp, frequency $\nBapFreqUp$) increased Brix by $\nBapEffBrix$ and NFC by $\nBapEffNFC$ standard deviations and decreased NDF by $|\nBapEffNDF|$ (Figure~\ref{fig:bap_chr4}b). With Brix in the model, NDF still differed by $\nBapAdjNDF$ points between homozygotes ($p=\nBapAdjP$), so the sugar--fibre trade-off explains about $\nBapFracVia\%$ of the allele's fibre effect (Figure~\ref{fig:bap_chr4}a). The locus is not a maturity or height locus: no cloned maturity or height gene lies on chromosome~4, the strongest flowering-time association in these lines had $p=1.1\times10^{-4}$, and the Brix-raising allele had no detectable effect on stalk height ($p=0.29$) or dry biomass ($p=0.09$). In public RNA-seq data, \textit{SbALDH3E1} is expressed in leaf, shoot, root, stem and inflorescence, highest in the leaf sheath at flowering and lowest in stem internodes (Supplementary Figure~\ref{fig:sbaldh_expression}) \citep{Moreno2022ExpressionAtlas}. A maize fatty aldehyde dehydrogenase is a candidate for kernel oil content \citep{Zhang2026FALDH}, and \textit{Arabidopsis} ALDH3F1 supplies acetate for histone acetylation at \textit{FLOWERING LOCUS C} \citep{Xu2020ALDH3F1}.
+
+%% ---- algorithm ----------------------------------------------------------
+\begin{algorithm}[!t]
+\caption{CATFISH self-contained test: per-pathway and family-wise $p$-values from one set of correlated null draws (Section~2.3).}
+\label{alg:catfish}
+\small
+\begin{algorithmic}[1]
+\Require gene $p$-values $p_g$ from MAGMA for $G$ genes; MAGMA gene--gene correlations $r_{ij}$; pathways $\mathcal{F}=\{S_1,\dots,S_K\}$; number of null draws $B$; omnibus $\mathcal{O}$, the ACAT combination of ACAT, Fisher, Stouffer, minP and soft TFisher (truncation grid fixed in advance)
+\Ensure per-pathway $p$-value $\tilde p_k$ and family-wise $p$-value $\tilde p^{\mathrm{WY}}_k$ for every pathway
+\State $z_g \gets \Phi^{-1}(1-p_g)$ computed from $\log p_g$; $\;p_g \gets 1-\Phi\{z_g-\mathrm{median}(z)\}$ \Comment{gene-level genomic control}
+\For{each chromosome $c$}
+  \State $R_c \gets I + \sum_{(i,j)\in\mathcal{P}_c} r_{ij}\,(e_ie_j^{\top}+e_je_i^{\top})$; floor eigenvalues at $10^{-6}$ if not positive definite
+  \State $R_c = U_c^{\top}U_c$ \Comment{Cholesky factor}
+\EndFor
+\For{$k=1,\dots,K$}
+  \State $q_k \gets \mathcal{O}\{\mathbf{p}(S_k)\}$ \Comment{observed omnibus, in log space}
+\EndFor
+\For{$b=1,\dots,B$}
+  \State $\mathbf{Z}^{(b)}_c \gets U_c^{\top}\boldsymbol{\varepsilon}_c$, $\;\boldsymbol{\varepsilon}_c\sim\mathcal{N}(0,I)$, independently for each chromosome \Comment{one genome-wide draw}\label{alg:draw}
+  \State $p^{(b)}_g \gets 1-\Phi(Z^{(b)}_g)$ for every gene\label{alg:nullp}
+  \For{$k=1,\dots,K$}
+    \State $Q^{(b)}_k \gets \mathcal{O}\{\mathbf{p}^{(b)}(S_k)\}$ \Comment{every pathway scored on the same draw}
+  \EndFor
+\EndFor
+\For{$k=1,\dots,K$}
+  \State $\tilde p_k \gets \bigl\{1+\sum_{b}\mathbf{1}(Q^{(b)}_k\le q_k)\bigr\}/(B+1)$ \Comment{per-pathway $p$-value}
+  \State $\mu_k,\sigma_k \gets$ mean and SD of $Q^{(1)}_k,\dots,Q^{(B)}_k$; $\;z_k \gets (q_k-\mu_k)/\sigma_k$; $\;\zeta^{(b)}_k \gets (Q^{(b)}_k-\mu_k)/\sigma_k$
+\EndFor
+\For{$b=1,\dots,B$}
+  \State $M^{(b)} \gets \min_k \zeta^{(b)}_k$ \Comment{family minimum of one draw}
+\EndFor
+\For{$k=1,\dots,K$}
+  \State $\tilde p^{\mathrm{WY}}_k \gets \bigl\{1+\sum_{b}\mathbf{1}(M^{(b)}\le z_k)\bigr\}/(B+1)$ \Comment{Westfall--Young; ties count as extreme}
+\EndFor
+\State \Return $\tilde p_k$, $\tilde p^{\mathrm{WY}}_k$ and $z_k$ (the pathway statistic $z_{\mathrm{std}}$ used by the gene score)
+\end{algorithmic}
+\vspace{2pt}
+\footnotesize Competitive test: lines~\ref{alg:draw}--\ref{alg:nullp} are replaced by one circular shift $s$ of the observed gene $p$-values along the genome order, shared by all pathways ($p^{(b)}_g \gets p_{g+s}$); everything else is unchanged. A pathway is called by both tests when $\max(\tilde p^{\mathrm{WY,self}}_k,\tilde p^{\mathrm{WY,comp}}_k)\le\alpha$.
+\end{algorithm}
 
 %% ---- main figures -------------------------------------------------------
 \begin{figure*}[!t]
