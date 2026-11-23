@@ -1,0 +1,91 @@
+trait,gene,evidence,note,refs
+ldl,LDLR,gene,LDL receptor; mutations cause familial hypercholesterolaemia,BrownGoldstein1986;Graham2021GLGC
+ldl,PCSK9,gene,gain-of-function mutations cause hypercholesterolaemia; PCSK9 inhibition lowers LDL-C and coronary events,Abifadel2003PCSK9;Sabatine2017FOURIER
+ldl,PVRL2,locus,APOE-APOC1 region; independent effect unresolved,GordilloMaranon2021;Graham2021GLGC
+ldl,APOE,gene,APOE isoforms set LDL-C and coronary risk,Song2004APOE;Graham2021GLGC
+ldl,APOC1,locus,APOE region; independent effect unresolved,GordilloMaranon2021;Graham2021GLGC
+ldl,LPA,gene,LPA variants set Lp(a) level; Lp(a) cholesterol is part of measured LDL-C,Clarke2009LPA
+ldl,APOB,gene,main protein of LDL; lipid GWAS locus,Graham2021GLGC
+ldl,KIAA1324,neighbour,1p13 CELSR2-PSRC1-SORT1 locus; causal gene SORT1,Musunuru2010SORT1;Graham2021GLGC
+ldl,LDLRAP1,gene,mutations cause autosomal recessive hypercholesterolaemia,Garcia2001LDLRAP1
+ldl,SMARCA4,locus,adjacent to LDLR; independent effect unresolved,Graham2021GLGC
+hdl,ABCA1,gene,mutations cause Tangier disease (near-absent HDL),BrooksWilson1999ABCA1
+hdl,LIPC,gene,hepatic lipase; HDL-C GWAS locus,Graham2021GLGC
+hdl,NLRC5,locus,next to CETP at 16q13; independent effect unresolved,Graham2021GLGC
+hdl,CETP,gene,cholesteryl ester transfer protein; HDL-C GWAS locus,Graham2021GLGC
+hdl,LPL,gene,LPL coding variants alter lipids and coronary risk,Stitziel2016LPL
+hdl,GALNT2,gene,"loss of function lowers HDL-C in humans, primates and rodents",Khetarpal2016GALNT2
+hdl,SCARB1,gene,rare loss-of-function variant raises HDL-C,Zanoni2016SCARB1
+hdl,APOA1,gene,main protein of HDL; APOA1-APOC3-APOA4-APOA5 locus,Graham2021GLGC
+hdl,SLC12A3,locus,CETP region at 16q13; independent effect unresolved,Graham2021GLGC
+hdl,MYO5B,locus,near LIPG at 18q21; independent effect unresolved,Graham2021GLGC
+cad,LPA,gene,LPA variants raise Lp(a) and coronary risk,Clarke2009LPA;Tregouet2009
+cad,SLC22A3,locus,SLC22A3-LPAL2-LPA cluster; independent effect unresolved,Tregouet2009
+cad,APOE,gene,APOE genotype and coronary risk,Song2004APOE
+cad,PLG,gene,LPA-PLG region; CAD GWAS locus,vanderHarst2018CAD
+cad,APOC1,locus,APOE region; independent effect unresolved,vanderHarst2018CAD
+cad,COL4A1,gene,risk variant alters COL4A1/COL4A2 expression and plaque stability,Yang2016COL4A1
+cad,PHACTR1,neighbour,risk variant rs9349379 regulates EDN1 at a distance,Gupta2017PHACTR1
+cad,CDKN2A,gene,deleting the 9p21 risk interval lowers Cdkn2a/b expression in mice,Visel2010
+cad,FURIN,locus,FURIN-FES locus; CRISPR perturbation in endothelial cells,Wunnemann2023
+cad,CDKN2B,gene,deleting the 9p21 risk interval lowers Cdkn2a/b expression in mice,Visel2010
+brca,FGFR2,gene,strongest common breast cancer locus,Easton2007BRCA;Hunter2007FGFR2
+brca,RAD51B,locus,14q24.1 risk variants within RAD51B,Thomas2009RAD51B
+brca,ESR1,gene,6q25 risk variants regulate ESR1,Dunning2016ESR1
+brca,ZNF365,neighbour,10q21.2 risk variants regulate NRBF2,Darabi2015ZNF365
+brca,TOX3,locus,16q12 locus (TOX3/TNRC9),Easton2007BRCA
+brca,TCF7L2,locus,breast cancer GWAS locus,Michailidou2017BRCA
+brca,MAP3K1,gene,5q11 locus,Easton2007BRCA
+brca,ITPR1,locus,3p26 ITPR1-EGOT locus,Michailidou2013BRCA
+brca,EBF1,locus,5q33 locus,Michailidou2013BRCA
+brca,NEK10,locus,3p24 SLC4A7-NEK10 locus,Ahmed2009NEK10
+af,SH3PXD2A,locus,AF GWAS locus,Christophersen2017AF
+af,KCNN3,gene,SK3 potassium channel; lone AF locus,Ellinor2010KCNN3
+af,ZFHX3,gene,16q22 AF locus,Gudbjartsson2009ZFHX3
+af,NEURL1,locus,10q24 AF locus,Sinner2014AF
+af,NR3C1,gene,AF GWAS locus,Roselli2018AF
+af,CAV1,gene,7q31 AF locus; risk variants affect atrial CAV1 expression,Ellinor2012AF;Hsu2018AF
+af,FAM13B,locus,5q31 AF locus,Roselli2018AF
+af,CAV2,locus,CAV1-CAV2 locus,Ellinor2012AF
+af,WIPF1,locus,AF GWAS locus,Roselli2018AF
+af,CAMK2G,locus,10q22 SYNPO2L locus,Ellinor2012AF
+cd,IL23R,gene,IL23R coding variants protect from IBD,Duerr2006IL23R
+cd,NOD2,gene,NOD2 coding variants raise Crohn's disease risk,Hugot2001NOD2
+cd,CYLD,locus,next to NOD2 at 16q12,Franke2010CD
+cd,IRF1,locus,5q31 (IBD5) locus,Jostins2012IBD
+cd,PTPN2,gene,replicated IBD gene,Franke2010CD
+cd,GPX1,locus,3p21 MST1 locus,Raelson2007CD
+cd,SNAPC4,neighbour,CARD9 locus at 9q34,Franke2010CD
+cd,SDCCAG3,neighbour,CARD9 locus at 9q34,Jostins2012IBD
+cd,SAG,neighbour,ATG16L1 locus at 2q37,Franke2010CD
+cd,IL12RB2,locus,IL23R-IL12RB2 region at 1p31,Duerr2006IL23R
+uc,FCGR2A,locus,1q23 FCGR2A locus,Anderson2011UC
+uc,JAK2,locus,UC GWAS locus,Anderson2011UC
+uc,IL23R,gene,IL23R coding variants protect from IBD,Duerr2006IL23R;Anderson2011UC
+uc,RHOA,locus,3p21 MST1 locus,Anderson2011UC
+uc,GPX1,locus,3p21 MST1 locus,Anderson2011UC
+uc,IL10,gene,IL10 locus,Franke2008UC
+uc,HSPA6,neighbour,1q23 FCGR2A locus,Anderson2011UC
+uc,APEH,locus,3p21 MST1 locus,Anderson2011UC
+uc,LAMB1,locus,7q31 LAMB1 locus,Anderson2011UC
+uc,PLA2G2E,locus,1p36 OTUD3 region,Anderson2011UC
+sle,NCF2,gene,coding variant H389Q alters NADPH oxidase function,Jacob2012NCF2
+sle,TNIP1,gene,SLE GWAS locus,Gateva2009SLE
+sle,STAT1,locus,risk variant in STAT4 alters STAT1 expression in B cells,Patel2018STAT1
+sle,IRF5,gene,risk haplotype alters IRF5 splicing and expression,Graham2006IRF5
+sle,IRF7,locus,IRF7-PHRF1 (KIAA1542) locus,Harley2008SLE
+sle,STAT4,gene,STAT4 risk haplotype,Remmers2007STAT4
+sle,ICAM1,locus,ICAM1-ICAM4-ICAM5 locus,Kim2012ICAM
+sle,IRF3,locus,replicated SLE locus,Zhang2020IRF3
+sle,IRF8,locus,IRF8 locus,Lessard2012SLE
+sle,UBE2L3,gene,risk allele raises UBE2L3 expression and NF-kB activation,Lewis2015UBE2L3
+asthma,IL33,gene,rare loss-of-function variant protects from asthma,Moffatt2010Asthma;Smith2017IL33
+asthma,SMAD3,locus,asthma GWAS locus; prioritized candidate gene,Moffatt2010Asthma;Valette2021Asthma
+asthma,IL1RL1,locus,IL1RL1-IL18R1 locus (IL-33 receptor),Moffatt2010Asthma
+asthma,D2HGDH,locus,moderate-to-severe asthma locus,Shrine2019Asthma
+asthma,IL1R1,locus,IL1RL1-IL18R1 locus,Moffatt2010Asthma
+asthma,BACH2,locus,asthma GWAS locus,Demenais2018Asthma
+asthma,IL4R,gene,prioritized causal gene at its asthma locus; IL4R is the target of dupilumab,Valette2021Asthma
+asthma,IL5,gene,5q31 type 2 cytokine region,Moffatt2010Asthma
+asthma,IL18RAP,locus,IL1RL1-IL18R1 locus,Moffatt2010Asthma
+asthma,GSDMB,gene,splice variant removes GSDMB pyroptotic activity; 17q12-21 locus,Panganiban2018GSDMB;Moffatt2010Asthma
