@@ -35,6 +35,20 @@ CONTROLS <- list(
           "LPA","CETP","LDLRAP1","MYLIP","ANGPTL3"),
   hdl = c("CETP","LIPC","LIPG","ABCA1","APOA1","APOA5","LCAT","SCARB1",
           "PLTP","LPL","ANGPTL4","CUBN"))
+
+## CONTROLS_FILE (optional): evaluate on another gene list instead of the
+## pre-specified one, e.g. the Open Targets gold-standard genes written by
+## final/45_benchmark_topk_all.R (results/45_gold_genes.csv: trait, universe,
+## ENSGID, symbol, entrez; rows of CONTROLS_UNIVERSE, default no_MHC, are used).
+## CONTROLS_LABEL names the list in figure and table text.
+CF_ <- Sys.getenv("CONTROLS_FILE", "")
+CTRL_LAB <- Sys.getenv("CONTROLS_LABEL", "established genes")
+if (nzchar(CF_)) {
+  cf_ <- data.table::fread(CF_)
+  if ("universe" %in% names(cf_)) cf_ <- cf_[cf_$universe == Sys.getenv("CONTROLS_UNIVERSE", "no_MHC"), ]
+  CONTROLS <- lapply(setNames(names(CONTROLS), names(CONTROLS)), function(t) unique(cf_$symbol[cf_$trait == t]))
+  cat("controls from", CF_, ":", paste(names(CONTROLS), lengths(CONTROLS), collapse = ", "), "\n")
+}
 SETS <- c(outer(c("ldl", "hdl"), c("eur", "afr", "eas", "sas", "his"), paste, sep = "_"))
 
 z0 <- function(x) { x <- suppressWarnings(as.numeric(x)); x[is.na(x)] <- 0; x }

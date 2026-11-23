@@ -32,6 +32,18 @@ CONTROLS <- list(
           "LPA","CETP","LDLRAP1","MYLIP","ANGPTL3"),
   hdl = c("CETP","LIPC","LIPG","ABCA1","APOA1","APOA5","LCAT","SCARB1",
           "PLTP","LPL","ANGPTL4","CUBN"))
+
+## CONTROLS_FILE (optional): evaluate on another gene list instead of the
+## pre-specified one, e.g. the Open Targets gold-standard genes written by
+## final/45_benchmark_topk_all.R (results/45_gold_genes.csv; rows of
+## CONTROLS_UNIVERSE, default no_MHC, are used).
+CF_ <- Sys.getenv("CONTROLS_FILE", "")
+if (nzchar(CF_)) {
+  cf_ <- data.table::fread(CF_)
+  if ("universe" %in% names(cf_)) cf_ <- cf_[cf_$universe == Sys.getenv("CONTROLS_UNIVERSE", "no_MHC"), ]
+  CONTROLS <- lapply(setNames(names(CONTROLS), names(CONTROLS)), function(t) unique(cf_$symbol[cf_$trait == t]))
+  cat("controls from", CF_, ":", paste(names(CONTROLS), lengths(CONTROLS), collapse = ", "), "\n")
+}
 ## identical to 25_sorghum_gene_prioritize.R
 SORGHUM_EST <- list(
   Dry_tons_per_acre = c("SORBI_3006G057866", "SORBI_3001G394400", "SORBI_3001G087100",

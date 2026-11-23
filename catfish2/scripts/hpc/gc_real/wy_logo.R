@@ -22,7 +22,7 @@ A    <- commandArgs(trailingOnly = TRUE)[1]
 ROOT <- Sys.getenv("GC_ROOT", "/share/maize/ntanduk/CATFISH/gc_real")
 B    <- as.integer(Sys.getenv("WY_B", "10000"))
 IN   <- file.path(ROOT, "inputs")
-OUT  <- file.path(ROOT, "out_logo")
+OUT  <- Sys.getenv("LOGO_OUT", file.path(ROOT, "out_logo"))
 dir.create(OUT, recursive = TRUE, showWarnings = FALSE)
 SEED <- 20260706L; TAU <- c(0.01, 0.05, 0.5); MIN <- 10L
 if (!grepl("^(ldl|hdl)_(eur|afr|eas|sas|his)$", A)) stop("lipid analyses only, e.g. ldl_eur", call. = FALSE)
@@ -35,6 +35,16 @@ CONTROLS <- list(
   hdl = c(CETP = "1071", LIPC = "3990", LIPG = "9388", ABCA1 = "19", APOA1 = "335",
           APOA5 = "116519", LCAT = "3931", SCARB1 = "949", PLTP = "5360", LPL = "4023",
           ANGPTL4 = "51129", CUBN = "8029"))
+## CONTROLS_FILE (optional): another gene list, e.g. results/45_gold_genes.csv
+## (trait, universe, symbol, entrez); rows of CONTROLS_UNIVERSE (default no_MHC).
+## Set LOGO_OUT as well, so the pre-specified results in out_logo are kept.
+CF_ <- Sys.getenv("CONTROLS_FILE", "")
+if (nzchar(CF_)) {
+  cf_ <- utils::read.csv(CF_, stringsAsFactors = FALSE)
+  if ("universe" %in% names(cf_)) cf_ <- cf_[cf_$universe == Sys.getenv("CONTROLS_UNIVERSE", "no_MHC"), ]
+  cf_ <- cf_[!is.na(cf_$entrez), ]
+  CONTROLS <- lapply(split(cf_, cf_$trait), function(d) setNames(as.character(d$entrez), d$symbol))
+}
 
 ## ---- gene statistics, GC, pathways: as wy_gc_real.R ----------------------------
 g <- read.table(file.path(IN, "lipids", paste0(A, ".genes.out")), header = TRUE,

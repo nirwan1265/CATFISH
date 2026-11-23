@@ -194,7 +194,7 @@ pApoe <- ggplot(apl, aes(layer, r, group = set)) +
   labs(x = NULL, y = "Rank among all genes") + plot_theme + strip_t +
   theme(strip.text = element_text(size = 22, face = "bold.italic"), axis.text.x = element_text(size = 18))
 
-## nine-trait benchmark (Fig 5): established genes in the top 20, extended MHC excluded
+## nine-trait benchmark (Fig 5): gold-standard genes in the top 20, extended MHC excluded
 TRL <- c(ldl = "LDL-C", hdl = "HDL-C", cad = "CAD", brca = "Breast\ncancer", af = "AF",
          cd = "Crohn's", uc = "UC", sle = "SLE", asthma = "Asthma")
 bk <- fread(file.path(RES, "45_benchmark_topk_all.csv"))[universe == "no_MHC"]
@@ -204,7 +204,7 @@ bk4 <- bk[method %in% names(MB)][, method := factor(MB[method], levels = MB)]
 pBench <- ggplot(bk4, aes(trait, top20, fill = method)) +
   geom_col(position = position_dodge(width = 0.85), width = 0.8) +
   scale_fill_viridis_d(end = 0.85) +
-  labs(x = NULL, y = "Established genes\nin the top 20") + plot_theme
+  labs(x = NULL, y = "Gold-standard genes\nin the top 20") + plot_theme
 ## pathway layer gain per trait: CATFISH minus GWAS + MAGMA, at top 20, 50, 100
 gw <- dcast(bk[method %in% c("CATFISH", "GWAS+MAGMA")], trait ~ method, value.var = c("top20", "top50", "top100"))
 gl <- rbindlist(lapply(c(20, 50, 100), function(k) data.table(trait = gw$trait, k = sprintf("Top %d", k),
@@ -212,8 +212,8 @@ gl <- rbindlist(lapply(c(20, 50, 100), function(k) data.table(trait = gw$trait, 
 gl[, k := factor(k, levels = c("Top 20", "Top 50", "Top 100"))]
 pGain <- ggplot(gl, aes(trait, gain, fill = k)) + geom_hline(yintercept = 0, colour = "grey30") +
   geom_col(position = position_dodge(width = 0.85), width = 0.8) + scale_fill_viridis_d(end = 0.85) +
-  labs(x = NULL, y = "Established genes gained\nwith the pathway layer") + plot_theme
-## overlap of established genes found by CATFISH and by PoPS (top 50)
+  labs(x = NULL, y = "Gold-standard genes gained\nwith the pathway layer") + plot_theme
+## overlap of gold-standard genes found by CATFISH and by PoPS (top 50)
 ov <- fread(file.path(RES, "45_overlap_catfish_pops.csv"))[k == 50]
 ovl <- melt(ov, id.vars = "trait", measure.vars = c("both", "only_CATFISH", "only_PoPS"), variable.name = "who", value.name = "n")
 ovl[, `:=`(trait = factor(TRL[trait], levels = TRL),
@@ -221,7 +221,7 @@ ovl[, `:=`(trait = factor(TRL[trait], levels = TRL),
                         levels = c("PoPS only", "CATFISH only", "Both")))]
 pOver <- ggplot(ovl, aes(trait, n, fill = who)) + geom_col(width = 0.75) +
   scale_fill_viridis_d(end = 0.85, direction = -1, breaks = c("Both", "CATFISH only", "PoPS only")) +
-  labs(x = NULL, y = "Established genes\nin the top 50") + plot_theme
+  labs(x = NULL, y = "Gold-standard genes\nin the top 50") + plot_theme
 
 ## sorghum leave one gene out (Fig 7)
 lg <- fread(file.path(RES, "bap_traits/logo/47_bap_logo_genes.csv"))
@@ -321,13 +321,13 @@ s4a <- ggplot(melt(bka, id.vars = c("trait", "universe", "method"), measure.vars
               aes(trait, value, fill = method)) +
   geom_col(position = position_dodge(width = 0.88), width = 0.85) + facet_grid(variable ~ universe, scales = "free_y") +
   scale_fill_viridis_d(end = 0.9) + guides(fill = guide_legend(nrow = 1)) +
-  labs(x = NULL, y = "Established genes") + plot_theme + strip_t +
+  labs(x = NULL, y = "Gold-standard genes") + plot_theme + strip_t +
   theme(axis.text.x = element_text(size = 16, angle = 45, hjust = 1))
 s4b <- ggplot(bka, aes(trait, median_rank, colour = method, shape = method)) +
   geom_point(size = 4.5, position = position_dodge(width = 0.7)) + facet_wrap(~ universe, nrow = 1) +
   scale_y_log10() + scale_colour_viridis_d(end = 0.9) + scale_shape_manual(values = c(15, 16, 17, 18, 8, 4)) +
   guides(colour = guide_legend(nrow = 1), shape = guide_legend(nrow = 1)) +
-  labs(x = NULL, y = "Median rank of\nestablished genes") + plot_theme + strip_t +
+  labs(x = NULL, y = "Median rank of\ngold-standard genes") + plot_theme + strip_t +
   theme(axis.text.x = element_text(size = 16, angle = 45, hjust = 1))
 save_fig(s4a / s4b + plot_layout(heights = c(2.4, 1)), "supp/figS4.png", 34, 30)
 ## S5: sorghum null, further checks

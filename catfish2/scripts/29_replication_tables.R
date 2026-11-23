@@ -36,6 +36,20 @@ CONTROLS <- list(
           "LPA","CETP","LDLRAP1","MYLIP","ANGPTL3"),
   hdl = c("CETP","LIPC","LIPG","ABCA1","APOA1","APOA5","LCAT","SCARB1",
           "PLTP","LPL","ANGPTL4","CUBN"))
+
+## CONTROLS_FILE (optional): evaluate on another gene list instead of the
+## pre-specified one, e.g. the Open Targets gold-standard genes written by
+## final/45_benchmark_topk_all.R (results/45_gold_genes.csv: trait, universe,
+## ENSGID, symbol, entrez; rows of CONTROLS_UNIVERSE, default no_MHC, are used).
+## CONTROLS_LABEL names the list in figure and table text.
+CF_ <- Sys.getenv("CONTROLS_FILE", "")
+CTRL_LAB <- Sys.getenv("CONTROLS_LABEL", "established genes")
+if (nzchar(CF_)) {
+  cf_ <- data.table::fread(CF_)
+  if ("universe" %in% names(cf_)) cf_ <- cf_[cf_$universe == Sys.getenv("CONTROLS_UNIVERSE", "no_MHC"), ]
+  CONTROLS <- lapply(setNames(names(CONTROLS), names(CONTROLS)), function(t) unique(cf_$symbol[cf_$trait == t]))
+  cat("controls from", CF_, ":", paste(names(CONTROLS), lengths(CONTROLS), collapse = ", "), "\n")
+}
 LIPO_RX <- "^REACTOME_(PLASMA_LIPOPROTEIN|LDL_|HDL_|VLDL_|VLDLR_|CHYLOMICRON_)"
 
 need <- function(f) if (!file.exists(f)) stop("missing input: ", f, call. = FALSE)
@@ -98,7 +112,7 @@ L <- c("\\begin{table*}[!t]", "\\centering",
          "the gene's best variant (GWAS layer) and \\emph{MA} the rank of its MAGMA ",
          "gene-level $p$-value, each among about $18{,}500$ genes (1 is the ",
          "strongest; tied ranks are averaged and rounded). Pre-specified ",
-         "established genes in bold; $^\\dagger$~member of the plasma-lipoprotein ",
+         CTRL_LAB, " in bold; $^\\dagger$~member of the plasma-lipoprotein ",
          "pathway subtree, the leading pathway of every replication set.}"), TOP_G),
        "\\label{tab:replication_genes}", "\\footnotesize",
        "\\setlength{\\tabcolsep}{3.5pt}",
@@ -138,7 +152,7 @@ for (t in names(TRAITS)) {
            "within each evidence layer (1 is the strongest): best variant within the ",
            "MAGMA gene annotation (GWAS), MAGMA gene-level $p$-value (MAGMA), and best ",
            "pathway by $z_{\\mathrm{std}}$ among pathway-annotated genes (Pathway). ",
-           "Pre-specified established genes in bold.}"), TRAITS[[t]]),
+           paste0(tools::toTitleCase(CTRL_LAB), " in bold.}")), TRAITS[[t]]),
          sprintf("\\label{tab:replication_candidates_%s}", t), "\\footnotesize",
          "\\begin{tabular}{rlrrrrl}", "\\hline",
          paste0("\\textbf{Rank} & \\textbf{Gene} & \\textbf{Score} & \\textbf{GWAS} & ",

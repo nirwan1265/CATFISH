@@ -66,7 +66,7 @@ cand_file <- function(tr) {
     file.path(RES, "benchmark", "candidates", sprintf("06_candidate_genes_%s.csv", tr))
 }
 
-out <- list(); tops <- list(); ov <- list()
+out <- list(); tops <- list(); ov <- list(); GL <- list()
 for (tr in names(TRAIT_EFO)) {
   g <- fread(cand_file(tr))
   g[, ENSGID := s2e[symbol]]; g <- g[!is.na(ENSGID) & !duplicated(ENSGID)]
@@ -77,6 +77,8 @@ for (tr in names(TRAIT_EFO)) {
     if (uni == "annotated") u <- intersect(u, g[layers == 3, ENSGID])
     gg <- g[match(u, ENSGID)]; pp <- p[match(u, ENSGID)]
     gold <- intersect(ot(TRAIT_EFO[[tr]]), u)
+    GL[[length(GL) + 1L]] <- data.table(trait = tr, universe = uni, ENSGID = gold,
+      symbol = unname(e2s[gold]), entrez = gg$gene[match(gold, gg$ENSGID)])
     rk <- function(s) { s[is.na(s)] <- -Inf; frank(-s, ties.method = "min") }
     R <- list(CATFISH = rk(gg$Score), `GWAS+MAGMA` = rk(gg$S_GWAS + gg$S_MAGMA),
               GWAS = rk(-gg$rank_gwas), MAGMA = rk(-gg$rank_magma), PoPS = rk(pp$PoPS_Score))
@@ -103,6 +105,8 @@ for (tr in names(TRAIT_EFO)) {
 D <- rbindlist(out); T20 <- rbindlist(tops); OV <- rbindlist(ov)
 fwrite(D, file.path(RES, "45_benchmark_topk_all.csv")); fwrite(T20, file.path(RES, "45_top20_lists_all.csv"))
 fwrite(OV, file.path(RES, "45_overlap_catfish_pops.csv"))
+## the gold-standard genes of each trait and universe (CONTROLS_FILE for 22, 27, 28, 29, 39)
+fwrite(rbindlist(GL), file.path(RES, "45_gold_genes.csv"))
 
 options(width = 200)
 for (uni in c("no_MHC", "all_MHC", "annotated")) {

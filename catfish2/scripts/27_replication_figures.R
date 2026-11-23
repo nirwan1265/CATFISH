@@ -92,6 +92,20 @@ TARGETS <- list(
           "LPA","CETP","LDLRAP1","MYLIP","ANGPTL3"),
   hdl = c("CETP","LIPC","LIPG","ABCA1","APOA1","APOA5","LCAT","SCARB1",
           "PLTP","LPL","ANGPTL4","CUBN"))
+
+## CONTROLS_FILE (optional): evaluate on another gene list instead of the
+## pre-specified one, e.g. the Open Targets gold-standard genes written by
+## final/45_benchmark_topk_all.R (results/45_gold_genes.csv: trait, universe,
+## ENSGID, symbol, entrez; rows of CONTROLS_UNIVERSE, default no_MHC, are used).
+## CONTROLS_LABEL names the list in figure and table text.
+CF_ <- Sys.getenv("CONTROLS_FILE", "")
+CTRL_LAB <- Sys.getenv("CONTROLS_LABEL", "established genes")
+if (nzchar(CF_)) {
+  cf_ <- data.table::fread(CF_)
+  if ("universe" %in% names(cf_)) cf_ <- cf_[cf_$universe == Sys.getenv("CONTROLS_UNIVERSE", "no_MHC"), ]
+  TARGETS <- lapply(setNames(names(TARGETS), names(TARGETS)), function(t) unique(cf_$symbol[cf_$trait == t]))
+  cat("controls from", CF_, ":", paste(names(TARGETS), lengths(TARGETS), collapse = ", "), "\n")
+}
 LIPO <- "^REACTOME_(PLASMA_LIPOPROTEIN|LDL_|HDL_|VLDL_|VLDLR_|CHYLOMICRON_)"
 
 ## rank bins: one viridis scale shared by every column (rank 1 = dark purple,
@@ -230,13 +244,13 @@ pA <- ggplot(long, aes(anc, med, colour = method, shape = method)) +
   geom_point(size = 6) + scale_y_log10() + vir +
   scale_shape_manual(values = c(16, 17, 15)) +
   facet_wrap(~ trait, nrow = 1) +
-  labs(x = NULL, y = "Median rank of\nestablished genes", title = "Median rank (lower is better)") +
+  labs(x = NULL, y = paste0("Median rank of\n", CTRL_LAB), title = "Median rank (lower is better)") +
   plot_theme + theme(strip.text = element_text(size = 24, face = "bold"))
 pB <- ggplot(long, aes(anc, top, fill = method)) +
   geom_col(position = position_dodge(width = 0.8), width = 0.75) + virf +
   scale_y_continuous(breaks = seq(0, 12, 2)) +
   facet_wrap(~ trait, nrow = 1) +
-  labs(x = NULL, y = sprintf("Established genes\nin the top %d", TOP_G),
+  labs(x = NULL, y = sprintf("%s\nin the top %d", tools::toTitleCase(CTRL_LAB), TOP_G),
        title = sprintf("In the top %d (of 13 LDL-C, 12 HDL-C genes)", TOP_G)) +
   plot_theme + theme(strip.text = element_text(size = 24, face = "bold"))
 supp <- (pA / pB) + plot_annotation(tag_levels = "A") &
