@@ -51,3 +51,6 @@ catfish2/logs/
 *.assoc.txt
 *cor_pairs*.txt
 inst/extdata/pathway/Ensembl2Reactome_All_Levels.txt
+
+# ---- compiled paper (27 MB; Overleaf builds its own) ------------------------
+catfish2/tex/catfish_wy.pdf
