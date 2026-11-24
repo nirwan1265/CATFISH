@@ -139,7 +139,7 @@ def glab(r):
 fmt = lambda x: "--" if pd.isna(x) else ("%d" % x if float(x).is_integer() else "%.1f" % x)
 CLASS = {"gene": "Causal gene", "locus": "Unresolved locus", "neighbour": "Neighbour", "": ""}
 cap = ("The ten highest-ranked CATFISH candidate genes of each of the nine human traits (gene score with the GWAS, "
-       "MAGMA and pathway layers; genes in the extended MHC skipped), with the published evidence linking each to the trait. "
+       "MAGMA and pathway layers), with the published evidence linking each to the trait. "
        "Bold, Open Targets gold-standard gene of the trait; $^\\dagger$, no pathway evidence (ranked on the GWAS and MAGMA "
        "layers only). Evidence: Causal gene, published genetic or functional evidence points to this gene; Unresolved locus, the gene "
        "lies at a locus reported for the trait but the causal gene there has not been identified; Neighbour, published evidence points to a "

@@ -81,7 +81,7 @@ print(S.to_string(index=False)); print("totals:", tot.to_dict())
 ## Results table
 L = ["\\begin{table*}[!t]", "\\centering",
      "\\caption{Genes the CATFISH gene score moves into and out of the genome-wide top %d, compared with ranking genes by "
-     "their strongest GWAS variant, in nine human traits (extended MHC removed). Lifted, in the top %d of the score but not "
+     "their strongest GWAS variant, in nine human traits. Lifted, in the top %d of the score but not "
      "of the GWAS layer; by pathway, lifted genes also outside the top %d of the score without the pathway layer; dropped, "
      "in the top %d of the GWAS layer but not of the score; gold, Open Targets gold-standard genes of the trait. Top 10, range "
      "of GWAS-layer ranks of the ten highest-scoring genes. Lifted genes are listed in Supplementary Table~\\ref{tab:lifted_genes}.}" % (N, N, N, N),
@@ -103,7 +103,7 @@ def lab(r):
     return "%s (%d$\\rightarrow$%d)" % (s, r["rank_gwas"], r["rank_catfish"])
 L = ["\\begin{table*}[!t]", "\\centering",
      "\\caption{Genes lifted into the genome-wide top %d of the CATFISH gene score from outside the top %d of the GWAS layer, "
-     "in score order, with each gene's GWAS-layer rank and score rank (extended MHC removed). Bold, Open Targets gold-standard "
+     "in score order, with each gene's GWAS-layer rank and score rank. Bold, Open Targets gold-standard "
      "gene of the trait; $^\\ast$, also outside the top %d of the score without the pathway layer. Ranks on every layer are in "
      "\\texttt{50\\_lifted\\_dropped\\_genes.csv}.}" % (N, N, N),
      "\\label{tab:lifted_genes}", "\\footnotesize", "\\begin{tabular}{p{0.16\\textwidth}>{\\raggedright\\arraybackslash}p{0.78\\textwidth}}", "\\hline",

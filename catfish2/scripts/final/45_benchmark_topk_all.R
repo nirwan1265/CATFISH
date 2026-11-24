@@ -159,7 +159,7 @@ two <- function(d, a, b, caption, label, ha, hb) {
     sprintf("\\textbf{Trait} & $n$ & %s & %s & %s & %s & %s & %s \\\\", ha, hb, ha, hb, ha, hb), "\\hline", rows, "\\hline",
     sprintf("\\textbf{Total} & %d & %s \\\\", d[method == a, sum(n_gold)], cells(dt)), "\\hline", "\\end{tabular}", "\\end{table}")
 }
-common <- "Number of Open Targets gold-standard genes of each trait (2019 and 2023 releases) among the top $20$, $50$ and $100$ genes of each ranking genome-wide, within the genes scored by both CATFISH and PoPS and outside the extended MHC (chromosome~6, $25$--$34$~Mb); all rankings use the same GWAS summary statistics and MAGMA gene analysis. $n$, gold-standard genes in the gene universe. Bold, the better ranking."
+common <- "Number of Open Targets gold-standard genes of each trait (2019 and 2023 releases) among the top $20$, $50$ and $100$ genes of each ranking genome-wide, within the genes scored by both CATFISH and PoPS; all rankings use the same GWAS summary statistics and MAGMA gene analysis. $n$, gold-standard genes in the gene universe. Bold, the better ranking."
 writeLines(two(x, "GWAS+MAGMA", "CATFISH",
   paste("Pathway evidence and candidate genes in nine European GWAS. GWAS+MAGMA, the CATFISH gene score without its pathway layer (pathway and hub weights $0$); CATFISH, the full score.", common),
   "tab:pathway_gain_all", "\\makecell{GWAS+\\\\MAGMA}", "CATFISH"), file.path(TEX, "tab_pathway_gain_all.tex"))
