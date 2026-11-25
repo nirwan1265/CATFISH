@@ -153,11 +153,11 @@ two <- function(d, a, b, caption, label, ha, hb) {
   rows <- vapply(names(TRAIT_EFO), function(tr)
     sprintf("%s & %d & %s \\\\", LABEL[[tr]], d[trait == tr & method == a, n_gold], cells(d[trait == tr])), "")
   dt <- d[, lapply(.SD, sum), by = method, .SDcols = paste0("top", K)]
-  c("\\begin{table}[!t]", "\\centering", sprintf("\\caption{%s}", caption), sprintf("\\label{%s}", label),
+  c("\\begin{table*}[!t]", "\\centering", sprintf("\\caption{%s}", caption), sprintf("\\label{%s}", label),
     "\\small", "\\setlength{\\tabcolsep}{4pt}", "\\begin{tabular}{lrrrrrrr}", "\\hline",
     " & & \\multicolumn{2}{c}{\\textbf{Top 20}} & \\multicolumn{2}{c}{\\textbf{Top 50}} & \\multicolumn{2}{c}{\\textbf{Top 100}} \\\\",
     sprintf("\\textbf{Trait} & $n$ & %s & %s & %s & %s & %s & %s \\\\", ha, hb, ha, hb, ha, hb), "\\hline", rows, "\\hline",
-    sprintf("\\textbf{Total} & %d & %s \\\\", d[method == a, sum(n_gold)], cells(dt)), "\\hline", "\\end{tabular}", "\\end{table}")
+    sprintf("\\textbf{Total} & %d & %s \\\\", d[method == a, sum(n_gold)], cells(dt)), "\\hline", "\\end{tabular}", "\\end{table*}")
 }
 common <- "Number of Open Targets gold-standard genes of each trait (2019 and 2023 releases) among the top $20$, $50$ and $100$ genes of each ranking genome-wide, within the genes scored by both CATFISH and PoPS; all rankings use the same GWAS summary statistics and MAGMA gene analysis. $n$, gold-standard genes in the gene universe. Bold, the better ranking."
 writeLines(two(x, "GWAS+MAGMA", "CATFISH",
