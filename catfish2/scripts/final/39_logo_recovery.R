@@ -42,7 +42,7 @@ CONTROLS <- list(
 ## ENSGID, symbol, entrez; rows of CONTROLS_UNIVERSE, default no_MHC, are used).
 ## CONTROLS_LABEL names the list in figure and table text.
 CF_ <- Sys.getenv("CONTROLS_FILE", "")
-CTRL_LAB <- Sys.getenv("CONTROLS_LABEL", "established genes")
+CTRL_LAB <- Sys.getenv("CONTROLS_LABEL", if (nzchar(Sys.getenv("CONTROLS_FILE"))) "Open Targets gold-standard genes" else "established genes")
 if (nzchar(CF_)) {
   cf_ <- data.table::fread(CF_)
   if ("universe" %in% names(cf_)) cf_ <- cf_[cf_$universe == Sys.getenv("CONTROLS_UNIVERSE", "no_MHC"), ]
@@ -58,6 +58,13 @@ SETS <- strsplit(Sys.getenv("SETS", paste(c(outer(c("ldl", "hdl"), c("eur", "afr
 OUT_PREFIX <- Sys.getenv("OUT_PREFIX", "39_logo_recovery")
 TAB_NAME <- paste0("tab_", sub("^39_", "", OUT_PREFIX), ".tex")   # tab_logo_recovery.tex by default
 BENCH <- c("cad", "brca", "cd", "uc", "af", "sle", "asthma")
+## LOGO_CAP (default 1): a gene's pathway statistic without itself is never
+## taken as stronger than with itself. Genes whose best pathway is the same share
+## one tied pathway rank (averaged); without the cap, a gene whose removal leaves
+## its pathway marginally stronger (it diluted the pathway) would jump from the
+## middle of that tie to its head, a gain from tie-breaking, not from evidence.
+## LOGO_CAP=0 reproduces the uncapped version (until 2026-11-25).
+LOGO_CAP <- Sys.getenv("LOGO_CAP", "1") == "1"
 
 z0 <- function(x) { x <- suppressWarnings(as.numeric(x)); x[is.na(x)] <- 0; x }
 ## rank of value v among `others` (larger = better unless low = TRUE); average ties
@@ -103,6 +110,7 @@ for (A in SETS) {
           m[, z_logo := zp[base_pathway] + (z_std - z_base)]
           mc <- max(abs(zp[m$base_pathway] - m$z_base))  # Monte Carlo difference from the paper's run
           j <- which.min(m$z_logo); p_logo <- m$z_logo[j]; best_logo <- m$base_pathway[j]
+          if (LOGO_CAP) p_logo <- max(p_logo, pstat[i])   # no gain from its own removal
           rk <- rank_in(p_logo, pstat[-i][!is.na(pstat[-i])], low = TRUE)
           sp <- -log10(rk / N_PATH)
           sc <- g$S_GWAS[i] + g$S_MAGMA[i] + W_PATH * sp + W_HUB * g$B_hub[i]
@@ -138,12 +146,13 @@ TL <- c(ldl = "LDL-C", hdl = "HDL-C", cad = "CAD", brca = "Breast cancer", cd = 
 lab <- function(A) sprintf("%s & %s", TL[[sub("_.*", "", A)]],
                            toupper(sub(".*_", "", A)))
 fm <- function(m, t) if (is.na(m)) "--" else sprintf("%s (%d)", trimws(formatC(m, format = "fg", digits = 4)), t)
+WHERE <- if (all(sub("_.*", "", SETS) %in% BENCH)) sprintf(", in the %s further European GWAS", c("one", "two", "three", "four", "five", "six", "seven", "eight", "nine")[length(SETS)]) else ", in the lipid analyses"
 L <- c("\\begin{table*}[!t]", "\\centering",
-  paste0("\\caption{Where the gain of the gene score comes from. Median rank of the established ",
-         "genes among all genes (number in the top 20 in parentheses) when genes are ranked by the ",
+  paste0("\\caption{Where the gain of the gene score comes from", WHERE, ". Median rank of the ", CTRL_LAB, " ",
+         "among all genes (number in the top 20 in parentheses) when genes are ranked by the ",
          "GWAS layer alone, the MAGMA layer alone, the two together (pathway weight $0$), the full ",
-         "CATFISH score, and the full score with each established gene's pathway evidence recomputed ",
-         "without that gene (leave one gene out).}"),
+         "CATFISH score, and the full score with each gene's pathway evidence recomputed ",
+         "without that gene (leave one gene out; never stronger than with it).}"),
   sprintf("\\label{tab:%s}", sub("\\.tex$", "", sub("^tab_", "", TAB_NAME))), "\\small",
   "\\begin{tabular}{llrrrrr}", "\\hline",
   paste0("\\textbf{Trait} & \\textbf{Group} & GWAS & MAGMA & GWAS + MAGMA & CATFISH & ",

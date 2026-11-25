@@ -152,7 +152,12 @@ containing gene $g$, $P$ and $P$ without $g$ are scored in one Westfall--Young
 run on the same null draws, the change in $z_k$ is added to $P$'s statistic from
 the full analysis, the strongest of these becomes $g$'s pathway evidence, and
 its pathway rank, score and overall rank are recomputed with every other gene
-unchanged (\texttt{wy\_logo.R}, \texttt{39\_logo\_recovery.R}). Reduced sets
+unchanged (\texttt{wy\_logo.R}, \texttt{39\_logo\_recovery.R}). Genes whose best
+pathway is the same share one tied pathway rank. Removing a weakly associated gene
+can leave its pathway marginally stronger, which would move that gene ahead of
+every other gene sharing the pathway; that gain comes from breaking the tie, not
+from evidence, so a gene's pathway statistic without itself is capped at its
+value with itself. Reduced sets
 are allowed one gene fewer than the minimum pathway size, so that removing a
 gene does not drop its pathway. If the gene keeps its rank, its lift comes from
 the other genes of its pathways; if it falls back to its rank without the

@@ -25,6 +25,7 @@ TEX  <- Sys.getenv("TEX_AUTO", file.path(BASE, "catfish2/tex/auto"))
 TR   <- c(Brix = "Brix_maturity", NDF = "NDF_pct_DM", NFC = "NFC_pct_DM")
 W_PATH <- as.numeric(Sys.getenv("W_PATH", "1")); W_HUB <- as.numeric(Sys.getenv("W_HUB", "0"))   # gene_prioritize() defaults (until 2026-11-25: 0.5, 0.3)
 ALDH <- "SORBI_3004G300800"; TRXR <- "SORBI_3004G300900"
+LOGO_CAP <- Sys.getenv("LOGO_CAP", "1") == "1"   # as 39_logo_recovery.R: without itself never stronger than with itself (0 = uncapped, until 2026-11-25)
 rank_in <- function(v, others, low = FALSE) {      # rank of v among others, average ties
   if (low) { v <- -v; others <- -others }
   1 + sum(others > v) + 0.5 * sum(others == v)
@@ -56,7 +57,8 @@ for (k in names(TR)) {
     if (nrow(m)) {
       m[, z_logo := zp[base_pathway] + (z_std - z_base)]
       j <- which.min(m$z_logo); best <- m$base_pathway[j]
-      sp <- -log10(rank_in(m$z_logo[j], pstat[-i][!is.na(pstat[-i])], low = TRUE) / N_PATH)
+      zl <- if (LOGO_CAP && !is.na(pstat[i])) max(m$z_logo[j], pstat[i]) else m$z_logo[j]
+      sp <- -log10(rank_in(zl, pstat[-i][!is.na(pstat[-i])], low = TRUE) / N_PATH)
       sc <- p$gwas_score[i] + p$magma_score[i] + W_PATH * sp + W_HUB * p$hub_bonus[i]
       r_logo  <- rank_in(sc, score[-i])
       r3_logo <- rank_in(sc, score[-i][three[-i]])

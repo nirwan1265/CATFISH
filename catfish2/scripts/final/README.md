@@ -47,5 +47,5 @@ Every gene-score output is downstream of this. Order:
 3. Mac, sorghum dry biomass: `TRAITS=Dry_tons_per_acre Rscript 25_sorghum_gene_prioritize.R`
 4. rsync back `benchmark/candidates/`, `BAP_gwas/prioritize/`, `BAP_gwas/logo/`.
 5. Mac, in order: `final/45`, then with `CONTROLS_FILE=../results/45_gold_genes.csv`:
-   `22`, `27`, `28`, `29`, `final/36`, `final/37`, `final/39` (`LOGO_DIR=../results/out_logo_gold`),
+   `22`, `27`, `28`, `29`, `final/36`, `final/37`, `final/39` (`LOGO_DIR=../results/out_logo_gold`; again with `SETS=cad_eur,brca_eur,cd_eur,uc_eur,af_eur,sle_eur,asthma_eur OUT_PREFIX=39_logo_recovery_bench` for the seven other traits, after `hpc/gc_real/wy_logo_LSF.sh` with the same `SETS`),
    `final/46`, `final/43`, `final/44`, `final/47`, then `final/48`; then `49` and `50` (python).
