@@ -46,10 +46,18 @@ CTRL_LAB <- Sys.getenv("CONTROLS_LABEL", "established genes")
 if (nzchar(CF_)) {
   cf_ <- data.table::fread(CF_)
   if ("universe" %in% names(cf_)) cf_ <- cf_[cf_$universe == Sys.getenv("CONTROLS_UNIVERSE", "no_MHC"), ]
-  CONTROLS <- lapply(setNames(names(CONTROLS), names(CONTROLS)), function(t) unique(cf_$symbol[cf_$trait == t]))
+  tr_all <- unique(cf_$trait)
+  CONTROLS <- lapply(setNames(tr_all, tr_all), function(t) unique(cf_$symbol[cf_$trait == t]))
   cat("controls from", CF_, ":", paste(names(CONTROLS), lengths(CONTROLS), collapse = ", "), "\n")
 }
-SETS <- c(outer(c("ldl", "hdl"), c("eur", "afr", "eas", "sas", "his"), paste, sep = "_"))
+## SETS (comma-separated) picks the analyses: default the ten lipid sets; the
+## benchmark traits are <trait>_eur (candidates in results/benchmark/candidates,
+## WY results in results/benchmark/pathways). OUT_PREFIX names the outputs
+## (default 39_logo_recovery; table tab_logo_recovery.tex, or tab_<OUT_PREFIX>.tex).
+SETS <- strsplit(Sys.getenv("SETS", paste(c(outer(c("ldl", "hdl"), c("eur", "afr", "eas", "sas", "his"), paste, sep = "_")), collapse = ",")), ",")[[1]]
+OUT_PREFIX <- Sys.getenv("OUT_PREFIX", "39_logo_recovery")
+TAB_NAME <- paste0("tab_", sub("^39_", "", OUT_PREFIX), ".tex")   # tab_logo_recovery.tex by default
+BENCH <- c("cad", "brca", "cd", "uc", "af", "sle", "asthma")
 
 z0 <- function(x) { x <- suppressWarnings(as.numeric(x)); x[is.na(x)] <- 0; x }
 ## rank of value v among `others` (larger = better unless low = TRUE); average ties
@@ -62,7 +70,9 @@ avg_rank_desc <- function(x) frank(-x, ties.method = "average")
 genes_out <- list(); summ <- list()
 for (A in SETS) {
   tr <- sub("_.*", "", A); anc <- sub(".*_", "", A); tag <- if (anc == "eur") tr else A
-  g <- fread(file.path(RES, sprintf("06_candidate_genes_%s.csv", tag)), colClasses = list(character = "gene"))
+  f06 <- if (tr %in% BENCH) file.path(RES, "benchmark", "candidates", sprintf("06_candidate_genes_%s.csv", tr)) else
+    file.path(RES, sprintf("06_candidate_genes_%s.csv", tag))
+  g <- fread(f06, colClasses = list(character = "gene"))
   g[, `:=`(S_GWAS = z0(S_GWAS), S_MAGMA = z0(S_MAGMA), S_PATH = z0(S_PATH), B_hub = z0(B_hub))]
   g[, r_gm   := avg_rank_desc(S_GWAS + S_MAGMA)]
   g[, r_gmh  := avg_rank_desc(S_GWAS + S_MAGMA + W_HUB * B_hub)]
@@ -71,7 +81,8 @@ for (A in SETS) {
   if (max(abs(score - g$Score)) > 1e-8) stop(A, ": recomputed score does not reproduce 06's Score", call. = FALSE)
   pstat <- suppressWarnings(as.numeric(g$p_pathway)); N_PATH <- sum(!is.na(pstat))
 
-  wy <- fread(file.path(WY, sprintf("%s_reactome_5comp_westfall_young.csv", A)))
+  wy <- fread(file.path(if (tr %in% BENCH) file.path(RES, "benchmark", "pathways") else WY,
+                        sprintf("%s_reactome_5comp_westfall_young.csv", A)))
   zp <- setNames(wy$z_std, wy$pathway_id)
   fl <- file.path(LOGO, sprintf("%s_logo.csv", A))
   lo <- if (file.exists(fl)) fread(fl, colClasses = list(character = "removed_gene")) else NULL
@@ -107,7 +118,7 @@ for (A in SETS) {
   }
 }
 G <- rbindlist(genes_out)
-fwrite(G, file.path(RES, "39_logo_recovery_genes.csv"))
+fwrite(G, file.path(RES, paste0(OUT_PREFIX, "_genes.csv")))
 
 med <- function(x) as.numeric(stats::median(x, na.rm = TRUE))
 t20 <- function(x) sum(x <= 20, na.rm = TRUE)
@@ -119,10 +130,12 @@ S <- G[, .(n = .N,
            top20_gwas_magma = t20(rank_gwas_magma), top20_catfish = t20(rank_catfish),
            top20_catfish_logo = t20(rank_catfish_logo),
            max_mc_diff = if (all(is.na(mc_diff))) NA_real_ else max(mc_diff, na.rm = TRUE)), by = set]
-fwrite(S, file.path(RES, "39_logo_recovery_summary.csv"))
+fwrite(S, file.path(RES, paste0(OUT_PREFIX, "_summary.csv")))
 
 ## ---- table ------------------------------------------------------------------------
-lab <- function(A) sprintf("%s & %s", c(ldl = "LDL-C", hdl = "HDL-C")[[sub("_.*", "", A)]],
+TL <- c(ldl = "LDL-C", hdl = "HDL-C", cad = "CAD", brca = "Breast cancer", cd = "Crohn's disease",
+        uc = "Ulcerative colitis", af = "Atrial fibrillation", sle = "SLE", asthma = "Asthma")
+lab <- function(A) sprintf("%s & %s", TL[[sub("_.*", "", A)]],
                            toupper(sub(".*_", "", A)))
 fm <- function(m, t) if (is.na(m)) "--" else sprintf("%s (%d)", trimws(formatC(m, format = "fg", digits = 4)), t)
 L <- c("\\begin{table*}[!t]", "\\centering",
@@ -131,7 +144,7 @@ L <- c("\\begin{table*}[!t]", "\\centering",
          "GWAS layer alone, the MAGMA layer alone, the two together (pathway weight $0$), the full ",
          "CATFISH score, and the full score with each established gene's pathway evidence recomputed ",
          "without that gene (leave one gene out).}"),
-  "\\label{tab:logo_recovery}", "\\small",
+  sprintf("\\label{tab:%s}", sub("\\.tex$", "", sub("^tab_", "", TAB_NAME))), "\\small",
   "\\begin{tabular}{llrrrrr}", "\\hline",
   paste0("\\textbf{Trait} & \\textbf{Group} & GWAS & MAGMA & GWAS + MAGMA & CATFISH & ",
          "\\makecell[r]{CATFISH,\\\\leave one gene out} \\\\"), "\\hline")
@@ -140,9 +153,9 @@ for (k in seq_len(nrow(S))) { r <- S[k]
                     fm(r$magma, r$top20_magma), fm(r$gwas_magma, r$top20_gwas_magma),
                     fm(r$catfish, r$top20_catfish), fm(r$catfish_logo, r$top20_catfish_logo))) }
 L <- c(L, "\\hline", "\\end{tabular}", "\\end{table*}")
-writeLines(L, file.path(AUT, "tab_logo_recovery.tex"))
+writeLines(L, file.path(AUT, TAB_NAME))
 
 options(width = 180)
 print(S[, .(set, gwas, magma, gwas_magma, gwas_magma_hub, catfish, catfish_logo,
             top20_gwas_magma, top20_catfish, top20_catfish_logo, max_mc_diff)], row.names = FALSE)
-cat("\nwrote", file.path(RES, "39_logo_recovery_summary.csv"), "and", file.path(AUT, "tab_logo_recovery.tex"), "\n")
+cat("\nwrote", file.path(RES, paste0(OUT_PREFIX, "_summary.csv")), "and", file.path(AUT, TAB_NAME), "\n")

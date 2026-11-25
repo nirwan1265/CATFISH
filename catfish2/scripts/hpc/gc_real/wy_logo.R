@@ -25,7 +25,10 @@ IN   <- file.path(ROOT, "inputs")
 OUT  <- Sys.getenv("LOGO_OUT", file.path(ROOT, "out_logo"))
 dir.create(OUT, recursive = TRUE, showWarnings = FALSE)
 SEED <- 20260706L; TAU <- c(0.01, 0.05, 0.5); MIN <- 10L
-if (!grepl("^(ldl|hdl)_(eur|afr|eas|sas|his)$", A)) stop("lipid analyses only, e.g. ldl_eur", call. = FALSE)
+## lipid sets (ldl|hdl)_(eur|afr|eas|sas|his), or a benchmark trait <trait>_eur whose
+## inputs benchmark/03_catfish_LSF.sh wrote to inputs/lipids/ (controls then from CONTROLS_FILE)
+if (!grepl("^((ldl|hdl)_(eur|afr|eas|sas|his)|(cad|brca|cd|uc|af|sle|asthma)_eur)$", A))
+  stop("unknown analysis ", A, call. = FALSE)
 
 ## positive controls of 06_candidate_genes.R, as Entrez IDs (from its output)
 CONTROLS <- list(
@@ -64,6 +67,7 @@ tested <- utils::read.csv(paper, stringsAsFactors = FALSE)$pathway_id
 
 ## ---- each control's pathways, with and without it ----------------------------------
 ctrl <- CONTROLS[[sub("_.*", "", A)]]
+if (is.null(ctrl)) stop("no controls for ", A, " (set CONTROLS_FILE for the benchmark traits)", call. = FALSE)
 ctrl <- ctrl[ctrl %in% g$GENE]
 sets <- list(); map <- list()
 for (s in names(ctrl)) {
