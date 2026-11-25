@@ -5,7 +5,10 @@
 ## Runs on either real dataset:  SPECIES=maize (default) or SPECIES=human.
 ## Same formula, same weights; only the input paths and ID space differ.
 ##
-## Score(g) = S_GWAS(g) + S_MAGMA(g) + 0.5 * S_PATH(g) + 0.3 * B_hub(g)
+## Score(g) = S_GWAS(g) + S_MAGMA(g) + W_PATH * S_PATH(g) + W_HUB * B_hub(g)
+##   W_PATH, W_HUB: env, default 1 and 0 (equal layers, no hub term; until
+##   2026-11-25 the weights were 0.5 and 0.3 -- set W_PATH=0.5 W_HUB=0.3 to
+##   reproduce those results)
 ##   S(.)   = -log10(rank / N)                    rank 1 = strongest
 ##   B_hub  = log10(n_pathways(g) + 1)
 ##
@@ -125,7 +128,8 @@ GWAS_FILE <- Sys.getenv("GWAS_FILE", if (SPECIES == "human" && ANC != "eur") {
             file.path(DATA_D, "ldl/ldl_eur.neglog10.txt"),
             file.path(DATA_D, sprintf("lipids/%s_eur.magma.pval", TRAIT)),
             file.path(DATA_D, "ldl/ldl_eur.magma.pval"))
-  cand <- if (TRAIT == "ldl") cand else cand[c(1, 3)]
+  ## non-LDL EUR files sit at the top of CATFISH_DATA (e.g. hdl_eur.neglog10.txt)
+  cand <- if (TRAIT == "ldl") cand else c(cand[1], file.path(DATA_D, sprintf("%s_eur.neglog10.txt", TRAIT)), cand[3])
   hit <- cand[file.exists(cand)]
   if (length(hit)) hit[1] else ""
 } else "")
@@ -324,6 +328,11 @@ if (nzchar(GWAS_FILE) && file.exists(GWAS_FILE) &&
 } else {
   cat("GWAS layer: no usable SNP file -- S_GWAS = 0 for all genes\n")
   cat("  set GWAS_FILE (and MAGMA_GENES_ANNOT, or a file with CHR/POS columns)\n")
+  ## a human run without its GWAS layer is never what the paper wants: stop
+  ## unless explicitly allowed
+  if (SPECIES == "human" && Sys.getenv("ALLOW_NO_GWAS", "0") != "1")
+    stop("no GWAS file found for ", TAG, " (GWAS_FILE='", GWAS_FILE,
+         "'); set GWAS_FILE, or ALLOW_NO_GWAS=1 to run without the GWAS layer", call. = FALSE)
 }
 
 hit <- !is.na(genes$p_gwas)
@@ -339,8 +348,10 @@ if (any(hit)) {
 }
 
 ## ------------------------------------------------------------- composite ---
-genes$Score <- genes$S_GWAS + genes$S_MAGMA + 0.5 * genes$S_PATH +
-               0.3 * genes$B_hub
+W_PATH <- as.numeric(Sys.getenv("W_PATH", "1")); W_HUB <- as.numeric(Sys.getenv("W_HUB", "0"))
+cat(sprintf("weights: GWAS 1, MAGMA 1, pathway %g, hub %g\n", W_PATH, W_HUB))
+genes$Score <- genes$S_GWAS + genes$S_MAGMA + W_PATH * genes$S_PATH +
+               W_HUB * genes$B_hub
 genes$layers <- (genes$S_GWAS > 0) + (genes$S_MAGMA > 0) + (genes$S_PATH > 0)
 genes <- genes[order(-genes$Score), ]
 genes$rank <- seq_len(nrow(genes))

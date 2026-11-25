@@ -28,7 +28,7 @@ RES  <- Sys.getenv("RES_DIR",  file.path(BASE, "catfish2/results"))
 WY   <- Sys.getenv("WY_DIR",   file.path(BASE, "results/human_LDL/catfish"))
 LOGO <- Sys.getenv("LOGO_DIR", file.path(RES, "gc_real_logo"))
 AUT  <- Sys.getenv("TEX_AUTO", file.path(BASE, "catfish2/tex/auto"))
-W_PATH <- 0.5; W_HUB <- 0.3                  # as 06_candidate_genes.R
+W_PATH <- as.numeric(Sys.getenv("W_PATH", "1")); W_HUB <- as.numeric(Sys.getenv("W_HUB", "0"))   # as 06_candidate_genes.R (until 2026-11-25: 0.5, 0.3)
 
 CONTROLS <- list(
   ldl = c("LDLR","PCSK9","APOB","APOE","SORT1","HMGCR","NPC1L1","ABCG8",

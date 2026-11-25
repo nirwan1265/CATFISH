@@ -85,7 +85,7 @@
 #' @param prioritize Rank candidate genes.
 #' @param targets Optional known genes; their ranks are reported.
 #' @param w_gwas,w_magma,w_pathway,w_hub Layer weights of
-#'   \code{\link{gene_prioritize}}.
+#'   \code{\link{gene_prioritize}}. Defaults 1, 1, 1, 0.
 #' @param out_dir Output folder.
 #' @param out_prefix Prefix of the output files.
 #' @param verbose Print progress.
@@ -175,8 +175,8 @@ catfish_run <- function(gwas_file      = NULL,
                         targets        = NULL,
                         w_gwas         = 1,
                         w_magma        = 1,
-                        w_pathway      = 0.5,
-                        w_hub          = 0.3,
+                        w_pathway      = 1,
+                        w_hub          = 0,
                         out_dir        = "catfish_results",
                         out_prefix     = "catfish",
                         verbose        = TRUE) {

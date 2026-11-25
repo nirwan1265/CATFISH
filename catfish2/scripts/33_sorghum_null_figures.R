@@ -32,7 +32,7 @@ FIG  <- Sys.getenv("FIG_DIR", file.path(BASE, "catfish2/figures"))
 TEX  <- Sys.getenv("TEX_AUTO", file.path(BASE, "catfish2/tex/auto"))
 TRAIT <- Sys.getenv("TRAIT", "Dry_tons_per_acre")
 PATHWAY_FILE <- Sys.getenv("PATHWAY_FILE",
-                  file.path(BASE, "inst/extdata/pathway/sorghumbicolorcyc_pathways.20230103.SORBI"))
+                  file.path(dirname(BASE), "MAGCAT/inst/extdata/pathway/sorghumbicolorcyc_pathways.20230103.SORBI"))   # CATFISH clone has no inst/ yet
 N_TOP <- 10L
 dir.create(FIG, showWarnings = FALSE, recursive = TRUE); dir.create(TEX, showWarnings = FALSE, recursive = TRUE)
 

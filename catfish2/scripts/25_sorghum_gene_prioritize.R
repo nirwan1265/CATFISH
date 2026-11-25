@@ -33,7 +33,7 @@ suppressPackageStartupMessages({ library(CATFISH); library(data.table) })
 MAGMA_ROOT <- Sys.getenv("MAGMA_ROOT", path.expand("~/Documents/Research/results/CATFISH/MAGMA"))
 BASE       <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/CATFISH"))
 PATHWAY_FILE <- Sys.getenv("PATHWAY_FILE",
-                  file.path(BASE, "inst/extdata/pathway/sorghumbicolorcyc_pathways.20230103.SORBI"))
+                  file.path(dirname(BASE), "MAGCAT/inst/extdata/pathway/sorghumbicolorcyc_pathways.20230103.SORBI"))   # CATFISH clone has no inst/ yet
 RES_DIR    <- Sys.getenv("RES_DIR", "../results/sorghum_bap")
 WY_DIR     <- Sys.getenv("WY_DIR", RES_DIR)
 OUT_DIR    <- Sys.getenv("OUT_DIR", RES_DIR)
@@ -91,6 +91,7 @@ for (TRAIT in TRAITS) {
     gwas = as.data.frame(gw), gwas_snp_col = "SNP", gwas_p_col = "P",
     gwas_chr_col = "CHR", gwas_pos_col = "BP",
     gene_loc = loc, window = 0L,
+    w_pathway = as.numeric(Sys.getenv("W_PATH", "1")), w_hub = as.numeric(Sys.getenv("W_HUB", "0")),
     targets = ESTABLISHED$id[ESTABLISHED$trait == TRAIT],
     verbose = TRUE)
 

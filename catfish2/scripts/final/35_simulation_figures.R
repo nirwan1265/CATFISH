@@ -34,7 +34,7 @@ NOTITLE <- theme(plot.title = element_blank(), plot.caption = element_blank())
 
 METH <- c(catfish_self = "CATFISH self-contained", magma_self = "MAGMA self-contained",
           catfish_comp = "CATFISH competitive", magma_comp = "MAGMA competitive",
-          catfish_both = "CATFISH both")
+          gsea = "GSEA (preranked)", catfish_both = "CATFISH both")
 ARCH <- c(SSS = "SSS", MDS = "MDS", WDE = "WDE", MSA = "MSA", SGP = "SGP")
 SIZE <- c(small = "Small", medium = "Medium", large = "Large")
 
@@ -53,10 +53,10 @@ fwrite(s, file.path(RES, "35_simulation_compare.csv"))
 ##   competitive tests and "both"; the self-contained tests are right to call
 ##   pathways that carry background genes, so they are not shown
 a <- rbind(s[scenario == "S0"][, panel := "No signal"],
-           s[scenario == "S1" & method %in% c("catfish_comp", "catfish_both", "magma_comp")][
+           s[scenario == "S1" & method %in% c("catfish_comp", "catfish_both", "magma_comp", "gsea")][
              , panel := "Background only"])
 a[, panel := factor(panel, levels = c("No signal", "Background only"))]
-cols5 <- setNames(viridisLite::viridis(5, end = 0.9), METH)
+cols5 <- setNames(viridisLite::viridis(length(METH), end = 0.9), METH)
 pA <- ggplot(a, aes(meth, off_rate, colour = meth)) +
   geom_hline(yintercept = 0.05, linetype = "dashed", colour = "grey30") +
   geom_pointrange(aes(ymin = off_l, ymax = off_h), linewidth = 1.3, size = 1.2) +
@@ -70,20 +70,20 @@ pA <- ggplot(a, aes(meth, off_rate, colour = meth)) +
 pw <- s[scenario %in% c("S2", "S3", "S4", "S5", "S6")]
 pw[, arch := factor(ARCH[archetype], levels = ARCH)]
 pw[, size := factor(SIZE[size_class], levels = SIZE)]
-bw <- c("black", "grey65")
+bw <- c("black", "grey55", "grey85")
 power_panel <- function(m) {
   d <- pw[method %in% m]; d[, meth := droplevels(meth)]
   ggplot(d, aes(arch, power, fill = meth)) +
     geom_col(position = position_dodge(0.8), width = 0.75) +
     geom_errorbar(aes(ymin = pow_l, ymax = pow_h), position = position_dodge(0.8), width = 0.25) +
     facet_grid(. ~ size) +
-    scale_fill_manual(values = setNames(bw, METH[m])) +
+    scale_fill_manual(values = setNames(bw[seq_along(m)], METH[m])) +
     scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.25)) +
     labs(x = "Signal architecture", y = "Power") + plot_theme +
     theme(strip.text = element_text(size = 24, face = "bold"))
 }
 pB <- power_panel(c("catfish_self", "magma_self"))
-pC <- power_panel(c("catfish_comp", "magma_comp"))
+pC <- power_panel(c("catfish_comp", "magma_comp", "gsea"))
 
 p <- pA / pB / pC + plot_layout(heights = c(1, 1, 1)) +
   plot_annotation(tag_levels = "A") & theme(plot.tag = element_text(size = 30, face = "bold")) & NOTITLE
@@ -93,16 +93,16 @@ ggsave(file.path(FIG, "Fig22_simulation_catfish_magma.png"), p, width = 26, heig
 f2 <- function(x) ifelse(is.na(x), "--", formatC(x, format = "f", digits = 2))
 cell <- function(sc, sz, m, what) { v <- s[scenario == sc & size_class == sz & method == m][[what]]
   if (!length(v)) NA_real_ else v }
-ms <- c("catfish_self", "magma_self", "catfish_comp", "magma_comp", "catfish_both")
-lines <- c("\\begin{tabular}{llccccc}", "\\toprule",
-  " & & \\multicolumn{2}{c}{Self-contained} & \\multicolumn{2}{c}{Competitive} & Both \\\\",
-  "\\cmidrule(lr){3-4}\\cmidrule(lr){5-6}\\cmidrule(lr){7-7}",
-  "Scenario & Size & CATFISH & MAGMA & CATFISH & MAGMA & CATFISH \\\\", "\\midrule",
-  "\\multicolumn{7}{l}{\\emph{Family-wise error (no pathway enriched)}} \\\\",
+ms <- c("catfish_self", "magma_self", "catfish_comp", "magma_comp", "gsea", "catfish_both")
+lines <- c("\\begin{tabular}{llcccccc}", "\\toprule",
+  " & & \\multicolumn{2}{c}{Self-contained} & \\multicolumn{3}{c}{Competitive} & Both \\\\",
+  "\\cmidrule(lr){3-4}\\cmidrule(lr){5-7}\\cmidrule(lr){8-8}",
+  "Scenario & Size & CATFISH & MAGMA & CATFISH & MAGMA & GSEA & CATFISH \\\\", "\\midrule",
+  "\\multicolumn{8}{l}{\\emph{Family-wise error (no pathway enriched)}} \\\\",
   paste0("No signal & -- & ", paste(f2(sapply(ms, function(m) cell("S0", "", m, "off_rate"))), collapse = " & "), " \\\\"),
   paste0("Background only & -- & -- & -- & ",
-         paste(f2(sapply(c("catfish_comp", "magma_comp", "catfish_both"), function(m) cell("S1", "", m, "off_rate"))), collapse = " & "), " \\\\"),
-  "\\midrule", "\\multicolumn{7}{l}{\\emph{Power to call the enriched pathway}} \\\\")
+         paste(f2(sapply(c("catfish_comp", "magma_comp", "gsea", "catfish_both"), function(m) cell("S1", "", m, "off_rate"))), collapse = " & "), " \\\\"),
+  "\\midrule", "\\multicolumn{8}{l}{\\emph{Power to call the enriched pathway}} \\\\")
 for (a in names(ARCH)) for (sz in names(SIZE)) {
   sc <- s[archetype == a, scenario][1]
   lines <- c(lines, paste0(if (sz == "small") a else "", " & ", SIZE[[sz]], " & ",

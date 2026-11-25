@@ -15,7 +15,7 @@
 ## settings, Ensembl annotation) pipelines (scripts/hpc/benchmark, hpc/pops).
 ## Known genes: Open Targets gold-standard genes of the trait, 2019 and 2023
 ## releases (TRAIT_EFO; LDL-C and HDL-C exactly as in 42).
-## Rankings: CATFISH (06 Score: GWAS + MAGMA + 0.5 pathway + 0.3 hub),
+## Rankings: CATFISH (06 Score: GWAS + MAGMA + W_PATH pathway + W_HUB hub; 1 and 0 since 2026-11-25),
 ##   GWAS + MAGMA (06 S_GWAS + S_MAGMA: the same score with pathway and hub
 ##   weights 0), GWAS (best variant), MAGMA (gene p), PoPS (PoPS_Score),
 ##   CATFISH + PoPS (mean of the two ranks).

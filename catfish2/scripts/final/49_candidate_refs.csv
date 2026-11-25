@@ -89,3 +89,20 @@ asthma,IL4R,gene,prioritized causal gene at its asthma locus; IL4R is the target
 asthma,IL5,gene,5q31 type 2 cytokine region,Moffatt2010Asthma
 asthma,IL18RAP,locus,IL1RL1-IL18R1 locus,Moffatt2010Asthma
 asthma,GSDMB,gene,splice variant removes GSDMB pyroptotic activity; 17q12-21 locus,Panganiban2018GSDMB;Moffatt2010Asthma
+ldl,ABCA1,gene,cholesterol efflux transporter; mutations cause Tangier disease; lipid GWAS locus,BrooksWilson1999ABCA1;Graham2021GLGC
+ldl,CETP,gene,cholesteryl ester transfer protein; CETP variants and inhibitors change LDL-C,Graham2021GLGC
+hdl,LPA,locus,lipid GWAS locus; LPA sets Lp(a); independent effect on HDL-C unresolved,Graham2021GLGC
+hdl,APOA5,gene,APOA1-APOC3-APOA4-APOA5 locus; APOA5 regulates triglyceride and HDL-C,Graham2021GLGC
+cad,LDLR,gene,LDL receptor; LDL-C-raising mutations cause familial hypercholesterolaemia and coronary disease,BrownGoldstein1986;vanderHarst2018CAD
+cad,LPL,gene,LPL coding variants alter lipids and coronary risk,Stitziel2016LPL
+brca,MKL1,locus,22q13 breast cancer locus,Michailidou2013BRCA
+af,SCN10A,gene,SCN5A-SCN10A cardiac sodium-channel locus,Roselli2018AF
+af,TBX5,locus,12q24 AF locus; cardiac transcription factor,Roselli2018AF
+cd,JAK2,locus,IBD GWAS locus,Franke2010CD
+cd,IL3,locus,5q31 (IBD5) locus,Jostins2012IBD
+uc,IRF5,locus,IBD GWAS locus,Jostins2012IBD
+uc,CAMK2A,locus,5q32 UC locus,Anderson2011UC
+sle,CD44,locus,11p13 PDHX-CD44 SLE locus,Lessard2011CD44
+asthma,IL1RL2,locus,IL1RL1-IL18R1 locus,Moffatt2010Asthma
+asthma,IL18R1,locus,IL1RL1-IL18R1 locus,Moffatt2010Asthma
+asthma,RAD50,locus,5q31 type 2 cytokine region,Moffatt2010Asthma

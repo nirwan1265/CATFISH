@@ -10,7 +10,8 @@
 ##   GWAS      the trait's GEMMA .assoc.txt (rs, chr, ps, p_wald); SNPs mapped to
 ##             genes by position with the START/STOP that MAGMA reports, which
 ##             already include the +/- 25 kb window (window = 0 here)
-##   score     CATFISH::gene_prioritize(), default weights (1, 1, 0.5, 0.3)
+##   score     CATFISH::gene_prioritize(), weights GWAS 1, MAGMA 1, pathway W_PATH
+##             (default 1), hub W_HUB (default 0); until 2026-11-25 0.5 and 0.3
 ## Shared genes: a gene's rank in every trait; genes in the top K of at least
 ## MIN_TRAITS traits (K = 50, 100, 200).
 ## Writes prioritize/<trait>_gene_prioritize.csv, prioritize/shared_genes.csv
@@ -58,7 +59,8 @@ for (TRAIT in TRAITS) {
     magma = as.data.frame(mg), magma_gene_col = "GENE", magma_p_col = "P",
     pathway_results = wyf, pathway_stat_col = "z_std", pathways = pw,
     gwas = gw, gwas_snp_col = "SNP", gwas_p_col = "P", gwas_chr_col = "CHR", gwas_pos_col = "BP",
-    gene_loc = loc, window = 0L, verbose = FALSE)
+    gene_loc = loc, window = 0L,
+    w_pathway = as.numeric(Sys.getenv("W_PATH", "1")), w_hub = as.numeric(Sys.getenv("W_HUB", "0")), verbose = FALSE)
   cand$best_pathway_name <- unname(pw_name[cand$best_pathway])
   cand$chr <- loc$chr[match(cand$gene, loc$gene)]
   cand$start <- loc$start[match(cand$gene, loc$gene)]

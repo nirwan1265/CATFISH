@@ -64,3 +64,9 @@ export ARTP_MAF=0.01              # sARTP default 0.05 (MAGMA's lipid run and th
 export ARTP_LAMBDA=1              # REQUIRED: 1 (no inflation correction, as MAGMA was given) or glgc (GLGC's own lambda, recovered from pvalue vs pvalue_GC)
 export ARTP_N=median                   # REQUIRED: median or max (sARTP takes one sample size per study; GLGC N varies by SNP)
 mkdir -p "$ARTP_REF" "$ARTP_IN" "$ARTP_OUT" 2>/dev/null || true
+
+## ---- preranked GSEA (step 22) ---------------------------------------------------
+## fgsea (Bioconductor) is installed once here, never in ~
+export FGSEA_RLIB=/usr/local/usrapps/maize/ntanduk/R_libs
+export GSEA_SEED=20261125
+mkdir -p "${OUT}/gsea" 2>/dev/null || true

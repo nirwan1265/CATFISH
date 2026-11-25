@@ -4,7 +4,7 @@
 ## pathway and hub weights (Supplementary Figure, Section 2.5).
 ##
 ##   score = S_GWAS + S_MAGMA + w_path * S_PATH + w_hub * B_hub
-##   grid:  w_path in {0, 0.25, 0.5, 0.75, 1},  w_hub in {0, 0.1, ..., 0.5}
+##   grid:  w_path in {0, 0.25, 0.5, 0.75, 1, 1.5, 2},  w_hub in {0, 0.1, ..., 0.5}
 ##
 ## Part A  truth-planted simulation. The simulation code, seed and settings are
 ##         those of Final/final_scripts/gene_priority_weight_sensitivity_sim.R
@@ -31,9 +31,9 @@ RES <- "../results"; FIG <- "../figures"
 dir.create(RES, showWarnings = FALSE, recursive = TRUE)
 dir.create(FIG, showWarnings = FALSE, recursive = TRUE)
 
-w_path_grid <- c(0, 0.25, 0.5, 0.75, 1.0)
+w_path_grid <- c(0, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0)
 w_hub_grid  <- c(0, 0.1, 0.2, 0.3, 0.4, 0.5)
-W_PATH0 <- 0.5; W_HUB0 <- 0.3     # the defaults used throughout
+W_PATH0 <- as.numeric(Sys.getenv("W_PATH", "1")); W_HUB0 <- as.numeric(Sys.getenv("W_HUB", "0"))   # the defaults used throughout (until 2026-11-25: 0.5, 0.3)
 
 ## ======================================================= Part A: simulation ==
 ## --- verbatim from gene_priority_weight_sensitivity_sim.R (thesis) ---------

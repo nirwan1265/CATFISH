@@ -476,7 +476,7 @@ if (all(file.exists(c(MAGMA_OUT, WYF, file.path(RES, sprintf("06_candidate_genes
 if (has("22_weight_sensitivity_sim_summary.csv")) {
   s <- fread(file.path(RES, "22_weight_sensitivity_sim_summary.csv"))
   lip <- if (has("22_weight_sensitivity_lipids.csv")) fread(file.path(RES, "22_weight_sensitivity_lipids.csv")) else NULL
-  W0 <- c(w_path = 0.5, w_hub = 0.3)
+  W0 <- c(w_path = as.numeric(Sys.getenv("W_PATH", "1")), w_hub = as.numeric(Sys.getenv("W_HUB", "0")))   # defaults (until 2026-11-25: 0.5, 0.3)
   hm <- function(d, col, title, fmt, lower_is_better = FALSE) {
     d <- copy(d)[, v := get(col)][, `:=`(xp = factor(w_path), yh = factor(w_hub))]
     d[, sh := if (lower_is_better) -v else v]

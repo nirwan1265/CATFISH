@@ -47,7 +47,7 @@ MAGMA_ROOT <- Sys.getenv("MAGMA_ROOT",
                 path.expand("~/Documents/Research/results/CATFISH/MAGMA"))
 BASE       <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/CATFISH"))
 PATHWAY_FILE <- Sys.getenv("PATHWAY_FILE",
-                  file.path(BASE, "inst/extdata/pathway/sorghumbicolorcyc_pathways.20230103.SORBI"))
+                  file.path(dirname(BASE), "MAGCAT/inst/extdata/pathway/sorghumbicolorcyc_pathways.20230103.SORBI"))   # CATFISH clone has no inst/ yet
 ## pathway size window: the same as the maize (PMN) branch of 18
 MIN_GENES  <- as.integer(Sys.getenv("MIN_GENES", "5"))
 MAX_GENES  <- as.integer(Sys.getenv("MAX_GENES", "200"))

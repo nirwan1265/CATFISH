@@ -23,7 +23,7 @@ BASE <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/CATFISH"))
 RES  <- file.path(BASE, "catfish2/results/bap_traits")
 TEX  <- Sys.getenv("TEX_AUTO", file.path(BASE, "catfish2/tex/auto"))
 TR   <- c(Brix = "Brix_maturity", NDF = "NDF_pct_DM", NFC = "NFC_pct_DM")
-W_PATH <- 0.5; W_HUB <- 0.3                       # gene_prioritize() defaults
+W_PATH <- as.numeric(Sys.getenv("W_PATH", "1")); W_HUB <- as.numeric(Sys.getenv("W_HUB", "0"))   # gene_prioritize() defaults (until 2026-11-25: 0.5, 0.3)
 ALDH <- "SORBI_3004G300800"; TRXR <- "SORBI_3004G300900"
 rank_in <- function(v, others, low = FALSE) {      # rank of v among others, average ties
   if (low) { v <- -v; others <- -others }

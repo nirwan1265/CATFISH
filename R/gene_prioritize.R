@@ -8,6 +8,9 @@
 #                of that kind; genes without that kind of evidence get 0
 #   B_hub(g)   = log10(1 + number of tested pathways containing g)
 #
+# Default weights 1, 1, 1, 0: the three layers enter with equal weight (a
+# Fisher-type sum of the three rank-based -log10 p-values) and the hub term is
+# off. Until 2026-11-25 the defaults were 1, 1, 0.5, 0.3.
 # Same formula and defaults as catfish2/scripts/06_candidate_genes.R.
 # =============================================================================
 
@@ -182,7 +185,8 @@ if (getRversion() >= "2.15.1") utils::globalVariables("NL")
 #'   present, otherwise column 6 of a 6-column file.
 #' @param window Base pairs added on each side of a gene for the position
 #'   route. Default 10000.
-#' @param w_gwas,w_magma,w_pathway,w_hub Layer weights. Defaults 1, 1, 0.5, 0.3.
+#' @param w_gwas,w_magma,w_pathway,w_hub Layer weights. Defaults 1, 1, 1, 0 (equal layers, no hub term;
+#'   before 2026-11-25 1, 1, 0.5, 0.3).
 #' @param targets Optional character vector of known genes (IDs or symbols) to
 #'   report as positive controls.
 #' @param chunk Genes read at a time from a \code{.genes.annot} file.
@@ -266,8 +270,8 @@ gene_prioritize <- function(magma,
                             window             = 10000L,
                             w_gwas             = 1,
                             w_magma            = 1,
-                            w_pathway          = 0.5,
-                            w_hub              = 0.3,
+                            w_pathway          = 1,
+                            w_hub              = 0,
                             targets            = NULL,
                             chunk              = 2000L,
                             verbose            = TRUE,

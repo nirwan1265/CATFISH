@@ -75,6 +75,7 @@ and 00b / 07b with the PascalX env active.
 | 07a | 07a_pascalx_pval_LSF.sh | PascalX input p-values (R env), one element per replicate |
 | 07b | 07b_pascalx_LSF.sh | PascalX (PascalX env), one element per replicate |
 | 07c | 07c_acat_LSF.sh | two-stage ACAT (SNP -> gene -> pathway; R env), one element per design cell |
+| 07d | 07d_gsea_LSF.sh (+ .R) | preranked GSEA (fgsea) on the MAGMA gene z (R env), one element per design cell |
 | 08 | 08_aggregate_LSF.sh (+ .R) | power and off-target rates |
 
 The simulated statistics (02) and MAGMA (03) are separate submissions. Steps 03
@@ -129,3 +130,20 @@ The design, u, z, the z check and the aggregation were run end to end on a mock
 panel (503 people, 3,000 SNPs) with a stand-in for plink2; 05_catfish.R was run
 on mock MAGMA output. plink2's real --variant-score file layout is checked by
 step 02 on the pilot (it stops if the columns are not as expected).
+
+## GSEA (step 07d; added Nov 2026)
+Preranked GSEA with fgsea on each replicate's MAGMA gene z-scores, same Reactome
+sets, calls at p <= 0.05 / K like MAGMA and PascalX. fgsea's null draws random
+gene sets, so it treats genes as independent (LD between a pathway's genes is not
+modelled). Install fgsea once, on a login node, into FGSEA_RLIB (never ~):
+```
+mkdir -p /usr/local/usrapps/maize/ntanduk/R_libs
+Rscript -e 'if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager", lib = "/usr/local/usrapps/maize/ntanduk/R_libs", repos = "https://cloud.r-project.org"); .libPaths(c("/usr/local/usrapps/maize/ntanduk/R_libs", .libPaths())); BiocManager::install("fgsea", lib = "/usr/local/usrapps/maize/ntanduk/R_libs", update = FALSE, ask = FALSE)'
+```
+Then, with the R env active:
+```
+cd /share/maize/ntanduk/CATFISH/simulation_check_catfish
+MODE=full bsub -J "sim_gsea[1-17]" < 07d_gsea_LSF.sh
+MODE=full bsub -w "done(sim_gsea)" < 08_aggregate_LSF.sh
+```
+

@@ -39,7 +39,7 @@ dir.create(TEX_DIR, showWarnings = FALSE, recursive = TRUE)
 ## domain (InterPro IPR003657) but is listed in SorghumBicolorCyc as an
 ## acyl-ACP thioesterase.
 PATHWAY_FILE <- Sys.getenv("PATHWAY_FILE",
-                  file.path(BASE, "inst/extdata/pathway/sorghumbicolorcyc_pathways.20230103.SORBI"))
+                  file.path(dirname(BASE), "MAGCAT/inst/extdata/pathway/sorghumbicolorcyc_pathways.20230103.SORBI"))   # CATFISH clone has no inst/ yet
 ANNOT_OVERRIDE <- c(SORBI_3008G029200 = "WRKY transcription factor$^{a}$")
 
 `%+%` <- function(a, b) paste0(a, b)

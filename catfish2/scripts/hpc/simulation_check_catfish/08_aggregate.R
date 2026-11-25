@@ -4,9 +4,10 @@
 ## Calls (family-wise 0.05):
 ##   catfish_self  p_fwer_std <= 0.05          catfish_comp  p_fwer_comp <= 0.05
 ##   catfish_both  max(both) <= 0.05           (Westfall-Young, B = WY_B)
-##   magma_comp, magma_self, pascalx, acat     p <= 0.05 / K (Bonferroni; K = the
-##                                             pathways in SIM_SETS; acat: two-stage
-##                                             SNP -> gene -> pathway ACAT, step 07c)
+##   magma_comp, magma_self, pascalx, acat,    p <= 0.05 / K (Bonferroni; K = the
+##   gsea                                      pathways in SIM_SETS; acat: two-stage
+##                                             SNP -> gene -> pathway ACAT, step 07c;
+##                                             gsea: preranked fgsea on MAGMA z, 07d)
 ## Per replicate:
 ##   target_called  the target pathway is called (S2-S6)
 ##   n_off, any_off calls of "off-target" pathways: none of their genes within
@@ -58,6 +59,7 @@ for (i in seq_len(nrow(design))) {
   f_ms <- file.path(RUN, "magma_gsa", paste0(RP, ".gsa.self.out"))
   f_px <- file.path(RUN, "pascalx", paste0(RP, ".tsv"))
   f_ac <- file.path(RUN, "acat", paste0(RP, ".tsv"))
+  f_gs <- file.path(RUN, "gsea", paste0(RP, ".tsv"))
   calls <- list()
   if (file.exists(f_cf)) {
     cf <- fread(f_cf)
@@ -74,6 +76,10 @@ for (i in seq_len(nrow(design))) {
   if (file.exists(f_ac)) {
     m <- fread(f_ac)[pathway_id %in% names(sets)]
     calls$acat <- m[!is.na(p) & p <= 0.05 / K, pathway_id]
+  }
+  if (file.exists(f_gs)) {
+    m <- fread(f_gs)[pathway_id %in% names(sets)]
+    calls$gsea <- m[!is.na(p) & p <= 0.05 / K, pathway_id]
   }
   if (!length(calls)) next
   dp <- dirty(d$rep_id)

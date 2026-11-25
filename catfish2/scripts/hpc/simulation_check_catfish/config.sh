@@ -60,3 +60,6 @@ export WY_B=2000                           # CATFISH null replicates (self-conta
 export WY_SEED=20260706                    # as in the paper's real and permutation analyses
 export PASCALX_WINDOW=10000                # +/- 10 kb, as MAGMA
 export PASCALX_MAF=0.01
+## preranked GSEA (07d): fgsea is installed here once, never in ~ (README, "GSEA")
+export FGSEA_RLIB=/usr/local/usrapps/maize/ntanduk/R_libs
+export GSEA_SEED=20261125

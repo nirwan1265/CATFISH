@@ -32,3 +32,20 @@ These stay in `scripts/hpc/` because they run on Hazel.
 6. **Main and supplementary figures (condensed paper):** after `28`, `27`, `33`, `35`, `43`, `45`, `46` and `47` have their inputs in place, `48_main_figures.R` builds `figures/main/fig1.png`–`fig7.png` and `figures/supp/figS1.png`–`figS6.png`. It reads the panel scripts with `ggsave()` replaced by a function that keeps the plot (those scripts write no figures in this run) and draws the new panels itself (workflow, signal types, APOE locus, nine-trait benchmark, overlap with PoPS, sorghum leave one gene out). Method names follow the paper: Analytic; CATFISH per-pathway p; CATFISH family-wise p. Same environment variables as the panel scripts (`CATFISH_BASE`, `CATFISH_DATA`, `SORGHUM_MAGMA`, `PATHWAY_FILE`); `DPI` (default 300). figS6 is the Expression Atlas screenshot until the TPM table is redrawn.
 
 - `50_lifted_demoted.py` — genes the gene score lifts into, and drops from, the genome-wide top 50 compared with the GWAS layer alone (nine traits; gold-standard counts; "by pathway" = also outside the top 50 without the pathway layer). Writes `results/50_lifted_dropped_{summary,genes}.csv`, `tex/auto/tab_lifted_dropped.tex` (Results table), `tex/auto/tab_lifted_genes.tex` (Supplementary) and `tex/auto/lifted{,_stub}.tex`. `TOPN` sets the cutoff. Run after 45 (needs `results/45_gold_genes.csv`).
+
+## Rerun after the gene-score weight change (2026-11-25)
+
+The gene score is now GWAS + MAGMA + pathway with equal weights and no hub term
+(W_PATH = 1, W_HUB = 0; set W_PATH=0.5 W_HUB=0.3 to reproduce the old results).
+Every gene-score output is downstream of this. Order:
+
+1. Mac, lipids (10 sets), from catfish2/scripts:
+   `for t in ldl hdl; do for a in eur afr eas sas his; do SPECIES=human TRAIT=$t ANC=$a Rscript 06_candidate_genes.R; done; done`
+2. Cluster: copy `06_candidate_genes.R` to `CATFISH/benchmark/scripts/` and rerun
+   `04_candidates_LSF.sh` (7 traits); copy `hpc/bap_gwas/` to `BAP_gwas/scripts/`
+   and rerun `04_prioritize_LSF.sh`, then `06_logo_LSF.sh`.
+3. Mac, sorghum dry biomass: `TRAITS=Dry_tons_per_acre Rscript 25_sorghum_gene_prioritize.R`
+4. rsync back `benchmark/candidates/`, `BAP_gwas/prioritize/`, `BAP_gwas/logo/`.
+5. Mac, in order: `final/45`, then with `CONTROLS_FILE=../results/45_gold_genes.csv`:
+   `22`, `27`, `28`, `29`, `final/36`, `final/37`, `final/39` (`LOGO_DIR=../results/out_logo_gold`),
+   `final/46`, `final/43`, `final/44`, `final/47`, then `final/48`; then `49` and `50` (python).
