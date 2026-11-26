@@ -16,7 +16,8 @@
 ##
 ## Usage (from catfish2/scripts):
 ##   TRAIT=BW_control_female Rscript 30_westfall_young_fly.R [B] [use_tfisher]
-## Env overrides: MAGMA_DIR, PATHWAY_FILE, MIN_GENES (10), MAX_GENES (200)
+## Env overrides: MAGMA_DIR, PATHWAY_FILE, MIN_GENES (10), MAX_GENES (200),
+##                P_COL (gene p column; default P)
 ## Writes ../results/dgrp/<TRAIT>_reactome_<k>comp_westfall_young.csv
 ##        <MAGMA_DIR>/<TRAIT>.cor_pairs.txt (built once, reused; gitignored)
 ## =============================================================================
@@ -26,7 +27,7 @@ B           <- if (length(args) >= 1) as.integer(args[[1]]) else 10000L
 USE_TFISHER <- if (length(args) >= 2) as.logical(args[[2]]) else TRUE
 SEED        <- 20260706                       # same seed as 18 and 23
 TAU_GRID    <- c(0.01, 0.05, 0.5)             # same grid as 18 and 23
-P_COL       <- "P"                            # SNP-wise mean: the only model run
+P_COL       <- Sys.getenv("P_COL", "P")       # gene p column: P (SNP-wise mean run); P_MULTI or P_SNPWISE_MEAN for a multi-model run
 
 TRAIT <- Sys.getenv("TRAIT", "BW_control_female")
 BASE  <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/CATFISH"))

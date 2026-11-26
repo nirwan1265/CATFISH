@@ -19,6 +19,15 @@
 ##   TRAITS=BW_serrano_female_web,BW_serrano_male_web,TG_serrano_web Rscript 31_fly_gene_prioritize.R
 ##   (web-server traits: N from gwas/output/<TRAIT>.nobs; TG_* traits use the TG
 ##    established genes, all others the body-weight genes)
+##   Starvation resistance (DGRP web-server GWAS, MAGMA multi model):
+##   TRAITS=Starvation_female,Starvation_male P_COL=P_MULTI GWAS_FORMAT=web \
+##     GWAS_DIR=~/Documents/Research/data/DGRP/Starvation_stress/raw_gwas \
+##     MAGMA_DIR=~/Documents/Research/results/DGRP/MAGMA/starvation_merged Rscript 31_fly_gene_prioritize.R
+##   (web CSV raw_GWAS_Starvation_stress_<sex>_DGRP.csv: SNP, CHR, Positions,
+##    P-Value; arms recoded to the MAGMA chromosome codes of fly.genes.loc;
+##    no per-SNP N filter, as the MAGMA run used every SNP of the file)
+## Env: P_COL (MAGMA gene p column, default P), GWAS_FORMAT (gemma, default, or web),
+##      GENE_MAP (FBgn-symbol table; default <BASE>/inst/extdata/dmel.flybase.gene_map.tsv)
 ## Writes ../results/dgrp/31_<TRAIT>_gene_prioritize.csv  (all genes)
 ##        ../results/dgrp/31_established_genes.csv         (all traits)
 ## =============================================================================
@@ -29,7 +38,10 @@ GWAS_DIR  <- Sys.getenv("GWAS_DIR",  file.path(BASE, "dgrp_bw_tg/gwas/output"))
 PHENO_TSV <- Sys.getenv("PHENO_TSV", file.path(BASE, "dgrp_bw_tg/geno/pheno.tsv"))
 PATHWAY_FILE <- Sys.getenv("PATHWAY_FILE",
                   file.path(BASE, "inst/extdata/pathway/dme_reactome_all_levels.tsv"))
-GENE_MAP  <- file.path(BASE, "inst/extdata/dmel.flybase.gene_map.tsv")
+GENE_MAP  <- Sys.getenv("GENE_MAP", file.path(BASE, "inst/extdata/dmel.flybase.gene_map.tsv"))
+P_COL     <- Sys.getenv("P_COL", "P")
+GWAS_FORMAT <- Sys.getenv("GWAS_FORMAT", "gemma")
+ARM_CODE  <- c("2L" = "1", "2R" = "2", "3L" = "3", "3R" = "4", "4" = "5", "X" = "6")   # fly.genes.loc.chr_map.tsv
 RES_DIR   <- "../results/dgrp"
 TRAITS    <- strsplit(Sys.getenv("TRAITS", "BW_control_female,BW_control_male,TG_control"), ",")[[1]]
 MIN_N     <- 50L
@@ -41,10 +53,13 @@ BW_GENES <- c("InR", "chico", "Pi3K92E", "Akt", "foxo", "S6k", "Thor", "Ilp2",
               "Pten", "gig", "Lnk", "Myc")
 TG_GENES <- c("bmm", "Lsd-1", "Lsd-2", "AkhR", "Akh", "mdy", "Lpin", "adp",
               "SREBP", "InR", "chico", "foxo")
+## Starvation resistance: insulin signalling, adipokinetic hormone signalling
+## and fat-body lipid mobilisation and storage, plus methuselah.
+STARV_GENES <- c("InR", "chico", "foxo", "Thor", "Akh", "AkhR", "bmm", "Lsd-1", "Lsd-2", "mth")
 gm <- fread(GENE_MAP, showProgress = FALSE)
 sym2id <- setNames(gm$FBgn, gm$symbol); id2sym <- setNames(gm$symbol, gm$FBgn)
 ESTABLISHED <- rbindlist(lapply(TRAITS, function(t) {
-  s <- if (grepl("^TG_", t)) TG_GENES else BW_GENES
+  s <- if (grepl("^TG_", t)) TG_GENES else if (grepl("^Starvation", t)) STARV_GENES else BW_GENES
   data.table(trait = t, gene = s, id = unname(sym2id[s]))
 }))
 if (anyNA(ESTABLISHED$id)) stop("no FBgn for: ", paste(unique(ESTABLISHED$gene[is.na(ESTABLISHED$id)]), collapse = ", "))
@@ -52,21 +67,25 @@ if (anyNA(ESTABLISHED$id)) stop("no FBgn for: ", paste(unique(ESTABLISHED$gene[i
 pw_raw <- fread(PATHWAY_FILE, sep = "\t", header = FALSE, quote = "", showProgress = FALSE,
                 col.names = c("gene_id", "pathway_id", "url", "name", "evidence", "species"))
 pw <- unique(as.data.frame(pw_raw[, .(pathway_id, gene_id)]))
-ph <- fread(PHENO_TSV, showProgress = FALSE)
+ph <- if (file.exists(PHENO_TSV)) fread(PHENO_TSV, showProgress = FALSE) else data.table()   # not needed for web-server GWAS
 
 est_all <- list()
 for (TRAIT in TRAITS) {
   t0 <- Sys.time()
   cat(sprintf("\n================ %s ================\n", TRAIT))
   gfile  <- file.path(MAGMA_DIR, paste0(TRAIT, ".genes.out"))
-  afile  <- file.path(GWAS_DIR, paste0(TRAIT, ".assoc.txt"))
+  afile  <- if (GWAS_FORMAT == "web")
+    file.path(GWAS_DIR, sprintf("raw_GWAS_Starvation_stress_%s_DGRP.csv", sub("^Starvation_", "", TRAIT))) else
+    file.path(GWAS_DIR, paste0(TRAIT, ".assoc.txt"))
   wy_file <- file.path(RES_DIR, sprintf("%s_reactome_5comp_westfall_young.csv", TRAIT))
   miss <- c(gfile, afile, wy_file)[!file.exists(c(gfile, afile, wy_file))]
   if (length(miss)) stop("missing input files:\n  ", paste(miss, collapse = "\n  "), call. = FALSE)
   ## lines in the GWAS: the trait's column of pheno.tsv (local vcf2gwas runs), or
   ## <TRAIT>.nobs written by 00_web_to_assoc.py (DGRP web-server runs, *_web)
   nobs_file <- file.path(GWAS_DIR, paste0(TRAIT, ".nobs"))
-  if (TRAIT %in% names(ph)) {
+  if (GWAS_FORMAT == "web") {
+    NOBS <- NA_integer_
+  } else if (TRAIT %in% names(ph)) {
     NOBS <- sum(!is.na(ph[[TRAIT]]))
   } else if (file.exists(nobs_file)) {
     NOBS <- as.integer(readLines(nobs_file, n = 1))
@@ -75,20 +94,29 @@ for (TRAIT in TRAITS) {
   mg <- fread(gfile, showProgress = FALSE)[!duplicated(GENE)]
   loc <- data.frame(gene = mg$GENE, chr = as.character(mg$CHR),
                     start = mg$START, end = mg$STOP, stringsAsFactors = FALSE)
-  gw <- fread(afile, select = c("chr", "rs", "ps", "n_miss", "p_wald"), showProgress = FALSE)
-  gw <- gw[!is.na(p_wald) & (NOBS - n_miss) >= MIN_N]
-  gw <- data.frame(SNP = gw$rs, P = gw$p_wald, CHR = as.character(gw$chr), BP = gw$ps)
-  cat(sprintf("GWAS: %s SNPs (N >= %d of %d lines), min p %.3g\n",
-              format(nrow(gw), big.mark = ","), MIN_N, NOBS, min(gw$P)))
+  if (GWAS_FORMAT == "web") {
+    gw <- fread(afile, select = c("SNP", "CHR", "Positions", "P-Value"), showProgress = FALSE)
+    gw <- data.frame(SNP = gw$SNP, P = gw[["P-Value"]], CHR = unname(ARM_CODE[as.character(gw$CHR)]),
+                     BP = gw$Positions)
+    gw <- gw[!is.na(gw$P) & !is.na(gw$CHR), ]
+    cat(sprintf("GWAS (web server): %s SNPs, min p %.3g\n", format(nrow(gw), big.mark = ","), min(gw$P)))
+  } else {
+    gw <- fread(afile, select = c("chr", "rs", "ps", "n_miss", "p_wald"), showProgress = FALSE)
+    gw <- gw[!is.na(p_wald) & (NOBS - n_miss) >= MIN_N]
+    gw <- data.frame(SNP = gw$rs, P = gw$p_wald, CHR = as.character(gw$chr), BP = gw$ps)
+    cat(sprintf("GWAS: %s SNPs (N >= %d of %d lines), min p %.3g\n",
+                format(nrow(gw), big.mark = ","), MIN_N, NOBS, min(gw$P)))
+  }
 
   cand <- gene_prioritize(
-    magma = as.data.frame(mg), magma_gene_col = "GENE", magma_p_col = "P",
+    magma = as.data.frame(mg), magma_gene_col = "GENE", magma_p_col = P_COL,
     pathway_results = wy_file, pathway_stat_col = "z_std",
     pathways = pw,
     gwas = gw, gwas_snp_col = "SNP", gwas_p_col = "P",
     gwas_chr_col = "CHR", gwas_pos_col = "BP",
     gene_loc = loc, window = 0L,
     targets = ESTABLISHED$id[ESTABLISHED$trait == TRAIT],
+    w_pathway = as.numeric(Sys.getenv("W_PATH", "1")), w_hub = as.numeric(Sys.getenv("W_HUB", "0")),   # equal weights, as 25 and 06
     verbose = TRUE)
   wy <- fread(wy_file, showProgress = FALSE)
   cand$symbol <- unname(id2sym[cand$gene])
