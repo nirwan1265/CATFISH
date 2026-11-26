@@ -65,6 +65,16 @@ BENCH <- c("cad", "brca", "cd", "uc", "af", "sle", "asthma")
 ## middle of that tie to its head, a gain from tie-breaking, not from evidence.
 ## LOGO_CAP=0 reproduces the uncapped version (until 2026-11-25).
 LOGO_CAP <- Sys.getenv("LOGO_CAP", "1") == "1"
+## UNIVERSE_FILE (optional): rank only within the genes of each trait listed in
+## this file (columns trait, entrez), e.g. results/45_universe_no_MHC.csv from
+## final/45_benchmark_topk_all.R: the genes scored by both CATFISH and PoPS,
+## outside the MHC, as in Table tab:benchmark_topk_all. Scores are not
+## recomputed (as 45): each layer's ranking is re-ranked within those genes.
+## Pathway evidence of a gene left out is still ranked among all genes'
+## pathway statistics, as in 06. Unset: all genes of the 06 file (until 2026-11-26).
+UNI_F <- Sys.getenv("UNIVERSE_FILE", "")
+UNI <- if (nzchar(UNI_F)) { u_ <- fread(UNI_F, colClasses = list(character = "entrez")); split(u_$entrez, u_$trait) } else NULL
+if (!is.null(UNI)) cat("universe from", UNI_F, ":", paste(names(UNI), lengths(UNI), collapse = ", "), "\n")
 
 z0 <- function(x) { x <- suppressWarnings(as.numeric(x)); x[is.na(x)] <- 0; x }
 ## rank of value v among `others` (larger = better unless low = TRUE); average ties
@@ -87,6 +97,21 @@ for (A in SETS) {
   score <- g$S_GWAS + g$S_MAGMA + W_PATH * g$S_PATH + W_HUB * g$B_hub
   if (max(abs(score - g$Score)) > 1e-8) stop(A, ": recomputed score does not reproduce 06's Score", call. = FALSE)
   pstat <- suppressWarnings(as.numeric(g$p_pathway)); N_PATH <- sum(!is.na(pstat))
+  ## ranking universe: all genes, or those of UNIVERSE_FILE (layer ranks re-ranked within it)
+  if (is.null(UNI)) {
+    g[, inU := TRUE]; g[, `:=`(k_gwas = rank_gwas, k_magma = rank_magma, k_full = rank)]
+  } else {
+    if (is.null(UNI[[tr]])) stop(A, ": trait ", tr, " not in ", UNI_F, call. = FALSE)
+    g[, inU := gene %in% UNI[[tr]]]
+    g[, `:=`(k_gwas = NA_real_, k_magma = NA_real_, k_full = NA_real_)]
+    g[inU == TRUE, `:=`(k_gwas = frank(rank_gwas, ties.method = "average", na.last = TRUE),
+                        k_magma = frank(rank_magma, ties.method = "average", na.last = TRUE),
+                        k_full = avg_rank_desc(Score))]
+    cat(sprintf("%s: %d of %d genes in the universe\n", A, sum(g$inU), nrow(g)))
+  }
+  g[, `:=`(r_gm = NA_real_, r_gmh = NA_real_)]
+  g[inU == TRUE, r_gm  := avg_rank_desc(S_GWAS + S_MAGMA)]
+  g[inU == TRUE, r_gmh := avg_rank_desc(S_GWAS + S_MAGMA + W_HUB * B_hub)]
 
   wy <- fread(file.path(if (tr %in% BENCH) file.path(RES, "benchmark", "pathways") else WY,
                         sprintf("%s_reactome_5comp_westfall_young.csv", A)))
@@ -97,11 +122,11 @@ for (A in SETS) {
   if (is.null(lo)) cat(sprintf("%s: no LOGO file (%s); LOGO column left empty\n", A, fl))
 
   for (s in CONTROLS[[tr]]) {
-    i <- match(s, g$symbol); if (is.na(i)) next
+    i <- match(s, g$symbol); if (is.na(i) || !g$inU[i]) next
     id <- g$gene[i]
     r_logo <- NA_real_; best_logo <- NA_character_; mc <- NA_real_; p_logo <- NA_real_
     if (!is.null(lo)) {
-      if (is.na(pstat[i])) { r_logo <- g$rank[i]          # in no pathway: nothing to remove
+      if (is.na(pstat[i])) { r_logo <- g$k_full[i]          # in no pathway: nothing to remove
       } else {
         m <- lo[removed_gene == id & !is.na(z_std)]
         base <- lo[is.na(removed_gene), .(base_pathway = pathway_id, z_base = z_std)]
@@ -114,13 +139,13 @@ for (A in SETS) {
           rk <- rank_in(p_logo, pstat[-i][!is.na(pstat[-i])], low = TRUE)
           sp <- -log10(rk / N_PATH)
           sc <- g$S_GWAS[i] + g$S_MAGMA[i] + W_PATH * sp + W_HUB * g$B_hub[i]
-          r_logo <- rank_in(sc, score[-i])
+          r_logo <- rank_in(sc, score[g$inU & seq_along(score) != i])
         } else r_logo <- NA_real_   # its pathways all fell below the size limit without it
       }
     }
     genes_out[[length(genes_out) + 1L]] <- data.table(
-      set = A, gene = s, rank_gwas = g$rank_gwas[i], rank_magma = g$rank_magma[i],
-      rank_gwas_magma = g$r_gm[i], rank_gwas_magma_hub = g$r_gmh[i], rank_catfish = g$rank[i],
+      set = A, gene = s, rank_gwas = g$k_gwas[i], rank_magma = g$k_magma[i],
+      rank_gwas_magma = g$r_gm[i], rank_gwas_magma_hub = g$r_gmh[i], rank_catfish = g$k_full[i],
       rank_catfish_logo = r_logo, best_pathway = g$best_pathway[i], z_best = pstat[i],
       best_pathway_logo = best_logo, z_best_logo = p_logo, mc_diff = mc)
   }
@@ -149,10 +174,11 @@ fm <- function(m, t) if (is.na(m)) "--" else sprintf("%s (%d)", trimws(formatC(m
 WHERE <- if (all(sub("_.*", "", SETS) %in% BENCH)) sprintf(", in the %s further European GWAS", c("one", "two", "three", "four", "five", "six", "seven", "eight", "nine")[length(SETS)]) else ", in the lipid analyses"
 L <- c("\\begin{table*}[!t]", "\\centering",
   paste0("\\caption{Where the gain of the gene score comes from", WHERE, ". Median rank of the ", CTRL_LAB, " ",
-         "among all genes (number in the top 20 in parentheses) when genes are ranked by the ",
+         "among the ranked genes (number in the top 20 in parentheses) when genes are ranked by the ",
          "GWAS layer alone, the MAGMA layer alone, the two together (pathway weight $0$), the full ",
          "CATFISH score, and the full score with each gene's pathway evidence recomputed ",
-         "without that gene (leave one gene out; never stronger than with it).}"),
+         "without that gene (leave one gene out; never stronger than with it).",
+         if (!is.null(UNI)) " Genes are ranked within those scored by both CATFISH and PoPS, outside the MHC, as in Table~\\ref{tab:benchmark_topk_all}." else "", "}"),
   sprintf("\\label{tab:%s}", sub("\\.tex$", "", sub("^tab_", "", TAB_NAME))), "\\small",
   "\\begin{tabular}{llrrrrr}", "\\hline",
   paste0("\\textbf{Trait} & \\textbf{Group} & GWAS & MAGMA & GWAS + MAGMA & CATFISH & ",

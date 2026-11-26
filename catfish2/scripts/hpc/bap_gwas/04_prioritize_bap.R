@@ -18,7 +18,8 @@
 ##   Rscript 04_prioritize_bap.R
 ## Env: TRAITS (comma-separated; default the five below), BAP_ROOT, RUNS_DIR,
 ##      MAGMA_DIR, CATFISH_DIR (default runs/, magma/, catfish/ under BAP_ROOT),
-##      PATHWAY_FILE, MIN_TRAITS (default 3)
+##      PATHWAY_FILE, MIN_TRAITS (default 3), SHARED_NAME (file name of the
+##      shared-gene table; default shared_genes.csv)
 ## =============================================================================
 suppressPackageStartupMessages({ library(CATFISH); library(data.table) })
 ROOT  <- Sys.getenv("BAP_ROOT", "/share/maize/ntanduk/BAP_gwas")
@@ -30,6 +31,7 @@ PWF   <- Sys.getenv("PATHWAY_FILE",
           "/share/maize/ntanduk/CATFISH/simulation/bap_perm_wy/inputs/sorghumbicolorcyc_pathways.20230103.SORBI")
 TRAITS <- strsplit(Sys.getenv("TRAITS", "ADF_pct_DM,NDF_pct_DM,NFC_pct_DM,Brix_milk,Brix_maturity"), ",")[[1]]
 MIN_TRAITS <- as.integer(Sys.getenv("MIN_TRAITS", "3"))
+SHARED_NAME <- Sys.getenv("SHARED_NAME", "shared_genes.csv")
 KS <- c(50, 100, 200)
 CHROMS <- sprintf("%02d", 1:10)
 
@@ -86,10 +88,10 @@ bp <- R[order(rank), .(best_pathway = best_pathway[!is.na(best_pathway)][1]), by
 W <- merge(W, bp, by = "gene", all.x = TRUE)
 W[, mean_rank := rowMeans(.SD, na.rm = TRUE), .SDcols = unique(R$trait)]
 setorder(W, -n_top100, mean_rank)
-fwrite(W, file.path(OUT, "shared_genes.csv"))
+fwrite(W, file.path(OUT, SHARED_NAME))
 options(width = 200)
 cat(sprintf("\n==== genes in the top 100 of at least %d of %d traits ====\n", MIN_TRAITS, nt))
 print(W[n_top100 >= MIN_TRAITS], row.names = FALSE)
 cat(sprintf("\ngenes in the top 50 / 100 / 200 of all %d traits: %d / %d / %d\n", nt,
             sum(W$n_top50 == nt), sum(W$n_top100 == nt), sum(W$n_top200 == nt)))
-cat("wrote", file.path(OUT, "shared_genes.csv"), "\n")
+cat("wrote", file.path(OUT, SHARED_NAME), "\n")
