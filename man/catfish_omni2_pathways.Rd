@@ -59,7 +59,8 @@ or a named list mapping \code{pathway_id -> character vector of genes}.}
 
 \item{species}{Optional character (provide \code{species} OR \code{pathways}), one of
 \code{"maize"}, \code{"sorghum"}, \code{"arabidopsis"}, \code{"plant"}, \code{"fly"},
-\code{"human"} (HumanCyc) or \code{"human_reactome"} (Reactome, Entrez IDs).
+\code{"sorghum_reactome"}, \code{"human"} (HumanCyc) or
+\code{"human_reactome"} (Reactome, Entrez IDs).
 When provided, pathways are loaded via \code{catfish_load_pathways()}.}
 
 \item{pmn_gene_col}{Optional character. When \code{species} is used, passed to

@@ -5,17 +5,17 @@
 \title{Load pathways as a data.frame}
 \usage{
 catfish_load_pathways(
-  species = c("maize", "sorghum", "arabidopsis", "plant", "fly", "human",
-    "human_reactome"),
+  species = c("maize", "sorghum", "sorghum_reactome", "arabidopsis", "plant", "fly",
+    "human", "human_reactome"),
   gene_col = NULL,
   drop_unknown = TRUE,
   file = NULL
 )
 }
 \arguments{
-\item{species}{Character. One of "maize", "sorghum", "arabidopsis",
-"plant", "fly", "human" (HumanCyc) or "human_reactome" (Reactome, Entrez
-IDs, from MSigDB).}
+\item{species}{Character. One of "maize", "sorghum",
+"sorghum_reactome", "arabidopsis", "plant", "fly", "human" (HumanCyc)
+or "human_reactome" (Reactome, Entrez IDs, from MSigDB).}
 
 \item{gene_col}{Character or NULL. Column name to use for gene IDs.
 If NULL (default), the function will:
@@ -27,10 +27,11 @@ If NULL (default), the function will:
 \item{drop_unknown}{Logical. If TRUE (default), drop rows where gene_id
 is NA, empty, or "unknown".}
 
-\item{file}{Optional path to your own pathway file in PMN / Pathway Tools
-tab-separated format (columns \code{Pathway-id}, \code{Pathway-name} and
-the gene column), e.g. a newer PMN release or another species from
-\url{https://plantcyc.org}. When given, \code{species} is ignored.}
+\item{file}{Optional path to your own pathway file. Accepted formats are
+PMN / Pathway Tools tab-separated data (columns \code{Pathway-id},
+\code{Pathway-name} and the gene column) or a CSV/TSV long table with
+\code{pathway_id}, \code{pathway_name}, and \code{gene_id}. When given,
+\code{species} is ignored.}
 }
 \value{
 A data.frame with columns:
@@ -51,6 +52,8 @@ the CATFISH package. The supported species and their source databases are:
 \itemize{
 \item \strong{maize}: CornCyc from Plant Metabolic Network
 \item \strong{sorghum}: SorghumBicolorCyc from PMN
+\item \strong{sorghum_reactome}: Reactome pathways mapped to Sorghum
+BTx623 v3 SORBI_300 gene IDs
 \item \strong{arabidopsis}: AraCyc from PMN
 \item \strong{plant}: PlantCyc (general plant pathways) from PMN
 \item \strong{fly}: FlyCyc (Drosophila melanogaster pathways)

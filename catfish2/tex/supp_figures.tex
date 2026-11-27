@@ -1,0 +1,27 @@
+%% Supplementary figures, \input by catfish_wy.tex in the Supplementary material.
+
+\subsection*{Supplementary Figures}
+\setcounter{figure}{0}
+\renewcommand{\thefigure}{S\arabic{figure}}
+
+\begin{figure*}[!t]
+\centering
+\maybefig{supp/figS1.png}{\textwidth}{European lipid GWAS. \textbf{a},~\textbf{b}~Variant-level Manhattan plots for LDL-C (\textbf{a}) and HDL-C (\textbf{b}), capped at $-\log_{10}p=60$ (triangles). \textbf{c}~Gene-level $-\log_{10}p$ for LDL-C against HDL-C; black, the $74$ members of plasma lipoprotein assembly, remodeling and clearance, selected genes labelled; the two traits agree only moderately (Spearman $\nLipGeneRho$). \textbf{d}~The twelve strongest genes of that pathway in each trait: LDL-C is carried by the receptor-uptake arm and HDL-C by the reverse-transport and lipolysis arm, with four of twelve in common.}{fig:supp_lipid}
+\end{figure*}
+
+\begin{figure*}[!t]
+\centering
+\maybefig{supp/figS4.png}{\textwidth}{The nine-trait benchmark in full. \textbf{a}~Open Targets gold-standard genes in the genome-wide top 20, 50 and 100 (rows) of six rankings: best variant (GWAS), MAGMA $p$-value, GWAS and MAGMA evidence (the gene score without the pathway layer), PoPS, CATFISH and the mean of the CATFISH and PoPS ranks; columns, all genes scored by both methods with the extended MHC excluded (main analysis), all genes, and genes in a tested pathway. \textbf{b}~Median rank of the gold-standard genes (log scale; lower is better).}{fig:supp_bench}
+\end{figure*}
+
+\begin{figure*}[!t]
+\centering
+\maybefig{supp/figS5.png}{\textwidth}{Further checks of the sorghum permutation null and of the gene-level input. \textbf{a}~Each point is one permutation of dry biomass without gene-level genomic control: its mean gene $z$-score against the number of its $304$ pathways with per-pathway $p<0.05$; filled points, permutations with a family-wise false positive. \textbf{b}~Observed over expected number of variant $p$-values below $10^{-4}$, by minor allele frequency, in five permutations (chromosomes 1--9); dashed line, one. \textbf{c}~Family-wise error rate of the permutations without and with genomic control (GC), with $95\%$ Clopper--Pearson interval. \textbf{d}~Quantile--quantile plots of the three MAGMA gene $p$-values for dry biomass (SNP-wise mean, SNP-wise top and multi-model); the mean model follows the null, while the top-variant and multi-model $p$-values are inflated, more so in genes with more variants.}{fig:supp_sorghum_null}\label{fig:sorghum_pcol}
+\end{figure*}
+
+\begin{figure*}[!t]
+\centering
+\maybefig{supp/figS6.png}{\textwidth}{Expression of \textit{SbALDH3E1} (Sobic.004G300800), the fatty aldehyde dehydrogenase at the chromosome~4 locus (Section~3.7), in public sorghum RNA-seq data, as summarised by Expression Atlas \citep{Moreno2022ExpressionAtlas}. \textbf{a}~Baseline expression across nine experiments and the tissues they sampled (Expression Atlas categories: below cutoff, low, medium, high). \textbf{b}~Expression in transcripts per million by organ and developmental stage in one experiment; hatched cells were not sampled. Expression is highest in the leaf sheath at flowering, in the seedling leaf lamina and in the vegetative shoot, and low in stem internodes. Screenshots of the Expression Atlas gene pages (\texttt{data/expression\_atlas/}).}{fig:sbaldh_expression}
+\end{figure*}
+
+\clearpage

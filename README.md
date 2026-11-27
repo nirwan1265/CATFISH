@@ -163,7 +163,8 @@ MAGMA computes gene--gene correlations only within a chromosome, so all chromoso
 
 ```r
 pw <- catfish_load_pathways(species = "sorghum")
-# built-in: "maize", "sorghum", "arabidopsis", "plant", "fly", "human", "human_reactome"
+# built-in: "maize", "sorghum", "sorghum_reactome", "arabidopsis", "plant",
+#           "fly", "human", "human_reactome"
 # your own files: catfish_load_pathways(file = "x_pathways.tsv")  (PMN format),
 #                 catfish_load_gmt("x.gmt"), catfish_load_biocyc("x.csv")
 ```

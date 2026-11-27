@@ -10,7 +10,7 @@
 ##   correlations   the matching per-chromosome .genes.raw files (MAGMA only
 ##                  computes gene-gene correlations within a chromosome, so the
 ##                  ten files together carry the full correlation structure)
-##   pathways       SorghumBicolorCyc (PMN), SORBI gene IDs
+##   pathways       SorghumBicolorCyc (PMN) or Sorghum Reactome, SORBI gene IDs
 ##
 ## Usage (from catfish2/scripts):
 ##   TRAIT=Dry_tons_per_acre Rscript 23_westfall_young_sorghum.R [B] [use_tfisher] [P_COL]
@@ -28,12 +28,20 @@
 ##   inflated gene-level p is read as pathway signal. The script prints the
 ##   median gene p of every column so the choice can be checked.
 ##
-## Env overrides: TRAIT, MAGMA_ROOT, PATHWAY_FILE, MIN_GENES (5), MAX_GENES (200),
+## Env overrides: TRAIT, MAGMA_ROOT, PATHWAY_FILE, PATHWAY_TAG,
+##                MIN_GENES (5), MAX_GENES (200),
 ##                CHROMS (default all ten; e.g. CHROMS=8 for a quick check)
 ## Writes ../results/sorghum_bap/<TRAIT>_<P_COL>_<k>comp_westfall_young.csv
 ##        ../results/sorghum_bap/<TRAIT>_gene_cor_pairs.txt (built once, reused)
 ## =============================================================================
-suppressPackageStartupMessages(library(CATFISH))
+BASE <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/CATFISH"))
+if (tolower(Sys.getenv("CATFISH_DEV", "false")) %in% c("1", "true", "yes")) {
+  if (!requireNamespace("pkgload", quietly = TRUE))
+    stop("CATFISH_DEV requires the pkgload package.", call. = FALSE)
+  suppressPackageStartupMessages(pkgload::load_all(BASE, quiet = TRUE))
+} else {
+  suppressPackageStartupMessages(library(CATFISH))
+}
 
 args <- commandArgs(trailingOnly = TRUE)
 B           <- if (length(args) >= 1) as.integer(args[[1]]) else 10000L
@@ -45,9 +53,11 @@ TAU_GRID    <- c(0.01, 0.05, 0.5)             # same grid as 18
 TRAIT      <- Sys.getenv("TRAIT", "Dry_tons_per_acre")
 MAGMA_ROOT <- Sys.getenv("MAGMA_ROOT",
                 path.expand("~/Documents/Research/results/CATFISH/MAGMA"))
-BASE       <- Sys.getenv("CATFISH_BASE", path.expand("~/Documents/Github/CATFISH"))
 PATHWAY_FILE <- Sys.getenv("PATHWAY_FILE",
-                  file.path(dirname(BASE), "MAGCAT/inst/extdata/pathway/sorghumbicolorcyc_pathways.20230103.SORBI"))   # CATFISH clone has no inst/ yet
+                  file.path(dirname(BASE), "MAGCAT/inst/extdata/pathway/sorghumbicolorcyc_pathways.20230103.SORBI"))
+PATHWAY_TAG <- Sys.getenv("PATHWAY_TAG",
+                  if (grepl("reactome", basename(PATHWAY_FILE), ignore.case = TRUE))
+                    "reactome" else "sorghumbicolorcyc")
 ## pathway size window: the same as the maize (PMN) branch of 18
 MIN_GENES  <- as.integer(Sys.getenv("MIN_GENES", "5"))
 MAX_GENES  <- as.integer(Sys.getenv("MAX_GENES", "200"))
@@ -101,14 +111,11 @@ if (!file.exists(cor_file)) {
 cat(sprintf("  correlation pairs: %s\n", cor_file))
 
 ## ---------------------------------------------------------------- pathways --
-pw_raw <- utils::read.delim(PATHWAY_FILE, stringsAsFactors = FALSE, check.names = FALSE)
-pw <- unique(data.frame(pathway_id = pw_raw[["Pathway-id"]],
-                        gene_id    = pw_raw[["Gene-name"]],
-                        stringsAsFactors = FALSE))
-pw <- pw[nzchar(pw$gene_id) & pw$gene_id != "unknown", ]
-pw_name <- tapply(pw_raw[["Pathway-name"]], pw_raw[["Pathway-id"]], function(x) x[1])
-cat(sprintf("  SorghumBicolorCyc: %d pathways before size filtering\n",
-            length(unique(pw$pathway_id))))
+pw_full <- catfish_load_pathways(file = PATHWAY_FILE)
+pw <- unique(pw_full[c("pathway_id", "gene_id")])
+pw_name <- tapply(pw_full$pathway_name, pw_full$pathway_id, function(x) x[1])
+cat(sprintf("  %s: %d pathways, %d genes before size filtering\n",
+            PATHWAY_TAG, length(unique(pw$pathway_id)), length(unique(pw$gene_id))))
 
 ## ------------------------------------------------------- Westfall-Young ----
 res <- catfish_wy_pathways(
@@ -119,7 +126,8 @@ res <- catfish_wy_pathways(
 res$pathway_name <- unname(pw_name[res$pathway_id])
 res <- res[, c("pathway_id", "pathway_name", setdiff(names(res), c("pathway_id", "pathway_name")))]
 
-tag <- sprintf("%s_%s_%dcomp", TRAIT, P_COL, if (isTRUE(USE_TFISHER)) 5L else 4L)
+tag <- sprintf("%s_%s_%s_%dcomp", TRAIT, PATHWAY_TAG, P_COL,
+               if (isTRUE(USE_TFISHER)) 5L else 4L)
 out <- file.path(OUT_DIR, paste0(tag, "_westfall_young.csv"))
 utils::write.csv(res, out, row.names = FALSE)
 

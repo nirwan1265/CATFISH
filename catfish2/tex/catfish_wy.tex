@@ -72,7 +72,7 @@
 
 \begin{document}
 
-\journaltitle{Bioinformatics}
+\journaltitle{Genome Biology}
 \DOI{DOI added during production}
 \copyrightyear{2026}
 \pubyear{2026}
@@ -151,7 +151,7 @@ simulation, analysis and figure code for this paper is in the
 \texttt{catfish2/} directory of that repository.\\
 \textbf{Contact:} \href{mailto:ntanduk@ncsu.edu}{ntanduk@ncsu.edu}\\
 \textbf{Supplementary information:} Supplementary data are available at
-\textit{Bioinformatics} online.}
+\textit{Genome Biology} online.}
 
 \keywords{genome-wide association study, pathway analysis, gene-set test,
 family-wise error rate, Westfall--Young, permutation, ACAT, MAGMA}
@@ -333,46 +333,9 @@ This section gives the essentials of the method and analyses. Derivations, imple
 
 \subsection*{2.1 Gene-level inputs and component tests}
 
-For a pathway $S$ with $m=|S|$ genes, CATFISH uses MAGMA \citep{deLeeuw2015} gene-level $p$-values $p_g$ and $z$-scores $Z_g$ ($g\in S$), which summarise GWAS evidence while accounting for LD, gene size and marker density, and provide LD-induced gene–gene correlations. Each pathway is tested with five component tests (Table~\ref{tab:components}): ACAT \citep{Liu2019ACATV,Liu2020ACAT}, Fisher \citep{Fisher1932}, soft TFisher \citep{Zhang2020TFisher}, minP and Stouffer \citep{Stouffer1949}. These target different signal patterns, from a single strong gene (minP, ACAT) to a weak shift across many genes (Stouffer) (Section~3.1). Component $p$-values are combined into an omnibus statistic via an ACAT-type operator $\mathcal{O}(\cdot)$. Only soft TFisher is tuned: it keeps genes with $p_g\le\tau$ and adapts over $\tau\in\{10^{-2},\,5\times10^{-2},\,5\times10^{-1}\}$; $\tau=1$ corresponds to Fisher and is included as a separate component. If no gene meets any threshold, soft TFisher is undefined and the omnibus uses the remaining components; its $p$-value is capped at $10^{-16}$ (Supplementary Methods SM1).
+For a pathway $S$ with $m=|S|$ genes, CATFISH uses MAGMA \citep{deLeeuw2015} gene-level $p$-values $p_g$ and $z$-scores $Z_g$ ($g\in S$), which summarise GWAS evidence while accounting for LD, gene size and marker density, and provide LD-induced gene–gene correlations. Each pathway is tested with five component tests (Supplementary Table~\ref{tab:components}): ACAT \citep{Liu2019ACATV,Liu2020ACAT}, Fisher \citep{Fisher1932}, soft TFisher \citep{Zhang2020TFisher}, minP and Stouffer \citep{Stouffer1949}. These target different signal patterns, from a single strong gene (minP, ACAT) to a weak shift across many genes (Stouffer) (Section~3.1). Component $p$-values are combined into an omnibus statistic via an ACAT-type operator $\mathcal{O}(\cdot)$. Only soft TFisher is tuned: it keeps genes with $p_g\le\tau$ and adapts over $\tau\in\{10^{-2},\,5\times10^{-2},\,5\times10^{-1}\}$; $\tau=1$ corresponds to Fisher and is included as a separate component. If no gene meets any threshold, soft TFisher is undefined and the omnibus uses the remaining components; its $p$-value is capped at $10^{-16}$ (Supplementary Methods SM1).
 
-\begin{table*}[!t]
-\centering
-\caption{CATFISH pathway-level component statistics. For a pathway $S$ with
-$m=|S|$ genes and gene-level $p$-values $p_g$, each component emphasizes a
-different pathway signal pattern. The analytic reference distributions define
-the statistics; final inference uses the dependence-aware calibrations of
-Section 2.3.}
-\label{tab:components}
-\small
-\renewcommand{\arraystretch}{1.25}
-\begin{tabular}{p{0.14\textwidth} p{0.33\textwidth} p{0.23\textwidth} p{0.16\textwidth}}
-\hline
-\textbf{Component} & \textbf{Pathway statistic} & \textbf{Analytic reference} & \textbf{Primary sensitivity} \\
-\hline
-ACAT &
-\[ T_{\mathrm{ACAT}}(S)=\frac{1}{m}\sum_{g\in S}\tan\!\left\{\pi\left(\tfrac12-p_g\right)\right\} \]
-&
-\[ p_{\mathrm{ACAT}}(S)=\tfrac12-\frac{1}{\pi}\arctan T_{\mathrm{ACAT}}(S) \]
-& Sparse or extreme-tail signals. \\
-Fisher &
-\[ T_{\mathrm{F}}(S)=-2\sum_{g\in S}\log p_g \]
-& Under independence, $T_{\mathrm{F}}\sim\chi^2_{2m}$. &
-Broad enrichment with many small-to-moderate $p$-values. \\
-Soft TFisher &
-\[ W(S;\tau)=\sum_{g\in S}\left[-2\log p_g+2\log\tau\right]_{+} \]
-& Adaptive over a $\tau$ grid; minimum calibrated $p$-value is taken. &
-Intermediate signals concentrated in a subset of genes. \\
-Stouffer &
-\[ Z_{\mathrm{St}}(S)=\frac{1}{\sqrt m}\sum_{g\in S}Z_g,\quad Z_g=\Phi^{-1}(1-p_g) \]
-& $p_{\mathrm{St}}(S)=1-\Phi\!\left(Z_{\mathrm{St}}(S)\right)$. &
-Weak, diffuse, pathway-wide enrichment. \\
-minP &
-\[ T_{\min}(S)=\min_{g\in S}p_g \]
-& Under independence, $p_{\min}=1-(1-T_{\min})^m$. &
-Single strongest gene or highly sparse signals. \\
-\hline
-\end{tabular}
-\end{table*}
+
 
 \subsection*{2.2 Two sources of dependence}
 
@@ -492,6 +455,51 @@ Finally, we define regret as the within-cell power gap between the best componen
 \maybefig{main/fig1.png}{\textwidth}{CATFISH and the signal types it is built for. \textbf{a}~Workflow: gene-level $p$-values (MAGMA, with gene-level genomic control) and the gene--gene correlations feed five component tests and their ACAT omnibus; one set of correlated multivariate normal null draws, shared by all pathways, gives each pathway its per-pathway $p$-value and the Westfall--Young family-wise $p$-value; pathway evidence then enters the gene score. \textbf{b}~Expected ranked gene-level profile of a $50$-gene pathway of each signal type, with the signal used in the simulation (fraction of genes shifted and shift on the $z$ scale); dashed line, no signal. SSS, strong sparse signal; MDS, moderate dense signal; WDE, weak diffuse enrichment; MSA, mixed signal architecture; SGP, single-gene proxy. \textbf{c}~Family-wise power to detect the signal pathway among $150$, by signal type (columns) and pathway size $m$ (rows), against effect scale; each line is one component, dashed black line the omnibus. \textbf{d}~Power given up by the omnibus relative to the best component: bars, mean over sizes and effect scales; crosses, the worst cell; dashed line, $0.05$.}{fig:overview}
 \end{figure*}
 
+\begin{table*}[!t]
+\centering
+\caption{Summary of pathway signal archetypes and expected CATFISH component
+sensitivity. Each archetype represents a conceptual ranked gene-level
+association profile rather than an empirically learned class of real pathways.
+The last column gives the signal used to generate each archetype in the
+simulation, as the fraction of the pathway's genes that are
+shifted and the mean shift on the gene-level $z$ scale before multiplication
+by the effect scale. Every layer contains at least one gene.}
+\label{tab:archetype_summary}
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{p{0.15\textwidth} p{0.26\textwidth} p{0.19\textwidth} p{0.12\textwidth} p{0.14\textwidth}}
+\hline
+\textbf{Archetype} & \textbf{Gene-level $p$-value pattern} & \textbf{Ranked-profile shape} & \textbf{Expected sensitive tests} & \textbf{Simulated signal} \\
+\hline
+Strong Sparse Signal (SSS) &
+A small number of genes have extremely small $p$-values, while most genes remain close to null. &
+Sharp early peak followed by a rapid drop; pronounced elbow. &
+ACAT, minP &
+$15\%$ of genes at $3.0$ \\
+Moderate Dense Signal (MDS) &
+Many genes show modest but consistent association, without one clearly dominant gene. &
+Broad shoulder of moderate signals across a substantial fraction of the pathway. &
+Fisher, Stouffer, soft TFisher &
+$60\%$ at $1.1$ \\
+Weak Diffuse Enrichment (WDE) &
+Most genes are individually non-significant, but the pathway shows a subtle overall shift toward smaller $p$-values. &
+Gentle pathway-wide deflection with few or no strong individual peaks. &
+Stouffer, Fisher &
+$90\%$ at $0.55$ \\
+Mixed Signal Architecture (MSA) &
+One or a few strong genes occur together with a broader set of moderate supporting signals. &
+Strong leading peak plus a moderate shoulder. &
+soft TFisher, Fisher, ACAT &
+$10\%$ at $1.8$ plus $60\%$ at $1.1$ \\
+Single-Gene Proxy (SGP) &
+One dominant gene accounts for most of the pathway-level signal, while the remaining genes are near null. &
+Single extreme peak followed by an otherwise null-like profile. &
+minP, ACAT &
+$5\%$ at $4.0$ \\
+\hline
+\end{tabular}
+\end{table*}
+
 \subsection*{3.2 CATFISH controls false positives under linkage disequilibrium and detects sparse pathway signals more often than MAGMA}
 
 We next examined whether CATFISH keeps the nominal false positive rate when genes within a pathway are correlated, a setting in which the analytic omnibus $p$-value is expected to fail because it assumes the genes are independent. We simulated independent pathways of $m\in\{5,20,50\}$ genes with within-pathway correlation $\rho\in\{0,0.3,0.6\}$, using $500$ families per setting. We compared two per-pathway $p$-values, the analytic $p$-value and the CATFISH per-pathway $p$-value, and two family-wise $p$-values, the analytic $p$-value with Bonferroni correction and the CATFISH family-wise $p$-value, with both CATFISH values taken from the same correlated null draws. Fig.~\ref{fig:calibration}a shows the error rate of each at $\alpha=0.05$, by $\rho$ and $m$, as type~I error for the per-pathway $p$-values and family-wise error for the family-wise $p$-values (Supplementary Table~\ref{tab:null_calibration}). The analytic error was $\nTAnInd$ at $\rho=0$, $m=5$, close to $0.05$, but rose with $\rho$ in every panel and most in larger pathways, reaching $\nTAnStr$ at $\rho=0.6$, $m=50$. Correlated genes carry less independent evidence than the analytic test assumes, so it overstates the evidence. Bonferroni correction, the usual family-wise correction, made this much worse. Its family-wise error was $\nTBonfInd$ at $\rho=0$, $m=5$, but at least $0.68$ in every setting with correlation, reaching $\nTBonfMod$ at $\rho=0.3$, $m=20$ and $\nTBonfStr$ at $\rho=0.6$, $m=50$. Bonferroni corrects for the number of pathways but not for the miscalibrated $p$-value it is applied to, and with $200$ pathways per family even a small excess of small null $p$-values makes at least one false call almost certain. Both CATFISH curves stayed near the dashed $0.05$ line. The CATFISH per-pathway error stayed within $[\nTMvnMin,\nTMvnMax]$, and at $\alpha=0.01$ the analytic rate reached $\nTAnMaxOne$ against $\nTMvnMaxOne$ for CATFISH. The CATFISH family-wise error, estimated out of sample by learning the null distribution of the family minimum on half the families and applying it to the other half, ranged from $\nTWyMin$ to $\nTWyMax$, within Monte Carlo error for $250$ held-out families (SE $\approx 0.014$).
@@ -508,6 +516,15 @@ Fig.~\ref{fig:calibration}e shows the power of the competitive tests. Power was 
 \centering
 \maybefig{main/fig2.png}{\textwidth}{Error control and power. \textbf{a}~Type I error at $\alpha=0.05$ under the global null with independent pathways, by within-pathway correlation $\rho$ and pathway size $m$: analytic (independence-based) $p$-value, CATFISH per-pathway $p$-value and CATFISH family-wise $p$-value (Westfall--Young, from the same null draws; held-out families). \textbf{b}~Genomic-control inflation $\lambda$ of the analytic and CATFISH per-pathway $p$-values, by LD level and size; dashed line, $\lambda=1$. \textbf{c}--\textbf{e}~GWAS simulated on real linkage disequilibrium ($50$ replicates per setting; proportion with exact $95\%$ binomial interval). \textbf{c}~Family-wise error with no pathway enriched: no signal (all tests) and a polygenic background only (competitive tests, GSEA and the joint call); dashed line, $0.05$. \textbf{d}~Power of the CATFISH and MAGMA self-contained tests to call the enriched pathway, by signal type and pathway size. \textbf{e}~Power of the competitive tests (CATFISH, MAGMA and preranked GSEA).}{fig:calibration}
 \end{figure*}
+
+\begin{table*}[!t]
+\centering
+\caption{Family-wise error and power of CATFISH, MAGMA and preranked GSEA in the simulation on real linkage disequilibrium ($50$ replicates per row). CATFISH: Westfall--Young family-wise $p\le0.05$; MAGMA and GSEA: Bonferroni over $1{,}021$ pathways. Both: called by CATFISH's self-contained and competitive tests.}
+\label{tab:sim_compare}
+\small
+\IfFileExists{auto/tab_simulation_compare.tex}{\input{auto/tab_simulation_compare.tex}}%
+{\textcolor{red}{\textbf{Table pending:} \texttt{auto/tab\_simulation\_compare.tex}}}
+\end{table*}
 
 \subsection*{3.3 Calibration holds when components are corrupted or removed, and degrades predictably with an incomplete correlation file}
 
@@ -567,6 +584,10 @@ We compared CATFISH with PoPS, a widely used method that ranks genes genome-wide
 \maybefig{main/fig5.png}{\textwidth}{Candidate genes. \textbf{a},~\textbf{b}~Ranks of the Open Targets gold-standard genes among all genes in the European data for LDL-C (\textbf{a}) and HDL-C (\textbf{b}) by their best variant (GWAS), MAGMA $p$-value and CATFISH gene score; lines join one gene; bars, medians. \textbf{c},~\textbf{d}~Genes in the gene-score top twenty in at least three of the five ancestry groups, with their rank in each group, for LDL-C (\textbf{c}) and HDL-C (\textbf{d}); bold, gold-standard genes; last column, groups in which the gene is in the top twenty. \textbf{e}~The chromosome~19 apolipoprotein locus: rank of \textit{APOE}, \textit{APOC1}, \textit{TOMM40} and \textit{PVRL2} by the GWAS layer and by the gene score in the ten lipid sets; lines join one set; bars, medians. \textbf{f}--\textbf{h}~Nine European traits, Open Targets gold-standard genes. \textbf{f}~Gold-standard genes gained in the genome-wide top 20, 50 and 100 by adding the pathway layer to GWAS and MAGMA evidence. \textbf{g}~Gold-standard genes in the top 20 by GWAS and MAGMA evidence, PoPS, CATFISH and the mean of the CATFISH and PoPS ranks. \textbf{h}~Gold-standard genes in the top 50 of both CATFISH and PoPS or of only one.}{fig:genes}
 \end{figure*}
 
+\maybeinput{auto/tab_lifted_dropped.tex}
+
+\maybeinput{auto/tab_benchmark_topk_all.tex}
+
 \subsection*{3.6 A permutation null in long-LD sorghum confirms per-pathway calibration on real genotypes}
 
 LD in human populations extends over short distances \citep{Reich2001LD}, and our simulations drew gene $z$-scores from a statistical model rather than from real genotypes. We therefore asked whether CATFISH stays calibrated on real genotypes with long-range LD, running the full pipeline from GWAS to pathways. We used the sorghum Bioenergy Association Panel (BAP), $327$ lines \citep{Brenton2016}, a small, structured panel analyzed with a mixed model, in which LD extends much further than in humans \citep{Morris2013Sorghum}. In MAGMA's gene--gene correlations, each gene had on average $\nSorNeighbours$ neighbors with $|r|\ge0.1$, against $\nLipNeighbours$ in the human lipid data. Because no pathway in a real GWAS is known to be null, we made every pathway null by permuting the phenotype across lines, which breaks the link between genotype and phenotype while keeping the genotypes, LD, and population structure \citep{Churchill1994,Wang2007Pathway}. Any pathway called significant is then a false positive. We permuted dry biomass $100$ times and ran GWAS, MAGMA, and CATFISH on each permutation, giving $304$ pathways and $30{,}400$ null tests. Pathways came from SorghumBicolorCyc, the curated metabolic pathway database for sorghum from the Plant Metabolic Network \citep{Hawkins2021CornCyc}, and we tested those with $5$ to $200$ genes, so the size classes run from $5$--$9$ genes upward.
@@ -597,64 +618,9 @@ The lead variants of the three traits are in strong LD. The Brix lead at $\nBapL
 \maybefig{main/fig7.png}{\textwidth}{A chromosome~4 locus shared by stem sugar and fibre. \textbf{a}~Brix at maturity and NDF of lines homozygous at the Brix lead variant ($\nBapLeadPosBrix$~Mb); large points, genotype means with $95\%$ confidence intervals; dashed line, least-squares line of NDF on Brix across all lines. \textbf{b}~Effect of the Brix-raising allele on each trait (mixed model with three principal components), in trait standard deviations, with $95\%$ confidence intervals and $p$-values. \textbf{c}~Variants between $63.85$ and $64.10$~Mb: NDF $z$-score against absolute Brix $z$-score, alleles oriented to raise Brix; triangle, the Brix lead; circle, the NDF and NFC lead. \textbf{d}~Gene-score rank of each gene of the locus for the three traits, in order of position; dashed line, rank 100. \textbf{e}~Leave one gene out: rank of every pathway-supported gene in each trait's top 100 without the pathway layer (GWAS + MAGMA), with it (CATFISH) and with its pathways rescored without itself; black, \textit{SbALDH3E1} (Sobic.004G300800) and TRXR (Sobic.004G300900), with their ranks without their own contribution; dashed line, rank 20.}{fig:bap_chr4}
 \end{figure*}
 
-%% ---- main tables --------------------------------------------------------
-\begin{table*}[!t]
-\centering
-\caption{Summary of pathway signal archetypes and expected CATFISH component
-sensitivity. Each archetype represents a conceptual ranked gene-level
-association profile rather than an empirically learned class of real pathways.
-The last column gives the signal used to generate each archetype in the
-simulation of Section~3.1: the fraction of the pathway's genes that are
-shifted, and the mean shift on the gene-level $z$ scale before multiplication
-by the effect scale. Every layer contains at least one gene.}
-\label{tab:archetype_summary}
-\scriptsize
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{p{0.15\textwidth} p{0.26\textwidth} p{0.19\textwidth} p{0.12\textwidth} p{0.14\textwidth}}
-\hline
-\textbf{Archetype} & \textbf{Gene-level $p$-value pattern} & \textbf{Ranked-profile shape} & \textbf{Expected sensitive tests} & \textbf{Simulated signal} \\
-\hline
-Strong Sparse Signal (SSS) &
-A small number of genes have extremely small $p$-values, while most genes remain close to null. &
-Sharp early peak followed by a rapid drop; pronounced elbow. &
-ACAT, minP &
-$15\%$ of genes at $3.0$ \\
-Moderate Dense Signal (MDS) &
-Many genes show modest but consistent association, without one clearly dominant gene. &
-Broad shoulder of moderate signals across a substantial fraction of the pathway. &
-Fisher, Stouffer, soft TFisher &
-$60\%$ at $1.1$ \\
-Weak Diffuse Enrichment (WDE) &
-Most genes are individually non-significant, but the pathway shows a subtle overall shift toward smaller $p$-values. &
-Gentle pathway-wide deflection with few or no strong individual peaks. &
-Stouffer, Fisher &
-$90\%$ at $0.55$ \\
-Mixed Signal Architecture (MSA) &
-One or a few strong genes occur together with a broader set of moderate supporting signals. &
-Strong leading peak plus a moderate shoulder. &
-soft TFisher, Fisher, ACAT &
-$10\%$ at $1.8$ plus $60\%$ at $1.1$ \\
-Single-Gene Proxy (SGP) &
-One dominant gene accounts for most of the pathway-level signal, while the remaining genes are near null. &
-Single extreme peak followed by an otherwise null-like profile. &
-minP, ACAT &
-$5\%$ at $4.0$ \\
-\hline
-\end{tabular}
-\end{table*}
-
-\begin{table*}[!t]
-\centering
-\caption{Family-wise error and power of CATFISH, MAGMA and preranked GSEA in the simulation on real linkage disequilibrium ($50$ replicates per row). CATFISH: Westfall--Young family-wise $p\le0.05$; MAGMA and GSEA: Bonferroni over $1{,}021$ pathways. Both: called by CATFISH's self-contained and competitive tests.}
-\label{tab:sim_compare}
-\small
-\IfFileExists{auto/tab_simulation_compare.tex}{\input{auto/tab_simulation_compare.tex}}%
-{\textcolor{red}{\textbf{Table pending:} \texttt{auto/tab\_simulation\_compare.tex}}}
-\end{table*}
-
-\maybeinput{auto/tab_benchmark_topk_all.tex}
-\maybeinput{auto/tab_lifted_dropped.tex}
 \maybeinput{auto/tab_bap_chr4.tex}
+
+
 
 \section{4 Discussion}
 
@@ -728,228 +694,17 @@ N.T. conceived and implemented the method, designed and ran the simulations, ana
 The authors thank the anonymous reviewers for their valuable suggestions.
 
 \clearpage
+\bibliographystyle{\paperdir oup-abbrvnat}
+\bibliography{\paperdir refs}
+
+\clearpage
 \section*{Supplementary material}
 
 \input{supp_methods}
 
 \clearpage
+\input{supp_figures}
 
-\subsection*{Supplementary Note S1: The five pathway signal archetypes}
+\input{supp_tables}
 
-This note extends Section~3.1. A pathway’s \emph{ranked profile} is its gene-level $-\log_{10}p$ values sorted from largest to smallest; an archetype is the profile’s shape. Archetypes are statistical templates: they are not inferred from real pathways, real pathways may mix features of several, and this paper does not assign real pathways to archetypes.
-
-\subsubsection*{S1.1 Strong Sparse Signal (SSS)}
-
-In an SSS pathway, most association evidence comes from a small subset of genes, while the rest are near null. The ranked profile has one or a few very small ordered $p$-values, then quickly drops to null-like values. Thus the pathway signal is driven by a few high-evidence genes rather than broad enrichment, so head-focused statistics such as ACAT and minP should be most efficient. Methods that weight all genes equally dilute these leading genes with the null majority.
-
-SSS is expected when pathway behaviour is controlled by one or a few bottleneck genes (e.g., a committed-step enzyme, rate-limiting regulator, or essential transporter) \citep{MorenoSanchez2008,Naz2023,Tanner2018,Song2020}. For example, aspartokinase initiates the aspartate-derived amino-acid pathway that produces lysine, threonine, methionine and isoleucine \citep{Galili2011} by phosphorylating aspartate to aspartyl phosphate \citep{Hasenoehrl2019}. Variation in this entry enzyme can create a strong localised signal while downstream genes remain buffered or near null. In the maize grain-nitrogen analysis (Section~2.7), the top candidate gene is an aspartate kinase isozyme, and the top pathway, L-homoserine biosynthesis, is the branch whose first step it catalyses.
-
-\subsubsection*{S1.2 Single-Gene Proxy (SGP)}
-
-In an SGP pathway, significance is driven by one strongly associated gene while the rest are near null; the ranked profile shows a single extreme peak followed by an otherwise null-like distribution. Statistically, SGP is a boundary case of SSS, with minP and ACAT again the most sensitive components. Interpretively, however, the pathway adds little beyond the dominant gene-level signal.
-
-Biologically, SGP occurs when a pathway is effectively defined by one major gene, often in small or overlapping annotations. Phenylalanine metabolism illustrates this. \textit{PAH} encodes phenylalanine hydroxylase, the rate-limiting enzyme converting phenylalanine to tyrosine, and pathogenic \textit{PAH} variation is the main cause of phenylketonuria and most PAH deficiency \citep{Flydal2013PAH,Elhawary2022PKU}. Broader phenylalanine-metabolism pathways include genes for tetrahydrobiopterin synthesis, recycling, chaperoning, and related processes, but the dominance of \textit{PAH} means pathway significance may reflect a gene-centric signal rather than coordinated enrichment. Accordingly, pathways significant only by minP and ACAT should be interpreted cautiously; Section~3.1 also shows this is where the omnibus loses the most power relative to its best component.
-
-\subsubsection*{S1.3 Moderate Dense Signal (MDS)}
-
-In an MDS pathway, many genes show modest but consistent association, with no single dominant gene. The ranked profile shows a broad shoulder of moderately small $p$-values rather than a sharp peak, and pathway-level evidence reflects the combined effects of many genes. Methods that aggregate consistent moderate signals (Fisher’s and Stouffer’s) should be most sensitive; soft TFisher should also perform well when enrichment is concentrated in a moderately sized subset.
-
-Biologically, MDS is expected in pathways whose output depends on many interacting components rather than a single effector, such as cytokine-driven immune signalling. In TNF$\alpha$/IL-1$\beta$ to NF-$\kappa$B signalling, activity depends on receptor engagement, adaptor recruitment, kinase cascades, feedback, and downstream transcriptional and post-transcriptional control \citep{Jiang2021CytoSig,Megha2021Inflammation,Verstrepen2008NFkB,vanLoo2011NFkB,Cargnello2011MAPK}. Variation in such pathways is therefore more likely to produce many moderate perturbations than one large-effect change.
-
-\subsubsection*{S1.4 Weak Diffuse Enrichment (WDE)}
-
-In a WDE pathway, most genes are individually non-significant, but the pathway shows a modest shift toward stronger association. The ranked profile displays a gentle, pathway-wide deflection rather than a peak, indicating a weak but widespread signal. Methods that capture distributed enrichment across many genes, especially Stouffer’s and Fisher’s, should be most sensitive \citep{deLeeuw2015}; extreme-tail statistics stay near the null because no gene is extreme.
-
-Biologically, WDE reflects a highly polygenic architecture in which pathway signal comes from many small effects. Human height is a classic example, shaped by thousands of variants with small individual effects \citep{Guo2018HeightGWAS,Yengo2022HeightSaturation}. In such settings, pathways such as TGF-$\beta$ signalling, Hedgehog signalling, and growth-plate extracellular-matrix processes may be detectable mainly through cumulative pathway enrichment rather than strong single-gene signals \citep{LangoAllen2010Height,Guo2018HeightGWAS}.
-
-\subsubsection*{S1.5 Mixed Signal Architecture (MSA)}
-
-In an MSA pathway, one or a few genes show strong association while many others provide moderate support. The ranked profile has a sharp leading peak and a moderate shoulder, placing MSA between sparse SSS and coordinated MDS. Methods that capture both features should be most sensitive, especially adaptive soft TFisher and Fisher’s method; ACAT mainly tracks the peak. In the family-wise simulation of Section~3.1, Fisher was the most powerful for MSA at all pathway sizes, with soft TFisher close behind.
-
-Biologically, MSA arises when a few core regulatory or structural genes with large effects sit within a broader network of auxiliary components. Low-density lipoprotein cholesterol metabolism illustrates this: rare, high-effect variants in \textit{LDLR}, \textit{APOB} and \textit{PCSK9} cause monogenic familial hypercholesterolaemia, while population-level LDL-C variation also reflects many common alleles with small to moderate effects in other lipid genes \citep{Umlai2025LDLC,Peloso2022WGSbloodlipids}. GWAS further implicate genes involved in lipoprotein metabolism and remodelling, including \textit{ABCA1}, \textit{LIPC}, \textit{CETP}, \textit{PLTP}, \textit{ANGPTL3} and \textit{SORT1} \citep{Chasman2009LipoproteinProfiles}. Several are among the established genes used to evaluate the candidate-gene score in Section~3.5.
-
-\subsubsection*{S1.6 How the archetypes were simulated}
-
-The simulation in Section~3.1 (Section~2.6, item~6) uses a shared-universe design: $3{,}000$ genes in independent blocks of $50$ with exchangeable within-block correlation $\rho=0.3$. From the first $600$ genes, we randomly draw a family of $K=150$ overlapping pathways of size $m\in\{5,20,50\}$. Exactly one pathway carries signal; the other $149$ are null.
-
-Signal is a layered mean shift on the gene-level $z$ scale (Table~\ref{tab:archetype_summary}, last column): SSS shifts $15\%$ of genes by $3.0$; SGP $5\%$ by $4.0$; MDS $60\%$ by $1.1$; WDE $90\%$ by $0.55$; and MSA shifts $10\%$ by $1.8$ plus $60\%$ by $1.1$. Each layer contains at least one gene, so at $m=5$ the sparse archetypes shift exactly one gene, and MSA shifts one gene strongly and three moderately. Shifted genes are resampled each replicate, so signal does not consistently hit the same genes or LD blocks. All shifts are multiplied by an effect scale in $\{0.5,1.0,1.5,2.0,2.5,3.0\}$, spanning undetectable to saturated regimes at the considered pathway sizes.
-
-The null bank, five components, soft TFisher grid, undefined-component rule, and omnibus follow Section~2. For each archetype, $m$, and effect scale, we record (for each component and the omnibus) the fraction of replicates in which the signal pathway exceeds its own Westfall--Young FWER threshold at $\alpha=0.05$. A cell is informative if the best component’s power is in $(0.05,0.98)$; Table~\ref{tab:archverify} winners and the first/second/lower-place counts in Section~3.1 are computed over informative cells. Cell regret is the best single-component power minus the omnibus power.
-
-\maybeinput{auto/tab_candidates_supp.tex}
-
-\begin{table*}[!t]
-\centering
-\caption{Archetype verification under the family-wise decision rule. For each archetype and pathway size, the component achieving the highest family-wise power most often across effect scales, against the set predicted in Table~\ref{tab:archetype_summary}. Cells in which no component or every component fires are excluded as uninformative. Worst regret is the largest gap in a single cell between the best component and the omnibus.}
-\label{tab:archverify}
-\small
-\begin{tabular}{llllcr}
-\hline
-\textbf{Archetype} & \textbf{$m$} & \textbf{Predicted} & \textbf{Observed winner} & \textbf{In set} & \textbf{Worst regret} \\
-\hline
-SSS & 5 & ACAT, minP & minP & \checkmark & 0.108 \\
-SSS & 20 & ACAT, minP & ACAT & \checkmark & 0.131 \\
-SSS & 50 & ACAT, minP & minP & \checkmark & 0.039 \\
-MDS & 5 & Fisher, Stouffer, TFisher & Fisher & \checkmark & 0.050 \\
-MDS & 20 & Fisher, Stouffer, TFisher & Fisher & \checkmark & 0.012 \\
-MDS & 50 & Fisher, Stouffer, TFisher & Fisher & \checkmark & 0.029 \\
-WDE & 5 & Stouffer, Fisher & Fisher & \checkmark & 0.032 \\
-WDE & 20 & Stouffer, Fisher & Stouffer & \checkmark & 0.020 \\
-WDE & 50 & Stouffer, Fisher & Stouffer & \checkmark & 0.021 \\
-MSA & 5 & TFisher, Fisher, ACAT & Fisher & \checkmark & 0.042 \\
-MSA & 20 & TFisher, Fisher, ACAT & Fisher & \checkmark & 0.009 \\
-MSA & 50 & TFisher, Fisher, ACAT & Fisher & \checkmark & 0.021 \\
-SGP & 5 & minP, ACAT & ACAT & \checkmark & 0.137 \\
-SGP & 20 & minP, ACAT & minP & \checkmark & 0.355 \\
-SGP & 50 & minP, ACAT & minP & \checkmark & 0.476 \\
-\hline
-\end{tabular}
-\end{table*}
-
-\begin{table*}[!t]
-\centering
-\caption{Power regret of the ACAT-O omnibus by archetype. Regret is the difference between the best single component and the omnibus in the same cell, over all pathway sizes and effect scales. The final two columns give the fraction of cells in which the omnibus is within $0.05$ and $0.10$ of the best component.}
-\label{tab:archregret}
-\small
-\begin{tabular}{llrrrrr}
-\hline
-\textbf{Code} & \textbf{Archetype} & \textbf{Mean} & \textbf{Median} & \textbf{Worst} & \textbf{$\le0.05$} & \textbf{$\le0.10$} \\
-\hline
-MSA & Mixed Signal Architecture & 0.006 & 0.001 & 0.042 & 100\% & 100\% \\
-MDS & Moderate Dense Signal & 0.010 & 0.003 & 0.050 & 94\% & 100\% \\
-WDE & Weak Diffuse Enrichment & 0.010 & 0.010 & 0.032 & 100\% & 100\% \\
-SSS & Strong Sparse Signal & 0.025 & 0.003 & 0.131 & 83\% & 89\% \\
-SGP & Single-Gene Proxy & 0.066 & 0.005 & 0.476 & 72\% & 83\% \\
-\hline
-\end{tabular}
-\end{table*}
-
-\begin{table*}[!t]
-\centering
-\caption{Empirical type~I error and genomic-control inflation for the CATFISH omnibus under the global null, by within-pathway LD level and pathway size. Analytic: independence-based omnibus. Calibrated: per-pathway calibration against the correlated null. Bonferroni and Westfall--Young (WY): family-wise error rates, the probability of at least one rejection among the pathways of one simulated family. Nominal level $\alpha=0.05$.}
-\label{tab:null_calibration}
-\small
-\begin{tabular}{llrrrrrrr}
-\hline
-\textbf{LD} & $\rho$ & $m$ & \textbf{Analytic} & \textbf{Calibrated} & \textbf{Bonferroni} & \textbf{WY} & $\lambda_{\mathrm{an}}$ & $\lambda_{\mathrm{cal}}$ \\
-\hline
-independent & 0.0 & 5 & 0.0571 & 0.0396 & 0.0526 & 0.0320 & 0.909 & 0.947 \\
-independent & 0.0 & 20 & 0.0626 & 0.0534 & 0.0620 & 0.0400 & 0.992 & 0.943 \\
-independent & 0.0 & 50 & 0.0651 & 0.0481 & 0.0658 & 0.0120 & 1.046 & 0.961 \\
-moderate & 0.3 & 5 & 0.1026 & 0.0653 & 0.6806 & 0.0360 & 0.701 & 1.055 \\
-moderate & 0.3 & 20 & 0.2115 & 0.0569 & 1.0000 & 0.0320 & 0.477 & 1.031 \\
-moderate & 0.3 & 50 & 0.2895 & 0.0469 & 1.0000 & 0.0640 & 0.261 & 0.970 \\
-strong & 0.6 & 5 & 0.1354 & 0.0403 & 0.9806 & 0.0600 & 0.486 & 1.124 \\
-strong & 0.6 & 20 & 0.2622 & 0.0386 & 1.0000 & 0.0440 & 0.068 & 1.031 \\
-strong & 0.6 & 50 & 0.3332 & 0.0484 & 1.0000 & 0.0680 & 0.002 & 1.016 \\
-\hline
-\end{tabular}
-\end{table*}
-
-\maybeinput{auto/tab_breakage.tex}
-
-\maybeinput{auto/tab_loo.tex}
-
-\maybeinput{auto/tab_components_cal.tex}
-
-\maybeinput{auto/tab_missing.tex}
-
-\begin{table}[!t]
-\centering
-\caption{Gene-level signal density and pathway-size dependence across the
-GWAS analysed. The last column is the Spearman correlation between pathway size
-and the pathway-level evidence ($-\log_{10}$ omnibus $p$); more negative values
-indicate that larger pathways receive systematically stronger evidence.
-n.c., not computed.}
-\label{tab:density}
-\small
-\begin{tabular}{lrrr}
-\hline
-\textbf{Dataset} & \makecell[r]{\textbf{Genes GW}\\\textbf{significant}} &
-\makecell[r]{\textbf{Median}\\\textbf{gene $p$}} &
-\makecell[r]{\textbf{Size}\\\textbf{correlation}} \\
-\hline
-Maize grain N (MLM)        & 0.00\%  & 0.468 & $-0.179$ \\
-Sorghum stem volume        & 0.86\%  & 0.440 & n.c.     \\
-Maize grain N (GLM)        & 1.15\%  & 0.185 & $-0.667$ \\
-Human LDL-C (GLGC, EUR)    & 11.2\%  & 0.083 & $-0.736$ \\
-Sorghum dry biomass (BAP)  & \nSorDryGeneGW\% & \nSorDryGeneMed & $\nSorDrySizeRho$ \\
-\hline
-\end{tabular}
-\end{table}
-
-\maybeinput{auto/tab_lipid_pathways.tex}
-
-\maybeinput{auto/tab_magma_compare.tex}
-
-\maybeinput{auto/tab_competitive_real.tex}
-
-\maybeinput{auto/tab_lipid_candidates.tex}
-
-\maybeinput{auto/tab_replication_genes.tex}
-
-\maybeinput{auto/tab_apoe_locus.tex}
-
-\maybeinput{auto/tab_logo_recovery.tex}
-
-\maybeinput{auto/tab_logo_recovery_bench.tex}
-
-\maybeinput{auto/tab_pathway_gain_all.tex}
-
-\maybeinput{auto/tab_lifted_genes.tex}
-
-\maybeinput{auto/tab_top10_candidates.tex}
-
-\begin{table}[!t]
-\centering
-\caption{CATFISH under the sorghum phenotype-permutation null ($304$
-SorghumBicolorCyc pathways in each permutation of dry biomass). $\lambda$ is the
-inflation factor of the per-pathway calibrated $p$-values; type I error is the
-fraction of null pathway tests with calibrated $p\le\alpha$; family-wise error
-is the fraction of permutations with at least one pathway at a Westfall--Young
-family-wise $p$-value $\le0.05$, with a Clopper--Pearson interval. GC,
-gene-level genomic control (Section~2.7).}
-\label{tab:sorghum_null}
-\small
-\maybeinput{auto/tab_sorghum_null.tex}
-\end{table}
-
-\begin{figure*}[!t]
-\centering
-\maybefig{supp/figS1.png}{\textwidth}{European lipid GWAS. \textbf{a},~\textbf{b}~Variant-level Manhattan plots for LDL-C (\textbf{a}) and HDL-C (\textbf{b}), capped at $-\log_{10}p=60$ (triangles). \textbf{c}~Gene-level $-\log_{10}p$ for LDL-C against HDL-C; black, the $74$ members of plasma lipoprotein assembly, remodeling and clearance, selected genes labelled; the two traits agree only moderately (Spearman $\nLipGeneRho$). \textbf{d}~The twelve strongest genes of that pathway in each trait: LDL-C is carried by the receptor-uptake arm and HDL-C by the reverse-transport and lipolysis arm, with four of twelve in common.}{fig:supp_lipid}
-\end{figure*}
-
-\begin{figure*}[!t]
-\centering
-\maybefig{supp/figS2.png}{\textwidth}{Open Targets gold-standard lipid genes under the gene score and under each single layer, in the five GLGC 2021 ancestry groups. \textbf{a}~Median rank, among about $18{,}500$ genes, of the $15$ LDL-C and $18$ HDL-C gold-standard genes (log scale; lower is better). \textbf{b}~Number of those genes in the top twenty. The gene score has a better median rank than GWAS association alone in eight of the ten trait--ancestry sets and places at least as many gold-standard genes in the top twenty as GWAS association alone in every set.}{fig:replication_established}
-\end{figure*}
-
-\begin{figure*}[!t]
-\centering
-\maybefig{supp/figS3.png}{\textwidth}{Sensitivity of the gene score to the pathway weight $w_{\mathrm{path}}$ ($x$-axis) and the hub weight $w_{\mathrm{hub}}$ ($y$-axis); the outlined cell marks the defaults (equal weights, $w_{\mathrm{path}}=1$, no hub term). \textbf{a},~\textbf{b}~Truth-planted simulation ($400$ replicates of $500$ genes and $50$ pathways with causal genes concentrated in five pathways): mean fraction of planted causal genes among the top twenty (\textbf{a}) and mean Spearman correlation of the full ranking with the ranking at the defaults (\textbf{b}). \textbf{c},~\textbf{d}~The European lipid analyses (Section~3.5): median rank, among all $\nLipNgenes$ genes, of the Open Targets gold-standard genes for LDL-C (\textbf{c}) and HDL-C (\textbf{d}); lower is better. Rankings are stable across the grid, and recovery improves with the pathway weight in both the simulation and the real data.}{fig:weights}
-\end{figure*}
-
-\begin{figure*}[!t]
-\centering
-\maybefig{supp/figS4.png}{\textwidth}{The nine-trait benchmark in full. \textbf{a}~Open Targets gold-standard genes in the genome-wide top 20, 50 and 100 (rows) of six rankings: best variant (GWAS), MAGMA $p$-value, GWAS and MAGMA evidence (the gene score without the pathway layer), PoPS, CATFISH and the mean of the CATFISH and PoPS ranks; columns, all genes scored by both methods with the extended MHC excluded (main analysis), all genes, and genes in a tested pathway. \textbf{b}~Median rank of the gold-standard genes (log scale; lower is better).}{fig:supp_bench}
-\end{figure*}
-
-\begin{figure*}[!t]
-\centering
-\maybefig{supp/figS5.png}{\textwidth}{Further checks of the sorghum permutation null and of the gene-level input. \textbf{a}~Each point is one permutation of dry biomass without gene-level genomic control: its mean gene $z$-score against the number of its $304$ pathways with per-pathway $p<0.05$; filled points, permutations with a family-wise false positive. \textbf{b}~Observed over expected number of variant $p$-values below $10^{-4}$, by minor allele frequency, in five permutations (chromosomes 1--9); dashed line, one. \textbf{c}~Family-wise error rate of the permutations without and with genomic control (GC), with $95\%$ Clopper--Pearson interval. \textbf{d}~Quantile--quantile plots of the three MAGMA gene $p$-values for dry biomass (SNP-wise mean, SNP-wise top and multi-model); the mean model follows the null, while the top-variant and multi-model $p$-values are inflated, more so in genes with more variants.}{fig:supp_sorghum_null}\label{fig:sorghum_pcol}
-\end{figure*}
-
-\begin{figure*}[!t]
-\centering
-\maybefig{supp/figS6.png}{\textwidth}{Expression of \textit{SbALDH3E1} (Sobic.004G300800), the fatty aldehyde dehydrogenase at the chromosome~4 locus (Section~3.7), in public sorghum RNA-seq data, as summarised by Expression Atlas \citep{Moreno2022ExpressionAtlas}. \textbf{a}~Baseline expression across nine experiments and the tissues they sampled (Expression Atlas categories: below cutoff, low, medium, high). \textbf{b}~Expression in transcripts per million by organ and developmental stage in one experiment; hatched cells were not sampled. Expression is highest in the leaf sheath at flowering, in the seedling leaf lamina and in the vegetative shoot, and low in stem internodes. Screenshots of the Expression Atlas gene pages (\texttt{data/expression\_atlas/}).}{fig:sbaldh_expression}
-\end{figure*}
-
-\clearpage
-\bibliographystyle{\paperdir oup-abbrvnat}
-\bibliography{\paperdir refs}
 \end{document}
-
-
-
-
-

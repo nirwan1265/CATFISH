@@ -1293,7 +1293,8 @@ if (!is.null(prep$z_col)) {
 #'
 #' @param species Optional character (provide \code{species} OR \code{pathways}), one of
 #'   \code{"maize"}, \code{"sorghum"}, \code{"arabidopsis"}, \code{"plant"}, \code{"fly"},
-#'   \code{"human"} (HumanCyc) or \code{"human_reactome"} (Reactome, Entrez IDs).
+#'   \code{"sorghum_reactome"}, \code{"human"} (HumanCyc) or
+#'   \code{"human_reactome"} (Reactome, Entrez IDs).
 #'   When provided, pathways are loaded via \code{catfish_load_pathways()}.
 #'
 #' @param pmn_gene_col Optional character. When \code{species} is used, passed to
@@ -1495,8 +1496,9 @@ catfish_omni2_pathways <- function(gene_results,
   tail_mode <- match.arg(tail_mode)
 
   if (!is.null(species)) {
-    species <- match.arg(species, c("maize","sorghum","arabidopsis","plant","fly",
-                                    "human","human_reactome"))
+    species <- match.arg(species, c("maize","sorghum","sorghum_reactome",
+                                    "arabidopsis","plant","fly","human",
+                                    "human_reactome"))
   }
 
   min_p <- as.numeric(min_p)

@@ -18,6 +18,8 @@
 #'   \item{"maize"}{CornCyc pathways (corncyc_pathways.20230103)}
 #'   \item{"sorghum"}{SorghumBicolorCyc pathways with SORBI_ gene IDs, the IDs of the
 #'     built-in sorghum.genes.loc (sorghumbicolorcyc_pathways.20230103.SORBI)}
+#'   \item{"sorghum_reactome"}{Reactome pathways projected to Sorghum bicolor
+#'     BTx623 v3 genes (sorghum_reactome.csv; SORBI_300 gene IDs).}
 #'   \item{"arabidopsis"}{AraCyc pathways (aracyc_pathways.20230103)}
 #'   \item{"plant"}{PlantCyc general plant pathways (plantcyc_pathways.20230103)}
 #'   \item{"fly"}{FlyCyc Drosophila pathways (Fly_Cyc.tsv)}
@@ -45,8 +47,8 @@
 #'   data.frame
 #' @export
 catfish_pmn_file <- function(
-    species = c("maize", "sorghum", "arabidopsis", "plant", "fly", "human",
-                "human_reactome")
+    species = c("maize", "sorghum", "sorghum_reactome", "arabidopsis",
+                "plant", "fly", "human", "human_reactome")
 ) {
 
   species <- match.arg(species)
@@ -55,6 +57,7 @@ catfish_pmn_file <- function(
     species,
     maize       = "corncyc_pathways.20230103",
     sorghum     = "sorghumbicolorcyc_pathways.20230103.SORBI",  # SORBI_ IDs, as in sorghum.genes.loc
+    sorghum_reactome = "sorghum_reactome.csv",
     arabidopsis = "aracyc_pathways.20230103",
     plant       = "plantcyc_pathways.20230103",
     fly         = "Fly_Cyc.tsv",
@@ -79,9 +82,9 @@ catfish_pmn_file <- function(
 #' data.frame of pathway-gene memberships. Supports Plant Metabolic Network
 #' (PMN) pathway files for plants and FlyCyc for Drosophila.
 #'
-#' @param species Character. One of "maize", "sorghum", "arabidopsis",
-#'   "plant", "fly", "human" (HumanCyc) or "human_reactome" (Reactome, Entrez
-#'   IDs, from MSigDB).
+#' @param species Character. One of "maize", "sorghum",
+#'   "sorghum_reactome", "arabidopsis", "plant", "fly", "human" (HumanCyc)
+#'   or "human_reactome" (Reactome, Entrez IDs, from MSigDB).
 #' @param gene_col Character or NULL. Column name to use for gene IDs.
 #'   If NULL (default), the function will:
 #'   \itemize{
@@ -90,10 +93,11 @@ catfish_pmn_file <- function(
 #'   }
 #' @param drop_unknown Logical. If TRUE (default), drop rows where gene_id
 #'   is NA, empty, or "unknown".
-#' @param file Optional path to your own pathway file in PMN / Pathway Tools
-#'   tab-separated format (columns \code{Pathway-id}, \code{Pathway-name} and
-#'   the gene column), e.g. a newer PMN release or another species from
-#'   \url{https://plantcyc.org}. When given, \code{species} is ignored.
+#' @param file Optional path to your own pathway file. Accepted formats are
+#'   PMN / Pathway Tools tab-separated data (columns \code{Pathway-id},
+#'   \code{Pathway-name} and the gene column) or a CSV/TSV long table with
+#'   \code{pathway_id}, \code{pathway_name}, and \code{gene_id}. When given,
+#'   \code{species} is ignored.
 #'
 #' @return A data.frame with columns:
 #' \describe{
@@ -108,6 +112,8 @@ catfish_pmn_file <- function(
 #' \itemize{
 #'   \item \strong{maize}: CornCyc from Plant Metabolic Network
 #'   \item \strong{sorghum}: SorghumBicolorCyc from PMN
+#'   \item \strong{sorghum_reactome}: Reactome pathways mapped to Sorghum
+#'     BTx623 v3 SORBI_300 gene IDs
 #'   \item \strong{arabidopsis}: AraCyc from PMN
 #'   \item \strong{plant}: PlantCyc (general plant pathways) from PMN
 #'   \item \strong{fly}: FlyCyc (Drosophila melanogaster pathways)
@@ -149,8 +155,8 @@ catfish_pmn_file <- function(
 #' \code{\link{catfish_minp_pathways}} for pathway enrichment tests
 #' @export
 catfish_load_pathways <- function(
-    species      = c("maize", "sorghum", "arabidopsis", "plant", "fly", "human",
-                     "human_reactome"),
+    species      = c("maize", "sorghum", "sorghum_reactome", "arabidopsis",
+                     "plant", "fly", "human", "human_reactome"),
     gene_col     = NULL,
     drop_unknown = TRUE,
     file         = NULL
@@ -190,17 +196,23 @@ catfish_load_pathways <- function(
   if (identical(species, "human") && is.null(gene_col)) gene_col <- "Gene-id"
   fpath <- if (is.null(file)) catfish_pmn_file(species) else file
 
-  x <- suppressWarnings(
-    utils::read.delim(
-      fpath,
-      header           = TRUE,
-      stringsAsFactors = FALSE,
-      check.names      = FALSE
-    )
-  )
+  x <- suppressWarnings(if (grepl("\\.csv$", fpath, ignore.case = TRUE)) {
+    utils::read.csv(fpath, header = TRUE, stringsAsFactors = FALSE,
+                    check.names = FALSE)
+  } else {
+    utils::read.delim(fpath, header = TRUE, stringsAsFactors = FALSE,
+                      check.names = FALSE)
+  })
 
-  # Handle fly format (different column names)
-  if (species == "fly") {
+  # Generic long format, including the built-in Sorghum Reactome export.
+  if (all(c("pathway_id", "pathway_name", "gene_id") %in% names(x))) {
+    df <- unique(data.frame(
+      pathway_id   = x[["pathway_id"]],
+      pathway_name = x[["pathway_name"]],
+      gene_id      = x[["gene_id"]],
+      stringsAsFactors = FALSE
+    ))
+  } else if (species == "fly") {
     # Fly_Cyc.tsv has: pathway_name, pathway_id, gene
     if (is.null(gene_col)) gene_col <- "gene"
     if (!gene_col %in% names(x)) {

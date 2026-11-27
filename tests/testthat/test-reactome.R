@@ -30,3 +30,26 @@ test_that("the set file works directly as gene_prioritize pathways", {
   expect_error(gene_prioritize(magma, res, f, species = "human_reactome"),
                "not both")
 })
+
+test_that("sorghum_reactome loads from the bundled long CSV", {
+  f <- catfish_pmn_file("sorghum_reactome")
+  expect_true(file.exists(f))
+  expect_equal(basename(f), "sorghum_reactome.csv")
+  pw <- catfish_load_pathways(species = "sorghum_reactome")
+  expect_named(pw, c("pathway_id", "pathway_name", "gene_id"))
+  expect_equal(nrow(pw), 3911L)
+  expect_equal(length(unique(pw$pathway_id)), 237L)
+  expect_equal(length(unique(pw$gene_id)), 2864L)
+  expect_true(all(grepl("^SORBI_300", pw$gene_id)))
+  expect_true("R-OSA-1119312" %in% pw$pathway_id)
+})
+
+test_that("catfish_load_pathways reads a user long-format CSV", {
+  f <- tempfile(fileext = ".csv")
+  utils::write.csv(data.frame(pathway_id = c("P1", "P1", "P2"),
+                              pathway_name = c("one", "one", "two"),
+                              gene_id = c("g1", "g2", "g3")),
+                   f, row.names = FALSE)
+  pw <- catfish_load_pathways(file = f)
+  expect_equal(pw$gene_id, c("g1", "g2", "g3"))
+})

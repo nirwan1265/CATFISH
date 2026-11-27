@@ -26,8 +26,8 @@ gene_prioritize(
   window = 10000L,
   w_gwas = 1,
   w_magma = 1,
-  w_pathway = 0.5,
-  w_hub = 0.3,
+  w_pathway = 1,
+  w_hub = 0,
   targets = NULL,
   chunk = 2000L,
   verbose = TRUE,
@@ -72,7 +72,8 @@ present, otherwise column 6 of a 6-column file.}
 \item{window}{Base pairs added on each side of a gene for the position
 route. Default 10000.}
 
-\item{w_gwas, w_magma, w_pathway, w_hub}{Layer weights. Defaults 1, 1, 0.5, 0.3.}
+\item{w_gwas, w_magma, w_pathway, w_hub}{Layer weights. Defaults 1, 1, 1, 0 (equal layers, no hub term;
+before 2026-11-25 1, 1, 0.5, 0.3).}
 
 \item{targets}{Optional character vector of known genes (IDs or symbols) to
 report as positive controls.}
@@ -157,8 +158,9 @@ be the same sets that produced \code{pathway_results}. Either
 per line (\code{id gene gene ...}, as used by MAGMA; \code{.gmt} files
 are also read); or \code{species}: a built-in set loaded with
 \code{\link{catfish_load_pathways}} (\code{"maize"}, \code{"sorghum"},
-\code{"arabidopsis"}, \code{"plant"}, \code{"fly"}, \code{"human"}
-for HumanCyc, \code{"human_reactome"} for Reactome). Only pathways
+\code{"sorghum_reactome"}, \code{"arabidopsis"}, \code{"plant"},
+\code{"fly"}, \code{"human"} for HumanCyc, or
+\code{"human_reactome"} for Reactome). Only pathways
 present in \code{pathway_results} are used.}
 \item{\code{gwas} (optional)}{SNP-level results. Required columns: SNP ID
 (\code{gwas_snp_col}, default \code{"SNP"}) and either

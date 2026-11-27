@@ -5,8 +5,8 @@
 \title{Path to built-in pathway file}
 \usage{
 catfish_pmn_file(
-  species = c("maize", "sorghum", "arabidopsis", "plant", "fly", "human",
-    "human_reactome")
+  species = c("maize", "sorghum", "sorghum_reactome", "arabidopsis", "plant", "fly",
+    "human", "human_reactome")
 )
 }
 \arguments{
@@ -15,6 +15,8 @@ catfish_pmn_file(
 \item{"maize"}{CornCyc pathways (corncyc_pathways.20230103)}
 \item{"sorghum"}{SorghumBicolorCyc pathways with SORBI_ gene IDs, the IDs of the
 built-in sorghum.genes.loc (sorghumbicolorcyc_pathways.20230103.SORBI)}
+\item{"sorghum_reactome"}{Reactome pathways projected to Sorghum bicolor
+BTx623 v3 genes (sorghum_reactome.csv; SORBI_300 gene IDs).}
 \item{"arabidopsis"}{AraCyc pathways (aracyc_pathways.20230103)}
 \item{"plant"}{PlantCyc general plant pathways (plantcyc_pathways.20230103)}
 \item{"fly"}{FlyCyc Drosophila pathways (Fly_Cyc.tsv)}

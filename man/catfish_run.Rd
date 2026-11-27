@@ -38,8 +38,8 @@ catfish_run(
   targets = NULL,
   w_gwas = 1,
   w_magma = 1,
-  w_pathway = 0.5,
-  w_hub = 0.3,
+  w_pathway = 1,
+  w_hub = 0,
   out_dir = "catfish_results",
   out_prefix = "catfish",
   verbose = TRUE
@@ -130,7 +130,7 @@ pathway table.}
 \item{targets}{Optional known genes; their ranks are reported.}
 
 \item{w_gwas, w_magma, w_pathway, w_hub}{Layer weights of
-\code{\link{gene_prioritize}}.}
+\code{\link{gene_prioritize}}. Defaults 1, 1, 1, 0.}
 
 \item{out_dir}{Output folder.}
 

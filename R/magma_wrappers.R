@@ -1,11 +1,13 @@
 # Path to built-in MAGMA gene-loc files
 #
-# @param species One of "maize", "sorghum", "arabidopsis".
+# @param species One of "maize", "sorghum", "sorghum_reactome", "arabidopsis".
 # @return Path to the built-in gene-loc file.
 # @keywords internal
 builtin_geneloc_path <- function(species) {
+  species <- tolower(species)
+  if (identical(species, "sorghum_reactome")) species <- "sorghum"
   species <- match.arg(
-    tolower(species),
+    species,
     c("maize", "sorghum", "arabidopsis")
   )
 

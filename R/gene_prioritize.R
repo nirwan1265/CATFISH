@@ -134,8 +134,9 @@ if (getRversion() >= "2.15.1") utils::globalVariables("NL")
 #'     per line (\code{id gene gene ...}, as used by MAGMA; \code{.gmt} files
 #'     are also read); or \code{species}: a built-in set loaded with
 #'     \code{\link{catfish_load_pathways}} (\code{"maize"}, \code{"sorghum"},
-#'     \code{"arabidopsis"}, \code{"plant"}, \code{"fly"}, \code{"human"}
-#'     for HumanCyc, \code{"human_reactome"} for Reactome). Only pathways
+#'     \code{"sorghum_reactome"}, \code{"arabidopsis"}, \code{"plant"},
+#'     \code{"fly"}, \code{"human"} for HumanCyc, or
+#'     \code{"human_reactome"} for Reactome). Only pathways
 #'     present in \code{pathway_results} are used.}
 #'   \item{\code{gwas} (optional)}{SNP-level results. Required columns: SNP ID
 #'     (\code{gwas_snp_col}, default \code{"SNP"}) and either
