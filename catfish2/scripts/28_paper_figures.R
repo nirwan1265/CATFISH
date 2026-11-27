@@ -92,8 +92,13 @@ cat("figures ->", FIG, "\n")
 ## ======================================================= Fig 1 and Fig 2 ===
 if (has("01_null_calibration.csv")) {
   d <- fread(file.path(RES, "01_null_calibration.csv"))[alpha == 0.05]
-  M3 <- c(t1_analytic = "Analytic", t1_mvn = "Per-pathway calibrated",
-          t1_wy = "Westfall-Young")
+  ## Bonferroni family-wise error, as 07_tables_and_numbers.R: t1_bonferroni is
+  ## the expected number of false rejections per family of NP independent
+  ## pathways, so the family-wise rate is 1 - (1 - x/NP)^NP
+  NPF <- if ("np" %in% names(d)) d$np else 200
+  d[, t1_bonf_fwer := if ("t1_bonf_fwer" %in% names(d)) t1_bonf_fwer else 1 - (1 - pmin(t1_bonferroni / NPF, 1))^NPF]
+  M3 <- c(t1_analytic = "Analytic", t1_bonf_fwer = "Bonferroni (family-wise)",
+          t1_mvn = "Per-pathway calibrated", t1_wy = "Westfall-Young")   # Bonferroni shown here only (2026-11-26)
   l <- melt(d, id.vars = c("rho", "ld", "m"), measure.vars = names(M3),
             variable.name = "method", value.name = "rate")
   l[, method := factor(M3[as.character(method)], levels = M3)]
@@ -124,7 +129,7 @@ if (has("01_null_calibration.csv")) {
 if (has("02_breakage_stress.csv")) {
   d <- fread(file.path(RES, "02_breakage_stress.csv"))
   M4 <- c(t1_analytic = "Analytic (marginal)", t1_mvn = "MVN (marginal)",
-          fwer_wy = "WY (family-wise)", fwer_bonferroni = "Bonferroni (family-wise)")
+          fwer_wy = "WY (family-wise)")   # Bonferroni dropped, shown once in Fig 1 (2026-11-26)
   l <- melt(d, id.vars = c("ld", "m", "direction", "k_broken"), measure.vars = names(M4),
             variable.name = "method", value.name = "rate")
   l[, `:=`(method = factor(M4[as.character(method)], levels = M4), ld = ld_f(ld),
@@ -159,14 +164,13 @@ if (has("03_adaptive_loo.csv")) {
   d <- d[m == max(m)]
   P4 <- c(t1_mvn = "Per-pathway calibration\n(type I error)",
           fwer_wy = "Westfall-Young\n(family-wise error)",
-          fwer_bonferroni = "Bonferroni\n(family-wise error)",
           lambda_mvn = "Calibrated null\n(genomic-control lambda)")
   l <- melt(d, id.vars = c("ld", "dropped"), measure.vars = intersect(names(P4), names(d)),
             variable.name = "panel", value.name = "v")
   l[, `:=`(panel = factor(P4[as.character(panel)], levels = P4), ld = ld_f(ld),
            dropped = factor(sub("<none>", "None", dropped),
                             levels = sub("<none>", "None", unique(d$dropped))))]
-  ref <- data.table(panel = factor(P4, levels = P4), y = c(0.05, 0.05, 0.05, 1))
+  ref <- data.table(panel = factor(P4, levels = P4), y = c(0.05, 0.05, 1))
   p <- ggplot(l, aes(dropped, v, fill = ld)) +
     geom_hline(data = ref, aes(yintercept = y), linetype = "dashed", colour = "grey30") +
     geom_col(position = position_dodge(width = 0.85), width = 0.8) +
@@ -181,7 +185,7 @@ if (has("03_adaptive_loo.csv")) {
 if (has("08_missing_correlation.csv")) {
   d <- fread(file.path(RES, "08_missing_correlation.csv"))
   M4 <- c(t1_analytic = "Analytic (marginal)", t1_mvn = "MVN (marginal)",
-          fwer_wy = "WY (family-wise)", fwer_bonferroni = "Bonferroni (family-wise)")
+          fwer_wy = "WY (family-wise)")   # Bonferroni dropped, shown once in Fig 1 (2026-11-26)
   l <- melt(d, id.vars = c("ld", "miss"), measure.vars = names(M4),
             variable.name = "method", value.name = "rate")
   l[, `:=`(method = factor(M4[as.character(method)], levels = M4), ld = ld_f(ld))]
@@ -442,9 +446,21 @@ if (all(file.exists(c(MAGMA_OUT, WYF, file.path(RES, sprintf("06_candidate_genes
   save(p, "Fig14_lipid_pathway_size.png", 24, 9.5)
 
   ## ---- Fig 15: established-gene recovery ----
+  ## UNIVERSE_FILE (optional, as final/39_logo_recovery.R): rank only within the
+  ## genes of each trait in this file (trait, entrez), e.g. results/45_universe_no_MHC.csv,
+  ## the genes scored by both CATFISH and PoPS outside the MHC; each layer is
+  ## re-ranked within them (average ties), as in the gene-score tables
+  UNI_F15 <- Sys.getenv("UNIVERSE_FILE", "")
+  U15 <- if (nzchar(UNI_F15)) { u_ <- fread(UNI_F15, colClasses = list(character = "entrez")); split(u_$entrez, u_$trait) } else NULL
   meth <- c(rank_gwas = "GWAS\n(best variant)", rank_magma = "MAGMA\n(gene test)", rank = "CATFISH\nscore")
   pl <- lapply(names(TRAITS), function(t) {
     g <- G[[t]]; ctrl <- CONTROLS[[t]]
+    if (!is.null(U15)) {
+      g <- copy(g)[as.character(gene) %in% U15[[t]]]
+      g[, `:=`(rank_gwas = frank(rank_gwas, ties.method = "average", na.last = TRUE),
+               rank_magma = frank(rank_magma, ties.method = "average", na.last = TRUE),
+               rank = frank(-Score, ties.method = "average"))]
+    }
     R <- rbindlist(lapply(names(meth), function(cc)
       data.table(gene = ctrl, method = meth[[cc]], r = as.numeric(g[[cc]][match(ctrl, g$symbol)]))))
     R <- R[gene %in% R[, .(ok = all(!is.na(r))), by = gene][ok == TRUE]$gene]
@@ -464,7 +480,7 @@ if (all(file.exists(c(MAGMA_OUT, WYF, file.path(RES, sprintf("06_candidate_genes
                 fontface = "italic") +
       scale_y_log10() + vir(guide = "none") +
       scale_x_discrete(expand = expansion(add = c(0.5, 1.1))) +
-      labs(x = NULL, y = "Rank among all genes (1 = top)",
+      labs(x = NULL, y = if (is.null(U15)) "Rank among all genes (1 = top)" else "Rank (1 = top)",
            title = sprintf("%s: %d established genes", TRAITS[[t]], length(unique(R$gene)))) +
       plot_theme
   })
