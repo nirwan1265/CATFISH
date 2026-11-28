@@ -60,7 +60,7 @@ lab <- c(eur = "EUR", afr = "AFR", eas = "EAS", sas = "SAS", his = "HIS")
 num <- function(x) formatC(x, format = "d", big.mark = "{,}")
 f2  <- function(x) { x <- round(x, 2); x[x == 0] <- 0; formatC(x, format = "f", digits = 2) }
 L <- c("\\begin{table*}[!t]", "\\centering",
-  "\\caption{CATFISH and MAGMA's gene-set analysis on the same gene-level statistics and the same $1{,}390$ Reactome pathways (10--200 genes), in the ten GLGC lipid sets. Significant: CATFISH Westfall--Young family-wise $p\\le0.05$; MAGMA Bonferroni $p\\le0.05/1{,}390$. Lipoprotein rank: rank of plasma lipoprotein assembly, remodeling and clearance. Size: Spearman correlation between pathway size and pathway evidence (CATFISH $-z_{\\mathrm{std}}$, MAGMA $-\\log_{10}p$). CATFISH uses centred gene $p$-values (Section~2.7); MAGMA reads the uncentred gene statistics.}",
+  "\\caption{CATFISH and MAGMA's gene-set analysis on the same gene-level statistics and the same $1{,}390$ Reactome pathways (10--200 genes), in the ten GLGC lipid sets. Significant: CATFISH Westfall--Young family-wise $p\\le0.05$; MAGMA Bonferroni $p\\le0.05/1{,}390$. Lipoprotein rank: rank of plasma lipoprotein assembly, remodeling and clearance. Size: Spearman correlation between pathway size and pathway evidence (CATFISH $-z_{\\mathrm{std}}$, MAGMA $-\\log_{10}p$). CATFISH uses centred gene $p$-values; MAGMA reads the uncentred gene statistics.}",
   "\\label{tab:magma_compare}", "\\small",
   "\\begin{tabular}{llrrrccccrrr}", "\\hline",
   " & & \\multicolumn{3}{c}{\\textbf{Significant}} & \\multicolumn{3}{c}{\\textbf{Lipoprotein rank}} & & \\multicolumn{3}{c}{\\textbf{Size}} \\\\",

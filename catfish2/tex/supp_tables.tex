@@ -10,7 +10,7 @@
 $m=|S|$ genes and gene-level $p$-values $p_g$, each component emphasizes a
 different pathway signal pattern. The analytic reference distributions define
 the statistics; final inference uses the dependence-aware calibrations of
-Section 2.3.}
+CATFISH.}
 \label{tab:components}
 \small
 \renewcommand{\arraystretch}{1.25}
@@ -124,8 +124,7 @@ strong & 0.6 & 50 & 0.3332 & 0.0484 & 1.0000 & 0.0680 & 0.002 & 1.016 \\
 \caption{Gene-level signal density and pathway-size dependence across the
 GWAS analysed. The last column is the Spearman correlation between pathway size
 and the pathway-level evidence ($-\log_{10}$ omnibus $p$); more negative values
-indicate that larger pathways receive systematically stronger evidence.
-n.c., not computed.}
+indicate that larger pathways receive systematically stronger evidence.}
 \label{tab:density}
 \small
 \begin{tabular}{lrrr}
@@ -134,9 +133,6 @@ n.c., not computed.}
 \makecell[r]{\textbf{Median}\\\textbf{gene $p$}} &
 \makecell[r]{\textbf{Size}\\\textbf{correlation}} \\
 \hline
-Maize grain N (MLM)        & 0.00\%  & 0.468 & $-0.179$ \\
-Sorghum stem volume        & 0.86\%  & 0.440 & n.c.     \\
-Maize grain N (GLM)        & 1.15\%  & 0.185 & $-0.667$ \\
 Human LDL-C (GLGC, EUR)    & 11.2\%  & 0.083 & $-0.736$ \\
 Sorghum dry biomass (BAP)  & \nSorDryGeneGW\% & \nSorDryGeneMed & $\nSorDrySizeRho$ \\
 \hline
@@ -171,7 +167,7 @@ inflation factor of the per-pathway calibrated $p$-values; type I error is the
 fraction of null pathway tests with calibrated $p\le\alpha$; family-wise error
 is the fraction of permutations with at least one pathway at a Westfall--Young
 family-wise $p$-value $\le0.05$, with a Clopper--Pearson interval. GC,
-gene-level genomic control (Section~2.7).}
+gene-level genomic control.}
 \label{tab:sorghum_null}
 \small
 \maybeinput{auto/tab_sorghum_null.tex}
