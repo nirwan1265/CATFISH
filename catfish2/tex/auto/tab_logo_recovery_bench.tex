@@ -1,9 +1,9 @@
-\begin{table*}[!t]
+\begin{table*}[!htbp]
 \centering
 \caption{Where the gain of the gene score comes from, in the seven further European GWAS. Median rank of the Open Targets gold-standard genes among the ranked genes (number in the top 20 in parentheses) when genes are ranked by the GWAS layer alone, the MAGMA layer alone, the two together (pathway weight $0$), the full CATFISH score, and the full score with each gene's pathway evidence recomputed without that gene (leave one gene out; never stronger than with it). Genes are ranked within those scored by both CATFISH and PoPS, outside the MHC, as in Table~\ref{tab:benchmark_topk_all}.}
 \label{tab:logo_recovery_bench}
 \small
-\begin{tabular}{llrrrrr}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}llrrrrr}
 \hline
 \textbf{Trait} & \textbf{Group} & GWAS & MAGMA & GWAS + MAGMA & CATFISH & \makecell[r]{CATFISH,\\leave one gene out} \\
 \hline
@@ -15,5 +15,5 @@ Atrial fibrillation & EUR & 829 (1) & 627 (4) & 703 (3) & 379 (4) & 386 (4) \\
 SLE & EUR & 1528 (0) & 3809 (0) & 1453 (0) & 1318 (0) & 1326 (0) \\
 Asthma & EUR & 223 (2) & 97 (2) & 129 (0) & 81 (5) & 82 (5) \\
 \hline
-\end{tabular}
+\end{tabular*}
 \end{table*}

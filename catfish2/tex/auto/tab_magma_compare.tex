@@ -1,9 +1,9 @@
-\begin{table*}[!t]
+\begin{table*}[!htbp]
 \centering
 \caption{CATFISH and MAGMA's gene-set analysis on the same gene-level statistics and the same $1{,}390$ Reactome pathways (10--200 genes), in the ten GLGC lipid sets. Significant: CATFISH Westfall--Young family-wise $p\le0.05$; MAGMA Bonferroni $p\le0.05/1{,}390$. Lipoprotein rank: rank of plasma lipoprotein assembly, remodeling and clearance. Size: Spearman correlation between pathway size and pathway evidence (CATFISH $-z_{\mathrm{std}}$, MAGMA $-\log_{10}p$). CATFISH uses centred gene $p$-values; MAGMA reads the uncentred gene statistics.}
 \label{tab:magma_compare}
 \small
-\begin{tabular}{llrrrccccrrr}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}llrrrccccrrr}
 \hline
  & & \multicolumn{3}{c}{\textbf{Significant}} & \multicolumn{3}{c}{\textbf{Lipoprotein rank}} & & \multicolumn{3}{c}{\textbf{Size}} \\
 \textbf{Trait} & \textbf{Group} & CATFISH & \makecell[r]{MAGMA\\self} & \makecell[r]{MAGMA\\comp.} & CATFISH & \makecell[c]{MAGMA\\self} & \makecell[c]{MAGMA\\comp.} & & CATFISH & \makecell[r]{MAGMA\\self} & \makecell[r]{MAGMA\\comp.} \\
@@ -19,5 +19,5 @@ HDL-C & SAS & 174 & 56 & 8 & 1 & 2 & 1 & & $0.30$ & $0.42$ & $0.04$ \\
 LDL-C & HIS & 133 & 71 & 8 & 1 & 1 & 1 & & $0.34$ & $0.48$ & $0.03$ \\
 HDL-C & HIS & 184 & 45 & 11 & 1 & 2 & 3 & & $0.31$ & $0.43$ & $0.02$ \\
 \hline
-\end{tabular}
+\end{tabular*}
 \end{table*}

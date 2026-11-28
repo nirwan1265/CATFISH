@@ -1,10 +1,10 @@
-\begin{table*}[!t]
+\begin{table*}[!htbp]
 \centering
 \caption{Component-breakage stress test on overlapping pathways. Each of $k$ component tests is miscalibrated by raising its $p$-value to the power $\gamma$; $\gamma<1$ makes a component conservative and $\gamma>1$ anti-conservative. Marginal columns are per-pathway type~I error; FWER columns are family-wise error rates over the $K$ pathways tested, measured on held-out draws. Nominal level $\alpha=0.05$.}
 \label{tab:breakage}
 \small
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{llrlrrrrrr}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}llrlrrrrrr}
 \hline
 \textbf{LD} & $\rho$ & $m$ & \textbf{Direction} & $\gamma$ & $k$ & \multicolumn{2}{c}{\textbf{Marginal}} & \multicolumn{2}{c}{\textbf{FWER}} \\
  & & & & & & Analytic & MVN & WY & Bonf. \\
@@ -70,5 +70,5 @@ strong & 0.6 & 50 & conservative & 0.7 & 2 & 0.1581 & 0.0431 & 0.0387 & 0.2393 \
 strong & 0.6 & 50 & conservative & 0.7 & 3 & 0.1431 & 0.0438 & 0.0433 & 0.2193 \\
 strong & 0.6 & 50 & conservative & 0.7 & 4 & 0.1213 & 0.0432 & 0.0427 & 0.1780 \\
 \hline
-\end{tabular}}
+\end{tabular*}}
 \end{table*}

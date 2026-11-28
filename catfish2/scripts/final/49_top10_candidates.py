@@ -151,7 +151,7 @@ for k, chunk in enumerate([traits[i:i + 2] for i in range(0, len(traits), 2)]):
               "" if k == 0 else "\\addtocounter{table}{-1}",   # continuation keeps the table number
               "\\caption{%s}" % (cap if k == 0 else "Top-ranked candidate genes and published evidence (continued)."),
               "\\label{tab:top10}" if k == 0 else "", "\\scriptsize",
-              "\\begin{tabular}{p{0.11\\textwidth}p{0.03\\textwidth}p{0.09\\textwidth}r@{\\hspace{6pt}}r@{\\hspace{6pt}}p{0.08\\textwidth}>{\\raggedright\\arraybackslash}p{0.31\\textwidth}>{\\raggedright\\arraybackslash}p{0.19\\textwidth}}",
+              "\\begin{tabular}{p{0.11\\textwidth}p{0.03\\textwidth}p{0.09\\textwidth}r@{\\hspace{6pt}}r@{\\hspace{6pt}}p{0.08\\textwidth}>{\\raggedright\\arraybackslash}p{0.27\\textwidth}>{\\raggedright\\arraybackslash}p{0.16\\textwidth}}",
               "\\hline", "\\textbf{Trait} & \\textbf{Rank} & \\textbf{Gene} & \\textbf{GWAS rank} & \\textbf{MAGMA rank} & \\textbf{Evidence} & \\textbf{Published finding} & \\textbf{References} \\\\", "\\hline"]
     for t in chunk:
         g = out[out["trait"] == t]

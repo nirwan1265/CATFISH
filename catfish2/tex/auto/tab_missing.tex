@@ -1,10 +1,10 @@
-\begin{table*}[!t]
+\begin{table*}[!htbp]
 \centering
 \caption{Robustness to an incomplete gene--gene correlation file. Data are generated from the true correlation structure; calibration is built from a matrix in which the stated fraction of off-diagonal entries has been zeroed, as an unreported gene pair would be. Marginal columns are per-pathway type~I error, FWER columns are family-wise rates over $K$ pathways. Nominal $\alpha=0.05$.}
 \label{tab:missing}
 \small
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{lrrrrrrr}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrrrrrr}
 \hline
 \textbf{LD} & \textbf{Dropped} & \multicolumn{2}{c}{\textbf{Marginal}} & \multicolumn{2}{c}{\textbf{FWER}} & \multicolumn{2}{c}{$\lambda$} \\
  & & Analytic & MVN & WY & Bonf. & Analytic & MVN \\
@@ -20,5 +20,5 @@ strong & 50\% & 0.1584 & 0.1055 & 0.1375 & 0.2150 & 0.609 & 0.724 \\
 strong & 75\% & 0.1584 & 0.1213 & 0.1675 & 0.2150 & 0.609 & 0.678 \\
 strong & 100\% & 0.1584 & 0.1424 & 0.2200 & 0.2150 & 0.609 & 0.609 \\
 \hline
-\end{tabular}}
+\end{tabular*}}
 \end{table*}

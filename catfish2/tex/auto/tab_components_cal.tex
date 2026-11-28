@@ -1,10 +1,10 @@
-\begin{table*}[!t]
+\begin{table*}[!htbp]
 \centering
 \caption{Per-component calibration. Each component test is calibrated against its own null rather than being combined into the omnibus, at $m=50$. Analytic columns assume gene independence; calibrated columns use the correlated null. Nominal $\alpha=0.05$.}
 \label{tab:components_cal}
 \small
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{llrrrrr}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}llrrrrr}
 \hline
 \textbf{LD} & \textbf{Component} & \textbf{Analytic} & \textbf{Calibrated} & \textbf{WY} & $\lambda_{\mathrm{an}}$ & $\lambda_{\mathrm{cal}}$ \\
 \hline
@@ -27,5 +27,5 @@ strong & minP & 0.0431 & 0.0415 & 0.0280 & 0.485 & 0.798 \\
 strong & TFisher & 0.1750 & 0.0391 & 0.0340 & 1.256 & 0.806 \\
 strong & Omnibus & 0.1761 & 0.0435 & 0.0420 & 0.665 & 0.880 \\
 \hline
-\end{tabular}}
+\end{tabular*}}
 \end{table*}

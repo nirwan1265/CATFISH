@@ -1,9 +1,9 @@
-\begin{table*}[!t]
+\begin{table*}[!htbp]
 \centering
 \caption{Where the gain of the gene score comes from, in the lipid analyses. Median rank of the Open Targets gold-standard genes among the ranked genes (number in the top 20 in parentheses) when genes are ranked by the GWAS layer alone, the MAGMA layer alone, the two together (pathway weight $0$), the full CATFISH score, and the full score with each gene's pathway evidence recomputed without that gene (leave one gene out; never stronger than with it). Genes are ranked within those scored by both CATFISH and PoPS, outside the MHC, as in Table~\ref{tab:benchmark_topk_all}.}
 \label{tab:logo_recovery}
 \small
-\begin{tabular}{llrrrrr}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}llrrrrr}
 \hline
 \textbf{Trait} & \textbf{Group} & GWAS & MAGMA & GWAS + MAGMA & CATFISH & \makecell[r]{CATFISH,\\leave one gene out} \\
 \hline
@@ -18,5 +18,5 @@ HDL-C & SAS & 96 (5) & 302 (3) & 131 (3) & 112.5 (6) & 128.5 (6) \\
 LDL-C & HIS & 67 (5) & 63 (4) & 54 (4) & 29 (6) & 32 (6) \\
 HDL-C & HIS & 189.8 (3) & 259 (2) & 173 (2) & 93.5 (5) & 97 (4) \\
 \hline
-\end{tabular}
+\end{tabular*}
 \end{table*}

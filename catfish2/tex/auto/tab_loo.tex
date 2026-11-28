@@ -1,10 +1,10 @@
-\begin{table*}[!t]
+\begin{table*}[!htbp]
 \centering
 \caption{Leave-one-out component sensitivity on overlapping pathways. Each row removes a single component and rebuilds the null bank, the marginal calibration and the Westfall--Young threshold from scratch. Nominal level $\alpha=0.05$.}
 \label{tab:loo}
 \small
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{llrlrrrr}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}llrlrrrr}
 \hline
 \textbf{LD} & $\rho$ & $m$ & \textbf{Dropped} & \multicolumn{2}{c}{\textbf{Marginal}} & \multicolumn{2}{c}{\textbf{FWER}} \\
  & & & & Analytic & MVN & WY & Bonf. \\
@@ -46,5 +46,5 @@ strong & 0.6 & 50 & Stouffer & 0.1482 & 0.0400 & 0.0300 & 0.2180 \\
 strong & 0.6 & 50 & minP & 0.1865 & 0.0436 & 0.0420 & 0.2720 \\
 strong & 0.6 & 50 & TFisher & 0.1657 & 0.0448 & 0.0440 & 0.2460 \\
 \hline
-\end{tabular}}
+\end{tabular*}}
 \end{table*}

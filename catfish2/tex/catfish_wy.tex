@@ -192,7 +192,7 @@ by the effect scale. Every layer contains at least one gene.}
 \label{tab:archetype_summary}
 \scriptsize
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{p{0.15\textwidth} p{0.26\textwidth} p{0.19\textwidth} p{0.12\textwidth} p{0.14\textwidth}}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}p{0.15\textwidth} p{0.26\textwidth} p{0.19\textwidth} p{0.12\textwidth} p{0.14\textwidth}}
 \hline
 \textbf{Archetype} & \textbf{Gene-level $p$-value pattern} & \textbf{Ranked-profile shape} & \textbf{Expected sensitive tests} & \textbf{Simulated signal} \\
 \hline
@@ -222,7 +222,7 @@ Single extreme peak followed by an otherwise null-like profile. &
 minP, ACAT &
 $5\%$ at $4.0$ \\
 \hline
-\end{tabular}
+\end{tabular*}
 \end{table*}
 
 \subsection*{CATFISH controls false positives under linkage disequilibrium and detects sparse pathway signals more often than MAGMA}
@@ -513,6 +513,7 @@ The authors thank the anonymous reviewers for their valuable suggestions.
 \bibliography{\paperdir refs}
 
 \clearpage
+\onecolumn
 \section*{Supplementary material}
 
 \input{supp_methods}
